@@ -8,6 +8,10 @@ import {
   registerGlobalShortcutsFromConfig,
   unregisterAll
 } from './hotkey'
+import { registerConfigHandlers } from './ipc/config_handlers'
+import { registerWindowHandlers } from './ipc/window_handlers'
+import { registerHotkeyHandlers } from './ipc/hotkey_handlers'
+import { registerTextHandlers } from './ipc/text_handlers'
 
 let windowManager: WindowManager | undefined
 
@@ -32,6 +36,11 @@ if (!gotLock) {
 
     setWindowManagerForTray(windowManager)
     setWindowManagerForHotkey(windowManager)
+
+    registerConfigHandlers()
+    registerWindowHandlers(windowManager)
+    registerHotkeyHandlers(windowManager)
+    registerTextHandlers()
 
     createTray()
     registerGlobalShortcutsFromConfig()
