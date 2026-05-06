@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
-import { initConfigStore, isFirstRun } from './config/store'
+import { initConfigStore, isFirstRun, commitFirstRun } from './config/store'
 import { createTray, setWindowManagerForTray } from './tray'
 import {
   setWindowManagerForHotkey,
@@ -64,6 +64,7 @@ if (!gotLock) {
         minWidth: 800,
         minHeight: 400
       })
+      commitFirstRun()
     }
   })
 
