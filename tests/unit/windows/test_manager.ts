@@ -25,10 +25,9 @@ vi.mock('electron', () => ({
     getDisplayNearestPoint: vi.fn().mockReturnValue({
       workArea: { x: 0, y: 0, width: 1920, height: 1080 }
     })
-  }
+  },
+  app: { isPackaged: true }
 }))
-
-vi.mock('@electron-toolkit/utils', () => ({ is: { dev: false } }))
 
 import { BrowserWindow } from 'electron'
 import { WindowManager } from '../../../electron/windows/manager'

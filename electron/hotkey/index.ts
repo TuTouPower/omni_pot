@@ -3,6 +3,7 @@ import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { getConfig } from '../config/store'
 import type { ConfigKey } from '@shared/types/config'
+import { start_screenshot_capture } from '../screenshot'
 
 let windowManager: WindowManager | null = null
 
@@ -17,18 +18,27 @@ const TRANSLATE_OPTS = {
 } as const
 
 export function buildHotkeyAction(name: string, mgr: WindowManager): () => void {
+  const toggleOrSend = (channel: string): (() => void) => {
+    return () => {
+      const existing = mgr.getWindow(WindowLabel.TRANSLATE)
+      if (existing && !existing.isDestroyed() && existing.isVisible()) {
+        existing.hide()
+        return
+      }
+      const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+      win.webContents.send(channel)
+    }
+  }
+
   switch (name) {
     case 'hotkey_input_translate':
-      return () => mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+      return toggleOrSend('translate:input-translate')
     case 'hotkey_selection_translate':
-      return () => {
-        const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
-        win.webContents.send('translate:from-selection')
-      }
+      return toggleOrSend('translate:from-selection')
     case 'hotkey_ocr_recognize':
+      return () => { void start_screenshot_capture(mgr, 'recognize') }
     case 'hotkey_ocr_translate':
-      // OCR in P2
-      return () => {}
+      return () => { void start_screenshot_capture(mgr, 'translate') }
     default:
       return () => {}
   }

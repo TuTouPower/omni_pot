@@ -1,4 +1,5 @@
 import type { TranslateService } from '@shared/types/service'
+import type { OcrService } from '@shared/types/ocr_service'
 
 export class ServiceRegistry<T extends { readonly key: string }> {
   private services = new Map<string, T>()
@@ -21,3 +22,4 @@ export class ServiceRegistry<T extends { readonly key: string }> {
 }
 
 export const translateServiceRegistry = new ServiceRegistry<TranslateService>()
+export const ocrServiceRegistry = new ServiceRegistry<OcrService>()

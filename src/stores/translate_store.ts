@@ -13,6 +13,7 @@ interface TranslateStore {
   detectedLanguage: LanguageCode | null
   results: TranslateResults
   isTranslating: boolean
+  requestId: number
 
   setSourceText: (text: string) => void
   setSourceLanguage: (lang: LanguageCode) => void
@@ -22,6 +23,7 @@ interface TranslateStore {
   setIsTranslating: (flag: boolean) => void
   swapLanguages: () => void
   clearResults: () => void
+  nextRequestId: () => number
 }
 
 export const useTranslateStore = create<TranslateStore>()((set, get) => ({
@@ -31,6 +33,7 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
   detectedLanguage: null,
   results: {},
   isTranslating: false,
+  requestId: 0,
 
   setSourceText: (text) => set({ sourceText: text }),
   setSourceLanguage: (lang) => set({ sourceLanguage: lang }),
@@ -45,5 +48,10 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
       set({ sourceLanguage: targetLanguage, targetLanguage: sourceLanguage })
     }
   },
-  clearResults: () => set({ results: {} })
+  clearResults: () => set({ results: {} }),
+  nextRequestId: () => {
+    const id = Date.now()
+    set({ requestId: id })
+    return id
+  }
 }))

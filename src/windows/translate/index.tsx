@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@heroui/react'
 import { BsPinFill } from 'react-icons/bs'
 import { AiFillCloseCircle } from 'react-icons/ai'
@@ -8,32 +8,61 @@ import { TargetArea } from './target_area'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
+import { detectLanguage } from '../../services/detect'
 import { getServiceKey } from '@shared/types/service'
+import type { DictResult } from '@shared/types/service'
 
 export default function TranslateWindow(): React.ReactElement {
   const sourceText = useTranslateStore((s) => s.sourceText)
   const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
   const targetLanguage = useTranslateStore((s) => s.targetLanguage)
+  const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
   const setIsTranslating = useTranslateStore((s) => s.setIsTranslating)
   const setResult = useTranslateStore((s) => s.setResult)
   const clearResults = useTranslateStore((s) => s.clearResults)
+  const setSourceText = useTranslateStore((s) => s.setSourceText)
+  const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
+  const requestId = useTranslateStore((s) => s.requestId)
+  const nextRequestId = useTranslateStore((s) => s.nextRequestId)
 
   const serviceList = useConfigStore((s) => s.config.translate_service_list)
   const serviceInstances = useConfigStore((s) => s.config.service_instances)
   const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
   const closeOnBlur = useConfigStore((s) => s.config.translate_close_on_blur)
+  const secondLanguage = useConfigStore((s) => s.config.translate_second_language)
+  const incrementalTranslate = useConfigStore((s) => s.config.incremental_translate)
+  const deleteNewline = useConfigStore((s) => s.config.translate_delete_newline)
+  const autoCopy = useConfigStore((s) => s.config.translate_auto_copy)
+  const hideSource = useConfigStore((s) => s.config.hide_source)
+
+  const [forceShowSource, setForceShowSource] = useState(false)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const handleTranslate = useCallback(async () => {
     if (!sourceText.trim()) return
 
+    const id = nextRequestId()
     setIsTranslating(true)
     clearResults()
+
+    const detected = sourceLanguage === 'auto' ? detectLanguage(sourceText) : null
+    if (detected) setDetectedLanguage(detected)
+
+    let effectiveTarget = targetLanguage
+    if (sourceLanguage === 'auto' && detected && detected === targetLanguage) {
+      effectiveTarget = secondLanguage
+    }
+
+    const resultsMap: Record<string, string | DictResult | null> = {}
 
     const promises = serviceList.map(async (instanceKey) => {
       const serviceKey = getServiceKey(instanceKey)
       const service = translateServiceRegistry.get(serviceKey)
       if (!service) {
-        setResult(instanceKey, null)
+        resultsMap[instanceKey] = null
+        if (useTranslateStore.getState().requestId === id) {
+          setResult(instanceKey, null)
+        }
         return
       }
       const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
@@ -42,18 +71,89 @@ export default function TranslateWindow(): React.ReactElement {
         const result = await service.translate(
           sourceText,
           sourceLanguage,
-          targetLanguage,
+          effectiveTarget,
           instanceConfig
         )
-        setResult(instanceKey, result)
+        resultsMap[instanceKey] = result
+        if (useTranslateStore.getState().requestId === id) {
+          setResult(instanceKey, result)
+        }
       } catch {
-        setResult(instanceKey, null)
+        resultsMap[instanceKey] = null
+        if (useTranslateStore.getState().requestId === id) {
+          setResult(instanceKey, null)
+        }
       }
     })
 
     await Promise.allSettled(promises)
-    setIsTranslating(false)
-  }, [sourceText, sourceLanguage, targetLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults])
+    if (useTranslateStore.getState().requestId === id) {
+      setIsTranslating(false)
+    }
+
+    if (autoCopy !== 'disable') {
+      if (autoCopy === 'source' || autoCopy === 'source_target') {
+        navigator.clipboard.writeText(sourceText)
+      }
+      if (autoCopy === 'target' || autoCopy === 'source_target') {
+        const targetTexts = Object.values(resultsMap)
+          .filter((r): r is string | DictResult => r !== null)
+          .map((r) => typeof r === 'string' ? r : r.definitions.map((d) => d.meanings.join('; ')).join('\n'))
+          .join('\n')
+        if (targetTexts) navigator.clipboard.writeText(targetTexts)
+      }
+    }
+  }, [sourceText, sourceLanguage, targetLanguage, detectedLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
+
+  // Listen for translate:from-selection
+  useEffect(() => {
+    const unsub = window.electronAPI.text.onTranslateFromSelection(async () => {
+      const text = await window.electronAPI.text.getSelection()
+      if (!text) return
+
+      const processed = deleteNewline ? text.replace(/-\s+/g, '').replace(/\s+/g, ' ') : text
+      const currentText = useTranslateStore.getState().sourceText
+      setSourceText(incrementalTranslate && currentText ? currentText + ' ' + processed : processed)
+      setForceShowSource(false)
+
+      setTimeout(() => handleTranslate(), 0)
+    })
+    return unsub
+  }, [deleteNewline, incrementalTranslate, setSourceText, handleTranslate])
+
+  // Listen for translate:from-api
+  useEffect(() => {
+    const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
+      if (!text.trim()) return
+      setSourceText(text)
+      setForceShowSource(false)
+      setTimeout(() => handleTranslate(), 0)
+    })
+    return unsub
+  }, [setSourceText, handleTranslate])
+
+  // Listen for translate:from-clipboard
+  useEffect(() => {
+    const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
+      if (!text.trim()) return
+      setSourceText(text)
+      setForceShowSource(false)
+      setTimeout(() => handleTranslate(), 0)
+    })
+    return unsub
+  }, [setSourceText, handleTranslate])
+
+  // Listen for translate:input-translate
+  useEffect(() => {
+    const unsub = window.electronAPI.text.onInputTranslate(() => {
+      setSourceText('')
+      setForceShowSource(true)
+      setDetectedLanguage(null)
+      clearResults()
+      setTimeout(() => inputRef.current?.focus(), 50)
+    })
+    return unsub
+  }, [setSourceText, setDetectedLanguage, clearResults])
 
   // Close on blur
   useEffect(() => {
@@ -78,6 +178,8 @@ export default function TranslateWindow(): React.ReactElement {
     window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop)
   }, [alwaysOnTop])
 
+  const showSource = forceShowSource || !hideSource
+
   return (
     <div className="flex flex-col h-screen select-none" style={{ fontSize: 16 }}>
       {/* Top bar */}
@@ -96,7 +198,7 @@ export default function TranslateWindow(): React.ReactElement {
         </Button>
       </div>
 
-      <SourceArea onTranslate={handleTranslate} />
+      {showSource && <SourceArea onTranslate={handleTranslate} inputRef={inputRef} />}
       <LanguageArea />
       <TargetArea serviceList={serviceList} />
     </div>

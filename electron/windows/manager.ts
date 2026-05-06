@@ -1,6 +1,5 @@
-import { BrowserWindow, screen } from 'electron'
+import { BrowserWindow, screen, app } from 'electron'
 import { join } from 'path'
-import { is } from '@electron-toolkit/utils'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
 
@@ -45,7 +44,7 @@ export class WindowManager {
       win.setPosition(x, y)
     }
 
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
       win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#${opts.label}`)
     } else {
       win.loadFile(join(__dirname, '../renderer/index.html'), {

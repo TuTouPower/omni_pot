@@ -8,6 +8,7 @@ export interface AppConfig {
   transparent: boolean
   check_update: boolean
   server_port: number
+  clipboard_monitor: boolean
 
   proxy_enable: boolean
   proxy_host: string
@@ -37,6 +38,12 @@ export interface AppConfig {
   translate_window_position_x: number
   translate_window_position_y: number
 
+  recognize_language: string
+  recognize_delete_newline: boolean
+  recognize_auto_copy: boolean
+  recognize_close_on_blur: boolean
+  recognize_hide_window: boolean
+
   hotkey_selection_translate: string
   hotkey_input_translate: string
   hotkey_ocr_recognize: string
@@ -48,6 +55,11 @@ export interface AppConfig {
   collection_service_list: string[]
 
   service_instances: ServiceInstancesMap
+
+  backup_type: string
+  webdav_url: string
+  webdav_username: string
+  webdav_password: string
 }
 
 // service_instances: instance key -> instance config; main process builds default instances on first launch
@@ -71,6 +83,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   transparent: true,
   check_update: true,
   server_port: 60828,
+  clipboard_monitor: false,
 
   proxy_enable: false,
   proxy_host: '',
@@ -95,6 +108,12 @@ export const DEFAULT_CONFIG: AppConfig = {
   hide_language: false,
   translate_hide_window: false,
 
+  recognize_language: 'auto',
+  recognize_delete_newline: false,
+  recognize_auto_copy: false,
+  recognize_close_on_blur: false,
+  recognize_hide_window: false,
+
   translate_window_width: 350,
   translate_window_height: 420,
   translate_window_position_x: 0,
@@ -110,7 +129,12 @@ export const DEFAULT_CONFIG: AppConfig = {
   tts_service_list: [],
   collection_service_list: [],
 
-  service_instances: DEFAULT_SERVICE_INSTANCES
+  service_instances: DEFAULT_SERVICE_INSTANCES,
+
+  backup_type: 'webdav',
+  webdav_url: '',
+  webdav_username: '',
+  webdav_password: ''
 }
 
 export type ConfigKey = keyof AppConfig

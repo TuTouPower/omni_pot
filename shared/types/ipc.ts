@@ -20,6 +20,17 @@ export interface ElectronAPI {
   }
   text: {
     getSelection(): Promise<string>
+    onTranslateFromSelection(callback: () => void): () => void
+    onInputTranslate(callback: () => void): () => void
+    onTranslateFromApi(callback: (text: string) => void): () => void
+    onTranslateFromClipboard(callback: (text: string) => void): () => void
+  }
+  ocr: {
+    captureScreenshot(mode: 'recognize' | 'translate'): Promise<void>
+    openRecognize(base64Image: string, text: string): Promise<void>
+    sendToTranslate(text: string): Promise<void>
+    onScreenshotShow(callback: (base64: string, mode: string) => void): () => void
+    onRecognizeShow(callback: (base64: string, text: string) => void): () => void
   }
 }
 

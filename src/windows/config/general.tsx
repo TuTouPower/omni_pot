@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, Label, ListBox, NumberField, Select, Switch } from '@heroui/react'
+import { Card, Input, Label, ListBox, NumberField, Select, Switch, TextField } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 
 const THEME_OPTIONS = [
@@ -17,6 +17,9 @@ export default function GeneralPage(): React.ReactElement {
     const [devMode, setDevMode] = useConfig('dev_mode')
     const [checkUpdate, setCheckUpdate] = useConfig('check_update')
     const [serverPort, setServerPort] = useConfig('server_port')
+    const [proxyEnable, setProxyEnable] = useConfig('proxy_enable')
+    const [proxyHost, setProxyHost] = useConfig('proxy_host')
+    const [proxyPort, setProxyPort] = useConfig('proxy_port')
 
     return (
         <div className="flex flex-col gap-4">
@@ -110,6 +113,40 @@ export default function GeneralPage(): React.ReactElement {
                             <Label className="text-sm">Developer mode (F12)</Label>
                         </Switch.Content>
                     </Switch>
+                </Card.Content>
+            </Card>
+
+            <Card>
+                <Card.Content className="gap-3 p-4">
+                    <h4 className="font-semibold">Proxy</h4>
+                    <Switch isSelected={proxyEnable} onChange={setProxyEnable}>
+                        <Switch.Control>
+                            <Switch.Thumb />
+                        </Switch.Control>
+                        <Switch.Content>
+                            <Label className="text-sm">Enable proxy (requires restart)</Label>
+                        </Switch.Content>
+                    </Switch>
+                    {proxyEnable && (
+                        <div className="flex gap-2">
+                            <TextField
+                                value={proxyHost as string}
+                                onChange={setProxyHost}
+                                className="flex-1"
+                            >
+                                <Label>Host</Label>
+                                <TextField.Input />
+                            </TextField>
+                            <TextField
+                                value={proxyPort as string}
+                                onChange={setProxyPort}
+                                className="w-24"
+                            >
+                                <Label>Port</Label>
+                                <TextField.Input />
+                            </TextField>
+                        </div>
+                    )}
                 </Card.Content>
             </Card>
         </div>

@@ -28,7 +28,42 @@ const api: ElectronAPI = {
     unregister: (name, shortcut) => ipcRenderer.invoke('hotkey:unregister', name, shortcut)
   },
   text: {
-    getSelection: () => ipcRenderer.invoke('text:getSelection')
+    getSelection: () => ipcRenderer.invoke('text:getSelection'),
+    onTranslateFromSelection: (callback) => {
+      const handler = () => callback()
+      ipcRenderer.on('translate:from-selection', handler)
+      return () => { ipcRenderer.off('translate:from-selection', handler) }
+    },
+    onInputTranslate: (callback) => {
+      const handler = () => callback()
+      ipcRenderer.on('translate:input-translate', handler)
+      return () => { ipcRenderer.off('translate:input-translate', handler) }
+    },
+    onTranslateFromApi: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      ipcRenderer.on('translate:from-api', handler)
+      return () => { ipcRenderer.off('translate:from-api', handler) }
+    },
+    onTranslateFromClipboard: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      ipcRenderer.on('translate:from-clipboard', handler)
+      return () => { ipcRenderer.off('translate:from-clipboard', handler) }
+    }
+  },
+  ocr: {
+    captureScreenshot: (mode) => ipcRenderer.invoke('ocr:capture-screenshot', mode),
+    openRecognize: (base64Image, text) => ipcRenderer.invoke('ocr:open-recognize', base64Image, text),
+    sendToTranslate: (text) => ipcRenderer.invoke('ocr:send-to-translate', text),
+    onScreenshotShow: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, base64: string, mode: string) => callback(base64, mode)
+      ipcRenderer.on('screenshot:show', handler)
+      return () => { ipcRenderer.off('screenshot:show', handler) }
+    },
+    onRecognizeShow: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, base64: string, text: string) => callback(base64, text)
+      ipcRenderer.on('recognize:show', handler)
+      return () => { ipcRenderer.off('recognize:show', handler) }
+    }
   }
 }
 

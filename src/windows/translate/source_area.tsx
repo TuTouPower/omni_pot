@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { TextArea, Button, Chip } from '@heroui/react'
 import { HiTranslate } from 'react-icons/hi'
 import { MdContentCopy, MdSmartButton } from 'react-icons/md'
@@ -8,13 +8,18 @@ import { useConfig } from '../../hooks/use_config'
 
 interface SourceAreaProps {
   onTranslate: () => void
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
-export function SourceArea({ onTranslate }: SourceAreaProps): React.ReactElement | null {
+export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.ReactElement | null {
   const sourceText = useTranslateStore((s) => s.sourceText)
   const setSourceText = useTranslateStore((s) => s.setSourceText)
   const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
   const [hideSource] = useConfig('hide_source')
+  const [dynamicTranslate] = useConfig('dynamic_translate')
+
+  const internalRef = useRef<HTMLTextAreaElement>(null)
+  const textAreaRef = inputRef ?? internalRef
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -38,12 +43,21 @@ export function SourceArea({ onTranslate }: SourceAreaProps): React.ReactElement
     setSourceText('')
   }, [setSourceText])
 
+  useEffect(() => {
+    if (!dynamicTranslate || !sourceText.trim()) return
+    const timer = setTimeout(() => {
+      onTranslate()
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [sourceText, dynamicTranslate, onTranslate])
+
   if (hideSource) return null
 
   return (
     <div className="flex flex-col p-2 gap-1">
       <div className="relative">
         <TextArea
+          ref={textAreaRef}
           value={sourceText}
           onChange={setSourceText}
           onKeyDown={handleKeyDown}

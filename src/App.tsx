@@ -3,6 +3,8 @@ import { Spinner } from '@heroui/react'
 
 const TranslateWindow = React.lazy(() => import('./windows/translate'))
 const ConfigWindow = React.lazy(() => import('./windows/config'))
+const ScreenshotWindow = React.lazy(() => import('./windows/screenshot'))
+const RecognizeWindow = React.lazy(() => import('./windows/recognize'))
 
 function getLabel(): string {
   return window.location.hash.replace(/^#/, '') || 'translate'
@@ -19,7 +21,9 @@ export default function App(): React.ReactElement {
       case 'config':
         return <ConfigWindow />
       case 'screenshot':
+        return <ScreenshotWindow />
       case 'recognize':
+        return <RecognizeWindow />
       case 'updater':
         return <div className="p-4 text-center">{label} window (coming soon)</div>
       default:
