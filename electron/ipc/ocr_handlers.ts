@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
 import { start_screenshot_capture } from '../screenshot'
 
 export function registerOcrHandlers(manager: WindowManager): void {

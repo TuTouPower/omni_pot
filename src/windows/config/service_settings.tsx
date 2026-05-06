@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { Button, Card, Label, Modal, Switch } from '@heroui/react'
 import { useConfigStore } from '../../stores/config_store'
-import { translateServiceRegistry } from '../../services/registry'
+import { translateServiceRegistry, ocrServiceRegistry } from '../../services/registry'
+import { ttsServiceRegistry } from '../../services/tts_registry'
+import { collectionServiceRegistry } from '../../services/index'
 import { createServiceInstanceKey, getServiceKey } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 
@@ -14,6 +16,15 @@ const CATEGORY_TABS = [
     { key: 'collection_service_list' as ServiceCategory, label: 'Collection' }
 ]
 
+function getRegistryForCategory(category: ServiceCategory) {
+    switch (category) {
+        case 'translate_service_list': return translateServiceRegistry
+        case 'recognize_service_list': return ocrServiceRegistry
+        case 'tts_service_list': return ttsServiceRegistry
+        case 'collection_service_list': return collectionServiceRegistry
+    }
+}
+
 export default function ServiceSettings(): React.ReactElement {
     const [activeTab, setActiveTab] = useState<ServiceCategory>('translate_service_list')
     const [showAddModal, setShowAddModal] = useState(false)
@@ -21,11 +32,12 @@ export default function ServiceSettings(): React.ReactElement {
     const serviceList = useConfigStore((s) => s.config[activeTab])
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
 
-    const availableServices = translateServiceRegistry.getAll()
+    const registry = getRegistryForCategory(activeTab)
+    const availableServices = registry.getAll()
 
     const getInstanceName = (instanceKey: string): string => {
         const svcKey = getServiceKey(instanceKey)
-        const svc = translateServiceRegistry.get(svcKey)
+        const svc = registry.get(svcKey)
         return svc ? svc.name : svcKey
     }
 

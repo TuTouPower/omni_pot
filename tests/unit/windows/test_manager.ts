@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 function makeWindowStub(opts: unknown): Record<string, unknown> {
   const win: Record<string, unknown> = {
     id: Math.floor(Math.random() * 1_000_000),
-    webContents: { loadFile: vi.fn(), loadURL: vi.fn(), id: Math.random() },
+    webContents: { loadFile: vi.fn(), loadURL: vi.fn(), id: Math.random(), on: vi.fn() },
     loadFile: vi.fn(),
     loadURL: vi.fn(),
     show: vi.fn(),
@@ -11,6 +11,7 @@ function makeWindowStub(opts: unknown): Record<string, unknown> {
     close: vi.fn(),
     on: vi.fn(),
     setPosition: vi.fn(),
+    setBounds: vi.fn(),
     setAlwaysOnTop: vi.fn(),
     isDestroyed: vi.fn().mockReturnValue(false),
     options: opts

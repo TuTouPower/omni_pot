@@ -1,20 +1,27 @@
-import React, { useCallback } from 'react'
-import { Card, Button, TextArea, Spinner } from '@heroui/react'
+import React, { useCallback, useRef, useState } from 'react'
+import { Card, Button, Spinner } from '@heroui/react'
 import { MdContentCopy } from 'react-icons/md'
 import { TbTransformFilled } from 'react-icons/tb'
+import { VscUnmute } from 'react-icons/vsc'
 import { useTranslateStore } from '../../stores/translate_store'
 import { translateServiceRegistry } from '../../services/registry'
+import { ttsServiceRegistry } from '../../services/tts_registry'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
 
 interface TargetAreaProps {
   serviceList: string[]
+  ttsServiceList: string[]
 }
 
-export function TargetArea({ serviceList }: TargetAreaProps): React.ReactElement {
+export function TargetArea({ serviceList, ttsServiceList }: TargetAreaProps): React.ReactElement {
   const results = useTranslateStore((s) => s.results)
   const isTranslating = useTranslateStore((s) => s.isTranslating)
+  const targetLanguage = useTranslateStore((s) => s.targetLanguage)
   const setSourceText = useTranslateStore((s) => s.setSourceText)
+
+  const playingRef = useRef<HTMLAudioElement | null>(null)
+  const [playingKey, setPlayingKey] = useState<string | null>(null)
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text)
@@ -26,6 +33,43 @@ export function TargetArea({ serviceList }: TargetAreaProps): React.ReactElement
     },
     [setSourceText]
   )
+
+  const handleTts = useCallback(async (text: string, key: string) => {
+    if (playingRef.current) {
+      playingRef.current.pause()
+      playingRef.current = null
+      setPlayingKey(null)
+      return
+    }
+
+    const instanceKey = ttsServiceList[0]
+    if (!instanceKey) return
+    const svcKey = getServiceKey(instanceKey)
+    const ttsService = ttsServiceRegistry.get(svcKey)
+    if (!ttsService) return
+
+    try {
+      setPlayingKey(key)
+      const audioBuffer = await ttsService.synthesize(text, targetLanguage, {})
+      const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      playingRef.current = audio
+      audio.onended = () => {
+        playingRef.current = null
+        setPlayingKey(null)
+        URL.revokeObjectURL(url)
+      }
+      audio.onerror = () => {
+        playingRef.current = null
+        setPlayingKey(null)
+        URL.revokeObjectURL(url)
+      }
+      audio.play()
+    } catch {
+      setPlayingKey(null)
+    }
+  }, [targetLanguage, ttsServiceList])
 
   const renderResult = (instanceKey: string) => {
     const result = results[instanceKey]
@@ -45,10 +89,11 @@ export function TargetArea({ serviceList }: TargetAreaProps): React.ReactElement
     if (typeof result === 'string') {
       return (
         <>
-          <TextArea
+          <textarea
             value={result}
-            isReadOnly
-            className="text-sm"
+            readOnly
+            rows={2}
+            className="w-full bg-transparent border-none text-sm resize-none outline-none"
           />
           <div className="flex items-center gap-1 mt-1">
             <Button isIconOnly size="sm" variant="light" onPress={() => handleCopy(result)}>
@@ -57,6 +102,11 @@ export function TargetArea({ serviceList }: TargetAreaProps): React.ReactElement
             <Button isIconOnly size="sm" variant="light" onPress={() => handleReverseTranslate(result)}>
               <TbTransformFilled className="text-base" />
             </Button>
+            {ttsServiceList.length > 0 && (
+              <Button isIconOnly size="sm" variant="light" color={playingKey === instanceKey ? 'primary' : 'default'} onPress={() => handleTts(result, instanceKey)}>
+                <VscUnmute className="text-base" />
+              </Button>
+            )}
           </div>
         </>
       )

@@ -35,6 +35,7 @@ export default function TranslateWindow(): React.ReactElement {
   const autoCopy = useConfigStore((s) => s.config.translate_auto_copy)
   const hideSource = useConfigStore((s) => s.config.hide_source)
   const historyDisable = useConfigStore((s) => s.config.history_disable)
+  const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
 
   const [forceShowSource, setForceShowSource] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -220,7 +221,7 @@ export default function TranslateWindow(): React.ReactElement {
 
       {showSource && <SourceArea onTranslate={handleTranslate} inputRef={inputRef} />}
       <LanguageArea />
-      <TargetArea serviceList={serviceList} />
+      <TargetArea serviceList={serviceList} ttsServiceList={ttsServiceList} />
     </div>
   )
 }

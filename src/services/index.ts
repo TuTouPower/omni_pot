@@ -21,6 +21,7 @@ import { chatglmService } from './chatglm'
 import { geminiproService } from './geminipro'
 import { ollamaService } from './ollama'
 import { registerAllTtsServices } from './tts'
+import { registerAllOcrServices } from './ocr'
 import { collectionServices } from './collection'
 import type { CollectionService } from '@shared/types/collection_service'
 
@@ -50,6 +51,7 @@ export function registerAllServices(): void {
     translateServiceRegistry.register(ollamaService)
 
     registerAllTtsServices()
+    registerAllOcrServices()
 
     for (const svc of collectionServices) {
         collectionServiceRegistry.register(svc)
