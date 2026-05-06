@@ -102,7 +102,7 @@ export const DEFAULT_CONFIG: AppConfig = {
 
   translate_window_position: 'mouse',
   translate_remember_window_size: false,
-  translate_close_on_blur: true,
+  translate_close_on_blur: false,
   translate_always_on_top: false,
   hide_source: false,
   hide_language: false,

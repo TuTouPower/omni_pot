@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react'
-import { TextArea, Button, Chip } from '@heroui/react'
+import { Button, Chip } from '@heroui/react'
 import { HiTranslate } from 'react-icons/hi'
 import { MdContentCopy, MdSmartButton } from 'react-icons/md'
 import { LuDelete } from 'react-icons/lu'
@@ -56,13 +56,14 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
   return (
     <div className="flex flex-col p-2 gap-1">
       <div className="relative">
-        <TextArea
+        <textarea
           ref={textAreaRef}
           value={sourceText}
-          onChange={setSourceText}
+          onChange={(e) => setSourceText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Enter text to translate..."
-          className="text-sm"
+          rows={3}
+          className="w-full bg-default-100 border border-default-200 rounded-md px-3 py-2 text-sm outline-none resize-none focus:ring-2 focus:ring-primary"
         />
         {detectedLanguage && (
           <Chip size="sm" color="primary" variant="flat" className="absolute top-1 right-1">

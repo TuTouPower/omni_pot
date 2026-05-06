@@ -12,6 +12,7 @@ function getLabel(): string {
 
 export default function App(): React.ReactElement {
   const label = getLabel()
+  console.log('[App] rendering label:', label)
 
   const child = (() => {
     switch (label) {

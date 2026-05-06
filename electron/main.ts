@@ -2,6 +2,10 @@ import { app } from 'electron'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { initConfigStore, isFirstRun, commitFirstRun, getConfig } from './config/store'
+
+const debug = (...args: unknown[]) => console.log('[main]', ...args)
+
+debug('starting...')
 import { createTray, setWindowManagerForTray } from './tray'
 import {
   setWindowManagerForHotkey,
@@ -41,26 +45,40 @@ if (!gotLock) {
   })
 
   app.whenReady().then(() => {
+    try {
+    debug('initializing config store...')
     initConfigStore()
+    debug('config store initialized, isFirstRun=%s', isFirstRun())
 
+    debug('creating window manager...')
     windowManager = new WindowManager()
 
     setWindowManagerForTray(windowManager)
     setWindowManagerForHotkey(windowManager)
 
     registerConfigHandlers()
+    debug('IPC handlers: config registered')
     registerWindowHandlers(windowManager)
     registerHotkeyHandlers(windowManager)
     registerTextHandlers()
     registerOcrHandlers(windowManager)
     registerHistoryHandlers()
     registerBackupHandlers()
+    debug('IPC handlers: all registered')
 
+    debug('creating tray...')
     createTray()
-    registerGlobalShortcutsFromConfig()
+    debug('tray created')
 
+    registerGlobalShortcutsFromConfig()
+    debug('global shortcuts registered')
+
+    debug('starting HTTP server...')
     startServer(windowManager)
+    debug('HTTP server started')
+
     applyProxy()
+    debug('proxy applied')
 
     if (getConfig('clipboard_monitor')) {
       startClipboardMonitor(windowManager)
@@ -96,6 +114,10 @@ if (!gotLock) {
     }
 
     checkForUpdate(windowManager)
+    } catch (err) {
+      console.error('[main] Init error:', err)
+    }
+    debug('startup complete')
   })
 
   // Don't quit - Pot is tray-resident; user quits via tray menu

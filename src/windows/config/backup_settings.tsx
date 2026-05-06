@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Button, Card, Input, Label, ListBox, Modal, Select } from '@heroui/react'
+import { Button, Card, Input, Label, Modal } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
+import { SimpleSelect } from '../../components/simple_select'
 
 const BACKUP_TYPES = [
     { key: 'webdav', label: 'WebDAV' },
@@ -53,27 +54,7 @@ export default function BackupSettings(): React.ReactElement {
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Backup Type</h4>
-                    <Select
-                        className="w-full"
-                        value={backupType}
-                        onChange={(v) => { if (v != null) setBackupType(String(v)) }}
-                    >
-                        <Label>Type</Label>
-                        <Select.Trigger>
-                            <Select.Value />
-                            <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                            <ListBox>
-                                {BACKUP_TYPES.map((opt) => (
-                                    <ListBox.Item key={opt.key} id={opt.key} textValue={opt.label}>
-                                        {opt.label}
-                                        <ListBox.ItemIndicator />
-                                    </ListBox.Item>
-                                ))}
-                            </ListBox>
-                        </Select.Popover>
-                    </Select>
+                    <SimpleSelect label="Type" value={backupType as string} onChange={(v) => setBackupType(v)} options={BACKUP_TYPES} />
                 </Card.Content>
             </Card>
 

@@ -1,57 +1,10 @@
 import React from 'react'
-import { Card, Label, ListBox, Select, Switch } from '@heroui/react'
+import { Card, Label, Switch } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
+import { SimpleSelect } from '../../components/simple_select'
 
-const ALL_LANGUAGES = LANGUAGE_CODES
-
-interface SelectFieldProps {
-    label: string
-    value: string
-    onChange: (value: string) => void
-    items: { key: string; label: string }[]
-}
-
-function SelectField({ label, value, onChange, items }: SelectFieldProps): React.ReactElement {
-    return (
-        <Select className="w-full" value={value} onChange={(v) => { if (v != null) onChange(String(v)) }}>
-            <Label>{label}</Label>
-            <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-                <ListBox>
-                    {items.map((item) => (
-                        <ListBox.Item key={item.key} id={item.key} textValue={item.label}>
-                            {item.label}
-                            <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                    ))}
-                </ListBox>
-            </Select.Popover>
-        </Select>
-    )
-}
-
-interface ToggleFieldProps {
-    label: string
-    isSelected: boolean
-    onChange: (value: boolean) => void
-}
-
-function ToggleField({ label, isSelected, onChange }: ToggleFieldProps): React.ReactElement {
-    return (
-        <Switch isSelected={isSelected} onChange={onChange}>
-            <Switch.Control>
-                <Switch.Thumb />
-            </Switch.Control>
-            <Switch.Content>
-                <Label className="text-sm">{label}</Label>
-            </Switch.Content>
-        </Switch>
-    )
-}
+const ALL_LANGUAGES = LANGUAGE_CODES.map((code) => ({ key: code, label: LANGUAGE_NAMES[code] }))
 
 export default function RecognizeSettings(): React.ReactElement {
     const [language, setLanguage] = useConfig('recognize_language')
@@ -60,8 +13,6 @@ export default function RecognizeSettings(): React.ReactElement {
     const [closeOnBlur, setCloseOnBlur] = useConfig('recognize_close_on_blur')
     const [hideWindow, setHideWindow] = useConfig('recognize_hide_window')
 
-    const langItems = ALL_LANGUAGES.map((code) => ({ key: code, label: LANGUAGE_NAMES[code] }))
-
     return (
         <div className="flex flex-col gap-4">
             <h3 className="text-xl font-bold">Recognize</h3>
@@ -69,44 +20,35 @@ export default function RecognizeSettings(): React.ReactElement {
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Language</h4>
-                    <SelectField
-                        label="OCR Language"
-                        value={language}
-                        onChange={setLanguage}
-                        items={langItems}
-                    />
+                    <SimpleSelect label="OCR Language" value={language} onChange={setLanguage} options={ALL_LANGUAGES} />
                 </Card.Content>
             </Card>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Behavior</h4>
-                    <ToggleField
-                        label="Delete newlines"
-                        isSelected={deleteNewline}
-                        onChange={setDeleteNewline}
-                    />
-                    <ToggleField
-                        label="Auto copy result"
-                        isSelected={autoCopy}
-                        onChange={setAutoCopy}
-                    />
+                    <Switch isSelected={deleteNewline} onChange={setDeleteNewline}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Delete newlines</Label></Switch.Content>
+                    </Switch>
+                    <Switch isSelected={autoCopy} onChange={setAutoCopy}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Auto copy result</Label></Switch.Content>
+                    </Switch>
                 </Card.Content>
             </Card>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Window</h4>
-                    <ToggleField
-                        label="Close on blur"
-                        isSelected={closeOnBlur}
-                        onChange={setCloseOnBlur}
-                    />
-                    <ToggleField
-                        label="Hide window after recognize"
-                        isSelected={hideWindow}
-                        onChange={setHideWindow}
-                    />
+                    <Switch isSelected={closeOnBlur} onChange={setCloseOnBlur}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Close on blur</Label></Switch.Content>
+                    </Switch>
+                    <Switch isSelected={hideWindow} onChange={setHideWindow}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Hide window after recognize</Label></Switch.Content>
+                    </Switch>
                 </Card.Content>
             </Card>
         </div>

@@ -33,8 +33,6 @@ export function createTray(): void {
   tray.setToolTip('Pot Desktop')
 
   rebuildMenu()
-
-  tray.setContextMenu(tray.contextMenu)
 }
 
 function rebuildMenu(): void {

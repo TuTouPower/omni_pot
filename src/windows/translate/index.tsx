@@ -201,7 +201,7 @@ export default function TranslateWindow(): React.ReactElement {
   const showSource = forceShowSource || !hideSource
 
   return (
-    <div className="flex flex-col h-screen select-none" style={{ fontSize: 16 }}>
+    <div className="flex flex-col h-screen" style={{ fontSize: 16 }}>
       {/* Top bar */}
       <div className="flex justify-between items-center px-2 py-1 drag-region">
         <Button

@@ -1,7 +1,8 @@
 import React from 'react'
-import { Card, Label, ListBox, Select, Switch } from '@heroui/react'
+import { Card, Label, Switch } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
+import { SimpleSelect } from '../../components/simple_select'
 
 const TARGET_LANGUAGES = LANGUAGE_CODES.filter((c) => c !== 'auto')
 const ALL_LANGUAGES = LANGUAGE_CODES
@@ -18,54 +19,6 @@ const DETECT_ENGINES = [
     { key: 'google', label: 'Google' },
     { key: 'local', label: 'Local (offline)' }
 ]
-
-interface SelectFieldProps {
-    label: string
-    value: string
-    onChange: (value: string) => void
-    items: { key: string; label: string }[]
-}
-
-function SelectField({ label, value, onChange, items }: SelectFieldProps): React.ReactElement {
-    return (
-        <Select className="w-full" value={value} onChange={(v) => { if (v != null) onChange(String(v)) }}>
-            <Label>{label}</Label>
-            <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-                <ListBox>
-                    {items.map((item) => (
-                        <ListBox.Item key={item.key} id={item.key} textValue={item.label}>
-                            {item.label}
-                            <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                    ))}
-                </ListBox>
-            </Select.Popover>
-        </Select>
-    )
-}
-
-interface ToggleFieldProps {
-    label: string
-    isSelected: boolean
-    onChange: (value: boolean) => void
-}
-
-function ToggleField({ label, isSelected, onChange }: ToggleFieldProps): React.ReactElement {
-    return (
-        <Switch isSelected={isSelected} onChange={onChange}>
-            <Switch.Control>
-                <Switch.Thumb />
-            </Switch.Control>
-            <Switch.Content>
-                <Label className="text-sm">{label}</Label>
-            </Switch.Content>
-        </Switch>
-    )
-}
 
 export default function TranslatePage(): React.ReactElement {
     const [sourceLang, setSourceLang] = useConfig('translate_source_language')
@@ -90,78 +43,47 @@ export default function TranslatePage(): React.ReactElement {
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Language</h4>
-                    <SelectField
-                        label="Source Language"
-                        value={sourceLang}
-                        onChange={(v) => setSourceLang(v)}
-                        items={allLangItems}
-                    />
-                    <SelectField
-                        label="Target Language"
-                        value={targetLang}
-                        onChange={(v) => setTargetLang(v)}
-                        items={targetLangItems}
-                    />
-                    <SelectField
-                        label="Second Language"
-                        value={secondLang}
-                        onChange={(v) => setSecondLang(v)}
-                        items={targetLangItems}
-                    />
-                    <SelectField
-                        label="Detect Engine"
-                        value={detectEngine}
-                        onChange={(v) => setDetectEngine(v)}
-                        items={DETECT_ENGINES}
-                    />
+                    <SimpleSelect label="Source Language" value={sourceLang} onChange={setSourceLang} options={allLangItems} />
+                    <SimpleSelect label="Target Language" value={targetLang} onChange={setTargetLang} options={targetLangItems} />
+                    <SimpleSelect label="Second Language" value={secondLang} onChange={setSecondLang} options={targetLangItems} />
+                    <SimpleSelect label="Detect Engine" value={detectEngine} onChange={setDetectEngine} options={DETECT_ENGINES} />
                 </Card.Content>
             </Card>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Behavior</h4>
-                    <SelectField
-                        label="Auto Copy"
-                        value={autoCopy}
-                        onChange={(v) => setAutoCopy(v as 'disable' | 'source' | 'target' | 'source_target')}
-                        items={AUTO_COPY_OPTIONS}
-                    />
-                    <ToggleField
-                        label="Delete newlines"
-                        isSelected={deleteNewline}
-                        onChange={setDeleteNewline}
-                    />
-                    <ToggleField
-                        label="Incremental translate"
-                        isSelected={incremental}
-                        onChange={setIncremental}
-                    />
+                    <SimpleSelect label="Auto Copy" value={autoCopy} onChange={(v) => setAutoCopy(v)} options={AUTO_COPY_OPTIONS} />
+                    <Switch isSelected={deleteNewline} onChange={setDeleteNewline}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Delete newlines</Label></Switch.Content>
+                    </Switch>
+                    <Switch isSelected={incremental} onChange={setIncremental}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Incremental translate</Label></Switch.Content>
+                    </Switch>
                 </Card.Content>
             </Card>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Window</h4>
-                    <ToggleField
-                        label="Close on blur"
-                        isSelected={closeOnBlur}
-                        onChange={setCloseOnBlur}
-                    />
-                    <ToggleField
-                        label="Always on top"
-                        isSelected={alwaysOnTop}
-                        onChange={setAlwaysOnTop}
-                    />
-                    <ToggleField
-                        label="Hide source text"
-                        isSelected={hideSource}
-                        onChange={setHideSource}
-                    />
-                    <ToggleField
-                        label="Hide language selector"
-                        isSelected={hideLanguage}
-                        onChange={setHideLanguage}
-                    />
+                    <Switch isSelected={closeOnBlur} onChange={setCloseOnBlur}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Close on blur</Label></Switch.Content>
+                    </Switch>
+                    <Switch isSelected={alwaysOnTop} onChange={setAlwaysOnTop}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Always on top</Label></Switch.Content>
+                    </Switch>
+                    <Switch isSelected={hideSource} onChange={setHideSource}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Hide source text</Label></Switch.Content>
+                    </Switch>
+                    <Switch isSelected={hideLanguage} onChange={setHideLanguage}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Hide language selector</Label></Switch.Content>
+                    </Switch>
                 </Card.Content>
             </Card>
         </div>

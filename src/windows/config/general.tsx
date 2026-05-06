@@ -1,6 +1,7 @@
 import React from 'react'
-import { Card, Input, Label, ListBox, NumberField, Select, Switch, TextField } from '@heroui/react'
+import { Card, Label, NumberField, Switch, TextField } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
+import { SimpleSelect } from '../../components/simple_select'
 
 const THEME_OPTIONS = [
     { key: 'system', label: 'System' },
@@ -8,7 +9,7 @@ const THEME_OPTIONS = [
     { key: 'dark', label: 'Dark' }
 ]
 
-const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24]
+const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24].map((s) => ({ key: String(s), label: `${s}px` }))
 
 export default function GeneralPage(): React.ReactElement {
     const [appTheme, setAppTheme] = useConfig('app_theme')
@@ -55,48 +56,8 @@ export default function GeneralPage(): React.ReactElement {
             <Card>
                 <Card.Content className="gap-3 p-4">
                     <h4 className="font-semibold">Appearance</h4>
-                    <Select
-                        className="w-full"
-                        value={appTheme}
-                        onChange={(v) => { if (v != null) setAppTheme(v as 'system' | 'light' | 'dark') }}
-                    >
-                        <Label>Theme</Label>
-                        <Select.Trigger>
-                            <Select.Value />
-                            <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                            <ListBox>
-                                {THEME_OPTIONS.map((opt) => (
-                                    <ListBox.Item key={opt.key} id={opt.key} textValue={opt.label}>
-                                        {opt.label}
-                                        <ListBox.ItemIndicator />
-                                    </ListBox.Item>
-                                ))}
-                            </ListBox>
-                        </Select.Popover>
-                    </Select>
-                    <Select
-                        className="w-full"
-                        value={String(fontSize)}
-                        onChange={(v) => { if (v != null) setFontSize(Number(v)) }}
-                    >
-                        <Label>Font Size</Label>
-                        <Select.Trigger>
-                            <Select.Value />
-                            <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                            <ListBox>
-                                {FONT_SIZE_OPTIONS.map((size) => (
-                                    <ListBox.Item key={String(size)} id={String(size)} textValue={`${size}px`}>
-                                        {`${size}px`}
-                                        <ListBox.ItemIndicator />
-                                    </ListBox.Item>
-                                ))}
-                            </ListBox>
-                        </Select.Popover>
-                    </Select>
+                    <SimpleSelect label="Theme" value={appTheme as string} onChange={(v) => setAppTheme(v)} options={THEME_OPTIONS} />
+                    <SimpleSelect label="Font Size" value={String(fontSize)} onChange={(v) => setFontSize(Number(v))} options={FONT_SIZE_OPTIONS} />
                     <Switch isSelected={transparent} onChange={setTransparent}>
                         <Switch.Control>
                             <Switch.Thumb />
