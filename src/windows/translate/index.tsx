@@ -34,6 +34,7 @@ export default function TranslateWindow(): React.ReactElement {
   const deleteNewline = useConfigStore((s) => s.config.translate_delete_newline)
   const autoCopy = useConfigStore((s) => s.config.translate_auto_copy)
   const hideSource = useConfigStore((s) => s.config.hide_source)
+  const historyDisable = useConfigStore((s) => s.config.history_disable)
 
   const [forceShowSource, setForceShowSource] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -89,6 +90,25 @@ export default function TranslateWindow(): React.ReactElement {
     await Promise.allSettled(promises)
     if (useTranslateStore.getState().requestId === id) {
       setIsTranslating(false)
+    }
+
+    // Write history
+    if (!historyDisable) {
+      const successKeys = Object.entries(resultsMap).filter(([, r]) => r !== null)
+      for (const [instanceKey, result] of successKeys) {
+        const targetText = typeof result === 'string'
+          ? result
+          : result.definitions.map((d) => d.meanings.join('; ')).join('\n')
+        try {
+          await window.electronAPI.history.add({
+            service_key: instanceKey,
+            source_text: sourceText,
+            source_lang: sourceLanguage,
+            target_text: targetText,
+            target_lang: effectiveTarget
+          })
+        } catch { /* non-critical */ }
+      }
     }
 
     if (autoCopy !== 'disable') {

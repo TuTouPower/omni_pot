@@ -1,5 +1,15 @@
 import type { ConfigKey, AppConfig } from './config'
 
+export interface HistoryRecord {
+    id: number
+    service_key: string
+    source_text: string
+    source_lang: string
+    target_text: string
+    target_lang: string
+    created_at: string
+}
+
 export interface ElectronAPI {
   window: {
     close(): Promise<void>
@@ -31,6 +41,19 @@ export interface ElectronAPI {
     sendToTranslate(text: string): Promise<void>
     onScreenshotShow(callback: (base64: string, mode: string) => void): () => void
     onRecognizeShow(callback: (base64: string, text: string) => void): () => void
+  }
+  history: {
+    add(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<void>
+    list(page: number, pageSize: number): Promise<HistoryRecord[]>
+    count(): Promise<number>
+    update(id: number, sourceText: string, targetText: string): Promise<void>
+    delete(id: number): Promise<void>
+    clear(): Promise<void>
+  }
+  backup: {
+    create(): Promise<{ success: boolean; path?: string; error?: string }>
+    list(): Promise<string[]>
+    restore(name: string): Promise<{ success: boolean; error?: string }>
   }
 }
 

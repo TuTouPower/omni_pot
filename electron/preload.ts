@@ -64,6 +64,19 @@ const api: ElectronAPI = {
       ipcRenderer.on('recognize:show', handler)
       return () => { ipcRenderer.off('recognize:show', handler) }
     }
+  },
+  history: {
+    add: (record) => ipcRenderer.invoke('history:add', record),
+    list: (page, pageSize) => ipcRenderer.invoke('history:list', page, pageSize),
+    count: () => ipcRenderer.invoke('history:count'),
+    update: (id, sourceText, targetText) => ipcRenderer.invoke('history:update', id, sourceText, targetText),
+    delete: (id) => ipcRenderer.invoke('history:delete', id),
+    clear: () => ipcRenderer.invoke('history:clear')
+  },
+  backup: {
+    create: () => ipcRenderer.invoke('backup:create'),
+    list: () => ipcRenderer.invoke('backup:list'),
+    restore: (name) => ipcRenderer.invoke('backup:restore', name)
   }
 }
 

@@ -13,6 +13,9 @@ import { registerWindowHandlers } from './ipc/window_handlers'
 import { registerHotkeyHandlers } from './ipc/hotkey_handlers'
 import { registerTextHandlers } from './ipc/text_handlers'
 import { registerOcrHandlers } from './ipc/ocr_handlers'
+import { registerHistoryHandlers } from './ipc/history_handlers'
+import { registerBackupHandlers } from './ipc/backup_handlers'
+import { close_history } from './history'
 import { startServer, stopServer } from './server'
 import { applyProxy } from './proxy'
 import { checkForUpdate } from './updater'
@@ -50,6 +53,8 @@ if (!gotLock) {
     registerHotkeyHandlers(windowManager)
     registerTextHandlers()
     registerOcrHandlers(windowManager)
+    registerHistoryHandlers()
+    registerBackupHandlers()
 
     createTray()
     registerGlobalShortcutsFromConfig()
@@ -101,6 +106,7 @@ if (!gotLock) {
   app.on('will-quit', () => {
     stopClipboardMonitor()
     stopServer()
+    close_history()
     unregisterAll()
   })
 }
