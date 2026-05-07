@@ -422,7 +422,7 @@ https://github.com/pot-app/pot-desktop
 |-----------|------|-----------|---------|---------|
 | 自动启动 | Switch | -- (tauri-autostart) | `false` | 操作系统级开机自启 |
 | 检查更新 | Switch | `check_update` | `true` | 启动时自动检查更新 |
-| 服务器端口 | Input (number) | `server_port` | `60828` | 限制 0-65535，修改时弹出 toast |
+| 服务器端口 | Input (number) | `server_port` | `20202` | 限制 0-65535，修改时弹出 toast |
 
 修改 `server_port` 后配置立即更新，但运行中的 HTTP 服务器保持旧端口直到应用重启。
 
@@ -1133,7 +1133,7 @@ https://github.com/pot-app/pot-desktop
 | `dev_mode` | boolean | `false` | 开发者模式 |
 | `transparent` | boolean | `true` | 窗口透明度 |
 | `check_update` | boolean | `true` | 启动时自动检查更新 |
-| `server_port` | number | `60828` | HTTP API 服务器端口 (0-65535)；修改后需重启 |
+| `server_port` | number | `20202` | HTTP API 服务器端口 (0-65535)；修改后需重启 |
 | `tray_click_event` | string | `'config'` | Windows 托盘点击行为 |
 
 #### 代理设置
@@ -1277,7 +1277,7 @@ https://github.com/pot-app/pot-desktop
 
 ### 14.4 server.rs — HTTP API 服务器
 
-绑定到 `127.0.0.1:{server_port}` (默认 60828)。参见[第 15 节](#15-http-api-服务器)。
+绑定到 `127.0.0.1:{server_port}` (默认 20202)。参见[第 15 节](#15-http-api-服务器)。
 
 ### 14.5 tray.rs — 系统托盘
 
@@ -1331,7 +1331,7 @@ https://github.com/pot-app/pot-desktop
 
 ## 15. HTTP API 服务器
 
-**绑定**: `127.0.0.1:{server_port}` (默认 60828，可配置)
+**绑定**: `127.0.0.1:{server_port}` (默认 20202，可配置)
 
 | 方法 | 端点 | 说明 |
 |--------|----------|-------------|

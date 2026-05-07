@@ -1,20 +1,20 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { getTranslateClient, cleanupAllClients, waitForSourceText } from './test_utils'
-
-// Prerequisite: electron-vite dev running with --remote-debugging-port=9225
-// Tests the OCR → Translate pipeline: sends OCR text to translate window.
-//
-// Run: npx electron-vite dev -- --remote-debugging-port=9225 &
-// Then: npx vitest run tests/user_e2e/04_ocr_translate.test.ts
+import { init, cleanup, getTranslateClient, waitForSourceText, waitForSelector } from './test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
 
 describe('Critical Path 4: OCR 翻译全流程', () => {
-    beforeAll(async () => {
-        const client = await getTranslateClient()
-        expect(client).toBeDefined()
-    }, 15000)
+    let instance: ElectronInstance
 
-    afterAll(() => {
-        cleanupAllClients()
+    beforeAll(async () => {
+        await ensureBuilt()
+        instance = await startElectron()
+        init(instance.translateClient, instance.httpPort)
+        await waitForSelector('textarea', 15000)
+    }, 60000)
+
+    afterAll(async () => {
+        cleanup()
+        await stopElectron(instance)
     })
 
     it('receives OCR text in translate window via send-to-translate', async () => {

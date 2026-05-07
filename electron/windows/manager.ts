@@ -1,4 +1,4 @@
-import { BrowserWindow, screen, app } from 'electron'
+import { BrowserWindow, screen, app, ipcMain } from 'electron'
 import { join } from 'path'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
@@ -6,6 +6,27 @@ import { WindowLabel } from './types'
 export class WindowManager {
   private byLabel = new Map<WindowLabel, BrowserWindow>()
   private labelById = new Map<number, WindowLabel>()
+  private readyLabels = new Set<WindowLabel>()
+  private pendingQueue = new Map<WindowLabel, Array<{ channel: string; args: unknown[] }>>()
+
+  constructor() {
+    // Listen for renderer-ready signals
+    ipcMain.on('renderer:ready', (_event, label: WindowLabel) => {
+      console.log('[wm] renderer ready:', label)
+      this.readyLabels.add(label)
+      // Flush any queued messages
+      const queue = this.pendingQueue.get(label)
+      if (queue) {
+        for (const { channel, args } of queue) {
+          const win = this.byLabel.get(label)
+          if (win && !win.isDestroyed()) {
+            win.webContents.send(channel, ...args)
+          }
+        }
+        this.pendingQueue.delete(label)
+      }
+    })
+  }
 
   createWindow(opts: WindowOptions): BrowserWindow {
     console.log('[wm] createWindow:', opts.label, `${opts.width}x${opts.height}`)
@@ -100,5 +121,33 @@ export class WindowManager {
 
   getAllWindows(): BrowserWindow[] {
     return Array.from(this.byLabel.values()).filter((w) => !w.isDestroyed())
+  }
+
+  /** Send IPC to a window, waiting for renderer to be ready if needed. */
+  sendWhenReady(label: WindowLabel, channel: string, ...args: unknown[]): void {
+    const win = this.getWindow(label)
+    if (!win) return
+
+    if (win.webContents.isLoading()) {
+      win.webContents.once('did-finish-load', () => {
+        // After page loads, check if renderer has signaled ready
+        if (this.readyLabels.has(label)) {
+          win.webContents.send(channel, ...args)
+        } else {
+          // Queue until renderer signals ready
+          const queue = this.pendingQueue.get(label) ?? []
+          queue.push({ channel, args })
+          this.pendingQueue.set(label, queue)
+        }
+      })
+    } else if (this.readyLabels.has(label)) {
+      win.webContents.send(channel, ...args)
+    } else {
+      // Page loaded but renderer not ready — queue
+      console.log('[wm] sendWhenReady: queuing %s for %s (renderer not ready)', channel, label)
+      const queue = this.pendingQueue.get(label) ?? []
+      queue.push({ channel, args })
+      this.pendingQueue.set(label, queue)
+    }
   }
 }

@@ -82,7 +82,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   dev_mode: false,
   transparent: true,
   check_update: true,
-  server_port: 60828,
+  server_port: 20202,
   clipboard_monitor: false,
 
   proxy_enable: false,

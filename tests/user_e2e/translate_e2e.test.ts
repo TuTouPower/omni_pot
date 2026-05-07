@@ -1,23 +1,25 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { getClient, cleanupClient, clearTextarea, getTextareaValue } from './test_utils'
-
-// Prerequisite: electron-vite dev running with --remote-debugging-port=9225
-// Run: npx electron-vite dev -- --remote-debugging-port=9225 &
-// Then: npx vitest run tests/user_e2e/
+import { init, cleanup, getTranslateClient, clearTextarea, getTextareaValue, waitForSelector } from './test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
 
 describe('Translate Window E2E', () => {
-    beforeAll(async () => {
-        // Verify CDP connection
-        const client = await getClient()
-        expect(client).toBeDefined()
-    }, 15000)
+    let instance: ElectronInstance
 
-    afterAll(() => {
-        cleanupClient()
+    beforeAll(async () => {
+        await ensureBuilt()
+        instance = await startElectron()
+        init(instance.translateClient, instance.httpPort)
+        // Wait for React.lazy chunk to load and textarea to render
+        await waitForSelector('textarea', 15000)
+    }, 60000)
+
+    afterAll(async () => {
+        cleanup()
+        await stopElectron(instance)
     })
 
     it('renders translate window with textarea', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         const html = await client.evaluate('document.querySelector("textarea")?.outerHTML') as string
         expect(html).toBeDefined()
         expect(html).toContain('placeholder="Enter text to translate..."')
@@ -26,7 +28,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('accepts English text input via insertText', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('hello')
 
@@ -35,7 +37,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('accepts Chinese text input via insertText', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('你好世界')
 
@@ -44,7 +46,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('accepts mixed Chinese-English input', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('Hello 你好 World 世界')
 
@@ -53,7 +55,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('appends text to existing content', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await client.evaluate('document.querySelector("textarea").value = "first "')
         await client.evaluate('document.querySelector("textarea").focus()')
         await client.insertText('second')
@@ -63,7 +65,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('handles special characters input', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('Hello! 你好？¡Hola! 123 @#$%')
 
@@ -72,7 +74,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('handles long text input', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
 
         const longText = '这是一段很长的中文文本，用来测试翻译窗口。This is a long English text for testing. '.repeat(3).trim()
@@ -85,7 +87,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('triggers translation on Enter key', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('hello')
         await client.pressEnter()
@@ -99,7 +101,7 @@ describe('Translate Window E2E', () => {
     }, 20000)
 
     it('translates Chinese text via Enter key', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('你好')
         await client.pressEnter()
@@ -112,7 +114,7 @@ describe('Translate Window E2E', () => {
     }, 20000)
 
     it('translates mixed language text via Enter key', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('Hello 你好 goodbye 再见')
         await client.pressEnter()
@@ -124,7 +126,7 @@ describe('Translate Window E2E', () => {
     }, 20000)
 
     it('language selector area renders with correct options', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
 
         const selectCount = await client.evaluate('document.querySelectorAll("select").length') as number
         expect(selectCount).toBeGreaterThan(0)
@@ -138,7 +140,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('top bar has pin and close buttons', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
 
         const hasTopBarButtons = await client.evaluate(`
             (() => {
@@ -155,7 +157,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('translate button is clickable', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
         await client.insertText('test')
 
@@ -175,7 +177,7 @@ describe('Translate Window E2E', () => {
     })
 
     it('clears textarea and re-types after translation', async () => {
-        const client = await getClient()
+        const client = await getTranslateClient()
         await clearTextarea()
 
         // Type new text

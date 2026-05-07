@@ -80,4 +80,7 @@ const api: ElectronAPI = {
   }
 }
 
-contextBridge.exposeInMainWorld('electronAPI', api)
+contextBridge.exposeInMainWorld('electronAPI', {
+  ...api,
+  ready: (label: string) => ipcRenderer.send('renderer:ready', label)
+})

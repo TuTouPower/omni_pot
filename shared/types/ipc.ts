@@ -11,6 +11,7 @@ export interface HistoryRecord {
 }
 
 export interface ElectronAPI {
+  ready(label: string): void
   window: {
     close(): Promise<void>
     minimize(): Promise<void>

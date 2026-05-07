@@ -51,14 +51,20 @@ export default function TranslateWindow(): React.ReactElement {
   const [forceShowSource, setForceShowSource] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const handleTranslate = useCallback(async () => {
-    if (!sourceText.trim()) return
+  // Signal to main process that renderer is ready to receive IPC
+  useEffect(() => {
+    window.electronAPI.ready('translate')
+  }, [])
+
+  const handleTranslate = useCallback(async (textOverride?: string) => {
+    const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
+    if (!textToTranslate.trim()) return
 
     const id = nextRequestId()
     setIsTranslating(true)
     clearResults()
 
-    const detected = sourceLanguage === 'auto' ? detectLanguage(sourceText) : null
+    const detected = sourceLanguage === 'auto' ? detectLanguage(textToTranslate) : null
     if (detected) setDetectedLanguage(detected)
 
     let effectiveTarget = targetLanguage
@@ -82,7 +88,7 @@ export default function TranslateWindow(): React.ReactElement {
 
       try {
         const result = await service.translate(
-          sourceText,
+          textToTranslate,
           sourceLanguage,
           effectiveTarget,
           instanceConfig
@@ -114,7 +120,7 @@ export default function TranslateWindow(): React.ReactElement {
         try {
           await window.electronAPI.history.add({
             service_key: instanceKey,
-            source_text: sourceText,
+            source_text: textToTranslate,
             source_lang: sourceLanguage,
             target_text: targetText,
             target_lang: effectiveTarget
@@ -125,7 +131,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     if (autoCopy !== 'disable') {
       if (autoCopy === 'source' || autoCopy === 'source_target') {
-        navigator.clipboard.writeText(sourceText)
+        navigator.clipboard.writeText(textToTranslate)
       }
       if (autoCopy === 'target' || autoCopy === 'source_target') {
         const targetTexts = Object.values(resultsMap)
@@ -135,7 +141,7 @@ export default function TranslateWindow(): React.ReactElement {
         if (targetTexts) navigator.clipboard.writeText(targetTexts)
       }
     }
-  }, [sourceText, sourceLanguage, targetLanguage, detectedLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
+  }, [sourceLanguage, targetLanguage, detectedLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
 
   // Listen for translate:from-selection
   useEffect(() => {
@@ -159,7 +165,7 @@ export default function TranslateWindow(): React.ReactElement {
       if (!text.trim()) return
       setSourceText(text)
       setForceShowSource(false)
-      setTimeout(() => handleTranslate(), 0)
+      setTimeout(() => handleTranslate(text), 0)
     })
     return unsub
   }, [setSourceText, handleTranslate])

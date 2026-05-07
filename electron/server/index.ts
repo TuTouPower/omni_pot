@@ -11,59 +11,67 @@ const TRANSLATE_OPTS = {
 
 let server: http.Server | null = null
 
-export function startServer(mgr: WindowManager): void {
-    if (server) return
+export function startServer(mgr: WindowManager): Promise<void> {
+    if (server) return Promise.resolve()
 
     const port = getConfig('server_port') as number
 
-    server = http.createServer((req, res) => {
-        res.setHeader('Content-Type', 'application/json')
-        res.setHeader('Access-Control-Allow-Origin', '*')
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    return new Promise((resolve, reject) => {
+        server = http.createServer((req, res) => {
+            res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
-        if (req.method === 'OPTIONS') {
-            res.writeHead(204)
-            res.end()
-            return
-        }
+            if (req.method === 'OPTIONS') {
+                res.writeHead(204)
+                res.end()
+                return
+            }
 
-        const url = new URL(req.url ?? '/', `http://localhost:${port}`)
+            const url = new URL(req.url ?? '/', `http://localhost:${port}`)
 
-        if (req.method === 'POST' && (url.pathname === '/' || url.pathname === '/translate')) {
-            handleTranslate(mgr, req, res)
-            return
-        }
+            if (req.method === 'POST' && (url.pathname === '/' || url.pathname === '/translate')) {
+                handleTranslate(mgr, req, res)
+                return
+            }
 
-        if (req.method === 'POST' && url.pathname === '/recognize') {
-            res.writeHead(200)
-            res.end(JSON.stringify({ success: true, message: 'recognize stub' }))
-            return
-        }
+            if (req.method === 'POST' && url.pathname === '/recognize') {
+                res.writeHead(200)
+                res.end(JSON.stringify({ success: true, message: 'recognize stub' }))
+                return
+            }
 
-        if (req.method === 'GET' && url.pathname === '/config') {
-            res.writeHead(200)
-            res.end(JSON.stringify(getAllConfig()))
-            return
-        }
+            if (req.method === 'GET' && url.pathname === '/config') {
+                res.writeHead(200)
+                res.end(JSON.stringify(getAllConfig()))
+                return
+            }
 
-        if (req.method === 'GET' && url.pathname === '/history') {
-            res.writeHead(200)
-            res.end(JSON.stringify({ success: true, message: 'history stub', data: [] }))
-            return
-        }
+            if (req.method === 'GET' && url.pathname === '/history') {
+                res.writeHead(200)
+                res.end(JSON.stringify({ success: true, message: 'history stub', data: [] }))
+                return
+            }
 
-        res.writeHead(404)
-        res.end(JSON.stringify({ success: false, error: 'not found' }))
-    })
+            res.writeHead(404)
+            res.end(JSON.stringify({ success: false, error: 'not found' }))
+        })
 
-    server.on('error', (err: NodeJS.ErrnoException) => {
-        if (err.code === 'EADDRINUSE') {
+        server.once('listening', () => {
+            console.log('[server] HTTP server listening on 127.0.0.1:%d', port)
+            resolve()
+        })
+
+        server.once('error', (err: NodeJS.ErrnoException) => {
+            console.error('[server] HTTP server failed to start on port %d: %s (%s)', port, err.message, err.code)
+            server?.close()
             server = null
-        }
-    })
+            reject(err)
+        })
 
-    server.listen(port, '127.0.0.1')
+        server.listen(port, '127.0.0.1')
+    })
 }
 
 export function stopServer(): void {
@@ -89,7 +97,7 @@ function handleTranslate(
         }
 
         const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
-        win.webContents.send('translate:from-api', text)
+        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
 
         res.writeHead(200)
         res.end(JSON.stringify({ success: true }))

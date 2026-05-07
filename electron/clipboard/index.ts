@@ -21,8 +21,8 @@ export function startClipboardMonitor(mgr: WindowManager): void {
         const current = clipboard.readText()
         if (current !== last_text && current.trim()) {
             last_text = current
-            const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
-            win.webContents.send('translate:from-clipboard', current)
+            mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+            mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', current)
         }
     }, 500)
 }

@@ -1,23 +1,20 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { CdpClient, CDP_PORT, findAllTargets } from './cdp_helper'
-import { getTranslateClient, cleanupAllClients } from './test_utils'
-
-// Prerequisite: electron-vite dev running with --remote-debugging-port=9225
-// Note: OCR tests require the recognize window to be opened.
-// We open it via electronAPI from the translate window.
-//
-// Run: npx electron-vite dev -- --remote-debugging-port=9225 &
-// Then: npx vitest run tests/user_e2e/03_ocr_recognize.test.ts
+import { CdpClient, findAllTargets } from './cdp_helper'
+import { init, cleanup, getTranslateClient } from './test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
 
 describe('Critical Path 3: OCR 识别全流程', () => {
+    let instance: ElectronInstance
     let recognizeClient: CdpClient | null = null
 
     beforeAll(async () => {
-        const client = await getTranslateClient()
-        expect(client).toBeDefined()
+        await ensureBuilt()
+        instance = await startElectron()
+        init(instance.translateClient, instance.httpPort)
+
+        const client = getTranslateClient()
 
         // Open recognize window with test data via electronAPI
-        // Use a small 1x1 white PNG as test image
         const testImage = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=='
         await client.evaluate(`
             window.electronAPI.ocr.openRecognize('${testImage}', 'test recognized text')
@@ -27,16 +24,17 @@ describe('Critical Path 3: OCR 识别全流程', () => {
         await new Promise(r => setTimeout(r, 2000))
 
         // Find and connect to recognize window
-        const targets = await findAllTargets(CDP_PORT)
+        const targets = await findAllTargets(instance.cdpPort)
         const recognizeTarget = targets.find(t => t.url.includes('recognize'))
         if (recognizeTarget) {
             recognizeClient = await CdpClient.connect(recognizeTarget.webSocketDebuggerUrl)
         }
-    }, 20000)
+    }, 60000)
 
-    afterAll(() => {
+    afterAll(async () => {
         recognizeClient?.close()
-        cleanupAllClients()
+        cleanup()
+        await stopElectron(instance)
     })
 
     it('opens recognize window when OCR is triggered', async () => {
@@ -94,7 +92,7 @@ describe('Critical Path 3: OCR 识别全流程', () => {
         await new Promise(r => setTimeout(r, 1000))
 
         // Verify window is gone by checking targets
-        const targets = await findAllTargets(CDP_PORT)
+        const targets = await findAllTargets(instance.cdpPort)
         const stillExists = targets.some(t => t.url.includes('recognize'))
         expect(stillExists).toBe(false)
     }, 10000)
