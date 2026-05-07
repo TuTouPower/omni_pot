@@ -116,8 +116,49 @@ function handleTriggerSelection(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
-    mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection')
-    res.writeHead(200)
-    res.end(JSON.stringify({ success: true }))
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        void (async () => {
+            try {
+                const body = Buffer.concat(chunks).toString('utf-8').trim()
+                let textToUse: string | null = null
+                let method = 'e2e'
+
+                // E2E text injection: if JSON body has text field, use it
+                if (body) {
+                    try {
+                        const json = JSON.parse(body)
+                        if (typeof json.text === 'string' && json.text.trim()) {
+                            textToUse = json.text
+                        }
+                    } catch {
+                        // not JSON, ignore
+                    }
+                }
+
+                // If no injected text, read from OS
+                if (textToUse === null) {
+                    const { readSelectedText } = await import('../selection')
+                    const result = await readSelectedText()
+                    if (!result.text.trim()) {
+                        res.writeHead(200)
+                        res.end(JSON.stringify({ success: false, reason: result.reason ?? 'empty' }))
+                        return
+                    }
+                    textToUse = result.text
+                    method = result.method
+                }
+
+                mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+                mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', textToUse)
+
+                res.writeHead(200)
+                res.end(JSON.stringify({ success: true, method }))
+            } catch (error: unknown) {
+                res.writeHead(500)
+                res.end(JSON.stringify({ success: false, error: String(error) }))
+            }
+        })()
+    })
 }
