@@ -1,28 +1,24 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { getTranslateClient, cleanupAllClients, readConfig, writeConfig } from './test_utils'
-
-// Prerequisite: electron-vite dev running with --remote-debugging-port=9225
-// Tests that config changes persist through the full read → write → read cycle.
-//
-// Run: npx electron-vite dev -- --remote-debugging-port=9225 &
-// Then: npx vitest run tests/user_e2e/05_config_persistence.test.ts
+import { init, cleanup, readConfig, writeConfig, getTranslateClient } from './test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
 
 describe('Critical Path 5: 配置持久化全流程', () => {
+    let instance: ElectronInstance
     let originalCloseOnBlur: unknown
 
     beforeAll(async () => {
-        const client = await getTranslateClient()
-        expect(client).toBeDefined()
-        // Save original value
+        await ensureBuilt()
+        instance = await startElectron()
+        init(instance.translateClient, instance.httpPort)
         originalCloseOnBlur = await readConfig('translate_close_on_blur')
-    }, 15000)
+    }, 60000)
 
     afterAll(async () => {
-        // Restore original value
         if (originalCloseOnBlur !== undefined) {
             await writeConfig('translate_close_on_blur', originalCloseOnBlur)
         }
-        cleanupAllClients()
+        cleanup()
+        await stopElectron(instance)
     })
 
     it('reads default config values via electronAPI', async () => {

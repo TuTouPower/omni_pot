@@ -30,7 +30,8 @@ import {
 
 let windowManager: WindowManager | undefined
 
-const gotLock = app.requestSingleInstanceLock()
+const isE2e = !!process.env['OMNI_POT_E2E']
+const gotLock = isE2e || app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
 } else {
@@ -74,8 +75,24 @@ if (!gotLock) {
     debug('global shortcuts registered')
 
     debug('starting HTTP server...')
-    startServer(windowManager)
-    debug('HTTP server started')
+    const startHttpServer = async (retries = 5): Promise<void> => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          await startServer(windowManager)
+          debug('HTTP server started')
+          return
+        } catch (err: unknown) {
+          const code = (err as NodeJS.ErrnoException).code
+          if (code === 'EADDRINUSE' && i < retries - 1) {
+            debug('HTTP server port in use, retrying in 3s (%d/%d)...', i + 1, retries)
+            await new Promise(r => setTimeout(r, 3000))
+          } else {
+            debug('HTTP server failed:', err)
+          }
+        }
+      }
+    }
+    startHttpServer()
 
     applyProxy()
     debug('proxy applied')

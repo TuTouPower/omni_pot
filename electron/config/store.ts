@@ -59,6 +59,13 @@ export function commitFirstRun(): void {
 }
 
 export function getConfig(key: ConfigKey): unknown {
+    // Allow environment variable overrides (used by E2E tests)
+    if (key === 'server_port' && process.env['OMNI_POT_SERVER_PORT']) {
+        return Number(process.env['OMNI_POT_SERVER_PORT'])
+    }
+    if (key === 'clipboard_monitor' && process.env['OMNI_POT_CLIPBOARD_MONITOR']) {
+        return process.env['OMNI_POT_CLIPBOARD_MONITOR'] === 'true'
+    }
     return key in data && data[key] !== undefined
         ? data[key]
         : DEFAULT_CONFIG[key]

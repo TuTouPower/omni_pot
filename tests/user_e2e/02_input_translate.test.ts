@@ -1,21 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import {
-    getTranslateClient, cleanupAllClients,
-    clearTextarea, getTextareaValue
+    init, cleanup, getTranslateClient,
+    clearTextarea, getTextareaValue, waitForSelector
 } from './test_utils'
-
-// Prerequisite: electron-vite dev running with --remote-debugging-port=9225
-// Run: npx electron-vite dev -- --remote-debugging-port=9225 &
-// Then: npx vitest run tests/user_e2e/02_input_translate.test.ts
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
 
 describe('Critical Path 2: 输入翻译全流程', () => {
-    beforeAll(async () => {
-        const client = await getTranslateClient()
-        expect(client).toBeDefined()
-    }, 15000)
+    let instance: ElectronInstance
 
-    afterAll(() => {
-        cleanupAllClients()
+    beforeAll(async () => {
+        await ensureBuilt()
+        instance = await startElectron()
+        init(instance.translateClient, instance.httpPort)
+        await waitForSelector('textarea', 15000)
+    }, 60000)
+
+    afterAll(async () => {
+        cleanup()
+        await stopElectron(instance)
     })
 
     // --- Input acceptance ---
@@ -165,11 +167,16 @@ describe('Critical Path 2: 输入翻译全流程', () => {
 
     it('has translate button in toolbar', async () => {
         const client = await getTranslateClient()
-        const hasTranslateIcon = await client.evaluate(`
-            document.querySelector('svg[data-icon="hi/translate"]') !== null ||
-            document.querySelector('button svg path[d*="M"]').closest('.flex.flex-col.p-2') !== null
+        // The toolbar is in .flex.flex-col.p-2 and contains at least one button with an SVG icon
+        const hasTranslateButton = await client.evaluate(`
+            (() => {
+                const toolbar = document.querySelector('.flex.flex-col.p-2')
+                if (!toolbar) return false
+                const btn = toolbar.querySelector('button svg')
+                return btn !== null
+            })()
         `) as boolean
-        expect(hasTranslateIcon).toBe(true)
+        expect(hasTranslateButton).toBe(true)
     })
 
     it('has clear button that empties the textarea', async () => {

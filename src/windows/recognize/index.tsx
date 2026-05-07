@@ -6,6 +6,11 @@ export default function RecognizeWindow(): React.ReactElement {
     const [imageBase64, setImageBase64] = useState<string>('')
     const [recognizedText, setRecognizedText] = useState<string>('')
 
+    // Signal to main process that renderer is ready to receive IPC
+    useEffect(() => {
+        window.electronAPI.ready('recognize')
+    }, [])
+
     useEffect(() => {
         const unsub = window.electronAPI.ocr.onRecognizeShow((base64, text) => {
             setImageBase64(base64)
