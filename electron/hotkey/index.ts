@@ -34,7 +34,7 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
     case 'hotkey_input_translate':
       return toggleOrSend('translate:input-translate')
     case 'hotkey_selection_translate':
-      return toggleOrSend('translate:from-selection')
+      return () => { void triggerSelectionTranslate(mgr) }
     case 'hotkey_ocr_recognize':
       return () => { void start_screenshot_capture(mgr, 'recognize') }
     case 'hotkey_ocr_translate':
@@ -42,6 +42,25 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
     default:
       return () => {}
   }
+}
+
+async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
+    const existing = mgr.getWindow(WindowLabel.TRANSLATE)
+    if (existing && !existing.isDestroyed() && existing.isVisible()) {
+        existing.hide()
+        return
+    }
+
+    const { readSelectedText } = await import('../selection')
+    const result = await readSelectedText()
+
+    if (!result.text.trim()) {
+        console.log('[hotkey] selection translate: no text, reason=%s', result.reason ?? 'empty')
+        return
+    }
+
+    mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+    mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', result.text)
 }
 
 export function registerHotkey(
