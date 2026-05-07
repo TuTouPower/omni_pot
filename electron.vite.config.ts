@@ -10,7 +10,8 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        input: { index: resolve(__dirname, 'electron/main.ts') }
+        input: { index: resolve(__dirname, 'electron/main.ts') },
+        external: [resolve(__dirname, 'electron/selection/darwin'), resolve(__dirname, 'electron/selection/windows')]
       }
     }
   },
