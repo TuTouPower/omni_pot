@@ -43,7 +43,11 @@ export class CdpClient {
     }
 
     async evaluate(expr: string): Promise<unknown> {
-        const r = await this.send('Runtime.evaluate', { expression: expr, returnByValue: true }) as { result?: { value?: unknown } }
+        const r = await this.send('Runtime.evaluate', {
+            expression: expr,
+            returnByValue: true,
+            awaitPromise: true
+        }) as { result?: { value?: unknown } }
         return r?.result?.value
     }
 
@@ -66,12 +70,9 @@ export class CdpClient {
         await this.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 })
     }
 
-    async screenshot(path: string): Promise<void> {
-        const r = await this.send('Page.captureScreenshot', { format: 'png' }) as { data?: string }
-        if (r?.data) {
-            const fs = await import('fs')
-            fs.writeFileSync(path, Buffer.from(r.data, 'base64'))
-        }
+    async click(x: number, y: number): Promise<void> {
+        await this.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 })
+        await this.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
     }
 
     async waitFor(condition: () => Promise<boolean>, timeoutMs = 10000, intervalMs = 300): Promise<void> {
@@ -88,20 +89,50 @@ export class CdpClient {
     }
 }
 
-export async function findTranslateTarget(port: number): Promise<{ wsUrl: string; url: string }> {
+interface CdpTarget {
+    webSocketDebuggerUrl: string
+    url: string
+    title: string
+    id: string
+}
+
+async function listTargets(port: number): Promise<CdpTarget[]> {
     const http = await import('http')
     return new Promise((resolve, reject) => {
         http.get(`http://localhost:${port}/json`, (res) => {
             let data = ''
             res.on('data', (c: Buffer) => data += c.toString())
             res.on('end', () => {
-                const targets = JSON.parse(data) as Array<{ webSocketDebuggerUrl: string; url: string }>
-                const t = targets.find(t => t.url.includes('translate'))
-                if (!t) reject(new Error('No translate target found'))
-                else resolve({ wsUrl: t.webSocketDebuggerUrl, url: t.url })
+                resolve(JSON.parse(data) as CdpTarget[])
             })
         }).on('error', reject)
     })
+}
+
+async function findTarget(port: number, urlPattern: string): Promise<CdpTarget> {
+    const targets = await listTargets(port)
+    const t = targets.find(t => t.url.includes(urlPattern))
+    if (!t) throw new Error(`No target found matching "${urlPattern}". Available: ${targets.map(t => t.url).join(', ')}`)
+    return t
+}
+
+export async function findTranslateTarget(port: number): Promise<{ wsUrl: string; url: string }> {
+    const t = await findTarget(port, 'translate')
+    return { wsUrl: t.webSocketDebuggerUrl, url: t.url }
+}
+
+export async function findConfigTarget(port: number): Promise<{ wsUrl: string; url: string }> {
+    const t = await findTarget(port, 'config')
+    return { wsUrl: t.webSocketDebuggerUrl, url: t.url }
+}
+
+export async function findRecognizeTarget(port: number): Promise<{ wsUrl: string; url: string }> {
+    const t = await findTarget(port, 'recognize')
+    return { wsUrl: t.webSocketDebuggerUrl, url: t.url }
+}
+
+export async function findAllTargets(port: number): Promise<CdpTarget[]> {
+    return listTargets(port)
 }
 
 export const CDP_PORT = 9225

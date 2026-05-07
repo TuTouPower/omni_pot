@@ -12,6 +12,13 @@ interface PersistedShape extends Partial<AppConfig> {
 let config_path: string
 let data: PersistedShape = {}
 
+/** Map Electron locale to our app language code and default target language. */
+function resolveSystemLanguage(): string {
+    const locale = (app.getLocale() ?? 'en').toLowerCase()
+    if (locale.startsWith('zh')) return 'zh_cn'
+    return 'en'
+}
+
 export function initConfigStore(): void {
     const dir = app.getPath('userData')
     config_path = join(dir, 'config.json')
@@ -28,8 +35,11 @@ export function initConfigStore(): void {
     }
 
     if (!data.__initialized) {
+        const sysLang = resolveSystemLanguage()
         data = {
             ...data,
+            app_language: data.app_language ?? sysLang,
+            translate_target_language: data.translate_target_language ?? sysLang,
             service_instances: {
                 ...DEFAULT_SERVICE_INSTANCES,
                 ...(data.service_instances ?? {})

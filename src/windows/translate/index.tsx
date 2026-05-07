@@ -11,6 +11,7 @@ import { translateServiceRegistry } from '../../services/registry'
 import { detectLanguage } from '../../services/detect'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
+import type { LanguageCode } from '@shared/types/language'
 
 export default function TranslateWindow(): React.ReactElement {
   const sourceText = useTranslateStore((s) => s.sourceText)
@@ -36,6 +37,16 @@ export default function TranslateWindow(): React.ReactElement {
   const hideSource = useConfigStore((s) => s.config.hide_source)
   const historyDisable = useConfigStore((s) => s.config.history_disable)
   const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
+  const configTargetLang = useConfigStore((s) => s.config.translate_target_language)
+  const configSourceLang = useConfigStore((s) => s.config.translate_source_language)
+  const setStoreTargetLang = useTranslateStore((s) => s.setTargetLanguage)
+  const setStoreSourceLang = useTranslateStore((s) => s.setSourceLanguage)
+
+  // Sync config languages → translate store on mount
+  useEffect(() => {
+    setStoreTargetLang(configTargetLang as LanguageCode)
+    setStoreSourceLang(configSourceLang as LanguageCode)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [forceShowSource, setForceShowSource] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)

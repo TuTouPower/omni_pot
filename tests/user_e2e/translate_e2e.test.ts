@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { getClient, cleanupClient, SCREENSHOT_DIR, clearTextarea, getTextareaValue } from './test_utils'
-import { join } from 'path'
+import { getClient, cleanupClient, clearTextarea, getTextareaValue } from './test_utils'
 
 // Prerequisite: electron-vite dev running with --remote-debugging-port=9225
 // Run: npx electron-vite dev -- --remote-debugging-port=9225 &
@@ -24,8 +23,6 @@ describe('Translate Window E2E', () => {
         expect(html).toContain('placeholder="Enter text to translate..."')
         expect(html).not.toContain('disabled')
         expect(html).not.toContain('readonly')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '01_initial.png'))
     })
 
     it('accepts English text input via insertText', async () => {
@@ -35,8 +32,6 @@ describe('Translate Window E2E', () => {
 
         const value = await getTextareaValue()
         expect(value).toBe('hello')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '02_english_input.png'))
     })
 
     it('accepts Chinese text input via insertText', async () => {
@@ -46,8 +41,6 @@ describe('Translate Window E2E', () => {
 
         const value = await getTextareaValue()
         expect(value).toBe('你好世界')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '03_chinese_input.png'))
     })
 
     it('accepts mixed Chinese-English input', async () => {
@@ -57,8 +50,6 @@ describe('Translate Window E2E', () => {
 
         const value = await getTextareaValue()
         expect(value).toBe('Hello 你好 World 世界')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '04_mixed_input.png'))
     })
 
     it('appends text to existing content', async () => {
@@ -78,8 +69,6 @@ describe('Translate Window E2E', () => {
 
         const value = await getTextareaValue()
         expect(value).toBe('Hello! 你好？¡Hola! 123 @#$%')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '05_special_chars.png'))
     })
 
     it('handles long text input', async () => {
@@ -93,8 +82,6 @@ describe('Translate Window E2E', () => {
         expect(value.length).toBeGreaterThan(100)
         expect(value).toContain('中文文本')
         expect(value).toContain('English text')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '06_long_text.png'))
     })
 
     it('triggers translation on Enter key', async () => {
@@ -109,8 +96,6 @@ describe('Translate Window E2E', () => {
         // Check that at least one result area rendered (multiple textareas = source + results)
         const textareaCount = await client.evaluate('document.querySelectorAll("textarea").length') as number
         expect(textareaCount).toBeGreaterThanOrEqual(1)
-
-        await client.screenshot(join(SCREENSHOT_DIR, '07_after_enter_translate.png'))
     }, 20000)
 
     it('translates Chinese text via Enter key', async () => {
@@ -124,8 +109,6 @@ describe('Translate Window E2E', () => {
         // Verify no crash - the page should still be functional
         const stillAlive = await client.evaluate('document.querySelector("textarea") !== null') as boolean
         expect(stillAlive).toBe(true)
-
-        await client.screenshot(join(SCREENSHOT_DIR, '08_chinese_translate.png'))
     }, 20000)
 
     it('translates mixed language text via Enter key', async () => {
@@ -138,8 +121,6 @@ describe('Translate Window E2E', () => {
 
         const stillAlive = await client.evaluate('document.querySelector("textarea") !== null') as boolean
         expect(stillAlive).toBe(true)
-
-        await client.screenshot(join(SCREENSHOT_DIR, '09_mixed_translate.png'))
     }, 20000)
 
     it('language selector area renders with correct options', async () => {
@@ -154,8 +135,6 @@ describe('Translate Window E2E', () => {
         expect(options).toContain('auto')
         expect(options).toContain('zh_cn')
         expect(options).toContain('en')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '10_language_select.png'))
     })
 
     it('top bar has pin and close buttons', async () => {
@@ -193,8 +172,6 @@ describe('Translate Window E2E', () => {
 
         const stillAlive = await client.evaluate('document.querySelector("textarea") !== null') as boolean
         expect(stillAlive).toBe(true)
-
-        await client.screenshot(join(SCREENSHOT_DIR, '11_button_translate.png'))
     })
 
     it('clears textarea and re-types after translation', async () => {
@@ -206,7 +183,5 @@ describe('Translate Window E2E', () => {
 
         const value = await getTextareaValue()
         expect(value).toBe('new text')
-
-        await client.screenshot(join(SCREENSHOT_DIR, '12_clear_retype.png'))
     })
 })

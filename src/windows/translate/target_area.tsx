@@ -134,7 +134,7 @@ export function TargetArea({ serviceList, ttsServiceList }: TargetAreaProps): Re
         if (!service) return null
 
         return (
-          <Card key={instanceKey} variant="bordered" className="shadow-none">
+          <Card key={instanceKey} variant="bordered" className="shadow-none" data-result-key={instanceKey}>
             <Card.Header className="flex justify-between px-3 py-1">
               <span className="text-xs font-semibold">{service.name}</span>
             </Card.Header>

@@ -26,10 +26,16 @@ interface TranslateStore {
   nextRequestId: () => number
 }
 
+function guessDefaultTargetLang(): LanguageCode {
+    const lang = (navigator.language ?? 'en').toLowerCase()
+    if (lang.startsWith('zh')) return 'zh_cn'
+    return 'en'
+}
+
 export const useTranslateStore = create<TranslateStore>()((set, get) => ({
   sourceText: '',
   sourceLanguage: 'auto',
-  targetLanguage: 'zh_cn',
+  targetLanguage: guessDefaultTargetLang(),
   detectedLanguage: null,
   results: {},
   isTranslating: false,
