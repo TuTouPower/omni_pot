@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { CdpClient, findAllTargets } from './cdp_helper'
-import { init, cleanup, getTranslateClient } from './test_utils'
-import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
+import { CdpClient, findAllTargets } from './helpers/cdp_helper'
+import { init, cleanup, getTranslateClient } from './helpers/test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
 
 describe('Critical Path 3: OCR 识别全流程', () => {
     let instance: ElectronInstance

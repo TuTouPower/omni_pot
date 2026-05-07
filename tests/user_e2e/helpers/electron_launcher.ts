@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import http from 'http'
 import { CdpClient } from './cdp_helper'
 
-const PROJECT_ROOT = resolve(__dirname, '../..')
+const PROJECT_ROOT = resolve(__dirname, '../../..')
 const ELECTRON_BIN = resolve(PROJECT_ROOT, 'node_modules/electron/dist/electron.exe')
 const MAIN_JS = resolve(PROJECT_ROOT, 'out/main/index.js')
 const LOCK_DIR = resolve(PROJECT_ROOT, 'node_modules/.e2e-build-lock')

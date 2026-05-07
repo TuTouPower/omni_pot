@@ -5,8 +5,8 @@ import {
     clearTextarea, getTextareaValue,
     triggerTranslateViaApi, waitForSourceText,
     readConfig, waitForSelector
-} from './test_utils'
-import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
+} from './helpers/test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
 
 /**
  * Critical Path 1: 划词翻译全流程

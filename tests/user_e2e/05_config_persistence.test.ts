@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { init, cleanup, readConfig, writeConfig, getTranslateClient } from './test_utils'
-import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
+import { init, cleanup, readConfig, writeConfig, getTranslateClient } from './helpers/test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
 
 describe('Critical Path 5: 配置持久化全流程', () => {
     let instance: ElectronInstance
