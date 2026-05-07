@@ -11,20 +11,38 @@ const TRANSLATE_OPTS = {
 let last_text = ''
 let interval_id: ReturnType<typeof setInterval> | null = null
 let enabled = false
+let suppressUntil = 0
+
+export async function withClipboardMutationSuppressed<T>(fn: () => Promise<T>): Promise<T> {
+    suppressUntil = Date.now() + 1000
+    try {
+        return await fn()
+    } finally {
+        suppressUntil = Date.now() + 200
+    }
+}
+
+export function pollClipboardMonitorOnce(mgr: WindowManager): void {
+    if (!enabled) return
+
+    const current = clipboard.readText()
+    if (Date.now() < suppressUntil) {
+        last_text = current
+        return
+    }
+
+    if (current !== last_text && current.trim()) {
+        last_text = current
+        mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', current)
+    }
+}
 
 export function startClipboardMonitor(mgr: WindowManager): void {
     if (interval_id) return
     enabled = true
     last_text = clipboard.readText()
-    interval_id = setInterval(() => {
-        if (!enabled) return
-        const current = clipboard.readText()
-        if (current !== last_text && current.trim()) {
-            last_text = current
-            mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
-            mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', current)
-        }
-    }, 500)
+    interval_id = setInterval(() => pollClipboardMonitorOnce(mgr), 500)
 }
 
 export function stopClipboardMonitor(): void {
