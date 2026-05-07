@@ -30,7 +30,7 @@ const api: ElectronAPI = {
   text: {
     getSelection: () => ipcRenderer.invoke('text:getSelection'),
     onTranslateFromSelection: (callback) => {
-      const handler = () => callback()
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
       ipcRenderer.on('translate:from-selection', handler)
       return () => { ipcRenderer.off('translate:from-selection', handler) }
     },
