@@ -9,6 +9,8 @@ const TRANSLATE_OPTS = {
     height: 420
 }
 
+const IS_E2E = !!process.env.OMNI_POT_E2E
+
 let server: http.Server | null = null
 
 export function startServer(mgr: WindowManager): Promise<void> {
@@ -51,6 +53,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
             if (req.method === 'GET' && url.pathname === '/history') {
                 res.writeHead(200)
                 res.end(JSON.stringify({ success: true, message: 'history stub', data: [] }))
+                return
+            }
+
+            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-selection') {
+                handleTriggerSelection(mgr, req, res)
                 return
             }
 
@@ -102,4 +109,15 @@ function handleTranslate(
         res.writeHead(200)
         res.end(JSON.stringify({ success: true }))
     })
+}
+
+function handleTriggerSelection(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+    mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection')
+    res.writeHead(200)
+    res.end(JSON.stringify({ success: true }))
 }

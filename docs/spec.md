@@ -90,11 +90,24 @@ https://github.com/pot-app/pot-desktop
 #### 划词翻译
 
 1. 由全局快捷键、托盘/API 操作或外部 HTTP 端点触发。
-2. 后端使用 `selection` crate 读取当前选中的文本。
+2. 后端读取当前选中的文本（方案见下方"选中文本提取"）。
 3. 非空的选中文本存入 `StringWrapper`。
 4. 后端创建/复用 `translate` 窗口并发射 `new_text` 事件携带选中文本。
 5. 前端去除文本首尾空白，可选应用 `translate_delete_newline`，当 `incremental_translate=true` 时可选追加到之前的源文本，检测语言，然后翻译。
 6. 切换变体：如果翻译窗口已经可见/聚焦或等待显示，则隐藏现有翻译窗口。
+
+**选中文本提取方案（跨平台）：**
+
+参考项目使用 `selection` crate（v1.2.0），本项目需在 Electron 中用等价方案实现：
+
+| 平台 | 主方案 | 原理 | 回退方案 |
+|------|--------|------|----------|
+| Windows | UI Automation API（`IUIAutomation` COM） | 获取焦点元素 → 查询 `TextPattern` → 读取选中范围，不碰剪贴板 | 模拟 Ctrl+C + 读剪贴板（保存并恢复原内容） |
+| macOS | Accessibility API | 查询 `kAXSelectedTextAttribute`，不碰剪贴板 | AppleScript 模拟 Cmd+C（保存并恢复原内容） |
+| Linux/X11 | X11 PRIMARY selection | 选中即自动写入 PRIMARY buffer，无需 Ctrl+C | — |
+| Linux/Wayland | `wl-clipboard` 读取 Primary | 读取 `ClipboardType::Primary` | 回退到 X11 兼容层 |
+
+> 详见 `docs/selection_translate_mechanism.md`
 
 #### 输入翻译
 
