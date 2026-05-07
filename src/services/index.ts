@@ -2,10 +2,7 @@ import { translateServiceRegistry, ServiceRegistry } from './registry'
 import { bingService } from './bing'
 import { googleService } from './google'
 import { deeplService } from './deepl'
-import { bingDictService } from './bing_dict'
-import { yandexService } from './yandex'
 import { lingvaService } from './lingva'
-import { ecdictService } from './ecdict'
 import { cambridgeDictService } from './cambridge_dict'
 import { alibabaService } from './alibaba'
 import { baiduService } from './baidu'
@@ -31,10 +28,7 @@ export function registerAllServices(): void {
     translateServiceRegistry.register(bingService)
     translateServiceRegistry.register(googleService)
     translateServiceRegistry.register(deeplService)
-    translateServiceRegistry.register(bingDictService)
-    translateServiceRegistry.register(yandexService)
     translateServiceRegistry.register(lingvaService)
-    translateServiceRegistry.register(ecdictService)
     translateServiceRegistry.register(cambridgeDictService)
     translateServiceRegistry.register(alibabaService)
     translateServiceRegistry.register(baiduService)
