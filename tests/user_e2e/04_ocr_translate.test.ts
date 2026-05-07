@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { init, cleanup, getTranslateClient, waitForSourceText, waitForSelector } from './test_utils'
-import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
+import { init, cleanup, getTranslateClient, waitForSourceText, waitForSelector } from './helpers/test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
 
 describe('Critical Path 4: OCR 翻译全流程', () => {
     let instance: ElectronInstance

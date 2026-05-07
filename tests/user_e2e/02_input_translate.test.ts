@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import {
     init, cleanup, getTranslateClient,
     clearTextarea, getTextareaValue, waitForSelector
-} from './test_utils'
-import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './electron_launcher'
+} from './helpers/test_utils'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
 
 describe('Critical Path 2: 输入翻译全流程', () => {
     let instance: ElectronInstance
