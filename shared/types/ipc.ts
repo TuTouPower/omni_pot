@@ -31,7 +31,7 @@ export interface ElectronAPI {
   }
   text: {
     getSelection(): Promise<string>
-    onTranslateFromSelection(callback: () => void): () => void
+    onTranslateFromSelection(callback: (text: string) => void): () => void
     onInputTranslate(callback: () => void): () => void
     onTranslateFromApi(callback: (text: string) => void): () => void
     onTranslateFromClipboard(callback: (text: string) => void): () => void

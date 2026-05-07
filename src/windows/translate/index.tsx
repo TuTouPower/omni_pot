@@ -145,16 +145,16 @@ export default function TranslateWindow(): React.ReactElement {
 
   // Listen for translate:from-selection
   useEffect(() => {
-    const unsub = window.electronAPI.text.onTranslateFromSelection(async () => {
-      const text = await window.electronAPI.text.getSelection()
-      if (!text) return
+    const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
+      if (!text.trim()) return
 
       const processed = deleteNewline ? text.replace(/-\s+/g, '').replace(/\s+/g, ' ') : text
       const currentText = useTranslateStore.getState().sourceText
-      setSourceText(incrementalTranslate && currentText ? currentText + ' ' + processed : processed)
-      setForceShowSource(false)
+      const nextText = incrementalTranslate && currentText ? `${currentText} ${processed}` : processed
 
-      setTimeout(() => handleTranslate(), 0)
+      setSourceText(nextText)
+      setForceShowSource(false)
+      setTimeout(() => handleTranslate(nextText), 0)
     })
     return unsub
   }, [deleteNewline, incrementalTranslate, setSourceText, handleTranslate])
