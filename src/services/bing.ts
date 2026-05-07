@@ -39,14 +39,14 @@ const BING_LANG_MAP: Record<string, string> = {
   he: 'he'
 }
 
-async function getToken(): Promise<string> {
+async function getToken(): Promise<{ key: string; token: string }> {
   const resp = await fetch('https://www.bing.com/translator')
   const html = await resp.text()
   const match = html.match(
-    /params_AbusePreventionHelper\s*=\s*\[.*?,.*?,(\d+),\s*"([^"]+)"/
+    /params_AbusePreventionHelper\s*=\s*\[(\d+),\s*"([^"]+)"/
   )
   if (!match) throw new Error('Failed to get Bing token')
-  return `${match[1]}_${match[2]}`
+  return { key: match[1], token: match[2] }
 }
 
 export const bingService: TranslateService = {
@@ -60,21 +60,23 @@ export const bingService: TranslateService = {
     to: LanguageCode,
     _config: ServiceConfig
   ): Promise<string> {
-    const token = await getToken()
+    const { key, token } = await getToken()
     const fromLang = BING_LANG_MAP[from] ?? from
     const toLang = BING_LANG_MAP[to] ?? to
 
-    const resp = await fetch('https://www.bing.com/ttranslatev3', {
+    const resp = await fetch('https://www.bing.com/ttranslatev3?isVertical=1', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Referer': 'https://www.bing.com/translator',
+        'Origin': 'https://www.bing.com'
       },
       body: new URLSearchParams({
         fromLang,
         to: toLang,
         text,
         token,
-        key: ''
+        key
       }).toString()
     })
 
