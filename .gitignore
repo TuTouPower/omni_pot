@@ -5,3 +5,5 @@ dist/
 .env.local
 *.log
 .claude
+.codex
+.playwright-mcp
