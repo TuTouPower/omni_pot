@@ -75,6 +75,81 @@ async function google_detect(text: string): Promise<LanguageCode> {
     return detect_local(text)
 }
 
+const BAIDU_DETECT_LANG_MAP: Record<string, LanguageCode> = {
+    'zh': 'zh_cn', 'cht': 'zh_tw', 'yue': 'yue',
+    'en': 'en', 'jp': 'ja', 'kor': 'ko', 'fra': 'fr', 'spa': 'es',
+    'ru': 'ru', 'de': 'de', 'it': 'it', 'tr': 'tr', 'pt': 'pt_pt',
+    'vie': 'vi', 'id': 'id', 'th': 'th', 'may': 'ms', 'ara': 'ar',
+    'hi': 'hi', 'nob': 'nb_no', 'nno': 'nn_no', 'per': 'fa', 'swe': 'sv',
+    'pl': 'pl', 'nl': 'nl', 'ukr': 'uk', 'heb': 'he'
+}
+
+async function baidu_detect(text: string): Promise<LanguageCode> {
+    try {
+        const salt = Math.random().toString(36).substring(2)
+        const resp = await fetch(
+            `https://fanyi.baidu.com/transapi?from=auto&to=en&query=${encodeURIComponent(text)}&salt=${salt}`
+        )
+        if (!resp.ok) return detect_local(text)
+        const data = await resp.json() as { from?: string; error?: number }
+        if (data.from && data.from !== 'auto' && data.from !== 'key') {
+            return BAIDU_DETECT_LANG_MAP[data.from] ?? detect_local(text)
+        }
+    } catch { /* fallback */ }
+    return detect_local(text)
+}
+
+const TENCENT_DETECT_LANG_MAP: Record<string, LanguageCode> = {
+    'zh': 'zh_cn', 'zh-TW': 'zh_tw',
+    'en': 'en', 'ja': 'ja', 'ko': 'ko', 'fr': 'fr', 'es': 'es',
+    'ru': 'ru', 'de': 'de', 'it': 'it', 'tr': 'tr', 'pt': 'pt_pt',
+    'vi': 'vi', 'id': 'id', 'th': 'th', 'ms': 'ms', 'ar': 'ar',
+    'hi': 'hi', 'uk': 'uk', 'he': 'he', 'nl': 'nl', 'pl': 'pl',
+    'sv': 'sv', 'fa': 'fa'
+}
+
+async function tencent_detect(text: string): Promise<LanguageCode> {
+    try {
+        const resp = await fetch('https://fanyi.qq.com/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ source: 'auto', target: 'en', sourceText: text, sessionUuid: Math.random().toString(36) })
+        })
+        if (!resp.ok) return detect_local(text)
+        const data = await resp.json() as { translate?: { records?: Array<{ sourceLang?: string }> } }
+        const lang = data.translate?.records?.[0]?.sourceLang
+        if (lang) {
+            return TENCENT_DETECT_LANG_MAP[lang] ?? detect_local(text)
+        }
+    } catch { /* fallback */ }
+    return detect_local(text)
+}
+
+const NIUTRANS_DETECT_LANG_MAP: Record<string, LanguageCode> = {
+    'zh': 'zh_cn', 'cht': 'zh_tw', 'yue': 'yue',
+    'en': 'en', 'ja': 'ja', 'ko': 'ko', 'fr': 'fr', 'es': 'es',
+    'ru': 'ru', 'de': 'de', 'it': 'it', 'tr': 'tr', 'pt': 'pt_pt',
+    'vi': 'vi', 'id': 'id', 'th': 'th', 'ms': 'ms', 'ar': 'ar',
+    'hi': 'hi', 'mn': 'mn_mo', 'km': 'km', 'no': 'nb_no',
+    'fa': 'fa', 'sv': 'sv', 'pl': 'pl', 'nl': 'nl', 'uk': 'uk', 'he': 'he'
+}
+
+async function niutrans_detect(text: string): Promise<LanguageCode> {
+    try {
+        const resp = await fetch('http://api.niutrans.com/NiuTransServer/translation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: 'auto', to: 'en', src_text: text })
+        })
+        if (!resp.ok) return detect_local(text)
+        const data = await resp.json() as { from?: string; error_code?: number }
+        if (data.from && data.from !== 'auto') {
+            return NIUTRANS_DETECT_LANG_MAP[data.from] ?? detect_local(text)
+        }
+    } catch { /* fallback */ }
+    return detect_local(text)
+}
+
 export async function detectLanguage(text: string, engine?: string): Promise<LanguageCode> {
     const effective_engine = engine ?? 'local'
     switch (effective_engine) {
@@ -82,6 +157,12 @@ export async function detectLanguage(text: string, engine?: string): Promise<Lan
             return bing_detect(text)
         case 'google':
             return google_detect(text)
+        case 'baidu':
+            return baidu_detect(text)
+        case 'tencent':
+            return tencent_detect(text)
+        case 'niutrans':
+            return niutrans_detect(text)
         case 'local':
         default:
             return detect_local(text)
