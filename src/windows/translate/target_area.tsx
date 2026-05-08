@@ -1,8 +1,11 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { Card, Button, Spinner } from '@heroui/react'
-import { MdContentCopy, MdAutorenew, MdStarOutline, MdStar, MdExpandMore, MdExpandLess } from 'react-icons/md'
+import { MdContentCopy, MdAutorenew, MdStarOutline, MdStar, MdExpandMore, MdExpandLess, MdDragIndicator } from 'react-icons/md'
 import { TbTransformFilled } from 'react-icons/tb'
 import { VscUnmute } from 'react-icons/vsc'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
@@ -15,6 +18,72 @@ interface TargetAreaProps {
   serviceList: string[]
   ttsServiceList: string[]
   onRetry?: (instanceKey: string) => void
+}
+
+interface SortableCardProps {
+  instanceKey: string
+  results: Record<string, string | DictResult | null | undefined>
+  isTranslating: boolean
+  collapsed: boolean
+  onToggleCollapse: (key: string) => void
+  sameTypeInstances: string[]
+  onSwitchInstance: (oldKey: string, newKey: string) => void
+  renderResult: (key: string) => React.ReactNode
+}
+
+function SortableCard({ instanceKey, results, collapsed, onToggleCollapse, sameTypeInstances, onSwitchInstance, renderResult }: SortableCardProps): React.ReactElement {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
+  const serviceKey = getServiceKey(instanceKey)
+  const service = translateServiceRegistry.get(serviceKey)
+  if (!service) return null as unknown as React.ReactElement
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  const result = results[instanceKey]
+  const resultPreview = typeof result === 'string'
+    ? result.substring(0, 50) + (result.length > 50 ? '...' : '')
+    : null
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card variant="bordered" className="shadow-none" data-result-key={instanceKey}>
+        <Card.Header className="flex justify-between items-center px-3 py-1">
+          <div className="flex items-center gap-1">
+            <span {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+              <MdDragIndicator className="text-base text-default-300" />
+            </span>
+            <Button isIconOnly size="sm" variant="light" onPress={() => onToggleCollapse(instanceKey)}>
+              {collapsed ? <MdExpandMore className="text-base" /> : <MdExpandLess className="text-base" />}
+            </Button>
+            <span className="text-xs font-semibold">{service.name}</span>
+            {collapsed && resultPreview && (
+              <span className="text-xs text-default-400 truncate max-w-40">{resultPreview}</span>
+            )}
+          </div>
+          {sameTypeInstances.length > 1 && (
+            <select
+              value={instanceKey}
+              onChange={(e) => onSwitchInstance(instanceKey, e.target.value)}
+              className="text-xs bg-default-100 border border-default-200 rounded px-1 py-0.5 outline-none"
+            >
+              {sameTypeInstances.map((ik) => (
+                <option key={ik} value={ik}>{ik.split('@')[1]}</option>
+              ))}
+            </select>
+          )}
+        </Card.Header>
+        {!collapsed && (
+          <Card.Content className="px-3 py-2">
+            {renderResult(instanceKey)}
+          </Card.Content>
+        )}
+      </Card>
+    </div>
+  )
 }
 
 export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaProps): React.ReactElement {
@@ -197,53 +266,40 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
 
   const allInstanceKeys = Object.keys(serviceInstances)
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  const handleDragEnd = useCallback((event: { active: { id: string | number }; over: { id: string | number } | null }) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const list = useConfigStore.getState().config.translate_service_list
+    const oldIdx = list.indexOf(String(active.id))
+    const newIdx = list.indexOf(String(over.id))
+    if (oldIdx === -1 || newIdx === -1) return
+    const updated = [...list]
+    const [moved] = updated.splice(oldIdx, 1)
+    updated.splice(newIdx, 0, moved)
+    useConfigStore.getState().set('translate_service_list', updated)
+  }, [])
+
   return (
-    <div className="flex flex-col gap-2 p-2 overflow-y-auto" style={{ maxHeight: '300px' }}>
-      {serviceList.map((instanceKey) => {
-        const serviceKey = getServiceKey(instanceKey)
-        const service = translateServiceRegistry.get(serviceKey)
-        if (!service) return null
-
-        const sameTypeInstances = allInstanceKeys.filter((k) => getServiceKey(k) === serviceKey)
-
-        const isCollapsed = collapsedKeys.has(instanceKey)
-        const result = results[instanceKey]
-        const resultPreview = typeof result === 'string'
-          ? result.substring(0, 50) + (result.length > 50 ? '...' : '')
-          : null
-
-        return (
-          <Card key={instanceKey} variant="bordered" className="shadow-none" data-result-key={instanceKey}>
-            <Card.Header className="flex justify-between items-center px-3 py-1">
-              <div className="flex items-center gap-1">
-                <Button isIconOnly size="sm" variant="light" onPress={() => toggleCollapse(instanceKey)}>
-                  {isCollapsed ? <MdExpandMore className="text-base" /> : <MdExpandLess className="text-base" />}
-                </Button>
-                <span className="text-xs font-semibold">{service.name}</span>
-                {isCollapsed && resultPreview && (
-                  <span className="text-xs text-default-400 truncate max-w-40">{resultPreview}</span>
-                )}
-              </div>
-              {sameTypeInstances.length > 1 && (
-                <select
-                  value={instanceKey}
-                  onChange={(e) => handleSwitchInstance(instanceKey, e.target.value)}
-                  className="text-xs bg-default-100 border border-default-200 rounded px-1 py-0.5 outline-none"
-                >
-                  {sameTypeInstances.map((ik) => (
-                    <option key={ik} value={ik}>{ik.split('@')[1]}</option>
-                  ))}
-                </select>
-              )}
-            </Card.Header>
-            {!isCollapsed && (
-              <Card.Content className="px-3 py-2">
-                {renderResult(instanceKey)}
-              </Card.Content>
-            )}
-          </Card>
-        )
-      })}
-    </div>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={serviceList} strategy={verticalListSortingStrategy}>
+        <div className="flex flex-col gap-2 p-2 overflow-y-auto" style={{ maxHeight: '300px' }}>
+          {serviceList.map((instanceKey) => (
+            <SortableCard
+              key={instanceKey}
+              instanceKey={instanceKey}
+              results={results}
+              isTranslating={isTranslating}
+              collapsed={collapsedKeys.has(instanceKey)}
+              onToggleCollapse={toggleCollapse}
+              sameTypeInstances={allInstanceKeys.filter((k) => getServiceKey(k) === getServiceKey(instanceKey))}
+              onSwitchInstance={handleSwitchInstance}
+              renderResult={renderResult}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
   )
 }
