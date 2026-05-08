@@ -1,212 +1,324 @@
-# Critical Paths — E2E 测试覆盖
+# Critical Paths — 关键路径文档
 
-> 每条路径定义: 前置条件 → 操作步骤 → 每步验证点。
-> E2E 测试必须逐条覆盖，不遗漏任何验证点。
-
----
-
-## CP1: 划词翻译全流程
-
-**用户旅程**: 用户在任意应用中选中文字 → 按快捷键 → 翻译窗口弹出 → 多个服务并行翻译 → 结果正确显示
-
-### 前置条件
-
-- 应用已启动，托盘图标可见
-- 至少配置 2 个翻译服务（bing, google）
-- 源语言 = auto，目标语言 = zh_cn，第二语言 = en
-
-### 测试步骤
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 1 | 向系统剪贴板写入 `"hello world"` | 剪贴板内容 === `"hello world"` |
-| 2 | 模拟触发划词翻译快捷键（`translate:from-selection`） | — |
-| 3 | 检查翻译窗口 | 窗口存在且可见；源文本 textarea.value === `"hello world"` |
-| 4 | 等待翻译完成（最多 30s） | DOM 中 `[data-result-key]` 卡片数量 >= 2 |
-| 5 | 检查每个结果卡片 | 每个卡片有服务名 header（如 Bing, Google） |
-| 6 | 检查第一个服务的翻译结果 | 结果 textarea 非空；结果 !== `"hello world"`（确认是翻译不是回显） |
-
-### 语言自动检测 + 第二语言回退
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 7 | 清空，剪贴板写入 `"你好世界"`，触发快捷键 | 源文本 === `"你好世界"` |
-| 8 | 等待翻译完成 | 检测到源语言 = zh_cn，与目标语言相同 → 回退到 en |
-| 9 | 检查翻译结果 | 结果包含英文字母（`/[a-zA-Z]{2,}/`） |
-
-### 反向验证: 英译中
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 10 | 清空，剪贴板写入 `"good morning"`，触发快捷键 | 源文本 === `"good morning"` |
-| 11 | 等待翻译完成 | 结果包含中文字符（`/[一-鿿]/`） |
-
-### 结果展示格式
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 12 | 翻译 `"test"` 并等待完成 | 至少一个结果卡片的 textarea 有值且为 readonly |
-| 13 | 检查结果卡片顺序 | 卡片在 DOM 中的顺序 === `translate_service_list` 配置顺序 |
-
-### 历史记录
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 14 | 翻译唯一文本 `"e2e history test {timestamp}"` | 翻译完成后，`history.list()` 返回的记录中包含该源文本 |
-
-### 多次翻译无状态污染
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 15 | 翻译 `"first translation"`，等待结果 | 结果非空 |
-| 16 | 清空，翻译 `"second translation test"`，等待结果 | 结果非空；源文本 === `"second translation test"` |
-
-### 边界情况
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 17 | 翻译短文本 `"hi"` | 结果非空 |
-| 18 | 翻译长文本（200+ 字符） | 窗口不崩溃，至少一个结果卡片 |
-| 19 | 翻译特殊字符 `"Hello! @#$% 123"` | 窗口不崩溃 |
-
-### 关键: 触发方式
-
-本路径的触发方式是**快捷键**（`translate:from-selection`），不是 HTTP API。
-测试中通过以下方式模拟:
-1. 写入剪贴板: `navigator.clipboard.writeText()` 或 Electron `clipboard.writeText()`
-2. 触发快捷键: CDP 发送 `translate:from-selection` IPC 到翻译窗口（模拟快捷键 action 的最终效果）
+> 本文档描述 omni_pot 应用的所有用户关键路径。
+> 每条路径对应一个完整的用户操作流程，列出涉及的文件和数据流。
 
 ---
 
-## CP2: 输入翻译全流程
+## CP1: 划词翻译
 
-**用户旅程**: 用户在翻译窗口手动输入文本 → 按回车 → 翻译结果展示
+**流程**: 用户在任意应用选中文字 → 按快捷键 → 翻译窗口弹出 → 多服务并行翻译 → 结果展示
 
-### 前置条件
+```
+用户选中文字 → 按快捷键
+  → electron/hotkey/index.ts: triggerSelectionTranslate()
+    → electron/selection/index.ts: readSelectedText()  [读取选中文本]
+    → electron/windows/manager.ts: focusOrCreate(TRANSLATE)
+    → manager.sendWhenReady('translate:from-selection', text)
+      → 翻译窗口 renderer 收到 IPC
+        → src/stores/translate_store.ts: setSourceText(text)
+        → src/windows/translate/index.tsx: handleTranslate()
+          → 遍历 translate_service_list，并行调用 service.translate()
+          → 结果写入 store → TargetArea 渲染卡片
+```
 
-- 翻译窗口已打开，textarea 可见且可编辑
+**涉及文件**:
+- `electron/hotkey/index.ts` — 快捷键注册与 action 分发
+- `electron/selection/index.ts` — 跨平台选中文本提取
+- `electron/windows/manager.ts` — 窗口创建/聚焦/消息发送
+- `src/windows/translate/index.tsx` — 翻译窗口主组件
+- `src/windows/translate/source_area.tsx` — 源文本输入区域
+- `src/windows/translate/target_area.tsx` — 结果卡片（拖拽排序/折叠/收藏/重试）
+- `src/windows/translate/language_area.tsx` — 语言选择器 + 交换
+- `src/stores/translate_store.ts` — 翻译状态管理
+- `src/services/registry.ts` — 服务注册表
+- `src/services/detect.ts` — 语言检测（bing/google/baidu/tencent/niutrans/local）
 
-### 输入测试
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 1 | CDP `Input.insertText("hello")` | textarea.value === `"hello"` |
-| 2 | 清空，`Input.insertText("你好世界")` | textarea.value === `"你好世界"` |
-| 3 | 清空，`Input.insertText("Hello 你好 World 世界")` | textarea.value === 完整混合文本 |
-| 4 | 清空，`Input.insertText("Hello! 你好？¡Hola! 123 @#$%")` | 值完整保留 |
-| 5 | 清空，输入长文本（200+ 字符） | textarea.value 长度 > 100 |
-
-### 翻译触发
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 6 | 输入 `"hello"`，按 Enter | `[data-result-key]` 卡片出现 |
-| 7 | 输入 `"你好"`，按 Enter | 页面不崩溃，卡片出现 |
-| 8 | 输入 `"world"`，按 Enter | 结果卡片 header 有服务名 |
-
-### UI 功能
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 9 | 输入文本后点击清空按钮 | textarea.value === `""` |
-| 10 | 翻译后清空，输入新文本 | 新文本正确显示 |
-| 11 | 检查语言选择器 | 存在 >= 2 个 `<select>`，选项包含 auto/zh_cn/en |
-
-### 关键: 输入方式
-
-文本输入必须通过 CDP `Input.insertText`（模拟真实键盘，兼容 React 受控组件和 IME）。
-不用 `evaluate("el.value = '...'")` 直接设值。
+**关键行为**:
+- 源语言 auto 时调用 detect 服务，检测结果与目标语言相同则回退到第二语言
+- 多服务 `Promise.allSettled` 并行翻译
+- 支持 OpenAI/Ollama 流式输出（`translateStream` AsyncGenerator）
+- requestId 机制防止旧结果覆盖新结果
 
 ---
 
-## CP3: OCR 识别全流程
+## CP2: 输入翻译
 
-**用户旅程**: 触发 OCR → 截图区域选择 → OCR 窗口显示识别文字
+**流程**: 用户在翻译窗口输入文本 → 按 Enter → 翻译
 
-### 前置条件
+```
+用户输入文本 → 按 Enter
+  → src/windows/translate/source_area.tsx: handleKeyDown()
+    → onTranslate() 回调
+      → src/windows/translate/index.tsx: handleTranslate()
+        → 同 CP1 翻译流程
+```
 
-- 应用已启动
+**涉及文件**: 同 CP1 + `src/windows/translate/source_area.tsx`
 
-### 测试步骤
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 1 | `electronAPI.ocr.openRecognize(base64Image, 'test text')` | recognize 窗口出现在 CDP targets |
-| 2 | 连接 recognize 窗口的 CDP client | 连接成功 |
-| 3 | 检查图片 | `<img>` 存在，src 以 `data:image/png;base64,` 开头 |
-| 4 | 检查识别文字 | `<pre>` 文本包含 `'test text'` |
-| 5 | 检查复制按钮 | "Copy" 按钮存在且未禁用 |
-| 6 | 检查关闭按钮 | header 中有 SVG 图标按钮 |
-| 7 | 按 Escape | recognize 窗口从 CDP targets 消失 |
-
-### 关键: 窗口连接
-
-recognize 是独立 BrowserWindow，需要通过 CDP `findAllTargets` 找到并单独连接。
-测试中不实际截图，通过 IPC 模拟传入 OCR 数据。
+**关键行为**:
+- `dynamic_translate` 开启时，输入 1s 防抖自动翻译
+- Alt+Shift+U 对选中文本循环变量名格式（snake/screaming_snake/kebab/dot/space/title/camel/pascal）
+- IME 处理：`isComposing` 时跳过快捷键
 
 ---
 
-## CP4: OCR 翻译联动
+## CP3: 截图 OCR 识别
 
-**用户旅程**: OCR 识别后，将文字发送到翻译窗口翻译
+**流程**: 用户按截图快捷键 → 屏幕截图覆盖层 → 选择区域 → OCR 窗口显示识别结果
 
-### 前置条件
+```
+按快捷键
+  → electron/hotkey/index.ts: start_screenshot_capture(mgr, 'recognize')
+    → electron/screenshot/index.ts: captureScreenshot()
+      → 创建 SCREENSHOT 窗口（全屏透明覆盖）
+      → 用户选区 → 返回 base64 图片
+    → electron/ipc/ocr_handlers.ts: process OCR
+      → tesseract.js (renderer) 或 system OCR (main process IPC)
+    → 创建 RECOGNIZE 窗口
+      → src/windows/recognize/index.tsx: 显示图片 + 识别文字
+```
 
-- 翻译窗口已打开，textarea 可见
+**涉及文件**:
+- `electron/screenshot/index.ts` — 截图覆盖层 + 区域选择
+- `electron/ipc/ocr_handlers.ts` — OCR IPC 处理
+- `src/services/ocr/system.ts` — 系统 OCR（Windows WinRT / Linux tesseract）
+- `src/windows/recognize/index.tsx` — 识别结果窗口
+- `src/windows/screenshot/index.tsx` — 截图覆盖层 UI
 
-### 测试步骤
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 1 | `electronAPI.ocr.sendToTranslate('OCR text')` | 翻译窗口 textarea.value === `'OCR text'` |
-| 2 | 等待翻译 | 至少一个结果卡片有内容 |
-| 3 | `sendToTranslate('你好世界')`（中文） | textarea.value === `'你好世界'` |
-| 4 | 翻译完成后手动输入新文本 | 输入正常，无状态污染 |
-
-### 关键: IPC 链路
-
-`sendToTranslate` 走: renderer → `ocr:send-to-translate` invoke → main process → `sendWhenReady('translate:from-api')` → 翻译窗口 renderer。
-验证这条链路不丢消息。
-
----
-
-## CP5: 配置持久化全流程
-
-**用户旅程**: 修改配置 → 验证当前生效 → 验证重启后保持
-
-### 前置条件
-
-- 应用已启动
-
-### 测试步骤
-
-| # | 操作 | 验证点 |
-|---|------|--------|
-| 1 | `config.get('translate_source_language')` | === `'auto'` |
-| 2 | `config.get('translate_target_language')` | 是有效非空字符串 |
-| 3 | `config.set('translate_close_on_blur', true)` → `config.get(...)` | === `true` |
-| 4 | `config.set('translate_close_on_blur', false)` → `config.get(...)` | === `false` |
-| 5 | `config.getAll()` | 包含 app_language, translate_source_language, translate_target_language, translate_service_list, server_port |
-| 6 | `config.getAll()` | translate_service_list 是数组 |
-| 7 | 监听 `config.onChange` → `config.set('translate_always_on_top', true)` | onChange 回调收到 key=`'translate_always_on_top'`, value=`true` |
-| 8 | `config.get('translate_service_list')` | 长度 > 0，包含 `'bing'` 和 `'google'` |
-| 9 | `config.get('server_port')` | > 0 且 <= 65535 |
-| 10 | 写入 `app_font_size` = 20 → 读回 → 恢复原值 | 读写一致 |
-| 11 | 写入 `app_language` = `'zh_cn'` → 读回 → 恢复原值 | 读写一致 |
-
-### 关键: cleanup
-
-每次写入后在 afterAll 中恢复原值，避免污染其他测试。
+**关键行为**:
+- 识别结果可编辑
+- 可切换 OCR 服务/语言，重新识别
+- "翻译" 按钮调用 `ocr:send-to-translate` 将文字发到翻译窗口
 
 ---
 
-## 通用验证规则
+## CP4: 截图 OCR 翻译
 
-所有关键路径必须满足:
+**流程**: 同 CP3 但 mode='translate'，OCR 结果直接送入翻译窗口
 
-1. **真实 API**: 翻译服务调用真实外部 API，不 mock
-2. **并行执行**: 多个翻译服务通过 `Promise.allSettled` 并行
-3. **结果顺序**: 结果卡片 DOM 顺序 === `translate_service_list` 配置顺序
-4. **历史记录**: 翻译成功后 history 表有记录（除非 `history_disable` = true）
-5. **无状态污染**: 连续多次翻译之间 requestId 机制防止旧结果覆盖新结果
-6. **窗口存活**: 翻译流程结束后窗口仍然响应输入
+```
+start_screenshot_capture(mgr, 'translate')
+  → 截图选区 → OCR 识别
+  → manager.sendWhenReady(TRANSLATE, 'translate:from-api', ocrText)
+    → 翻译窗口执行翻译
+```
+
+**涉及文件**: CP3 文件 + 翻译窗口文件
+
+---
+
+## CP5: 划词字典
+
+**流程**: 用户选中文字 → 按字典快捷键 → 字典窗口弹出 → 多字典服务查询
+
+```
+按字典快捷键
+  → electron/hotkey/index.ts: triggerSelectionDictionary()
+    → readSelectedText()
+    → focusOrCreate(DICT)
+    → sendWhenReady('dict:lookup', text)
+      → src/windows/dict/index.tsx: handleLookup()
+        → 遍历 dictionary_service_list，并行调用 service.translate()
+        → 返回 DictResult 的服务渲染为字典卡片
+```
+
+**涉及文件**:
+- `electron/hotkey/index.ts` — 快捷键触发
+- `electron/selection/index.ts` — 文本提取
+- `src/windows/dict/index.tsx` — 字典窗口
+- `src/stores/dict_store.ts` — 字典状态
+- `src/services/free_dictionary.ts` — dictionaryapi.dev 英文词典
+- `src/services/ecdict.ts` — CC-CEDICT 离线中英词典
+- `electron/dict/index.ts` — CC-CEDICT SQLite 数据库
+- `electron/ipc/dict_handlers.ts` — 字典查询 IPC
+
+**CC-CEDICT 数据流**:
+```
+renderer: ecdict.translate()
+  → window.electronAPI.dict.lookup(text, from, to)
+    → IPC → electron/dict/index.ts: lookup_chinese() / lookup_english()
+      → better-sqlite3 查询 cc_cedict.db
+        → 返回 DictResult | null
+```
+
+**CC-CEDICT 首次启动**:
+```
+electron/main.ts: auto_import_if_needed()
+  → electron/dict/index.ts: 检查数据库是否已有数据
+    → 无数据 → 读取 data/dict/cedict.txt.gz
+    → 解压 → 解析 CC-CEDICT 文本格式 → 批量 INSERT 到 SQLite
+    → 重建 FTS5 索引
+```
+
+**关键行为**:
+- 字典服务返回 `DictResult`（type='dict'）才渲染为字典卡片
+- free_dictionary 在线查询英文音标/词性/释义
+- CC-CEDICT 离线查询：中文→英文（simplified/traditional 精确匹配），英文→中文（LIKE 模糊搜索）
+
+---
+
+## CP6: 剪贴板翻译
+
+**流程**: 复制文字到剪贴板 → 监听器自动触发翻译
+
+```
+clipboard_monitor = true
+  → electron/clipboard/index.ts: startClipboardMonitor()
+    → 轮询剪贴板变化
+    → 检测到新文本 → focusOrCreate(TRANSLATE)
+    → sendWhenReady('translate:from-clipboard', text)
+      → 翻译窗口执行翻译
+```
+
+**涉及文件**:
+- `electron/clipboard/index.ts` — 剪贴板监听
+- 其余同翻译流程
+
+---
+
+## CP7: 配置管理
+
+**流程**: 用户打开配置窗口 → 修改设置 → 实时生效 + 持久化
+
+```
+用户打开配置窗口（托盘或 tray_click_event）
+  → src/windows/config/index.tsx: 侧栏导航
+    → 各配置页面:
+      - general.tsx: 主题/字体/代理/启动/更新/开发者模式
+      - translate_settings.tsx: 语言/检测引擎/自动复制/窗口行为
+      - recognize_settings.tsx: OCR 语言/行为
+      - hotkey_settings.tsx: 快捷键录制
+      - service_settings.tsx: 服务添加/删除/排序/配置
+      - history_settings.tsx: 历史记录开关/清空/分页浏览/编辑
+      - backup_settings.tsx: WebDAV/本地备份
+      - about.tsx: 版本/技术栈/链接
+```
+
+**数据流**:
+```
+renderer: useConfig(key) hook
+  → 读: useConfigStore(s => s.config[key])
+  → 写: useConfigStore.set(key, value)
+    → electron/preload.ts: config:set IPC
+      → electron/config/store.ts: setConfig(key, value)
+        → 写入 userData/config.json
+        → 广播 config:changed 到所有窗口
+          → renderer: config.onChange() → zustand store 更新
+```
+
+**涉及文件**:
+- `electron/config/store.ts` — JSON 配置持久化 + 变更广播
+- `electron/ipc/config_handlers.ts` — 配置 IPC
+- `src/hooks/use_config.ts` — React hook
+- `src/stores/config_store.ts` — Zustand 配置 store
+- `shared/types/config.ts` — AppConfig 类型 + 默认值
+- `src/windows/config/*.tsx` — 各配置页面
+
+---
+
+## CP8: 自动更新
+
+**流程**: 应用启动 → 检查 GitHub releases → 有新版本 → 打开更新窗口
+
+```
+electron/main.ts: checkForUpdate(windowManager)
+  → electron/updater/index.ts: checkForUpdate()
+    → fetch GitHub API latest release
+    → 比较版本号
+    → 有更新 → 创建 UPDATER 窗口
+      → src/windows/updater/index.tsx:
+        - 显示当前版本 vs 最新版本
+        - 渲染 release notes
+        - 提供下载链接
+```
+
+**涉及文件**:
+- `electron/updater/index.ts` — 版本检查
+- `src/windows/updater/index.tsx` — 更新窗口 UI
+
+---
+
+## CP9: 备份恢复
+
+**流程**: 用户在配置窗口创建备份 → 选择恢复点 → 恢复配置
+
+```
+backup.create()
+  → electron/backup/index.ts: 将 config.json + cc_cedict.db 打包为 zip
+  → 存储到本地或 WebDAV
+backup.restore(name)
+  → 下载/读取 zip → 解压覆盖 config.json
+```
+
+**涉及文件**:
+- `electron/backup/index.ts` — 备份/恢复逻辑
+- `electron/ipc/backup_handlers.ts` — 备份 IPC
+- `src/windows/config/backup_settings.tsx` — 备份 UI
+
+---
+
+## CP10: 国际化
+
+**流程**: 用户切换 app_language → 所有 UI 文案即时切换
+
+```
+config.set('app_language', 'zh_cn')
+  → electron/config/store.ts 广播变更
+    → src/i18n/index.ts: bindI18nToConfig()
+      → subscribe 到 config store
+      → i18n.changeLanguage(lang)
+        → 所有 useTranslation() 组件重渲染
+```
+
+**涉及文件**:
+- `src/i18n/index.ts` — i18next 初始化 + 配置绑定
+- `src/i18n/locales/*.json` — 19 个语言文件
+- 所有使用 `useTranslation()` 的组件
+
+---
+
+## 窗口总览
+
+| 窗口 | Label | 入口文件 | 触发方式 |
+|------|-------|----------|----------|
+| 翻译 | TRANSLATE | `src/windows/translate/index.tsx` | 快捷键/输入/剪贴板/OCR/API |
+| 字典 | DICT | `src/windows/dict/index.tsx` | 划词字典快捷键 |
+| 识别 | RECOGNIZE | `src/windows/recognize/index.tsx` | 截图 OCR 快捷键 |
+| 截图 | SCREENSHOT | `src/windows/screenshot/index.tsx` | 截图快捷键（全屏覆盖层） |
+| 配置 | CONFIG | `src/windows/config/index.tsx` | 托盘/首次运行 |
+| 更新 | UPDATER | `src/windows/updater/index.tsx` | 检测到新版本自动弹出 |
+| 后台 | DAEMON | — | 隐藏后台进程 |
+
+## IPC 通道总览
+
+| 通道 | 方向 | 用途 |
+|------|------|------|
+| `translate:from-selection` | main→renderer | 划词翻译文本 |
+| `translate:input-translate` | main→renderer | 输入翻译触发 |
+| `translate:from-api` | main→renderer | API/OCR 发送的翻译文本 |
+| `translate:from-clipboard` | main→renderer | 剪贴板翻译文本 |
+| `dict:lookup` | main→renderer | 划词字典文本 |
+| `dict:lookup` (invoke) | renderer→main | CC-CEDICT 查询 |
+| `dict:check` | renderer→main | 检查字典数据库状态 |
+| `dict:import` | renderer→main | 下载/导入 CC-CEDICT 数据 |
+| `ocr:capture-screenshot` | renderer→main | 启动截图 |
+| `ocr:open-recognize` | renderer→main | 打开识别窗口 |
+| `ocr:send-to-translate` | renderer→main | OCR 文字发送到翻译窗口 |
+| `ocr:system-recognize` | renderer→main | 系统 OCR 识别 |
+| `config:get/set/getAll` | renderer→main | 配置读写 |
+| `config:changed` | main→renderer | 配置变更广播 |
+| `hotkey:register/unregister` | renderer→main | 快捷键注册 |
+| `history:*` | renderer→main | 历史记录 CRUD |
+| `backup:*` | renderer→main | 备份创建/恢复 |
+| `renderer:ready` | renderer→main | 窗口就绪信号 |
+| `window:*` | renderer→main | 窗口控制 |
+
+## 服务注册表
+
+| 注册表 | 服务 |
+|--------|------|
+| translateServiceRegistry | bing, google, deepl, lingva, alibaba, baidu, baidu_field, caiyun, niutrans, youdao, volcengine, transmart, tencent, openai, chatglm, geminipro, ollama, mymemory, free_dictionary, ecdict, cambridge_dict |
+| ocrServiceRegistry | tesseract, baidu_accurate, baidu_img, tencent_accurate, tencent_img, volcengine_multi_lang, simple_latex, xfyun (×3), system |
+| ttsServiceRegistry | 各 TTS 服务 |
+| collectionServiceRegistry | 各收藏服务 |
