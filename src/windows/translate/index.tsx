@@ -9,6 +9,7 @@ import { useTranslateStore } from '../../stores/translate_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
 import { detectLanguage } from '../../services/detect'
+import { useConfigStore } from '../../stores/config_store'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
@@ -64,7 +65,7 @@ export default function TranslateWindow(): React.ReactElement {
     setIsTranslating(true)
     clearResults()
 
-    const detected = sourceLanguage === 'auto' ? detectLanguage(textToTranslate) : null
+    const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
     if (detected) setDetectedLanguage(detected)
 
     let effectiveTarget = targetLanguage
@@ -225,7 +226,7 @@ export default function TranslateWindow(): React.ReactElement {
     if (!service) return
 
     const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
-    const detected = sourceLanguage === 'auto' ? detectLanguage(textToTranslate) : null
+    const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
 
     let effectiveTarget = targetLanguage
     if (sourceLanguage === 'auto' && detected && detected === targetLanguage) {

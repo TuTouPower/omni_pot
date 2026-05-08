@@ -2,55 +2,55 @@ import { describe, it, expect } from 'vitest'
 import { detectLanguage } from '../../../src/services/detect'
 
 describe('detectLanguage', () => {
-    it('detects Chinese', () => {
-        expect(detectLanguage('你好世界')).toBe('zh_cn')
-        expect(detectLanguage('汉字')).toBe('zh_cn')
+    it('detects Chinese', async () => {
+        expect(await detectLanguage('你好世界', 'local')).toBe('zh_cn')
+        expect(await detectLanguage('汉字', 'local')).toBe('zh_cn')
     })
 
-    it('detects Japanese', () => {
-        expect(detectLanguage('こんにちは')).toBe('ja')
-        expect(detectLanguage('カタカナ')).toBe('ja')
+    it('detects Japanese', async () => {
+        expect(await detectLanguage('こんにちは', 'local')).toBe('ja')
+        expect(await detectLanguage('カタカナ', 'local')).toBe('ja')
     })
 
-    it('detects Korean', () => {
-        expect(detectLanguage('안녕하세요')).toBe('ko')
-        expect(detectLanguage('한국어')).toBe('ko')
+    it('detects Korean', async () => {
+        expect(await detectLanguage('안녕하세요', 'local')).toBe('ko')
+        expect(await detectLanguage('한국어', 'local')).toBe('ko')
     })
 
-    it('detects Russian', () => {
-        expect(detectLanguage('Привет мир')).toBe('ru')
+    it('detects Russian', async () => {
+        expect(await detectLanguage('Привет мир', 'local')).toBe('ru')
     })
 
-    it('detects Ukrainian', () => {
-        expect(detectLanguage('Привіт світ')).toBe('uk')
+    it('detects Ukrainian', async () => {
+        expect(await detectLanguage('Привіт світ', 'local')).toBe('uk')
     })
 
-    it('detects Thai', () => {
-        expect(detectLanguage('สวัสดี')).toBe('th')
+    it('detects Thai', async () => {
+        expect(await detectLanguage('สวัสดี', 'local')).toBe('th')
     })
 
-    it('detects Arabic', () => {
-        expect(detectLanguage('مرحبا')).toBe('ar')
+    it('detects Arabic', async () => {
+        expect(await detectLanguage('مرحبا', 'local')).toBe('ar')
     })
 
-    it('detects Persian', () => {
-        expect(detectLanguage('سلام گچپژ')).toBe('fa')
+    it('detects Persian', async () => {
+        expect(await detectLanguage('سلام گچپژ', 'local')).toBe('fa')
     })
 
-    it('detects Hebrew', () => {
-        expect(detectLanguage('שלום')).toBe('he')
+    it('detects Hebrew', async () => {
+        expect(await detectLanguage('שלום', 'local')).toBe('he')
     })
 
-    it('detects Hindi', () => {
-        expect(detectLanguage('नमस्ते')).toBe('hi')
+    it('detects Hindi', async () => {
+        expect(await detectLanguage('नमस्ते', 'local')).toBe('hi')
     })
 
-    it('detects Vietnamese', () => {
-        expect(detectLanguage('Tôi là người')).toBe('vi')
+    it('detects Vietnamese', async () => {
+        expect(await detectLanguage('Tôi là người', 'local')).toBe('vi')
     })
 
-    it('defaults to English for Latin script', () => {
-        expect(detectLanguage('Hello world')).toBe('en')
-        expect(detectLanguage('Bonjour')).toBe('en')
+    it('defaults to English for Latin script', async () => {
+        expect(await detectLanguage('Hello world', 'local')).toBe('en')
+        expect(await detectLanguage('Bonjour', 'local')).toBe('en')
     })
 })
