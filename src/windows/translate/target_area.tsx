@@ -1,10 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { Card, Button, Spinner } from '@heroui/react'
-import { MdContentCopy, MdAutorenew } from 'react-icons/md'
+import { MdContentCopy, MdAutorenew, MdStarOutline, MdStar } from 'react-icons/md'
 import { TbTransformFilled } from 'react-icons/tb'
 import { VscUnmute } from 'react-icons/vsc'
 import { useTranslateStore } from '../../stores/translate_store'
+import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
+import { collectionServiceRegistry } from '../../services/index'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
@@ -18,11 +20,17 @@ interface TargetAreaProps {
 export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaProps): React.ReactElement {
   const results = useTranslateStore((s) => s.results)
   const isTranslating = useTranslateStore((s) => s.isTranslating)
+  const sourceText = useTranslateStore((s) => s.sourceText)
+  const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
   const targetLanguage = useTranslateStore((s) => s.targetLanguage)
   const setSourceText = useTranslateStore((s) => s.setSourceText)
 
+  const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
+  const serviceInstances = useConfigStore((s) => s.config.service_instances)
+
   const playingRef = useRef<HTMLAudioElement | null>(null)
   const [playingKey, setPlayingKey] = useState<string | null>(null)
+  const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text)
@@ -72,6 +80,27 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     }
   }, [targetLanguage, ttsServiceList])
 
+  const handleCollect = useCallback(async (instanceKey: string) => {
+    const result = results[instanceKey]
+    if (!result || !sourceText.trim()) return
+
+    const resultText = typeof result === 'string'
+      ? result
+      : (result as DictResult).definitions.map((d) => d.meanings.join('; ')).join('\n')
+
+    for (const collInstanceKey of collectionServiceList) {
+      const collKey = getServiceKey(collInstanceKey)
+      const svc = collectionServiceRegistry.get(collKey)
+      if (!svc) continue
+      const cfg = serviceInstances[collInstanceKey]?.config ?? {}
+      try {
+        await svc.send(sourceText, sourceLanguage, targetLanguage, resultText, cfg)
+      } catch { /* skip failed services */ }
+    }
+
+    setCollectedKeys((prev) => new Set(prev).add(instanceKey))
+  }, [results, sourceText, sourceLanguage, targetLanguage, collectionServiceList, serviceInstances])
+
   const renderResult = (instanceKey: string) => {
     const result = results[instanceKey]
 
@@ -117,6 +146,11 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                 <VscUnmute className="text-base" />
               </Button>
             )}
+            {collectionServiceList.length > 0 && (
+              <Button isIconOnly size="sm" variant="light" color={collectedKeys.has(instanceKey) ? 'warning' : 'default'} onPress={() => handleCollect(instanceKey)}>
+                {collectedKeys.has(instanceKey) ? <MdStar className="text-base" /> : <MdStarOutline className="text-base" />}
+              </Button>
+            )}
           </div>
         </>
       )
@@ -124,6 +158,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
 
     // DictResult
     const dict = result as DictResult
+    const dictText = dict.definitions.map((d) => d.meanings.join('; ')).join('\n')
     return (
       <div className="text-sm">
         {dict.definitions.map((def, i) => (
@@ -132,6 +167,13 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
             {def.meanings.join('; ')}
           </div>
         ))}
+        {collectionServiceList.length > 0 && (
+          <div className="flex items-center gap-1 mt-1">
+            <Button isIconOnly size="sm" variant="light" color={collectedKeys.has(instanceKey) ? 'warning' : 'default'} onPress={() => handleCollect(instanceKey)}>
+              {collectedKeys.has(instanceKey) ? <MdStar className="text-base" /> : <MdStarOutline className="text-base" />}
+            </Button>
+          </div>
+        )}
       </div>
     )
   }
