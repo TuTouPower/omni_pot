@@ -54,14 +54,14 @@
 
 ### 翻译窗口
 
-- [ ] **拖拽排序服务卡片** — react-beautiful-dnd 或 @dnd-kit
-- [ ] **流式翻译输出** — OpenAI/Ollama/ChatGLM stream 模式
-- [ ] **变量名转换** — Alt+Shift+U 循环: snake_case → SNAKE_CASE → kebab-case → dot.notation → 空格 → Title Case → CamelCase → PascalCase → snake_case
+- [x] **拖拽排序服务卡片** — @dnd-kit
+- [x] **流式翻译输出** — OpenAI/Ollama stream 模式
+- [x] **变量名转换** — Alt+Shift+U 循环: snake_case → SNAKE_CASE → kebab-case → dot.notation → 空格 → Title Case → CamelCase → PascalCase → snake_case
 - [x] **动态翻译** — dynamic_translate 配置，输入 1s 防抖自动翻译
-- [ ] **服务卡片折叠/展开** — spring 动画
-- [ ] **服务卡片内切换服务** — 下拉框切换实例
+- [x] **服务卡片折叠/展开** — spring 动画
+- [x] **服务卡片内切换服务** — 下拉框切换实例
 - [x] **重试按钮** — 翻译失败后显示
-- [ ] **收藏按钮** — 每个服务卡片底部，对应 collection_service_list 中的服务
+- [x] **收藏按钮** — 每个服务卡片底部，对应 collection_service_list 中的服务
 - [x] **SourceArea 补全** — 删除换行按钮、清空按钮、TTS 朗读按钮
 - [x] **IME 处理** — 防止输入法与语言检测竞态
 - [x] **窗口大小记忆** — translate_remember_window_size + 保存尺寸
@@ -81,9 +81,9 @@
 
 ### 配置窗口
 
-- [ ] **字体选择** — 系统字体列表下拉框 + 预览
+- [x] **字体选择** — 系统字体列表下拉框 + 预览
 - [x] **自动启动** — 开机自启开关
-- [ ] **透明开关** — macOS 上隐藏
+- [x] **透明开关** — macOS 上隐藏
 - [x] **托盘点击事件** — tray_click_event（仅 Windows）
 
 ---
@@ -101,14 +101,15 @@
   - 插件配置 UI（动态表单）
   - 支持 translate/recognize/tts/collection 四种类型
 
-- [ ] **自动更新** — updater 窗口
+- [x] **自动更新** — updater 窗口
   - 检查 GitHub releases
-  - 下载 + 安装 + 重启
-  - 更新日志 Markdown 渲染
-  - 进度条
+  - ~~下载 + 安装 + 重启~~（需 electron-builder 打包后实现）
+  - 更新日志渲染
+  - 下载链接
 
-- [ ] **语言检测在线引擎** — 目前只有本地 JS 检测
-  - baidu / tencent / niutrans / google / bing 在线检测 API
+- [ ] **语言检测在线引擎** — bing/google 已实现
+  - [x] bing / google 在线检测 API
+  - [x] baidu / tencent / niutrans 在线检测 API
   - translate_detect_engine 配置已存在，需要实现对应 API 调用
 
 ---
