@@ -99,9 +99,6 @@ export default function DictWindow(): React.ReactElement {
 
     useEffect(() => {
         window.electronAPI.ready('dict')
-    }, [])
-
-    useEffect(() => {
         window.electronAPI.dict.check().then(({ ready }) => setDictReady(ready))
     }, [])
 

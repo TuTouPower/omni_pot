@@ -1,14 +1,8 @@
 import { app } from 'electron'
 import { join } from 'path'
+import { existsSync, createReadStream } from 'fs'
+import { createGunzip } from 'zlib'
 import Database from 'better-sqlite3'
-
-export interface DictEntry {
-    id: number
-    simplified: string
-    traditional: string
-    pinyin: string
-    english: string
-}
 
 let db: Database.Database | undefined
 
@@ -42,7 +36,6 @@ function init_db(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_traditional ON entries(traditional)
     `)
 
-    // FTS5 for English lookup — only create if entries table has data but FTS doesn't
     const fts_exists = database.prepare(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'"
     ).get()
@@ -79,10 +72,44 @@ export function import_from_text(text: string): number {
 
     insert_many()
 
-    // Rebuild FTS index after import
     database.exec('INSERT INTO entries_fts(entries_fts) VALUES("rebuild")')
 
     return count
+}
+
+function find_bundled_cedict(): string | null {
+    // Production: process.resourcesPath/data/dict/cedict.txt.gz
+    const prod_path = join(process.resourcesPath, 'data', 'dict', 'cedict.txt.gz')
+    if (existsSync(prod_path)) return prod_path
+
+    // Development: project root data/dict/cedict.txt.gz
+    const dev_path = join(app.getAppPath(), 'data', 'dict', 'cedict.txt.gz')
+    if (existsSync(dev_path)) return dev_path
+
+    return null
+}
+
+function read_gzip_file(path: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const chunks: Buffer[] = []
+        const stream = createReadStream(path).pipe(createGunzip())
+        stream.on('data', (chunk: Buffer) => chunks.push(chunk))
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')))
+        stream.on('error', reject)
+    })
+}
+
+export async function auto_import_if_needed(): Promise<void> {
+    const database = get_dict_db()
+    const row = database.prepare('SELECT COUNT(*) as count FROM entries LIMIT 1').get() as { count: number }
+    if (row.count > 0) return
+
+    const bundled = find_bundled_cedict()
+    if (!bundled) return
+
+    const text = await read_gzip_file(bundled)
+    const count = import_from_text(text)
+    console.log(`[dict] imported ${count} CC-CEDICT entries from bundled file`)
 }
 
 export function is_ready(): boolean {

@@ -21,7 +21,7 @@ import { registerHistoryHandlers } from './ipc/history_handlers'
 import { registerBackupHandlers } from './ipc/backup_handlers'
 import { registerDictHandlers } from './ipc/dict_handlers'
 import { close_history } from './history'
-import { close_dict } from './dict'
+import { close_dict, auto_import_if_needed } from './dict'
 import { startServer, stopServer } from './server'
 import { applyProxy } from './proxy'
 import { checkForUpdate } from './updater'
@@ -141,6 +141,10 @@ if (!gotLock) {
     }
 
     checkForUpdate(windowManager)
+
+    auto_import_if_needed().catch((err) => {
+      debug('CC-CEDICT auto-import failed:', err)
+    })
     } catch (err) {
       console.error('[main] Init error:', err)
     }
