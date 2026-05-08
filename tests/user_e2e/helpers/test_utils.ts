@@ -99,6 +99,37 @@ export async function triggerTranslateViaApi(text: string): Promise<void> {
     })
 }
 
+/** Trigger selection translate via E2E HTTP endpoint with optional text injection */
+export async function triggerSelectionTranslate(text?: string): Promise<{ success: boolean; method?: string; reason?: string }> {
+    const http = await import('http')
+    return new Promise((resolve, reject) => {
+        const body = text ? JSON.stringify({ text }) : ''
+        const req = http.request({
+            hostname: '127.0.0.1',
+            port: _httpPort,
+            path: '/trigger-selection',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(body ? { 'Content-Length': String(body.length) } : {})
+            }
+        }, (res) => {
+            const chunks: Buffer[] = []
+            res.on('data', (chunk: Buffer) => chunks.push(chunk))
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(Buffer.concat(chunks).toString()))
+                } catch {
+                    resolve({ success: false })
+                }
+            })
+        })
+        req.on('error', reject)
+        if (body) req.write(body)
+        req.end()
+    })
+}
+
 /** Wait until the translate results area has at least N result cards */
 export async function waitForResults(minCount: number, timeoutMs = 15000): Promise<void> {
     const c = getClient()
