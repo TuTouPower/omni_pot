@@ -41,6 +41,7 @@ export default function ScreenshotWindow(): React.ReactElement {
             setBackground(base64)
             setMode(m)
         })
+        window.electronAPI.ready('screenshot')
         return unsub
     }, [])
 
