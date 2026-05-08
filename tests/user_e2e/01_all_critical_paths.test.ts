@@ -5,7 +5,16 @@ import {
     init, cleanup, getTranslateClient,
     clearTextarea, getTextareaValue,
     triggerSelectionTranslate, triggerDictLookup, triggerClipboardText,
-    triggerTranslateViaApi,
+    triggerTranslateViaApi, captureClockImage,
+    waitForSourceText, waitForSelector,
+    readConfig, writeConfig
+} from './helpers/test_utils'
+import { CdpClient, findAllTargets } from './helpers/cdp_helper'
+import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
+    init, cleanup, getTranslateClient,
+    clearTextarea, getTextareaValue,
+    triggerSelectionTranslate, triggerDictLookup, triggerClipboardText,
+    triggerTranslateViaApi, captureClockImage,
     waitForSourceText, waitForSelector, waitForResults,
     readConfig, writeConfig
 } from './helpers/test_utils'
@@ -32,29 +41,18 @@ interface CPResult {
     producesHistory: boolean
 }
 
-/** Create a test image with known text via browser canvas, return base64 without data-url prefix */
-async function createTestImage(client: CdpClient, text: string): Promise<string> {
-    const dataUrl = await client.evaluate(`
-        (() => {
-            const canvas = document.createElement('canvas')
-            canvas.width = 400; canvas.height = 80
-            const ctx = canvas.getContext('2d')
-            ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 400, 80)
-            ctx.fillStyle = 'black'; ctx.font = 'bold 36px Arial'
-            ctx.fillText(${JSON.stringify(text)}, 20, 55)
-            return canvas.toDataURL('image/png')
-        })()
-    `) as string
-    return dataUrl.replace('data:image/png;base64,', '')
+/** Parse hours and minutes from OCR text */
+function parseTimeFromOcr(text: string): { hours: number; minutes: number } | null {
+    const match = text.match(/(\d{1,2})\s*[:：]\s*(\d{2})/)
+    if (!match) return null
+    return { hours: parseInt(match[1], 10), minutes: parseInt(match[2], 10) }
 }
 
-/** Run real Tesseract.js OCR on a base64 image */
-async function recognizeText(imageBase64: string, lang = 'eng'): Promise<string> {
-    const dataUrl = `data:image/png;base64,${imageBase64}`
-    const worker = await Tesseract.createWorker(lang, 1, { langPath: TESSERACT_LANG_PATH, cachePath: TESSERACT_LANG_PATH })
-    const result = await worker.recognize(dataUrl)
-    await worker.terminate()
-    return result.data.text.trim()
+/** Check if two times are within tolerance minutes of each other */
+function isTimeClose(h1: number, m1: number, h2: number, m2: number, toleranceMinutes = 2): boolean {
+    const t1 = h1 * 60 + m1
+    const t2 = h2 * 60 + m2
+    return Math.abs(t1 - t2) <= toleranceMinutes
 }
 
 /** Read result text from a specific service card */
@@ -162,11 +160,32 @@ async function executeCP2(): Promise<CPResult> {
 }
 
 async function executeCP3(): Promise<CPResult> {
-    const client = getTranslateClient()
-    const imageBase64 = await createTestImage(client, 'OCR TEST WORDS')
-    const ocrText = await recognizeText(imageBase64, 'eng')
+    const beforeTime = new Date()
+
+    // Capture real taskbar clock screenshot
+    const imageBase64 = await captureClockImage()
+    expect(imageBase64.length).toBeGreaterThan(0)
+
+    // Run real Tesseract OCR on the clock image
+    const worker = await Tesseract.createWorker('eng', 1, { langPath: TESSERACT_LANG_PATH, cachePath: TESSERACT_LANG_PATH })
+    const result = await worker.recognize(`data:image/png;base64,${imageBase64}`)
+    await worker.terminate()
+    const ocrText = result.data.text.trim()
+    console.log(`[CP3] OCR text from taskbar clock: "${ocrText}"`)
     expect(ocrText.length).toBeGreaterThan(0)
 
+    // Parse time from OCR and compare with current time
+    const parsed = parseTimeFromOcr(ocrText)
+    expect(parsed).not.toBeNull()
+    console.log(`[CP3] Parsed time: ${parsed!.hours}:${String(parsed!.minutes).padStart(2, '0')}`)
+
+    const nowHours = beforeTime.getHours()
+    const nowMinutes = beforeTime.getMinutes()
+    const timeClose = isTimeClose(parsed!.hours, parsed!.minutes, nowHours, nowMinutes, 2)
+    expect(timeClose).toBe(true)
+
+    // Also open recognize window to verify the full OCR pipeline
+    const client = getTranslateClient()
     await client.evaluate(`
         window.electronAPI.ocr.openRecognize('${imageBase64}', ${JSON.stringify(ocrText)})
     `)
@@ -185,7 +204,7 @@ async function executeCP3(): Promise<CPResult> {
     expect(displayedText.length).toBeGreaterThan(0)
     recognizeClient.close()
 
-    return { description: 'CP3 OCR Recognize', sourceText: ocrText, producesHistory: false }
+    return { description: 'CP3 OCR Recognize (taskbar clock)', sourceText: ocrText, producesHistory: false }
 }
 
 async function executeCP4(): Promise<CPResult> {
