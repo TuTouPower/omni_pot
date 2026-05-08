@@ -55,6 +55,21 @@ async function waitForServiceResult(instanceKey: string, timeoutMs = TRANSLATE_R
     return result ?? ''
 }
 
+/** Helper: wait for ALL services to return non-empty results */
+async function waitForAllServiceResults(
+    serviceList: string[],
+    timeoutMs = TRANSLATE_RESULT_TIMEOUT
+): Promise<Record<string, string>> {
+    const results: Record<string, string> = {}
+    const deadline = Date.now() + timeoutMs
+    for (const key of serviceList) {
+        const remaining = deadline - Date.now()
+        if (remaining <= 0) throw new Error(`Timed out waiting for results (got ${Object.keys(results).length}/${serviceList.length})`)
+        results[key] = await waitForServiceResult(key, remaining)
+    }
+    return results
+}
+
 /** Helper: get all result card keys in DOM order */
 async function getResultCardKeys(): Promise<string[]> {
     const c = await getTranslateClient()
@@ -139,7 +154,7 @@ describe('Critical Path 1: 划词翻译全流程', () => {
 
     // ── VP3: Multiple services translate in parallel, results in instance order ──
 
-    it('English→Chinese: multiple services return real translation results', async () => {
+    it('English→Chinese: all services return real translation results', async () => {
         await clearTextarea()
         await triggerTranslateViaApi('hello world')
         await waitForSourceText('hello world', 5000)
@@ -147,13 +162,11 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         const serviceList = await readConfig('translate_service_list') as string[]
         expect(serviceList.length).toBeGreaterThanOrEqual(2)
 
-        // Wait for at least one service to produce a real result
-        const firstKey = serviceList[0]
-        const result = await waitForServiceResult(firstKey, TRANSLATE_RESULT_TIMEOUT)
-        expect(result.length).toBeGreaterThan(0)
-
-        // The result should contain actual translated text, not just the source
-        expect(result).not.toBe('hello world')
+        const results = await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
+        for (const result of Object.values(results)) {
+            expect(result.length).toBeGreaterThan(0)
+            expect(result).not.toBe('hello world')
+        }
     }, 45000)
 
     it('result cards appear in DOM in the same order as service_list config', async () => {
@@ -196,13 +209,12 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         await waitForSourceText('你好世界', 5000)
 
         const serviceList = await readConfig('translate_service_list') as string[]
-        const firstKey = serviceList[0]
-        const result = await waitForServiceResult(firstKey, TRANSLATE_RESULT_TIMEOUT)
+        const results = await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
 
-        // Result should be English (since fallback from zh_cn target to en second language)
-        // Check it contains common English words or is not just Chinese
-        const hasEnglish = /[a-zA-Z]{2,}/.test(result)
-        expect(hasEnglish).toBe(true)
+        for (const result of Object.values(results)) {
+            const hasEnglish = /[a-zA-Z]{2,}/.test(result)
+            expect(hasEnglish).toBe(true)
+        }
     }, 45000)
 
     it('English→Chinese: auto-detect detects en, translates to zh_cn target', async () => {
@@ -211,12 +223,12 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         await waitForSourceText('good morning', 5000)
 
         const serviceList = await readConfig('translate_service_list') as string[]
-        const firstKey = serviceList[0]
-        const result = await waitForServiceResult(firstKey, TRANSLATE_RESULT_TIMEOUT)
+        const results = await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
 
-        // Result should be Chinese (target language)
-        const hasChinese = /[一-鿿]/.test(result)
-        expect(hasChinese).toBe(true)
+        for (const result of Object.values(results)) {
+            const hasChinese = /[一-鿿]/.test(result)
+            expect(hasChinese).toBe(true)
+        }
     }, 45000)
 
     // ── VP5: String results render as read-only textarea ──
@@ -260,7 +272,7 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         await waitForSourceText(testText, 5000)
 
         const serviceList = await readConfig('translate_service_list') as string[]
-        await waitForServiceResult(serviceList[0], TRANSLATE_RESULT_TIMEOUT)
+        await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
 
         // Wait for async history write
         await new Promise(r => setTimeout(r, 2000))
@@ -285,18 +297,21 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         await waitForSourceText('first translation', 5000)
 
         const serviceList = await readConfig('translate_service_list') as string[]
-        const firstResult = await waitForServiceResult(serviceList[0], TRANSLATE_RESULT_TIMEOUT)
-        expect(firstResult.length).toBeGreaterThan(0)
+        const firstResults = await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
+        for (const result of Object.values(firstResults)) {
+            expect(result.length).toBeGreaterThan(0)
+        }
 
         // Second translation with different text
         await clearTextarea()
         await triggerTranslateViaApi('second translation test')
         await waitForSourceText('second translation test', 5000)
 
-        const secondResult = await waitForServiceResult(serviceList[0], TRANSLATE_RESULT_TIMEOUT)
-        expect(secondResult.length).toBeGreaterThan(0)
+        const secondResults = await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
+        for (const result of Object.values(secondResults)) {
+            expect(result.length).toBeGreaterThan(0)
+        }
 
-        // Results should be different (different source texts)
         // Also verify the source text updated correctly
         const finalSource = await getTextareaValue()
         expect(finalSource).toBe('second translation test')
@@ -308,8 +323,10 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         await waitForSourceText('hi', 5000)
 
         const serviceList = await readConfig('translate_service_list') as string[]
-        const result = await waitForServiceResult(serviceList[0], TRANSLATE_RESULT_TIMEOUT)
-        expect(result.length).toBeGreaterThan(0)
+        const results = await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
+        for (const result of Object.values(results)) {
+            expect(result.length).toBeGreaterThan(0)
+        }
     }, 30000)
 
     it('long text translates without crash', async () => {
