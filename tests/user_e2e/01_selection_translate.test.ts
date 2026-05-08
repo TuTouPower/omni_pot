@@ -3,7 +3,7 @@ import {
     init, cleanup,
     getTranslateClient,
     clearTextarea, getTextareaValue,
-    triggerTranslateViaApi, waitForSourceText,
+    triggerTranslateViaApi, triggerSelectionTranslate, waitForSourceText,
     readConfig, waitForSelector
 } from './helpers/test_utils'
 import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
@@ -345,4 +345,16 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         const alive = await c.evaluate('document.querySelector("textarea") !== null') as boolean
         expect(alive).toBe(true)
     }, 30000)
+
+    // ── VP8: Selection translate via E2E trigger ──
+
+    it('E2E selection trigger injects text into translate window', async () => {
+        await clearTextarea()
+        const response = await triggerSelectionTranslate('e2e selected text')
+        expect(response.success).toBe(true)
+
+        await waitForSourceText('e2e selected text', 5000)
+        const value = await getTextareaValue()
+        expect(value).toBe('e2e selected text')
+    }, 20000)
 })
