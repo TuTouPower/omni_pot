@@ -1,6 +1,7 @@
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
+import { getAccessToken } from './baidu_common'
 
 const BAIDU_OCR_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -35,19 +36,6 @@ const BAIDU_OCR_LANG_MAP: Record<string, string> = {
     uk: 'CHN_ENG'
 }
 
-async function get_access_token(client_id: string, client_secret: string): Promise<string> {
-    const url = `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=${client_id}&client_secret=${client_secret}`
-    const resp = await fetch(url)
-    if (!resp.ok) {
-        throw new Error(`Baidu OCR token error: ${resp.status}`)
-    }
-    const data = (await resp.json()) as { access_token?: string; error?: string }
-    if (!data.access_token) {
-        throw new Error(`Baidu OCR token error: ${data.error ?? 'unknown'}`)
-    }
-    return data.access_token
-}
-
 export const baiduOcrService: OcrService = {
     key: 'baidu_ocr',
     name: 'Baidu OCR',
@@ -60,7 +48,7 @@ export const baiduOcrService: OcrService = {
     ): Promise<string> {
         const client_id = config.client_id as string
         const client_secret = config.client_secret as string
-        const token = await get_access_token(client_id, client_secret)
+        const token = await getAccessToken(client_id, client_secret)
         const lang = BAIDU_OCR_LANG_MAP[language] ?? 'CHN_ENG'
 
         const resp = await fetch(
@@ -93,7 +81,7 @@ export const baiduOcrService: OcrService = {
         try {
             const client_id = config.client_id as string
             const client_secret = config.client_secret as string
-            const token = await get_access_token(client_id, client_secret)
+            const token = await getAccessToken(client_id, client_secret)
             return token.length > 0
         } catch {
             return false

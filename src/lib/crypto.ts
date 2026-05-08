@@ -134,8 +134,29 @@ async function sha256(message: string): Promise<string> {
     return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-function hmacSync(key: string, message: string, algorithm: 'sha1' | 'sha256'): string {
-    throw new Error(`HMAC-${algorithm} requires async. Use hmac() instead.`)
+function hexToBytes(hex: string): Uint8Array {
+    const bytes = new Uint8Array(hex.length / 2)
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16)
+    }
+    return bytes
 }
 
-export { md5, hmac, sha256, hmacSync }
+function hexToBase64(hex: string): string {
+    const bytes = hexToBytes(hex)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i])
+    }
+    return btoa(binary)
+}
+
+function utcDate(timestamp: number): string {
+    const d = new Date(timestamp * 1000)
+    const year = d.getUTCFullYear()
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(d.getUTCDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+export { md5, hmac, sha256, hexToBytes, hexToBase64, utcDate }

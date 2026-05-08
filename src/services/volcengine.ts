@@ -1,6 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
-import { hmac, sha256 } from '@/lib/crypto'
+import { signVolcengineRequest } from './volcengine_sign'
 
 const VOLCENGINE_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'ja', 'en', 'ko', 'fr', 'es', 'ru', 'de',
@@ -40,22 +40,6 @@ const VOLCENGINE_LANG_MAP: Record<string, string> = {
     he: 'he'
 }
 
-function hexToBuffer(hex: string): ArrayBuffer {
-    const bytes = new Uint8Array(hex.length / 2)
-    for (let i = 0; i < hex.length; i += 2) {
-        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16)
-    }
-    return bytes.buffer
-}
-
-function getDate(timestamp: number): string {
-    const d = new Date(timestamp * 1000)
-    const year = d.getUTCFullYear()
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(d.getUTCDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-}
-
 export const volcengineService: TranslateService = {
     key: 'volcengine',
     name: 'Volcengine',
@@ -73,46 +57,21 @@ export const volcengineService: TranslateService = {
         const sourceLang = VOLCENGINE_LANG_MAP[from] ?? from
         const targetLang = VOLCENGINE_LANG_MAP[to] ?? to
 
-        const timestamp = Math.floor(Date.now() / 1000)
-        const date = getDate(timestamp)
-
         const body = JSON.stringify({
             SourceLanguage: sourceLang,
             TargetLanguage: targetLang,
             Text: text
         })
 
-        const host = 'open.volcengineapi.com'
-        const service = 'translate'
-        const region = 'cn-north-1'
-        const action = 'TranslateText'
+        const { headers, url } = await signVolcengineRequest({
+            appId: appid, secret,
+            host: 'open.volcengineapi.com',
+            service: 'translate', region: 'cn-north-1',
+            action: 'TranslateText', version: '2020-06-01', body
+        })
 
-        const hashedPayload = await sha256(body)
-        const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-content-sha256:${hashedPayload}\nx-date:${date}\n`
-        const signedHeaders = 'content-type;host;x-content-sha256;x-date'
-        const canonicalRequest = `POST\n/\nAction=${action}&Version=2020-06-01\n${canonicalHeaders}\n${signedHeaders}\n${hashedPayload}`
-
-        const credentialScope = `${date}/${region}/${service}/request`
-        const stringToSign = `HMAC-SHA256\n${date}\n${credentialScope}\n${await sha256(canonicalRequest)}`
-
-        const kDate = await hmac(secret, date, 'SHA-256')
-        const kRegion = await hmac(hexToBuffer(kDate), region, 'SHA-256')
-        const kService = await hmac(hexToBuffer(kRegion), service, 'SHA-256')
-        const kSigning = await hmac(hexToBuffer(kService), 'request', 'SHA-256')
-        const signature = await hmac(hexToBuffer(kSigning), stringToSign, 'SHA-256')
-
-        const authorization = `HMAC-SHA256 Credential=${appid}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
-
-        const resp = await fetch(`https://${host}/?Action=${action}&Version=2020-06-01`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Host': host,
-                'X-Date': date,
-                'X-Content-Sha256': hashedPayload,
-                'Authorization': authorization
-            },
-            body
+        const resp = await fetch(url, {
+            method: 'POST', headers, body
         })
 
         if (!resp.ok) {

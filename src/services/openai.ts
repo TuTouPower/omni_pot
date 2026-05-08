@@ -8,12 +8,10 @@ const OPENAI_LANGUAGES: LanguageCode[] = [
     'nl', 'uk', 'he'
 ]
 
+import { buildTranslationPrompt } from './llm_prompt'
+
 function build_system_prompt(config: ServiceConfig, from: LanguageCode, to: LanguageCode): string {
-    const custom = config.promptList as string | undefined
-    if (custom) return custom
-    const source_lang = from === 'auto' ? 'auto-detect' : from
-    const target_lang = to
-    return `You are a professional translation engine. Translate the following text from ${source_lang} to ${target_lang}. Only output the translation result, nothing else.`
+    return buildTranslationPrompt(config, from, to)
 }
 
 function build_url(config: ServiceConfig): string {

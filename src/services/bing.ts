@@ -46,7 +46,11 @@ interface BingPageConfig {
   token: string
 }
 
+let cachedConfig: BingPageConfig | null = null
+let configExpiresAt = 0
+
 async function getPageConfig(): Promise<BingPageConfig> {
+  if (cachedConfig && Date.now() < configExpiresAt) return cachedConfig
   const resp = await fetch('https://www.bing.com/translator')
   const html = await resp.text()
   const ig_match = html.match(/IG:"([^"]+)"/)
@@ -57,7 +61,9 @@ async function getPageConfig(): Promise<BingPageConfig> {
   if (!ig_match || !iid_match || !token_match) {
     throw new Error('Failed to get Bing page config')
   }
-  return { ig: ig_match[1], iid: iid_match[1], key: token_match[1], token: token_match[2] }
+  cachedConfig = { ig: ig_match[1], iid: iid_match[1], key: token_match[1], token: token_match[2] }
+  configExpiresAt = Date.now() + 5 * 60 * 1000
+  return cachedConfig
 }
 
 export const bingService: TranslateService = {

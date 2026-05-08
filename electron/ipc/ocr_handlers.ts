@@ -103,7 +103,7 @@ export function registerOcrHandlers(manager: WindowManager): void {
             height: h
         })
 
-        if (rememberSize) {
+        if (rememberSize && !win.listenerCount('resize')) {
             win.on('resize', () => {
                 const [cw, ch] = win.getSize()
                 setConfig('translate_window_width', cw)
