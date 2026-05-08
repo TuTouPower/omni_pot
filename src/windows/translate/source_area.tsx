@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { Button, Chip } from '@heroui/react'
 import { HiTranslate } from 'react-icons/hi'
-import { MdContentCopy, MdSmartButton } from 'react-icons/md'
+import { MdContentCopy, MdSmartButton, MdTextRotateUp } from 'react-icons/md'
 import { LuDelete } from 'react-icons/lu'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfig } from '../../hooks/use_config'
@@ -9,6 +9,53 @@ import { useConfig } from '../../hooks/use_config'
 interface SourceAreaProps {
   onTranslate: () => void
   inputRef?: React.RefObject<HTMLTextAreaElement | null>
+}
+
+type CaseFormat = 'snake' | 'screaming_snake' | 'kebab' | 'dot' | 'space' | 'title' | 'camel' | 'pascal'
+
+const CASE_CYCLE: CaseFormat[] = ['snake', 'screaming_snake', 'kebab', 'dot', 'space', 'title', 'camel', 'pascal']
+
+function detect_current_format(text: string): CaseFormat {
+  if (text.includes('_') && text === text.toUpperCase()) return 'screaming_snake'
+  if (text.includes('_')) return 'snake'
+  if (text.includes('-')) return 'kebab'
+  if (text.includes('.') && !text.includes(' ')) return 'dot'
+  if (text.includes(' ') && /^(?:[A-Z][a-z]* )*[A-Z][a-z]*$/.test(text)) return 'title'
+  if (text.includes(' ')) return 'space'
+  if (/^[A-Z]/.test(text) && /[a-z]/.test(text) && !text.includes('_') && !text.includes('-') && !text.includes(' ')) return 'pascal'
+  if (text === text.toUpperCase() && text.length > 1) return 'screaming_snake'
+  if (/^[a-z]/.test(text) && /[A-Z]/.test(text)) return 'camel'
+  return 'snake'
+}
+
+function split_words(text: string): string[] {
+  if (text.includes('_')) return text.split('_').filter(Boolean)
+  if (text.includes('-')) return text.split('-').filter(Boolean)
+  if (text.includes('.')) return text.split('.').filter(Boolean)
+  if (text.includes(' ')) return text.split(/\s+/).filter(Boolean)
+  return text.replace(/([a-z])([A-Z])/g, '$1 $2').split(/\s+/).filter(Boolean)
+}
+
+function apply_format(words: string[], format: CaseFormat): string {
+  const lower = words.map((w) => w.toLowerCase())
+  switch (format) {
+    case 'snake': return lower.join('_')
+    case 'screaming_snake': return lower.join('_').toUpperCase()
+    case 'kebab': return lower.join('-')
+    case 'dot': return lower.join('.')
+    case 'space': return lower.join(' ')
+    case 'title': return lower.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    case 'camel': return lower.map((w, i) => i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)).join('')
+    case 'pascal': return lower.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')
+  }
+}
+
+function cycle_variable_name(text: string): string {
+  const current = detect_current_format(text)
+  const idx = CASE_CYCLE.indexOf(current)
+  const next = CASE_CYCLE[(idx + 1) % CASE_CYCLE.length]
+  const words = split_words(text)
+  return apply_format(words, next)
 }
 
 export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.ReactElement | null {
@@ -24,12 +71,17 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.nativeEvent.isComposing) return
+      if (e.key === 'U' && e.altKey && e.shiftKey) {
+        e.preventDefault()
+        handleVariableCycle()
+        return
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
         onTranslate()
       }
     },
-    [onTranslate]
+    [onTranslate, handleVariableCycle]
   )
 
   const handleCopy = useCallback(() => {
@@ -43,6 +95,18 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
   const handleClear = useCallback(() => {
     setSourceText('')
   }, [setSourceText])
+
+  const handleVariableCycle = useCallback(() => {
+    const textarea = textAreaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    if (start === end) return
+    const selected = sourceText.substring(start, end)
+    const transformed = cycle_variable_name(selected)
+    const newText = sourceText.substring(0, start) + transformed + sourceText.substring(end)
+    setSourceText(newText)
+  }, [sourceText, setSourceText, textAreaRef])
 
   useEffect(() => {
     if (!dynamicTranslate || !sourceText.trim()) return
@@ -81,6 +145,9 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
         </Button>
         <Button isIconOnly size="sm" variant="light" onPress={handleDeleteNewline} isDisabled={!sourceText}>
           <MdSmartButton className="text-lg" />
+        </Button>
+        <Button isIconOnly size="sm" variant="light" onPress={handleVariableCycle} isDisabled={!sourceText}>
+          <MdTextRotateUp className="text-lg" />
         </Button>
         <div className="flex-1" />
         <Button isIconOnly size="sm" variant="light" onPress={handleClear} isDisabled={!sourceText}>
