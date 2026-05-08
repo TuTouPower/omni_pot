@@ -17,6 +17,8 @@ const THEME_OPTIONS = [
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24].map((s) => ({ key: String(s), label: `${s}px` }))
 
+const IS_MAC = navigator.platform.toLowerCase().includes('mac')
+
 const FONT_OPTIONS = [
     { key: 'default', label: 'System Default' },
     { key: 'Arial', label: 'Arial' },
@@ -104,14 +106,16 @@ export default function GeneralPage(): React.ReactElement {
                     >
                         Preview: Hello World 你好世界 こんにちは 안녕하세요
                     </div>
-                    <Switch isSelected={transparent} onChange={setTransparent}>
-                        <Switch.Control>
-                            <Switch.Thumb />
-                        </Switch.Control>
-                        <Switch.Content>
-                            <Label className="text-sm">Transparent background</Label>
-                        </Switch.Content>
-                    </Switch>
+                    {IS_MAC && (
+                        <Switch isSelected={transparent} onChange={setTransparent}>
+                            <Switch.Control>
+                                <Switch.Thumb />
+                            </Switch.Control>
+                            <Switch.Content>
+                                <Label className="text-sm">Transparent background</Label>
+                            </Switch.Content>
+                        </Switch>
+                    )}
                     <Switch isSelected={devMode} onChange={setDevMode}>
                         <Switch.Control>
                             <Switch.Thumb />
