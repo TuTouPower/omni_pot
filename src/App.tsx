@@ -6,6 +6,7 @@ const ConfigWindow = React.lazy(() => import('./windows/config'))
 const ScreenshotWindow = React.lazy(() => import('./windows/screenshot'))
 const RecognizeWindow = React.lazy(() => import('./windows/recognize'))
 const DictWindow = React.lazy(() => import('./windows/dict'))
+const UpdaterWindow = React.lazy(() => import('./windows/updater'))
 
 function getLabel(): string {
   return window.location.hash.replace(/^#/, '') || 'translate'
@@ -29,7 +30,7 @@ export default function App(): React.ReactElement {
       case 'dict':
         return <DictWindow />
       case 'updater':
-        return <div className="p-4 text-center">{label} window (coming soon)</div>
+        return <UpdaterWindow />
       default:
         return <TranslateWindow />
     }
