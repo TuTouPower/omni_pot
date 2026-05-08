@@ -1,7 +1,7 @@
 import { globalShortcut } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
-import { getConfig } from '../config/store'
+import { getConfig, setConfig } from '../config/store'
 import type { ConfigKey } from '@shared/types/config'
 import { start_screenshot_capture } from '../screenshot'
 
@@ -11,11 +11,14 @@ export function setWindowManagerForHotkey(mgr: WindowManager): void {
   windowManager = mgr
 }
 
-const TRANSLATE_OPTS = {
-  label: WindowLabel.TRANSLATE,
-  width: 350,
-  height: 420
-} as const
+function getTranslateOpts() {
+  const remember = getConfig('translate_remember_window_size') as boolean
+  return {
+    label: WindowLabel.TRANSLATE,
+    width: remember ? (getConfig('translate_window_width') as number) : 350,
+    height: remember ? (getConfig('translate_window_height') as number) : 420
+  }
+}
 
 const DICT_OPTS = {
   label: WindowLabel.DICT,
@@ -31,7 +34,7 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
         existing.hide()
         return
       }
-      const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+      const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, getTranslateOpts())
       win.webContents.send(channel)
     }
   }
@@ -67,7 +70,7 @@ async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
         return
     }
 
-    mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+    mgr.focusOrCreate(WindowLabel.TRANSLATE, getTranslateOpts())
     mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', result.text)
 }
 

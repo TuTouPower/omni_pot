@@ -8,6 +8,7 @@ import {
     stopClipboardMonitor,
     isClipboardMonitoring
 } from '../clipboard'
+import { getConfig } from '../config/store'
 
 let tray: Tray | null = null
 let windowManager: WindowManager | null = null
@@ -31,6 +32,25 @@ export function createTray(): void {
 
   tray = new Tray(icon.resize({ width: 16, height: 16 }))
   tray.setToolTip('Pot Desktop')
+
+  tray.on('click', () => {
+    const action = getConfig('tray_click_event') as string
+    if (action === 'show_translate') {
+      windowManager?.focusOrCreate(WindowLabel.TRANSLATE, {
+        label: WindowLabel.TRANSLATE,
+        width: 350,
+        height: 420
+      })
+    } else if (action === 'show_config' || !action) {
+      windowManager?.focusOrCreate(WindowLabel.CONFIG, {
+        label: WindowLabel.CONFIG,
+        width: 800,
+        height: 600,
+        minWidth: 800,
+        minHeight: 400
+      })
+    }
+  })
 
   rebuildMenu()
 }

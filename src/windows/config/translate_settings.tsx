@@ -32,6 +32,7 @@ export default function TranslatePage(): React.ReactElement {
     const [alwaysOnTop, setAlwaysOnTop] = useConfig('translate_always_on_top')
     const [hideSource, setHideSource] = useConfig('hide_source')
     const [hideLanguage, setHideLanguage] = useConfig('hide_language')
+    const [rememberWindowSize, setRememberWindowSize] = useConfig('translate_remember_window_size')
 
     const allLangItems = ALL_LANGUAGES.map((code) => ({ key: code, label: LANGUAGE_NAMES[code] }))
     const targetLangItems = TARGET_LANGUAGES.map((code) => ({ key: code, label: LANGUAGE_NAMES[code] }))
@@ -83,6 +84,10 @@ export default function TranslatePage(): React.ReactElement {
                     <Switch isSelected={hideLanguage} onChange={setHideLanguage}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
                         <Switch.Content><Label className="text-sm">Hide language selector</Label></Switch.Content>
+                    </Switch>
+                    <Switch isSelected={rememberWindowSize} onChange={setRememberWindowSize}>
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Content><Label className="text-sm">Remember window size</Label></Switch.Content>
                     </Switch>
                 </Card.Content>
             </Card>

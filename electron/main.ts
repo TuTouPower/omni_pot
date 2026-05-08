@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
-import { initConfigStore, isFirstRun, commitFirstRun, getConfig } from './config/store'
+import { initConfigStore, isFirstRun, commitFirstRun, getConfig, setConfig } from './config/store'
 
 const debug = (...args: unknown[]) => console.log('[main]', ...args)
 
@@ -112,12 +112,19 @@ if (!gotLock) {
       frame: false
     })
 
-    // Always open config window for development
-    windowManager.createWindow({
+    // Always open translate window for development
+    const tw = windowManager.createWindow({
       label: WindowLabel.TRANSLATE,
-      width: 350,
-      height: 420
+      width: getConfig('translate_remember_window_size') ? (getConfig('translate_window_width') as number) : 350,
+      height: getConfig('translate_remember_window_size') ? (getConfig('translate_window_height') as number) : 420
     })
+    if (getConfig('translate_remember_window_size')) {
+      tw.on('resize', () => {
+        const [w, h] = tw.getSize()
+        setConfig('translate_window_width', w)
+        setConfig('translate_window_height', h)
+      })
+    }
 
     if (isFirstRun()) {
       windowManager.createWindow({

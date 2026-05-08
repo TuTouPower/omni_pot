@@ -3,6 +3,12 @@ import { Card, Label, NumberField, Switch, TextField } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import { SimpleSelect } from '../../components/simple_select'
 
+const TRAY_CLICK_OPTIONS = [
+    { key: 'show_config', label: 'Show Config' },
+    { key: 'show_translate', label: 'Show Translate' },
+    { key: 'none', label: 'None' }
+]
+
 const THEME_OPTIONS = [
     { key: 'system', label: 'System' },
     { key: 'light', label: 'Light' },
@@ -21,6 +27,8 @@ export default function GeneralPage(): React.ReactElement {
     const [proxyEnable, setProxyEnable] = useConfig('proxy_enable')
     const [proxyHost, setProxyHost] = useConfig('proxy_host')
     const [proxyPort, setProxyPort] = useConfig('proxy_port')
+    const [autoStart, setAutoStart] = useConfig('auto_start')
+    const [trayClickEvent, setTrayClickEvent] = useConfig('tray_click_event')
 
     return (
         <div className="flex flex-col gap-4">
@@ -37,6 +45,15 @@ export default function GeneralPage(): React.ReactElement {
                             <Label className="text-sm">Check for updates on startup</Label>
                         </Switch.Content>
                     </Switch>
+                    <Switch isSelected={autoStart} onChange={setAutoStart}>
+                        <Switch.Control>
+                            <Switch.Thumb />
+                        </Switch.Control>
+                        <Switch.Content>
+                            <Label className="text-sm">Auto start on login</Label>
+                        </Switch.Content>
+                    </Switch>
+                    <SimpleSelect label="Tray click action" value={trayClickEvent as string} onChange={(v) => setTrayClickEvent(v)} options={TRAY_CLICK_OPTIONS} />
                     <NumberField
                         value={serverPort}
                         onChange={(v) => { if (typeof v === 'number') setServerPort(v) }}
