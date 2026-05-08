@@ -215,6 +215,31 @@ export async function waitForSourceText(expected: string, timeoutMs = 5000): Pro
     })
 }
 
+/** Capture the taskbar clock area via E2E HTTP endpoint, return base64 PNG */
+export async function captureClockImage(): Promise<string> {
+    const http = await import('http')
+    return new Promise((resolve, reject) => {
+        const req = http.request({
+            hostname: '127.0.0.1',
+            port: _httpPort,
+            path: '/capture-clock',
+            method: 'GET'
+        }, (res) => {
+            const chunks: Buffer[] = []
+            res.on('data', (chunk: Buffer) => chunks.push(chunk))
+            res.on('end', () => {
+                try {
+                    const data = JSON.parse(Buffer.concat(chunks).toString())
+                    if (data.success) resolve(data.image)
+                    else reject(new Error(data.error ?? 'capture failed'))
+                } catch (e) { reject(e) }
+            })
+        })
+        req.on('error', reject)
+        req.end()
+    })
+}
+
 // Backward compat
 export function getTranslateClient(): CdpClient {
     return getClient()

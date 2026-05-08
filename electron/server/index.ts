@@ -1,5 +1,5 @@
 import http from 'http'
-import { clipboard } from 'electron'
+import { clipboard, desktopCapturer, screen } from 'electron'
 import { getConfig, getAllConfig } from '../config/store'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
@@ -75,6 +75,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-clipboard') {
                 handleTriggerClipboard(req, res)
+                return
+            }
+
+            if (IS_E2E && req.method === 'GET' && url.pathname === '/capture-clock') {
+                handleCaptureClock(res)
                 return
             }
 
@@ -242,4 +247,46 @@ function handleTriggerClipboard(
             res.end(JSON.stringify({ success: false, error: String(error) }))
         }
     })
+}
+
+function handleCaptureClock(res: http.ServerResponse): void {
+    void (async () => {
+        try {
+            const primaryDisplay = screen.getPrimaryDisplay()
+            const { width, height } = primaryDisplay.bounds
+            const sf = primaryDisplay.scaleFactor
+
+            const sources = await desktopCapturer.getSources({
+                types: ['screen'],
+                thumbnailSize: {
+                    width: Math.floor(width * sf),
+                    height: Math.floor(height * sf)
+                }
+            })
+
+            if (sources.length === 0) {
+                res.writeHead(500)
+                res.end(JSON.stringify({ success: false, error: 'no screen source' }))
+                return
+            }
+
+            const thumb = sources[0].thumbnail
+            const thumbSize = thumb.getSize()
+
+            // Crop bottom-right where the Windows taskbar clock is
+            const cropW = Math.floor(300 * sf)
+            const cropH = Math.floor(70 * sf)
+            const cropX = Math.max(0, thumbSize.width - cropW)
+            const cropY = Math.max(0, thumbSize.height - cropH)
+
+            const cropped = thumb.crop({ x: cropX, y: cropY, width: cropW, height: cropH })
+            const base64 = cropped.toPNG().toString('base64')
+
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true, image: base64 }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })()
 }
