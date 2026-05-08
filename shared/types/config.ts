@@ -62,6 +62,9 @@ export interface AppConfig {
   webdav_url: string
   webdav_username: string
   webdav_password: string
+
+  auto_start: boolean
+  tray_click_event: 'show_config' | 'show_translate' | 'none'
 }
 
 // service_instances: instance key -> instance config; main process builds default instances on first launch
@@ -141,7 +144,10 @@ export const DEFAULT_CONFIG: AppConfig = {
   backup_type: 'webdav',
   webdav_url: '',
   webdav_username: '',
-  webdav_password: ''
+  webdav_password: '',
+
+  auto_start: false,
+  tray_click_event: 'show_config'
 }
 
 export type ConfigKey = keyof AppConfig
