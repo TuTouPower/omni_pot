@@ -41,12 +41,14 @@
 
 ## 待实现：翻译服务（缺 1 个可用 + 1 个需架构）
 
-- [ ] **CC-CEDICT 离线词典** — 需架构调整
-  - `nodeIntegration: false`，renderer 无法直接用 `better-sqlite3`
-  - 方案 A: IPC bridge — main process 管 SQLite，renderer 通过 IPC 查询
-  - 方案 B: sql.js（WASM SQLite）在 renderer 中运行
-  - 约 30MB 磁盘，< 5MB 内存，微秒级查询
-  - 查英文→中文释义，查中文→英文释义
+- [x] **CC-CEDICT 离线词典** — IPC bridge 架构
+  - `electron/dict/index.ts` — SQLite 数据库模块（better-sqlite3 + WAL + FTS5）
+  - `electron/ipc/dict_handlers.ts` — IPC 处理器（lookup/check/import）
+  - `src/services/ecdict.ts` — Renderer 侧服务，通过 IPC 调用主进程
+  - 首次使用时从 MDBG 下载 CC-CEDICT 文本（~6MB gzipped），解析入库
+  - 中文查询：按 simplified/traditional 精确匹配
+  - 英文查询：LIKE 模糊搜索 english 列
+  - 字典窗口集成下载提示
 
 ---
 
