@@ -17,8 +17,30 @@ const THEME_OPTIONS = [
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24].map((s) => ({ key: String(s), label: `${s}px` }))
 
+const FONT_OPTIONS = [
+    { key: 'default', label: 'System Default' },
+    { key: 'Arial', label: 'Arial' },
+    { key: 'Consolas', label: 'Consolas' },
+    { key: 'Courier New', label: 'Courier New' },
+    { key: 'Georgia', label: 'Georgia' },
+    { key: 'Microsoft YaHei', label: 'Microsoft YaHei' },
+    { key: 'PingFang SC', label: 'PingFang SC' },
+    { key: 'SimHei', label: 'SimHei' },
+    { key: 'SimSun', label: 'SimSun' },
+    { key: 'Monaco', label: 'Monaco' },
+    { key: 'Segoe UI', label: 'Segoe UI' },
+    { key: 'Tahoma', label: 'Tahoma' },
+    { key: 'Times New Roman', label: 'Times New Roman' },
+    { key: 'Trebuchet MS', label: 'Trebuchet MS' },
+    { key: 'Verdana', label: 'Verdana' },
+    { key: 'Noto Sans SC', label: 'Noto Sans SC' },
+    { key: 'Noto Sans JP', label: 'Noto Sans JP' },
+    { key: 'Noto Sans KR', label: 'Noto Sans KR' },
+]
+
 export default function GeneralPage(): React.ReactElement {
     const [appTheme, setAppTheme] = useConfig('app_theme')
+    const [appFont, setAppFont] = useConfig('app_font')
     const [fontSize, setFontSize] = useConfig('app_font_size')
     const [transparent, setTransparent] = useConfig('transparent')
     const [devMode, setDevMode] = useConfig('dev_mode')
@@ -75,6 +97,13 @@ export default function GeneralPage(): React.ReactElement {
                     <h4 className="font-semibold">Appearance</h4>
                     <SimpleSelect label="Theme" value={appTheme as string} onChange={(v) => setAppTheme(v)} options={THEME_OPTIONS} />
                     <SimpleSelect label="Font Size" value={String(fontSize)} onChange={(v) => setFontSize(Number(v))} options={FONT_SIZE_OPTIONS} />
+                    <SimpleSelect label="Font Family" value={appFont as string} onChange={(v) => setAppFont(v)} options={FONT_OPTIONS} />
+                    <div
+                        className="p-2 rounded-md bg-default-50 text-sm border border-default-200"
+                        style={{ fontFamily: appFont === 'default' ? undefined : (appFont as string), fontSize: Number(fontSize) }}
+                    >
+                        Preview: Hello World 你好世界 こんにちは 안녕하세요
+                    </div>
                     <Switch isSelected={transparent} onChange={setTransparent}>
                         <Switch.Control>
                             <Switch.Thumb />
