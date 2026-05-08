@@ -24,12 +24,9 @@ export async function withClipboardMutationSuppressed<T>(fn: () => Promise<T>): 
 
 export function pollClipboardMonitorOnce(mgr: WindowManager): void {
     if (!enabled) return
+    if (Date.now() < suppressUntil) return
 
     const current = clipboard.readText()
-    if (Date.now() < suppressUntil) {
-        last_text = current
-        return
-    }
 
     if (current !== last_text && current.trim()) {
         last_text = current

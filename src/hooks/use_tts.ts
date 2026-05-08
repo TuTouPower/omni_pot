@@ -10,14 +10,25 @@ export function use_tts() {
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
         audio_ref.current = audio
-        audio.onended = () => set_is_playing(false)
+        audio.onended = () => {
+            URL.revokeObjectURL(url)
+            audio_ref.current = null
+            set_is_playing(false)
+        }
+        audio.onerror = () => {
+            URL.revokeObjectURL(url)
+            audio_ref.current = null
+            set_is_playing(false)
+        }
         set_is_playing(true)
         await audio.play()
     }, [])
 
     const stop = useCallback(() => {
         if (audio_ref.current) {
+            const src = audio_ref.current.src
             audio_ref.current.pause()
+            if (src) URL.revokeObjectURL(src)
             audio_ref.current = null
         }
         set_is_playing(false)

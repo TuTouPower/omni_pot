@@ -44,7 +44,6 @@ export default function TranslateWindow(): React.ReactElement {
   const setStoreTargetLang = useTranslateStore((s) => s.setTargetLanguage)
   const setStoreSourceLang = useTranslateStore((s) => s.setSourceLanguage)
 
-  // Sync config languages → translate store on mount
   useEffect(() => {
     setStoreTargetLang(configTargetLang as LanguageCode)
     setStoreSourceLang(configSourceLang as LanguageCode)
@@ -53,7 +52,6 @@ export default function TranslateWindow(): React.ReactElement {
   const [forceShowSource, setForceShowSource] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  // Signal to main process that renderer is ready to receive IPC
   useEffect(() => {
     window.electronAPI.ready('translate')
   }, [])
@@ -91,12 +89,18 @@ export default function TranslateWindow(): React.ReactElement {
       try {
         if (service.translateStream) {
           let accumulated = ''
+          let lastUpdateTime = 0
           setResult(instanceKey, '')
           for await (const chunk of service.translateStream(textToTranslate, sourceLanguage, effectiveTarget, instanceConfig)) {
             accumulated += chunk
-            if (useTranslateStore.getState().requestId === id) {
+            const now = Date.now()
+            if (now - lastUpdateTime > 50 && useTranslateStore.getState().requestId === id) {
               setResult(instanceKey, accumulated)
+              lastUpdateTime = now
             }
+          }
+          if (useTranslateStore.getState().requestId === id) {
+            setResult(instanceKey, accumulated)
           }
           resultsMap[instanceKey] = accumulated
         } else {
@@ -124,23 +128,20 @@ export default function TranslateWindow(): React.ReactElement {
       setIsTranslating(false)
     }
 
-    // Write history
     if (!historyDisable) {
       const successKeys = Object.entries(resultsMap).filter(([, r]) => r !== null)
-      for (const [instanceKey, result] of successKeys) {
+      await Promise.all(successKeys.map(([instanceKey, result]) => {
         const targetText = typeof result === 'string'
           ? result
           : result.definitions.map((d) => d.meanings.join('; ')).join('\n')
-        try {
-          await window.electronAPI.history.add({
-            service_key: instanceKey,
-            source_text: textToTranslate,
-            source_lang: sourceLanguage,
-            target_text: targetText,
-            target_lang: effectiveTarget
-          })
-        } catch { /* non-critical */ }
-      }
+        return window.electronAPI.history.add({
+          service_key: instanceKey,
+          source_text: textToTranslate,
+          source_lang: sourceLanguage,
+          target_text: targetText,
+          target_lang: effectiveTarget
+        }).catch(() => {})
+      }))
     }
 
     if (autoCopy !== 'disable') {
@@ -157,7 +158,6 @@ export default function TranslateWindow(): React.ReactElement {
     }
   }, [sourceLanguage, targetLanguage, detectedLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
 
-  // Listen for translate:from-selection
   useEffect(() => {
     const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
       if (!text.trim()) return
@@ -173,7 +173,6 @@ export default function TranslateWindow(): React.ReactElement {
     return unsub
   }, [deleteNewline, incrementalTranslate, setSourceText, handleTranslate])
 
-  // Listen for translate:from-api
   useEffect(() => {
     const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
       if (!text.trim()) return
@@ -184,7 +183,6 @@ export default function TranslateWindow(): React.ReactElement {
     return unsub
   }, [setSourceText, handleTranslate])
 
-  // Listen for translate:from-clipboard
   useEffect(() => {
     const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
       if (!text.trim()) return
@@ -195,7 +193,6 @@ export default function TranslateWindow(): React.ReactElement {
     return unsub
   }, [setSourceText, handleTranslate])
 
-  // Listen for translate:input-translate
   useEffect(() => {
     const unsub = window.electronAPI.text.onInputTranslate(() => {
       setSourceText('')
@@ -207,7 +204,6 @@ export default function TranslateWindow(): React.ReactElement {
     return unsub
   }, [setSourceText, setDetectedLanguage, clearResults])
 
-  // Close on blur
   useEffect(() => {
     if (!closeOnBlur) return
     const handleBlur = () => window.electronAPI.window.close()
@@ -215,7 +211,6 @@ export default function TranslateWindow(): React.ReactElement {
     return () => window.removeEventListener('blur', handleBlur)
   }, [closeOnBlur])
 
-  // Escape to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') window.electronAPI.window.close()

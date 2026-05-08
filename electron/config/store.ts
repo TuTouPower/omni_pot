@@ -89,8 +89,14 @@ export function getAllConfig(): AppConfig {
     return { ...DEFAULT_CONFIG, ...data } as AppConfig
 }
 
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+
 function saveToDisk(): void {
-    writeFileSync(config_path, JSON.stringify(data, null, 2), 'utf-8')
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+        writeFileSync(config_path, JSON.stringify(data, null, 2), 'utf-8')
+        saveTimer = null
+    }, 300)
 }
 
 function broadcastChange(key: ConfigKey, value: unknown): void {

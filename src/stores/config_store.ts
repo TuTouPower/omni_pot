@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { AppConfig, ConfigKey } from '@shared/types/config'
 import { DEFAULT_CONFIG } from '@shared/types/config'
 
+let listenerRegistered = false
+
 interface ConfigStore {
   config: AppConfig
   loaded: boolean
@@ -18,11 +20,14 @@ export const useConfigStore = create<ConfigStore>()((set, get) => ({
     const all = await window.electronAPI.config.getAll()
     set({ config: { ...DEFAULT_CONFIG, ...all }, loaded: true })
 
-    window.electronAPI.config.onChange((key, value) => {
-      set((state) => ({
-        config: { ...state.config, [key]: value }
-      }))
-    })
+    if (!listenerRegistered) {
+      listenerRegistered = true
+      window.electronAPI.config.onChange((key, value) => {
+        set((state) => ({
+          config: { ...state.config, [key]: value }
+        }))
+      })
+    }
   },
 
   get: (key) => get().config[key],

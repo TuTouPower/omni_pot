@@ -1,18 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
-import { hmac } from '@/lib/crypto'
-
-function hexToBase64(hex: string): string {
-    const bytes = new Uint8Array(hex.length / 2)
-    for (let i = 0; i < hex.length; i += 2) {
-        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16)
-    }
-    let binary = ''
-    for (const byte of bytes) {
-        binary += String.fromCharCode(byte)
-    }
-    return btoa(binary)
-}
+import { hmac, hexToBase64 } from '@/lib/crypto'
 
 const ALIBABA_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'yue', 'ja', 'en', 'ko', 'fr', 'es', 'ru',
