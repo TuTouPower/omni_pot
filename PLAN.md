@@ -1,4 +1,4 @@
-# API 测试结果待办
+# omni_pot 开发待办
 
 ## 已完成
 
@@ -6,21 +6,140 @@
 - [x] 全部 22 个 API 测试完成 — 结果见 `docs/external_services/api_test_results.md`
 - [x] **MyMemory 翻译服务** — `src/services/mymemory.ts` ✅ 已验证连通
 - [x] **dictionaryapi.dev 词典服务** — `src/services/free_dictionary.ts` ✅ 已验证连通
-- [x] **Yandex Translate** — 已不存在，无需移除
-- [x] **Bing Dictionary** — 已不存在，无需移除
+- [x] **Yandex Translate** — API 403，免费端点已关闭，不再实现
+- [x] **Bing Dictionary** — API 403，服务已停用，不再实现
+- [x] **字典模式** — 独立窗口 + 独立快捷键 + 独立服务列表
+  - `src/windows/dict/index.tsx` — 字典窗口，完整 DictResult 渲染
+  - `src/stores/dict_store.ts` — 独立状态
+  - `dictionary_service_list` 配置 + `hotkey_selection_dictionary` 快捷键
+  - 配置 UI：服务设置 Dictionary 标签页 + 快捷键设置页
+- [x] **OCR E2E 测试** — 真实 Tesseract.js + 真实翻译 API
+- [x] **截图覆盖层修复** — workAreaSize→display.size, sendWhenReady 机制
+- [x] **运行文件整理** — data/ 目录
 
-## 待实现
+---
 
-- [ ] **CC-CEDICT 离线词典** — 需要架构调整
-  - `nodeIntegration: false`，renderer 无法使用 `better-sqlite3`
-  - 方案：需要 IPC bridge 让 main process 管理 SQLite 查询
-  - 或改用 sql.js（WASM SQLite）在 renderer 中运行
+## 待实现：OCR 服务（缺 10 个）
+
+### 高优先
+
+- [ ] **系统 OCR** — `src/services/ocr/system.ts`
+  - Windows: WinRT OcrEngine（通过 native addon 或 Edge WebView2）
+  - macOS: 捆绑二进制
+  - Linux: tesseract CLI
+  - 语言: auto + 18 种
+
+- [ ] **讯飞 OCR 系列** — 3 个服务
+  - `src/services/ocr/iflytek_ocr.ts` — 通用 OCR（auto/zh_cn/zh_tw/en）
+  - `src/services/ocr/iflytek_intsig_ocr.ts` — IntSig OCR（18 种语言）
+  - `src/services/ocr/iflytek_latex_ocr.ts` — 数学公式 → LaTeX（auto/zh_cn/zh_tw/en）
+  - 配置: appid, apisecret, apikey
+
+### 中优先
+
+- [ ] **百度高精度 OCR** — `src/services/ocr/baidu_accurate_ocr.ts`
+  - 配置: client_id, client_secret
+  - 18 种语言，手写/复杂场景
+
+- [ ] **百度图片 OCR** — `src/services/ocr/baidu_img_ocr.ts`
+  - 配置: appid, secret
+  - 18 种语言
+
+- [ ] **腾讯高精度 OCR** — `src/services/ocr/tencent_accurate_ocr.ts`
+  - 配置: secret_id, secret_key
+  - 5 种语言（auto/zh/zh_rare/en）
+
+- [ ] **腾讯图片 OCR** — `src/services/ocr/tencent_img_ocr.ts`
+  - 配置: secret_id, secret_key
+  - 14 种语言
+
+### 低优先
+
+- [ ] **火山引擎多语言 OCR** — `src/services/ocr/volcengine_multi_lang_ocr.ts`
+  - 配置: appid, secret
+  - 19 种语言
+
+- [ ] **Simple LaTeX OCR** — `src/services/ocr/simple_latex_ocr.ts`
+  - 配置: token
+  - 数学公式 → LaTeX
+
+---
+
+## 待实现：翻译服务（缺 1 个可用 + 1 个需架构）
+
+- [ ] **CC-CEDICT 离线词典** — 需架构调整
+  - `nodeIntegration: false`，renderer 无法直接用 `better-sqlite3`
+  - 方案 A: IPC bridge — main process 管 SQLite，renderer 通过 IPC 查询
+  - 方案 B: sql.js（WASM SQLite）在 renderer 中运行
   - 约 30MB 磁盘，< 5MB 内存，微秒级查询
   - 查英文→中文释义，查中文→英文释义
 
-- [ ] **选中文本查字典功能** — 字典与翻译分离
-  - 用户选中文本后可调用字典 API 查词
-  - 字典服务（Cambridge Dict、Free Dictionary、CC-CEDICT）与翻译服务分开配置
-  - 需要独立的 `dictionary_service_list` 配置项
-  - 需要独立的字典窗口或面板展示 DictResult（音标、词性、释义、例句）
-  - 独立快捷键触发字典查询
+---
+
+## 待实现：UI 细节
+
+### 翻译窗口
+
+- [ ] **拖拽排序服务卡片** — react-beautiful-dnd 或 @dnd-kit
+- [ ] **流式翻译输出** — OpenAI/Ollama/ChatGLM stream 模式
+- [ ] **变量名转换** — Alt+Shift+U 循环: snake_case → SNAKE_CASE → kebab-case → dot.notation → 空格 → Title Case → CamelCase → PascalCase → snake_case
+- [ ] **动态翻译** — dynamic_translate 配置，输入 1s 防抖自动翻译
+- [ ] **服务卡片折叠/展开** — spring 动画
+- [ ] **服务卡片内切换服务** — 下拉框切换实例
+- [ ] **重试按钮** — 翻译失败后显示
+- [ ] **收藏按钮** — 每个服务卡片底部，对应 collection_service_list 中的服务
+- [ ] **SourceArea 补全** — 删除换行按钮、清空按钮、TTS 朗读按钮
+- [ ] **IME 处理** — 防止输入法与语言检测竞态
+- [ ] **窗口大小记忆** — translate_remember_window_size + 保存尺寸
+
+### 识别窗口
+
+- [ ] **识别窗口补全** — Pin 按钮、窗口控制（最小化/最大化/关闭）
+- [ ] **可编辑文本** — OCR 结果可编辑
+- [ ] **删除换行/删除空格按钮**
+- [ ] **服务/语言下拉框** — 切换 OCR 服务和语言
+- [ ] **重新识别按钮** — 换服务重新 OCR
+- [ ] **翻译按钮** — 发送 OCR 结果到翻译窗口
+
+### 截图窗口
+
+- [ ] **右键关闭** — 右键点击关闭截图窗口不执行操作
+
+### 配置窗口
+
+- [ ] **字体选择** — 系统字体列表下拉框 + 预览
+- [ ] **自动启动** — 开机自启开关
+- [ ] **透明开关** — macOS 上隐藏
+- [ ] **托盘点击事件** — tray_click_event（仅 Windows）
+
+---
+
+## 待实现：基础设施
+
+- [ ] **国际化 (i18n)** — spec 要求 19 种语言
+  - react-i18next 集成
+  - 19 个语言文件: zh_CN, zh_TW, en, ru_RU, pt_BR, de_DE, es_ES, fr_FR, it_IT, ja_JP, ko_KR, pt_PT, tr_TR, nb_NO, nn_NO, fa_IR, uk_UA, ar_AE, he_IL
+  - 配置窗口、托盘菜单、所有 UI 文案
+
+- [ ] **插件系统** — .potext 文件格式
+  - 插件安装/卸载
+  - 插件运行时（sandbox JS 执行）
+  - 插件配置 UI（动态表单）
+  - 支持 translate/recognize/tts/collection 四种类型
+
+- [ ] **自动更新** — updater 窗口
+  - 检查 GitHub releases
+  - 下载 + 安装 + 重启
+  - 更新日志 Markdown 渲染
+  - 进度条
+
+- [ ] **语言检测在线引擎** — 目前只有本地 JS 检测
+  - baidu / tencent / niutrans / google / bing 在线检测 API
+  - translate_detect_engine 配置已存在，需要实现对应 API 调用
+
+---
+
+## 不再实现（API 已停用）
+
+- ~~**Yandex Translate**~~ — 403 免费端点已关闭
+- ~~**Bing Dictionary**~~ — 403 服务已停用
