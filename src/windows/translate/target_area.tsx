@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { Card, Button, Spinner } from '@heroui/react'
-import { MdContentCopy, MdAutorenew, MdStarOutline, MdStar } from 'react-icons/md'
+import { MdContentCopy, MdAutorenew, MdStarOutline, MdStar, MdExpandMore, MdExpandLess } from 'react-icons/md'
 import { TbTransformFilled } from 'react-icons/tb'
 import { VscUnmute } from 'react-icons/vsc'
 import { useTranslateStore } from '../../stores/translate_store'
@@ -31,6 +31,16 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
   const playingRef = useRef<HTMLAudioElement | null>(null)
   const [playingKey, setPlayingKey] = useState<string | null>(null)
   const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
+  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
+
+  const toggleCollapse = useCallback((key: string) => {
+    setCollapsedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text)
@@ -196,10 +206,24 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
 
         const sameTypeInstances = allInstanceKeys.filter((k) => getServiceKey(k) === serviceKey)
 
+        const isCollapsed = collapsedKeys.has(instanceKey)
+        const result = results[instanceKey]
+        const resultPreview = typeof result === 'string'
+          ? result.substring(0, 50) + (result.length > 50 ? '...' : '')
+          : null
+
         return (
           <Card key={instanceKey} variant="bordered" className="shadow-none" data-result-key={instanceKey}>
-            <Card.Header className="flex justify-between px-3 py-1">
-              <span className="text-xs font-semibold">{service.name}</span>
+            <Card.Header className="flex justify-between items-center px-3 py-1">
+              <div className="flex items-center gap-1">
+                <Button isIconOnly size="sm" variant="light" onPress={() => toggleCollapse(instanceKey)}>
+                  {isCollapsed ? <MdExpandMore className="text-base" /> : <MdExpandLess className="text-base" />}
+                </Button>
+                <span className="text-xs font-semibold">{service.name}</span>
+                {isCollapsed && resultPreview && (
+                  <span className="text-xs text-default-400 truncate max-w-40">{resultPreview}</span>
+                )}
+              </div>
               {sameTypeInstances.length > 1 && (
                 <select
                   value={instanceKey}
@@ -212,9 +236,11 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                 </select>
               )}
             </Card.Header>
-            <Card.Content className="px-3 py-2">
-              {renderResult(instanceKey)}
-            </Card.Content>
+            {!isCollapsed && (
+              <Card.Content className="px-3 py-2">
+                {renderResult(instanceKey)}
+              </Card.Content>
+            )}
           </Card>
         )
       })}
