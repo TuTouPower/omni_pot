@@ -83,6 +83,11 @@ const api: ElectronAPI = {
     create: () => ipcRenderer.invoke('backup:create'),
     list: () => ipcRenderer.invoke('backup:list'),
     restore: (name) => ipcRenderer.invoke('backup:restore', name)
+  },
+  dict: {
+    lookup: (text, from, to) => ipcRenderer.invoke('dict:lookup', text, from, to),
+    check: () => ipcRenderer.invoke('dict:check'),
+    import: (url) => ipcRenderer.invoke('dict:import', url)
   }
 }
 

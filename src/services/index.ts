@@ -19,6 +19,7 @@ import { geminiproService } from './geminipro'
 import { ollamaService } from './ollama'
 import { mymemoryService } from './mymemory'
 import { freeDictionaryService } from './free_dictionary'
+import { ecdictService } from './ecdict'
 import { registerAllTtsServices } from './tts'
 import { registerAllOcrServices } from './ocr'
 import { collectionServices } from './collection'
@@ -47,6 +48,7 @@ export function registerAllServices(): void {
     translateServiceRegistry.register(ollamaService)
     translateServiceRegistry.register(mymemoryService)
     translateServiceRegistry.register(freeDictionaryService)
+    translateServiceRegistry.register(ecdictService)
 
     registerAllTtsServices()
     registerAllOcrServices()

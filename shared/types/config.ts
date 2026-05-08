@@ -78,7 +78,8 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
   'deepl@default': { serviceKey: 'deepl', config: {} },
   'tesseract@default': { serviceKey: 'tesseract', config: {} },
   'mymemory@default': { serviceKey: 'mymemory', config: {} },
-  'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} }
+  'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+  'ecdict@default': { serviceKey: 'ecdict', config: {} }
 }
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -134,7 +135,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   hotkey_selection_dictionary: '',
 
   translate_service_list: ['bing@default', 'google@default', 'deepl@default'],
-  dictionary_service_list: ['free_dictionary@default'],
+  dictionary_service_list: ['free_dictionary@default', 'ecdict@default'],
   recognize_service_list: [],
   tts_service_list: [],
   collection_service_list: [],

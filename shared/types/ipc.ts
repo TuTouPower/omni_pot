@@ -58,6 +58,11 @@ export interface ElectronAPI {
     list(): Promise<string[]>
     restore(name: string): Promise<{ success: boolean; error?: string }>
   }
+  dict: {
+    lookup(text: string, from: string, to: string): Promise<import('./service').DictResult | null>
+    check(): Promise<{ ready: boolean; entry_count: number }>
+    import(url?: string): Promise<{ success: boolean; entry_count?: number; error?: string }>
+  }
 }
 
 declare global {

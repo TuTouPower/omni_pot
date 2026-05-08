@@ -94,8 +94,24 @@ export default function DictWindow(): React.ReactElement {
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
 
+    const [dictReady, setDictReady] = useState<boolean | null>(null)
+    const [importing, setImporting] = useState(false)
+
     useEffect(() => {
         window.electronAPI.ready('dict')
+    }, [])
+
+    useEffect(() => {
+        window.electronAPI.dict.check().then(({ ready }) => setDictReady(ready))
+    }, [])
+
+    const handleImport = useCallback(async () => {
+        setImporting(true)
+        const result = await window.electronAPI.dict.import()
+        if (result.success) {
+            setDictReady(true)
+        }
+        setImporting(false)
     }, [])
 
     const handleLookup = useCallback(async (text: string) => {
@@ -184,6 +200,16 @@ export default function DictWindow(): React.ReactElement {
             </div>
 
             <div className="flex flex-col gap-2 px-2 overflow-y-auto flex-1">
+                {dictReady === false && (
+                    <Card variant="bordered" className="shadow-none">
+                        <Card.Content className="px-3 py-3 text-center">
+                            <p className="text-sm text-default-500 mb-2">CC-CEDICT dictionary not downloaded</p>
+                            <Button size="sm" color="primary" onPress={handleImport} isLoading={importing}>
+                                {importing ? 'Downloading...' : 'Download Dictionary (~6MB)'}
+                            </Button>
+                        </Card.Content>
+                    </Card>
+                )}
                 {isLoading && Object.keys(results).length === 0 && (
                     <div className="flex justify-center py-4"><Spinner size="sm" color="primary" /></div>
                 )}
