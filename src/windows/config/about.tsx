@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Card } from '@heroui/react'
 import { AiFillGithub } from 'react-icons/ai'
 import { BiGlobe, BiFolder, BiLog } from 'react-icons/bi'
@@ -6,9 +7,10 @@ import { BiGlobe, BiFolder, BiLog } from 'react-icons/bi'
 const VERSION = '0.1.0'
 
 export default function AboutPage(): React.ReactElement {
+    const { t } = useTranslation()
     return (
         <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">About</h3>
+            <h3 className="text-xl font-bold">{t('about.title')}</h3>
 
             <Card>
                 <Card.Content className="gap-3 p-4 text-center">

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Input, Label } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 
@@ -26,6 +27,7 @@ function buildAccelerator(e: React.KeyboardEvent): string {
 }
 
 function HotkeyField({ label, configKey }: HotkeyFieldProps): React.ReactElement {
+    const { t } = useTranslation()
     const [currentValue, setCurrentValue] = useConfig(configKey)
     const [capturing, setCapturing] = useState(false)
     const [tempValue, setTempValue] = useState('')
@@ -75,7 +77,7 @@ function HotkeyField({ label, configKey }: HotkeyFieldProps): React.ReactElement
             <Input
                 ref={inputRef as React.RefObject<HTMLInputElement>}
                 className="flex-1"
-                value={capturing ? (tempValue || 'Press shortcut...') : (currentValue || 'Not set')}
+                value={capturing ? (tempValue || t('ui.press_shortcut')) : (currentValue || t('ui.not_set'))}
                 readOnly
                 onKeyDown={capturing ? handleKeyDown : undefined}
                 onFocus={() => { if (capturing) return }}
@@ -83,15 +85,15 @@ function HotkeyField({ label, configKey }: HotkeyFieldProps): React.ReactElement
             />
             {!capturing ? (
                 <Button size="sm" onPress={() => { setCapturing(true); setTempValue('') }}>
-                    Set
+                    {t('ui.set')}
                 </Button>
             ) : (
                 <>
                     <Button size="sm" color="primary" onPress={handleConfirm}>
-                        OK
+                        {t('ui.ok')}
                     </Button>
                     <Button size="sm" variant="ghost" onPress={handleCancel}>
-                        Cancel
+                        {t('ui.cancel')}
                     </Button>
                 </>
             )}
@@ -100,18 +102,18 @@ function HotkeyField({ label, configKey }: HotkeyFieldProps): React.ReactElement
 }
 
 export default function HotkeySettings(): React.ReactElement {
+    const { t } = useTranslation()
     return (
         <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">Hotkey</h3>
+            <h3 className="text-xl font-bold">{t('hotkey.title')}</h3>
 
             <Card>
                 <Card.Content className="gap-4 p-4">
-                    <h4 className="font-semibold">Shortcuts</h4>
-                    <HotkeyField label="Selection Translate" configKey="hotkey_selection_translate" />
-                    <HotkeyField label="Input Translate" configKey="hotkey_input_translate" />
-                    <HotkeyField label="OCR Recognize" configKey="hotkey_ocr_recognize" />
-                    <HotkeyField label="OCR Translate" configKey="hotkey_ocr_translate" />
-                    <HotkeyField label="Selection Dictionary" configKey="hotkey_selection_dictionary" />
+                    <HotkeyField label={t('hotkey.selection_translate')} configKey="hotkey_selection_translate" />
+                    <HotkeyField label={t('hotkey.input_translate')} configKey="hotkey_input_translate" />
+                    <HotkeyField label={t('hotkey.screenshot_recognize')} configKey="hotkey_ocr_recognize" />
+                    <HotkeyField label={t('hotkey.screenshot_translate')} configKey="hotkey_ocr_translate" />
+                    <HotkeyField label={t('hotkey.selection_dictionary')} configKey="hotkey_selection_dictionary" />
                 </Card.Content>
             </Card>
         </div>

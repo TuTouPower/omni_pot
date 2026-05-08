@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@heroui/react'
 import { BsPinFill } from 'react-icons/bs'
 import { AiFillCloseCircle, AiOutlineCopy } from 'react-icons/ai'
@@ -13,6 +14,7 @@ import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 
 export default function RecognizeWindow(): React.ReactElement {
+    const { t } = useTranslation()
     const [imageBase64, setImageBase64] = useState<string>('')
     const [recognizedText, setRecognizedText] = useState<string>('')
     const [alwaysOnTop, setAlwaysOnTop] = useState(false)
@@ -117,7 +119,7 @@ export default function RecognizeWindow(): React.ReactElement {
                     >
                         <BsPinFill />
                     </Button>
-                    <span className="text-sm font-medium text-default-600">OCR Result</span>
+                    <span className="text-sm font-medium text-default-600">{t('recognize.title')}</span>
                 </div>
                 <Button isIconOnly size="sm" variant="light" onPress={handleClose}>
                     <AiFillCloseCircle />
@@ -140,7 +142,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 <textarea
                     value={recognizedText}
                     onChange={(e) => setRecognizedText(e.target.value)}
-                    placeholder="No text recognized"
+                    placeholder={t('recognize.no_result')}
                     className="w-full h-full text-sm whitespace-pre-wrap break-words font-mono text-default-700 bg-default-50 rounded p-2 border border-default-200 outline-none resize-none"
                 />
             </div>
@@ -152,7 +154,7 @@ export default function RecognizeWindow(): React.ReactElement {
                     onChange={(e) => setSelectedService(e.target.value)}
                     className="text-xs bg-default-100 border border-default-200 rounded px-2 py-1 max-w-[140px]"
                 >
-                    <option value="">Default service</option>
+                    <option value="">{t('recognize.service')}</option>
                     {service_list.map((k) => {
                         const svc = ocrServiceRegistry.get(getServiceKey(k))
                         return <option key={k} value={k}>{svc?.name ?? getServiceKey(k)}</option>
@@ -175,7 +177,7 @@ export default function RecognizeWindow(): React.ReactElement {
                     isDisabled={!imageBase64 || isRecognizing || service_list.length === 0}
                     isLoading={isRecognizing}
                 >
-                    Re-OCR
+                    {t('recognize.re_recognize')}
                 </Button>
             </div>
 
@@ -207,7 +209,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         onPress={handleTranslate}
                         isDisabled={!recognizedText}
                     >
-                        Translate
+                        {t('recognize.translate')}
                     </Button>
                     <Button
                         size="sm"
@@ -216,7 +218,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         onPress={handleCopy}
                         isDisabled={!recognizedText}
                     >
-                        Copy
+                        {t('copy')}
                     </Button>
                 </div>
             </div>

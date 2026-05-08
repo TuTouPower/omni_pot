@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Input, Label, Modal } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import { SimpleSelect } from '../../components/simple_select'
@@ -9,6 +10,7 @@ const BACKUP_TYPES = [
 ]
 
 export default function BackupSettings(): React.ReactElement {
+    const { t } = useTranslation()
     const [backupType, setBackupType] = useConfig('backup_type')
     const [webdavUrl, setWebdavUrl] = useConfig('webdav_url')
     const [webdavUsername, setWebdavUsername] = useConfig('webdav_username')
@@ -49,7 +51,7 @@ export default function BackupSettings(): React.ReactElement {
 
     return (
         <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">Backup</h3>
+            <h3 className="text-xl font-bold">{t('backup.title')}</h3>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
@@ -90,15 +92,15 @@ export default function BackupSettings(): React.ReactElement {
                     <h4 className="font-semibold">Local Backups</h4>
                     <div className="flex gap-2">
                         <Button color="primary" onPress={handle_backup}>
-                            Create Backup
+                            {t('backup.create')}
                         </Button>
                         <Button color="secondary" onPress={() => { load_backups(); setRestoreModal(true) }}>
-                            Restore
+                            {t('backup.restore')}
                         </Button>
                     </div>
                     {status && <p className="text-sm text-default-500">{status}</p>}
                     {backups.length === 0 && (
-                        <p className="text-sm text-default-400">No backups yet.</p>
+                        <p className="text-sm text-default-400">{t('backup.no_backups')}</p>
                     )}
                     {backups.slice(0, 5).map((name) => (
                         <div key={name} className="text-sm text-default-500">{name}</div>
@@ -125,7 +127,7 @@ export default function BackupSettings(): React.ReactElement {
                         ))}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="ghost" onPress={() => setRestoreModal(false)}>Close</Button>
+                        <Button variant="ghost" onPress={() => setRestoreModal(false)}>{t('ui.close')}</Button>
                     </Modal.Footer>
                 </Modal.Content>
             </Modal>

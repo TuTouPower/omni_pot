@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, Button, Spinner } from '@heroui/react'
 import { AiFillCloseCircle } from 'react-icons/ai'
 import { MdOpenInNew } from 'react-icons/md'
@@ -21,6 +22,7 @@ const REPO_OWNER = 'TuTouPower'
 const REPO_NAME = 'omni_pot'
 
 export default function UpdaterWindow(): React.ReactElement {
+    const { t } = useTranslation()
     const [release, setRelease] = useState<ReleaseInfo | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -65,7 +67,7 @@ export default function UpdaterWindow(): React.ReactElement {
     return (
         <div className="flex flex-col h-screen p-4 gap-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold">Update Available</h2>
+                <h2 className="text-lg font-bold">{t('update_available')}</h2>
                 <Button isIconOnly size="sm" variant="light" onPress={handleClose}>
                     <AiFillCloseCircle className="text-lg" />
                 </Button>
@@ -80,7 +82,7 @@ export default function UpdaterWindow(): React.ReactElement {
             {error && (
                 <Card variant="bordered">
                     <Card.Content className="p-4">
-                        <p className="text-danger text-sm">Failed to check for updates: {error}</p>
+                        <p className="text-danger text-sm">{t('update_check_failed')}: {error}</p>
                     </Card.Content>
                 </Card>
             )}
@@ -88,13 +90,13 @@ export default function UpdaterWindow(): React.ReactElement {
             {release && (
                 <>
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-default-400">Current: v{release.current_version}</span>
+                        <span className="text-sm text-default-400">{t('current')}: v{release.current_version}</span>
                         <span className="text-sm">→</span>
-                        <span className="text-sm font-bold text-primary">Latest: v{release.version}</span>
+                        <span className="text-sm font-bold text-primary">{t('latest')}: v{release.version}</span>
                     </div>
 
                     <Button color="primary" onPress={handleOpenRelease} startContent={<MdOpenInNew />}>
-                        Open Release Page
+                        {t('open_release_page')}
                     </Button>
 
                     {release.body && (
@@ -110,7 +112,7 @@ export default function UpdaterWindow(): React.ReactElement {
 
                     {release.assets.length > 0 && (
                         <div className="text-sm">
-                            <p className="font-semibold mb-1">Downloads:</p>
+                            <p className="font-semibold mb-1">{t('downloads')}:</p>
                             {release.assets.map((asset) => (
                                 <a
                                     key={asset.name}

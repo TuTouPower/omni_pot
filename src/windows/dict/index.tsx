@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, Button, Spinner } from '@heroui/react'
 import { AiFillCloseCircle } from 'react-icons/ai'
 import { MdContentCopy } from 'react-icons/md'
@@ -10,6 +11,7 @@ import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
 
 function DictResultCard({ instanceKey, result }: { instanceKey: string; result: DictResult | null }): React.ReactElement | null {
+    const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
     const serviceKey = getServiceKey(instanceKey)
     const service = translateServiceRegistry.get(serviceKey)
@@ -22,7 +24,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
                     <span className="text-xs font-semibold">{service.name}</span>
                 </Card.Header>
                 <Card.Content className="px-3 py-2">
-                    <p className="text-danger text-xs">Lookup failed</p>
+                    <p className="text-danger text-xs">{t('dict.lookup_failed')}</p>
                 </Card.Content>
             </Card>
         )
@@ -67,7 +69,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
                 ))}
                 {result.examples.length > 0 && (
                     <div className="mt-2 border-t border-default-100 pt-2">
-                        <p className="text-xs font-semibold text-default-400 mb-1">Examples</p>
+                        <p className="text-xs font-semibold text-default-400 mb-1">{t('dict.examples')}</p>
                         {result.examples.slice(0, 3).map((ex, i) => (
                             <p key={i} className="text-xs text-default-500 italic mb-1">{ex.source}</p>
                         ))}
@@ -79,6 +81,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 }
 
 export default function DictWindow(): React.ReactElement {
+    const { t } = useTranslation()
     const word = useDictStore((s) => s.word)
     const results = useDictStore((s) => s.results)
     const isLoading = useDictStore((s) => s.isLoading)
@@ -171,11 +174,11 @@ export default function DictWindow(): React.ReactElement {
                         value={word}
                         onChange={(e) => setWord(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleManualLookup() }}
-                        placeholder="Enter a word to look up..."
+                        placeholder={t('dict.source_placeholder')}
                         className="flex-1 px-3 py-1.5 rounded-md bg-default-100 text-sm outline-none focus:ring-1 focus:ring-primary"
                     />
                     <Button size="sm" color="primary" onPress={handleManualLookup} isDisabled={!word.trim()}>
-                        Look Up
+                        {t('dict.look_up')}
                     </Button>
                 </div>
             </div>

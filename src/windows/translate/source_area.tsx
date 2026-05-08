@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Chip } from '@heroui/react'
 import { HiTranslate } from 'react-icons/hi'
 import { MdContentCopy, MdSmartButton, MdTextRotateUp } from 'react-icons/md'
@@ -59,6 +60,7 @@ function cycle_variable_name(text: string): string {
 }
 
 export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.ReactElement | null {
+  const { t } = useTranslation()
   const sourceText = useTranslateStore((s) => s.sourceText)
   const setSourceText = useTranslateStore((s) => s.setSourceText)
   const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
@@ -126,7 +128,7 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
           value={sourceText}
           onChange={(e) => setSourceText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Enter text to translate..."
+          placeholder={t('source_placeholder')}
           rows={3}
           className="w-full bg-default-100 border border-default-200 rounded-md px-3 py-2 text-sm outline-none resize-none focus:ring-2 focus:ring-primary"
         />

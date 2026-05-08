@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, Button, Spinner } from '@heroui/react'
 import { MdContentCopy, MdAutorenew, MdStarOutline, MdStar, MdExpandMore, MdExpandLess, MdDragIndicator } from 'react-icons/md'
 import { TbTransformFilled } from 'react-icons/tb'
@@ -87,6 +88,7 @@ function SortableCard({ instanceKey, results, collapsed, onToggleCollapse, sameT
 }
 
 export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaProps): React.ReactElement {
+  const { t } = useTranslation()
   const results = useTranslateStore((s) => s.results)
   const isTranslating = useTranslateStore((s) => s.isTranslating)
   const sourceText = useTranslateStore((s) => s.sourceText)
@@ -190,7 +192,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     if (result === null) {
       return (
         <div className="flex items-center gap-2">
-          <p className="text-danger text-xs">Translation failed</p>
+          <p className="text-danger text-xs">{t('translation_failed')}</p>
           {onRetry && (
             <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => onRetry(instanceKey)}>
               <MdAutorenew className="text-base" />

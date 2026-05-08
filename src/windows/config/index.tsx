@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@heroui/react'
 import { AiFillAppstore, AiFillCloud } from 'react-icons/ai'
 import { PiTranslateFill, PiTextboxFill } from 'react-icons/pi'
@@ -18,22 +19,23 @@ type ConfigPage = 'general' | 'translate' | 'recognize' | 'hotkey' | 'service' |
 
 interface NavItem {
     key: ConfigPage
-    label: string
+    labelKey: string
     icon: React.ReactNode
 }
 
 export default function ConfigWindow(): React.ReactElement {
+    const { t } = useTranslation()
     const [activePage, setActivePage] = useState<ConfigPage>('general')
 
     const pages: NavItem[] = [
-        { key: 'general', label: 'General', icon: <AiFillAppstore /> },
-        { key: 'translate', label: 'Translate', icon: <PiTranslateFill /> },
-        { key: 'recognize', label: 'Recognize', icon: <PiTextboxFill /> },
-        { key: 'hotkey', label: 'Hotkey', icon: <MdKeyboardAlt /> },
-        { key: 'service', label: 'Service', icon: <MdExtension /> },
-        { key: 'history', label: 'History', icon: <FaHistory /> },
-        { key: 'backup', label: 'Backup', icon: <AiFillCloud /> },
-        { key: 'about', label: 'About', icon: <BsInfoSquareFill /> }
+        { key: 'general', labelKey: 'general.title', icon: <AiFillAppstore /> },
+        { key: 'translate', labelKey: 'translate_settings.title', icon: <PiTranslateFill /> },
+        { key: 'recognize', labelKey: 'recognize.title', icon: <PiTextboxFill /> },
+        { key: 'hotkey', labelKey: 'hotkey.title', icon: <MdKeyboardAlt /> },
+        { key: 'service', labelKey: 'service.title', icon: <MdExtension /> },
+        { key: 'history', labelKey: 'history.title', icon: <FaHistory /> },
+        { key: 'backup', labelKey: 'backup.title', icon: <AiFillCloud /> },
+        { key: 'about', labelKey: 'about.title', icon: <BsInfoSquareFill /> }
     ]
 
     const renderPage = (): React.ReactElement => {
@@ -54,7 +56,7 @@ export default function ConfigWindow(): React.ReactElement {
             {/* Sidebar */}
             <div className="w-[230px] border-r flex flex-col p-3 gap-1">
                 <h2 className="text-lg font-bold mb-3 px-2">Pot</h2>
-                {pages.map(({ key, label, icon }) => (
+                {pages.map(({ key, labelKey, icon }) => (
                     <Button
                         key={key}
                         variant={activePage === key ? 'secondary' : 'ghost'}
@@ -62,7 +64,7 @@ export default function ConfigWindow(): React.ReactElement {
                         className="justify-start gap-2"
                     >
                         {icon}
-                        {label}
+                        {t(labelKey)}
                     </Button>
                 ))}
             </div>

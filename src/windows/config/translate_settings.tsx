@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, Label, Switch } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
@@ -24,6 +25,7 @@ const DETECT_ENGINES = [
 ]
 
 export default function TranslatePage(): React.ReactElement {
+    const { t } = useTranslation()
     const [sourceLang, setSourceLang] = useConfig('translate_source_language')
     const [targetLang, setTargetLang] = useConfig('translate_target_language')
     const [secondLang, setSecondLang] = useConfig('translate_second_language')
@@ -42,55 +44,52 @@ export default function TranslatePage(): React.ReactElement {
 
     return (
         <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">Translate</h3>
+            <h3 className="text-xl font-bold">{t('translate_settings.title')}</h3>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">Language</h4>
-                    <SimpleSelect label="Source Language" value={sourceLang} onChange={setSourceLang} options={allLangItems} />
-                    <SimpleSelect label="Target Language" value={targetLang} onChange={setTargetLang} options={targetLangItems} />
-                    <SimpleSelect label="Second Language" value={secondLang} onChange={setSecondLang} options={targetLangItems} />
-                    <SimpleSelect label="Detect Engine" value={detectEngine} onChange={setDetectEngine} options={DETECT_ENGINES} />
+                    <SimpleSelect label={t('translate_settings.source_language')} value={sourceLang} onChange={setSourceLang} options={allLangItems} />
+                    <SimpleSelect label={t('translate_settings.target_language')} value={targetLang} onChange={setTargetLang} options={targetLangItems} />
+                    <SimpleSelect label={t('translate_settings.second_language')} value={secondLang} onChange={setSecondLang} options={targetLangItems} />
+                    <SimpleSelect label={t('translate_settings.detect_engine')} value={detectEngine} onChange={setDetectEngine} options={DETECT_ENGINES} />
                 </Card.Content>
             </Card>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">Behavior</h4>
-                    <SimpleSelect label="Auto Copy" value={autoCopy} onChange={(v) => setAutoCopy(v)} options={AUTO_COPY_OPTIONS} />
+                    <SimpleSelect label={t('translate_settings.auto_copy')} value={autoCopy} onChange={(v) => setAutoCopy(v)} options={AUTO_COPY_OPTIONS} />
                     <Switch isSelected={deleteNewline} onChange={setDeleteNewline}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">Delete newlines</Label></Switch.Content>
+                        <Switch.Content><Label className="text-sm">{t('translate_settings.delete_newline')}</Label></Switch.Content>
                     </Switch>
                     <Switch isSelected={incremental} onChange={setIncremental}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">Incremental translate</Label></Switch.Content>
+                        <Switch.Content><Label className="text-sm">{t('translate_settings.incremental_translate')}</Label></Switch.Content>
                     </Switch>
                 </Card.Content>
             </Card>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">Window</h4>
                     <Switch isSelected={closeOnBlur} onChange={setCloseOnBlur}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">Close on blur</Label></Switch.Content>
+                        <Switch.Content><Label className="text-sm">{t('translate_settings.close_on_blur')}</Label></Switch.Content>
                     </Switch>
                     <Switch isSelected={alwaysOnTop} onChange={setAlwaysOnTop}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">Always on top</Label></Switch.Content>
+                        <Switch.Content><Label className="text-sm">{t('translate_settings.always_on_top')}</Label></Switch.Content>
                     </Switch>
                     <Switch isSelected={hideSource} onChange={setHideSource}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">Hide source text</Label></Switch.Content>
+                        <Switch.Content><Label className="text-sm">{t('translate_settings.hide_source')}</Label></Switch.Content>
                     </Switch>
                     <Switch isSelected={hideLanguage} onChange={setHideLanguage}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">Hide language selector</Label></Switch.Content>
+                        <Switch.Content><Label className="text-sm">{t('translate_settings.hide_language')}</Label></Switch.Content>
                     </Switch>
                     <Switch isSelected={rememberWindowSize} onChange={setRememberWindowSize}>
                         <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">Remember window size</Label></Switch.Content>
+                        <Switch.Content><Label className="text-sm">{t('translate_settings.remember_window_size')}</Label></Switch.Content>
                     </Switch>
                 </Card.Content>
             </Card>
