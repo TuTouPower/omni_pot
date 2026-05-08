@@ -78,6 +78,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
+            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-clipboard-translate') {
+                handleTriggerClipboardTranslate(mgr, req, res)
+                return
+            }
+
             if (IS_E2E && req.method === 'GET' && url.pathname === '/capture-clock') {
                 handleCaptureClock(res)
                 return
@@ -240,6 +245,39 @@ function handleTriggerClipboard(
                 return
             }
             clipboard.writeText(text)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
+}
+
+function handleTriggerClipboardTranslate(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = Buffer.concat(chunks).toString('utf-8').trim()
+            let text = ''
+            if (body) {
+                try {
+                    const json = JSON.parse(body)
+                    if (typeof json.text === 'string') text = json.text
+                } catch { /* ignore */ }
+            }
+            if (!text.trim()) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'empty text' }))
+                return
+            }
+            mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+            mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', text)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (error: unknown) {

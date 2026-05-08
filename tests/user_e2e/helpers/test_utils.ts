@@ -186,6 +186,34 @@ export async function triggerClipboardText(text: string): Promise<{ success: boo
     })
 }
 
+/** Simulate clipboard-triggered translation via E2E HTTP endpoint */
+export async function triggerClipboardTranslate(text: string): Promise<{ success: boolean; error?: string }> {
+    const http = await import('http')
+    const body = JSON.stringify({ text })
+    return new Promise((resolve, reject) => {
+        const req = http.request({
+            hostname: '127.0.0.1',
+            port: _httpPort,
+            path: '/trigger-clipboard-translate',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': String(body.length) }
+        }, (res) => {
+            const chunks: Buffer[] = []
+            res.on('data', (chunk: Buffer) => chunks.push(chunk))
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(Buffer.concat(chunks).toString()))
+                } catch {
+                    resolve({ success: false })
+                }
+            })
+        })
+        req.on('error', reject)
+        req.write(body)
+        req.end()
+    })
+}
+
 /** Wait until the translate results area has at least N result cards */
 export async function waitForResults(minCount: number, timeoutMs = 15000): Promise<void> {
     const c = getClient()

@@ -70,6 +70,18 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
   const internalRef = useRef<HTMLTextAreaElement>(null)
   const textAreaRef = inputRef ?? internalRef
 
+  const handleVariableCycle = useCallback(() => {
+    const textarea = textAreaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    if (start === end) return
+    const selected = sourceText.substring(start, end)
+    const transformed = cycle_variable_name(selected)
+    const newText = sourceText.substring(0, start) + transformed + sourceText.substring(end)
+    setSourceText(newText)
+  }, [sourceText, setSourceText, textAreaRef])
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.nativeEvent.isComposing) return
@@ -97,18 +109,6 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
   const handleClear = useCallback(() => {
     setSourceText('')
   }, [setSourceText])
-
-  const handleVariableCycle = useCallback(() => {
-    const textarea = textAreaRef.current
-    if (!textarea) return
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    if (start === end) return
-    const selected = sourceText.substring(start, end)
-    const transformed = cycle_variable_name(selected)
-    const newText = sourceText.substring(0, start) + transformed + sourceText.substring(end)
-    setSourceText(newText)
-  }, [sourceText, setSourceText, textAreaRef])
 
   useEffect(() => {
     if (!dynamicTranslate || !sourceText.trim()) return
