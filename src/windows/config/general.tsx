@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, Label, NumberField, Switch, TextField } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import { SimpleSelect } from '../../components/simple_select'
@@ -41,6 +42,7 @@ const FONT_OPTIONS = [
 ]
 
 export default function GeneralPage(): React.ReactElement {
+    const { t } = useTranslation()
     const [appTheme, setAppTheme] = useConfig('app_theme')
     const [appFont, setAppFont] = useConfig('app_font')
     const [fontSize, setFontSize] = useConfig('app_font_size')
@@ -56,17 +58,17 @@ export default function GeneralPage(): React.ReactElement {
 
     return (
         <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">General</h3>
+            <h3 className="text-xl font-bold">{t('general.title')}</h3>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">App Settings</h4>
+                    <h4 className="font-semibold">{t('general.app_settings')}</h4>
                     <Switch isSelected={checkUpdate} onChange={setCheckUpdate}>
                         <Switch.Control>
                             <Switch.Thumb />
                         </Switch.Control>
                         <Switch.Content>
-                            <Label className="text-sm">Check for updates on startup</Label>
+                            <Label className="text-sm">{t('general.check_update')}</Label>
                         </Switch.Content>
                     </Switch>
                     <Switch isSelected={autoStart} onChange={setAutoStart}>
@@ -74,17 +76,17 @@ export default function GeneralPage(): React.ReactElement {
                             <Switch.Thumb />
                         </Switch.Control>
                         <Switch.Content>
-                            <Label className="text-sm">Auto start on login</Label>
+                            <Label className="text-sm">{t('general.auto_start')}</Label>
                         </Switch.Content>
                     </Switch>
-                    <SimpleSelect label="Tray click action" value={trayClickEvent as string} onChange={(v) => setTrayClickEvent(v)} options={TRAY_CLICK_OPTIONS} />
+                    <SimpleSelect label={t('general.tray_click')} value={trayClickEvent as string} onChange={(v) => setTrayClickEvent(v)} options={TRAY_CLICK_OPTIONS} />
                     <NumberField
                         value={serverPort}
                         onChange={(v) => { if (typeof v === 'number') setServerPort(v) }}
                         minValue={0}
                         maxValue={65535}
                     >
-                        <Label>Server Port</Label>
+                        <Label>{t('general.server_port')}</Label>
                         <NumberField.Group>
                             <NumberField.DecrementButton />
                             <NumberField.Input />
@@ -96,10 +98,10 @@ export default function GeneralPage(): React.ReactElement {
 
             <Card>
                 <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">Appearance</h4>
-                    <SimpleSelect label="Theme" value={appTheme as string} onChange={(v) => setAppTheme(v)} options={THEME_OPTIONS} />
-                    <SimpleSelect label="Font Size" value={String(fontSize)} onChange={(v) => setFontSize(Number(v))} options={FONT_SIZE_OPTIONS} />
-                    <SimpleSelect label="Font Family" value={appFont as string} onChange={(v) => setAppFont(v)} options={FONT_OPTIONS} />
+                    <h4 className="font-semibold">{t('general.appearance')}</h4>
+                    <SimpleSelect label={t('general.theme')} value={appTheme as string} onChange={(v) => setAppTheme(v)} options={THEME_OPTIONS} />
+                    <SimpleSelect label={t('general.font_size')} value={String(fontSize)} onChange={(v) => setFontSize(Number(v))} options={FONT_SIZE_OPTIONS} />
+                    <SimpleSelect label={t('general.font_family')} value={appFont as string} onChange={(v) => setAppFont(v)} options={FONT_OPTIONS} />
                     <div
                         className="p-2 rounded-md bg-default-50 text-sm border border-default-200"
                         style={{ fontFamily: appFont === 'default' ? undefined : (appFont as string), fontSize: Number(fontSize) }}
@@ -112,7 +114,7 @@ export default function GeneralPage(): React.ReactElement {
                                 <Switch.Thumb />
                             </Switch.Control>
                             <Switch.Content>
-                                <Label className="text-sm">Transparent background</Label>
+                                <Label className="text-sm">{t('general.transparent')}</Label>
                             </Switch.Content>
                         </Switch>
                     )}
@@ -121,7 +123,7 @@ export default function GeneralPage(): React.ReactElement {
                             <Switch.Thumb />
                         </Switch.Control>
                         <Switch.Content>
-                            <Label className="text-sm">Developer mode (F12)</Label>
+                            <Label className="text-sm">{t('general.dev_mode')}</Label>
                         </Switch.Content>
                     </Switch>
                 </Card.Content>
@@ -129,13 +131,13 @@ export default function GeneralPage(): React.ReactElement {
 
             <Card>
                 <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">Proxy</h4>
+                    <h4 className="font-semibold">{t('general.proxy')}</h4>
                     <Switch isSelected={proxyEnable} onChange={setProxyEnable}>
                         <Switch.Control>
                             <Switch.Thumb />
                         </Switch.Control>
                         <Switch.Content>
-                            <Label className="text-sm">Enable proxy (requires restart)</Label>
+                            <Label className="text-sm">{t('general.proxy_enable')}</Label>
                         </Switch.Content>
                     </Switch>
                     {proxyEnable && (
@@ -145,7 +147,7 @@ export default function GeneralPage(): React.ReactElement {
                                 onChange={setProxyHost}
                                 className="flex-1"
                             >
-                                <Label>Host</Label>
+                                <Label>{t('general.proxy_host')}</Label>
                                 <TextField.Input />
                             </TextField>
                             <TextField
@@ -153,7 +155,7 @@ export default function GeneralPage(): React.ReactElement {
                                 onChange={setProxyPort}
                                 className="w-24"
                             >
-                                <Label>Port</Label>
+                                <Label>{t('general.proxy_port')}</Label>
                                 <TextField.Input />
                             </TextField>
                         </div>

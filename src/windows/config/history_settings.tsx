@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Label, Modal, Switch, TextField } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import type { HistoryRecord } from '@shared/types/ipc'
@@ -6,6 +7,7 @@ import type { HistoryRecord } from '@shared/types/ipc'
 const PAGE_SIZE = 20
 
 export default function HistorySettings(): React.ReactElement {
+    const { t } = useTranslation()
     const [historyDisable, setHistoryDisable] = useConfig('history_disable')
     const [records, setRecords] = useState<HistoryRecord[]>([])
     const [page, setPage] = useState(1)
@@ -47,7 +49,7 @@ export default function HistorySettings(): React.ReactElement {
 
     return (
         <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">History</h3>
+            <h3 className="text-xl font-bold">{t('history.title')}</h3>
 
             <Card>
                 <Card.Content className="gap-3 p-4">
@@ -56,7 +58,7 @@ export default function HistorySettings(): React.ReactElement {
                             <Switch.Thumb />
                         </Switch.Control>
                         <Switch.Content>
-                            <Label className="text-sm">Disable history</Label>
+                            <Label className="text-sm">{t('history.disable')}</Label>
                         </Switch.Content>
                     </Switch>
                 </Card.Content>
@@ -68,7 +70,7 @@ export default function HistorySettings(): React.ReactElement {
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-default-500">{total} records</span>
                             <Button color="danger" size="sm" onPress={handle_clear}>
-                                Clear All
+                                {t('history.clear')}
                             </Button>
                         </div>
 
@@ -89,11 +91,11 @@ export default function HistorySettings(): React.ReactElement {
 
                         <div className="flex justify-center gap-2 mt-2">
                             <Button size="sm" isDisabled={page <= 1} onPress={() => setPage(page - 1)}>
-                                Prev
+                                {t('ui.prev')}
                             </Button>
                             <span className="text-sm self-center">{page} / {total_pages}</span>
                             <Button size="sm" isDisabled={page >= total_pages} onPress={() => setPage(page + 1)}>
-                                Next
+                                {t('ui.next')}
                             </Button>
                         </div>
                     </Card.Content>
@@ -124,8 +126,8 @@ export default function HistorySettings(): React.ReactElement {
                         </TextField>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="ghost" onPress={() => setSelected(null)}>Cancel</Button>
-                        <Button color="primary" onPress={handle_save}>Save</Button>
+                        <Button variant="ghost" onPress={() => setSelected(null)}>{t('ui.cancel')}</Button>
+                        <Button color="primary" onPress={handle_save}>{t('ui.save')}</Button>
                     </Modal.Footer>
                 </Modal.Content>
             </Modal>

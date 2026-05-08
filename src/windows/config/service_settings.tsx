@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Label, Modal, Switch } from '@heroui/react'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry, ocrServiceRegistry } from '../../services/registry'
@@ -10,11 +11,11 @@ import type { ServiceInstancesMap } from '@shared/types/config'
 type ServiceCategory = 'translate_service_list' | 'dictionary_service_list' | 'recognize_service_list' | 'tts_service_list' | 'collection_service_list'
 
 const CATEGORY_TABS = [
-    { key: 'translate_service_list' as ServiceCategory, label: 'Translate' },
-    { key: 'dictionary_service_list' as ServiceCategory, label: 'Dictionary' },
-    { key: 'recognize_service_list' as ServiceCategory, label: 'Recognize' },
-    { key: 'tts_service_list' as ServiceCategory, label: 'TTS' },
-    { key: 'collection_service_list' as ServiceCategory, label: 'Collection' }
+    { key: 'translate_service_list' as ServiceCategory, labelKey: 'service.translate' },
+    { key: 'dictionary_service_list' as ServiceCategory, labelKey: 'service.dictionary' },
+    { key: 'recognize_service_list' as ServiceCategory, labelKey: 'service.ocr' },
+    { key: 'tts_service_list' as ServiceCategory, labelKey: 'service.tts' },
+    { key: 'collection_service_list' as ServiceCategory, labelKey: 'service.collection' }
 ]
 
 function getRegistryForCategory(category: ServiceCategory) {
@@ -28,6 +29,7 @@ function getRegistryForCategory(category: ServiceCategory) {
 }
 
 export default function ServiceSettings(): React.ReactElement {
+    const { t } = useTranslation()
     const [activeTab, setActiveTab] = useState<ServiceCategory>('translate_service_list')
     const [showAddModal, setShowAddModal] = useState(false)
 
@@ -84,7 +86,7 @@ export default function ServiceSettings(): React.ReactElement {
 
     return (
         <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">Service</h3>
+            <h3 className="text-xl font-bold">{t('service.title')}</h3>
 
             <div className="flex gap-2 border-b pb-2">
                 {CATEGORY_TABS.map((tab) => (
@@ -94,7 +96,7 @@ export default function ServiceSettings(): React.ReactElement {
                         variant={activeTab === tab.key ? 'secondary' : 'ghost'}
                         onPress={() => setActiveTab(tab.key)}
                     >
-                        {tab.label}
+                        {t(tab.labelKey)}
                     </Button>
                 ))}
             </div>
@@ -110,7 +112,7 @@ export default function ServiceSettings(): React.ReactElement {
                                 isDisabled={index === 0}
                                 onPress={() => moveUp(index)}
                             >
-                                Up
+                                {t('ui.up')}
                             </Button>
                             <Button
                                 size="sm"
@@ -118,7 +120,7 @@ export default function ServiceSettings(): React.ReactElement {
                                 isDisabled={index === serviceList.length - 1}
                                 onPress={() => moveDown(index)}
                             >
-                                Down
+                                {t('ui.down')}
                             </Button>
                             <Button
                                 size="sm"
@@ -127,7 +129,7 @@ export default function ServiceSettings(): React.ReactElement {
                                 isDisabled={serviceList.length <= 1}
                                 onPress={() => removeService(instanceKey)}
                             >
-                                Delete
+                                {t('ui.delete')}
                             </Button>
                         </div>
                     ))}
@@ -135,7 +137,7 @@ export default function ServiceSettings(): React.ReactElement {
             </Card>
 
             <Button color="primary" onPress={() => setShowAddModal(true)}>
-                Add Service
+                {t('service.add')}
             </Button>
 
             {showAddModal && (
@@ -147,7 +149,7 @@ export default function ServiceSettings(): React.ReactElement {
                     <Modal.Container>
                         <Modal.Dialog>
                             <Modal.Header>
-                                <Modal.Heading>Add Service</Modal.Heading>
+                                <Modal.Heading>{t('service.add')}</Modal.Heading>
                                 <Modal.CloseTrigger />
                             </Modal.Header>
                             <Modal.Body>
