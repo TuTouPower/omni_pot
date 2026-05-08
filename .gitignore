@@ -8,3 +8,5 @@ dist/
 .codex
 .playwright-mcp
 data/
+!data/dict/
+!data/dict/cedict.txt.gz
