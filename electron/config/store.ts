@@ -47,6 +47,14 @@ export function initConfigStore(): void {
         }
         saveToDisk()
     }
+
+    // Migrate: clear stale DeepL config that pointed to official API with empty key
+    const deeplInst = data.service_instances?.['deepl@default']
+    if (deeplInst && (deeplInst.config as Record<string, unknown>)?.type === 'free'
+        && !(deeplInst.config as Record<string, unknown>)?.authKey) {
+        deeplInst.config = {}
+        saveToDisk()
+    }
 }
 
 export function isFirstRun(): boolean {

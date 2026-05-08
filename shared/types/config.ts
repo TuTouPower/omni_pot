@@ -70,7 +70,7 @@ export interface ServiceInstancesMap {
 export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
   'bing@default': { serviceKey: 'bing', config: {} },
   'google@default': { serviceKey: 'google', config: {} },
-  'deepl@default': { serviceKey: 'deepl', config: { type: 'free', authKey: '' } }
+  'deepl@default': { serviceKey: 'deepl', config: {} }
 }
 
 export const DEFAULT_CONFIG: AppConfig = {
