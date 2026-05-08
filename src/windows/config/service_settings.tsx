@@ -7,10 +7,11 @@ import { collectionServiceRegistry } from '../../services/index'
 import { createServiceInstanceKey, getServiceKey } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 
-type ServiceCategory = 'translate_service_list' | 'recognize_service_list' | 'tts_service_list' | 'collection_service_list'
+type ServiceCategory = 'translate_service_list' | 'dictionary_service_list' | 'recognize_service_list' | 'tts_service_list' | 'collection_service_list'
 
 const CATEGORY_TABS = [
     { key: 'translate_service_list' as ServiceCategory, label: 'Translate' },
+    { key: 'dictionary_service_list' as ServiceCategory, label: 'Dictionary' },
     { key: 'recognize_service_list' as ServiceCategory, label: 'Recognize' },
     { key: 'tts_service_list' as ServiceCategory, label: 'TTS' },
     { key: 'collection_service_list' as ServiceCategory, label: 'Collection' }
@@ -19,6 +20,7 @@ const CATEGORY_TABS = [
 function getRegistryForCategory(category: ServiceCategory) {
     switch (category) {
         case 'translate_service_list': return translateServiceRegistry
+        case 'dictionary_service_list': return translateServiceRegistry
         case 'recognize_service_list': return ocrServiceRegistry
         case 'tts_service_list': return ttsServiceRegistry
         case 'collection_service_list': return collectionServiceRegistry

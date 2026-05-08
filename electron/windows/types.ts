@@ -3,6 +3,7 @@ export enum WindowLabel {
   TRANSLATE = 'translate',
   SCREENSHOT = 'screenshot',
   RECOGNIZE = 'recognize',
+  DICT = 'dict',
   CONFIG = 'config',
   UPDATER = 'updater'
 }

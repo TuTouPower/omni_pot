@@ -17,6 +17,12 @@ const TRANSLATE_OPTS = {
   height: 420
 } as const
 
+const DICT_OPTS = {
+  label: WindowLabel.DICT,
+  width: 400,
+  height: 500
+} as const
+
 export function buildHotkeyAction(name: string, mgr: WindowManager): () => void {
   const toggleOrSend = (channel: string): (() => void) => {
     return () => {
@@ -39,6 +45,8 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
       return () => { void start_screenshot_capture(mgr, 'recognize') }
     case 'hotkey_ocr_translate':
       return () => { void start_screenshot_capture(mgr, 'translate') }
+    case 'hotkey_selection_dictionary':
+      return () => { void triggerSelectionDictionary(mgr) }
     default:
       return () => {}
   }
@@ -61,6 +69,25 @@ async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
 
     mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
     mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', result.text)
+}
+
+async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
+    const existing = mgr.getWindow(WindowLabel.DICT)
+    if (existing && !existing.isDestroyed() && existing.isVisible()) {
+        existing.hide()
+        return
+    }
+
+    const { readSelectedText } = await import('../selection')
+    const result = await readSelectedText()
+
+    if (!result.text.trim()) {
+        console.log('[hotkey] selection dictionary: no text, reason=%s', result.reason ?? 'empty')
+        return
+    }
+
+    mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+    mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', result.text)
 }
 
 export function registerHotkey(
@@ -88,7 +115,8 @@ const HOTKEY_KEYS: ConfigKey[] = [
   'hotkey_selection_translate',
   'hotkey_input_translate',
   'hotkey_ocr_recognize',
-  'hotkey_ocr_translate'
+  'hotkey_ocr_translate',
+  'hotkey_selection_dictionary'
 ]
 
 export function registerGlobalShortcutsFromConfig(): void {

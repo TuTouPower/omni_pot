@@ -48,8 +48,10 @@ export interface AppConfig {
   hotkey_input_translate: string
   hotkey_ocr_recognize: string
   hotkey_ocr_translate: string
+  hotkey_selection_dictionary: string
 
   translate_service_list: string[]
+  dictionary_service_list: string[]
   recognize_service_list: string[]
   tts_service_list: string[]
   collection_service_list: string[]
@@ -126,8 +128,10 @@ export const DEFAULT_CONFIG: AppConfig = {
   hotkey_input_translate: '',
   hotkey_ocr_recognize: '',
   hotkey_ocr_translate: '',
+  hotkey_selection_dictionary: '',
 
   translate_service_list: ['bing@default', 'google@default', 'deepl@default'],
+  dictionary_service_list: ['free_dictionary@default'],
   recognize_service_list: [],
   tts_service_list: [],
   collection_service_list: [],

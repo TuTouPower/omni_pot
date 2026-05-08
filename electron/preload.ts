@@ -48,6 +48,11 @@ const api: ElectronAPI = {
       const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
       ipcRenderer.on('translate:from-clipboard', handler)
       return () => { ipcRenderer.off('translate:from-clipboard', handler) }
+    },
+    onDictLookup: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      ipcRenderer.on('dict:lookup', handler)
+      return () => { ipcRenderer.off('dict:lookup', handler) }
     }
   },
   ocr: {
