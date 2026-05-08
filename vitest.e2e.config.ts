@@ -6,10 +6,11 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     pool: 'forks',
+    poolOptions: { forks: { singleFork: true } },
     include: ['tests/user_e2e/**/*.test.ts'],
     testTimeout: 60000,
     hookTimeout: 60000,
-    fileParallelism: true
+    fileParallelism: false
   },
   resolve: {
     alias: {
