@@ -41,6 +41,7 @@ export interface ElectronAPI {
     captureScreenshot(mode: 'recognize' | 'translate'): Promise<void>
     openRecognize(base64Image: string, text: string): Promise<void>
     sendToTranslate(text: string): Promise<void>
+    systemRecognize(base64Image: string, lang: string): Promise<string>
     onScreenshotShow(callback: (base64: string, mode: string) => void): () => void
     onRecognizeShow(callback: (base64: string, text: string) => void): () => void
   }
