@@ -130,6 +130,62 @@ export async function triggerSelectionTranslate(text?: string): Promise<{ succes
     })
 }
 
+/** Trigger dict lookup via E2E HTTP endpoint */
+export async function triggerDictLookup(text: string): Promise<{ success: boolean; error?: string }> {
+    const http = await import('http')
+    const body = JSON.stringify({ text })
+    return new Promise((resolve, reject) => {
+        const req = http.request({
+            hostname: '127.0.0.1',
+            port: _httpPort,
+            path: '/trigger-dict',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': String(body.length) }
+        }, (res) => {
+            const chunks: Buffer[] = []
+            res.on('data', (chunk: Buffer) => chunks.push(chunk))
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(Buffer.concat(chunks).toString()))
+                } catch {
+                    resolve({ success: false })
+                }
+            })
+        })
+        req.on('error', reject)
+        req.write(body)
+        req.end()
+    })
+}
+
+/** Write text to system clipboard via E2E HTTP endpoint (clipboard monitor will pick it up) */
+export async function triggerClipboardText(text: string): Promise<{ success: boolean; error?: string }> {
+    const http = await import('http')
+    const body = JSON.stringify({ text })
+    return new Promise((resolve, reject) => {
+        const req = http.request({
+            hostname: '127.0.0.1',
+            port: _httpPort,
+            path: '/trigger-clipboard',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': String(body.length) }
+        }, (res) => {
+            const chunks: Buffer[] = []
+            res.on('data', (chunk: Buffer) => chunks.push(chunk))
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(Buffer.concat(chunks).toString()))
+                } catch {
+                    resolve({ success: false })
+                }
+            })
+        })
+        req.on('error', reject)
+        req.write(body)
+        req.end()
+    })
+}
+
 /** Wait until the translate results area has at least N result cards */
 export async function waitForResults(minCount: number, timeoutMs = 15000): Promise<void> {
     const c = getClient()

@@ -1,10 +1,17 @@
 import http from 'http'
+import { clipboard } from 'electron'
 import { getConfig, getAllConfig } from '../config/store'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 
 const TRANSLATE_OPTS = {
     label: WindowLabel.TRANSLATE,
+    width: 350,
+    height: 420
+}
+
+const DICT_OPTS = {
+    label: WindowLabel.DICT,
     width: 350,
     height: 420
 }
@@ -58,6 +65,16 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-selection') {
                 handleTriggerSelection(mgr, req, res)
+                return
+            }
+
+            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-dict') {
+                handleTriggerDict(mgr, req, res)
+                return
+            }
+
+            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-clipboard') {
+                handleTriggerClipboard(req, res)
                 return
             }
 
@@ -160,5 +177,69 @@ function handleTriggerSelection(
                 res.end(JSON.stringify({ success: false, error: String(error) }))
             }
         })()
+    })
+}
+
+function handleTriggerDict(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = Buffer.concat(chunks).toString('utf-8').trim()
+            let text = ''
+            if (body) {
+                try {
+                    const json = JSON.parse(body)
+                    if (typeof json.text === 'string') text = json.text
+                } catch { /* ignore */ }
+            }
+            if (!text.trim()) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'empty text' }))
+                return
+            }
+            mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+            mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', text)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
+}
+
+function handleTriggerClipboard(
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = Buffer.concat(chunks).toString('utf-8').trim()
+            let text = ''
+            if (body) {
+                try {
+                    const json = JSON.parse(body)
+                    if (typeof json.text === 'string') text = json.text
+                } catch { /* ignore */ }
+            }
+            if (!text.trim()) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'empty text' }))
+                return
+            }
+            clipboard.writeText(text)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
     })
 }
