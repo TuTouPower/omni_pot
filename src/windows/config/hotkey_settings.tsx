@@ -4,7 +4,7 @@ import { useConfig } from '../../hooks/use_config'
 
 interface HotkeyFieldProps {
     label: string
-    configKey: 'hotkey_selection_translate' | 'hotkey_input_translate' | 'hotkey_ocr_recognize' | 'hotkey_ocr_translate'
+    configKey: 'hotkey_selection_translate' | 'hotkey_input_translate' | 'hotkey_ocr_recognize' | 'hotkey_ocr_translate' | 'hotkey_selection_dictionary'
 }
 
 function buildAccelerator(e: React.KeyboardEvent): string {
@@ -111,6 +111,7 @@ export default function HotkeySettings(): React.ReactElement {
                     <HotkeyField label="Input Translate" configKey="hotkey_input_translate" />
                     <HotkeyField label="OCR Recognize" configKey="hotkey_ocr_recognize" />
                     <HotkeyField label="OCR Translate" configKey="hotkey_ocr_translate" />
+                    <HotkeyField label="Selection Dictionary" configKey="hotkey_selection_dictionary" />
                 </Card.Content>
             </Card>
         </div>

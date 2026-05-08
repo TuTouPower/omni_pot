@@ -35,6 +35,7 @@ export interface ElectronAPI {
     onInputTranslate(callback: () => void): () => void
     onTranslateFromApi(callback: (text: string) => void): () => void
     onTranslateFromClipboard(callback: (text: string) => void): () => void
+    onDictLookup(callback: (text: string) => void): () => void
   }
   ocr: {
     captureScreenshot(mode: 'recognize' | 'translate'): Promise<void>
