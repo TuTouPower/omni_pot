@@ -19,9 +19,7 @@
 
 ---
 
-## 待实现：OCR 服务（缺 10 个）
-
-### 高优先
+## 待实现：OCR 服务（缺 1 个）
 
 - [ ] **系统 OCR** — `src/services/ocr/system.ts`
   - Windows: WinRT OcrEngine（通过 native addon 或 Edge WebView2）
@@ -29,39 +27,15 @@
   - Linux: tesseract CLI
   - 语言: auto + 18 种
 
-- [ ] **讯飞 OCR 系列** — 3 个服务
-  - `src/services/ocr/iflytek_ocr.ts` — 通用 OCR（auto/zh_cn/zh_tw/en）
-  - `src/services/ocr/iflytek_intsig_ocr.ts` — IntSig OCR（18 种语言）
-  - `src/services/ocr/iflytek_latex_ocr.ts` — 数学公式 → LaTeX（auto/zh_cn/zh_tw/en）
-  - 配置: appid, apisecret, apikey
+### 已完成
 
-### 中优先
-
-- [ ] **百度高精度 OCR** — `src/services/ocr/baidu_accurate_ocr.ts`
-  - 配置: client_id, client_secret
-  - 18 种语言，手写/复杂场景
-
-- [ ] **百度图片 OCR** — `src/services/ocr/baidu_img_ocr.ts`
-  - 配置: appid, secret
-  - 18 种语言
-
-- [ ] **腾讯高精度 OCR** — `src/services/ocr/tencent_accurate_ocr.ts`
-  - 配置: secret_id, secret_key
-  - 5 种语言（auto/zh/zh_rare/en）
-
-- [ ] **腾讯图片 OCR** — `src/services/ocr/tencent_img_ocr.ts`
-  - 配置: secret_id, secret_key
-  - 14 种语言
-
-### 低优先
-
-- [ ] **火山引擎多语言 OCR** — `src/services/ocr/volcengine_multi_lang_ocr.ts`
-  - 配置: appid, secret
-  - 19 种语言
-
-- [ ] **Simple LaTeX OCR** — `src/services/ocr/simple_latex_ocr.ts`
-  - 配置: token
-  - 数学公式 → LaTeX
+- [x] **讯飞 OCR 系列** — 3 个服务
+- [x] **百度高精度 OCR** — `src/services/ocr/baidu_accurate_ocr.ts`
+- [x] **百度图片 OCR** — `src/services/ocr/baidu_img_ocr.ts`
+- [x] **腾讯高精度 OCR** — `src/services/ocr/tencent_accurate_ocr.ts`
+- [x] **腾讯图片 OCR** — `src/services/ocr/tencent_img_ocr.ts`
+- [x] **火山引擎多语言 OCR** — `src/services/ocr/volcengine_multi_lang_ocr.ts`
+- [x] **Simple LaTeX OCR** — `src/services/ocr/simple_latex_ocr.ts`
 
 ---
 
