@@ -21,6 +21,55 @@ export const ollamaService: TranslateService = {
     name: 'Ollama',
     languages: OLLAMA_LANGUAGES,
 
+    async *translateStream(
+        text: string,
+        from: LanguageCode,
+        to: LanguageCode,
+        config: ServiceConfig
+    ): AsyncGenerator<string, void, unknown> {
+        const model = (config.model as string) || 'gemma:2b'
+        const request_path = (config.requestPath as string) || 'http://localhost:11434'
+        const base = request_path.replace(/\/+$/, '')
+        const url = `${base}/api/chat`
+
+        const system_prompt = build_system_prompt(config, from, to)
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model,
+                messages: [
+                    { role: 'system', content: system_prompt },
+                    { role: 'user', content: text }
+                ],
+                stream: true
+            })
+        })
+
+        if (!resp.ok) throw new Error(`Ollama API error: ${resp.status}`)
+
+        const reader = resp.body?.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (reader) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ''
+            for (const line of lines) {
+                if (!line.trim()) continue
+                try {
+                    const json = JSON.parse(line) as { message?: { content?: string }; done?: boolean }
+                    if (json.message?.content) yield json.message.content
+                    if (json.done) return
+                } catch { /* skip malformed */ }
+            }
+        }
+    },
+
     async translate(
         text: string,
         from: LanguageCode,

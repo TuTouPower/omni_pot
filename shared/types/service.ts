@@ -38,6 +38,12 @@ export interface TranslateService {
     to: LanguageCode,
     config: ServiceConfig
   ): Promise<string | DictResult>
+  translateStream?(
+    text: string,
+    from: LanguageCode,
+    to: LanguageCode,
+    config: ServiceConfig
+  ): AsyncGenerator<string, void, unknown>
   testConfig(config: ServiceConfig): Promise<boolean>
 }
 
