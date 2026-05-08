@@ -19,7 +19,9 @@ import { registerTextHandlers } from './ipc/text_handlers'
 import { registerOcrHandlers } from './ipc/ocr_handlers'
 import { registerHistoryHandlers } from './ipc/history_handlers'
 import { registerBackupHandlers } from './ipc/backup_handlers'
+import { registerDictHandlers } from './ipc/dict_handlers'
 import { close_history } from './history'
+import { close_dict } from './dict'
 import { startServer, stopServer } from './server'
 import { applyProxy } from './proxy'
 import { checkForUpdate } from './updater'
@@ -65,6 +67,7 @@ if (!gotLock) {
     registerOcrHandlers(windowManager)
     registerHistoryHandlers()
     registerBackupHandlers()
+    registerDictHandlers()
     debug('IPC handlers: all registered')
 
     debug('creating tray...')
@@ -153,6 +156,7 @@ if (!gotLock) {
     stopClipboardMonitor()
     stopServer()
     close_history()
+    close_dict()
     unregisterAll()
   })
 }
