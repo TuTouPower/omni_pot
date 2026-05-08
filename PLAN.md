@@ -63,8 +63,8 @@
 - [x] **重试按钮** — 翻译失败后显示
 - [ ] **收藏按钮** — 每个服务卡片底部，对应 collection_service_list 中的服务
 - [x] **SourceArea 补全** — 删除换行按钮、清空按钮、TTS 朗读按钮
-- [ ] **IME 处理** — 防止输入法与语言检测竞态
-- [ ] **窗口大小记忆** — translate_remember_window_size + 保存尺寸
+- [x] **IME 处理** — 防止输入法与语言检测竞态
+- [x] **窗口大小记忆** — translate_remember_window_size + 保存尺寸
 
 ### 识别窗口
 
@@ -82,9 +82,9 @@
 ### 配置窗口
 
 - [ ] **字体选择** — 系统字体列表下拉框 + 预览
-- [ ] **自动启动** — 开机自启开关
+- [x] **自动启动** — 开机自启开关
 - [ ] **透明开关** — macOS 上隐藏
-- [ ] **托盘点击事件** — tray_click_event（仅 Windows）
+- [x] **托盘点击事件** — tray_click_event（仅 Windows）
 
 ---
 

@@ -1,34 +1,89 @@
 import type { LanguageCode } from '@shared/types/language'
 
 function detect_local(text: string): LanguageCode {
-    // CJK
     if (/[一-鿿]/.test(text)) return 'zh_cn'
     if (/[぀-ゟ゠-ヿ]/.test(text)) return 'ja'
     if (/[가-힯]/.test(text)) return 'ko'
-    // Cyrillic — Russian vs Ukrainian
     if (/[Ѐ-ӿ]/.test(text)) {
-        // Ukrainian-specific: і, ї, є, ґ
         if (/[іїєґ]/.test(text)) return 'uk'
         return 'ru'
     }
-    // Thai
     if (/[฀-๿]/.test(text)) return 'th'
-    // Arabic + Persian (both use Arabic script)
     if (/[؀-ۿ]/.test(text)) {
-        // Persian-specific: گ, چ, پ, ژ, ک, ی
         if (/[گچپژ]/.test(text)) return 'fa'
         return 'ar'
     }
-    // Hebrew
     if (/[֐-׿]/.test(text)) return 'he'
-    // Devanagari (Hindi)
     if (/[ऀ-ॿ]/.test(text)) return 'hi'
-    // Vietnamese — Latin with combining marks or specific chars
     if (/[ăằẳẵặâầẩẫậđêềểễệôồổỗộơờởỡợùừửữựýỳỷỹỵ]/i.test(text)) return 'vi'
-    // Default to English for Latin script
     return 'en'
 }
 
-export function detectLanguage(text: string): LanguageCode {
+const BING_LANG_MAP: Record<string, LanguageCode> = {
+    'zh-Hans': 'zh_cn', 'zh-Hant': 'zh_tw', 'yue': 'yue',
+    'en': 'en', 'ja': 'ja', 'ko': 'ko', 'fr': 'fr', 'es': 'es',
+    'ru': 'ru', 'de': 'de', 'it': 'it', 'tr': 'tr', 'pt': 'pt_pt',
+    'vi': 'vi', 'id': 'id', 'th': 'th', 'ms': 'ms', 'ar': 'ar',
+    'hi': 'hi', 'uk': 'uk', 'he': 'he', 'nl': 'nl', 'pl': 'pl',
+    'sv': 'sv', 'fa': 'fa', 'nb': 'nb_no', 'nn': 'nn_no'
+}
+
+async function bing_detect(text: string): Promise<LanguageCode> {
+    try {
+        const auth_resp = await fetch('https://edge.microsoft.com/translate/auth')
+        if (!auth_resp.ok) return detect_local(text)
+        const token = await auth_resp.text()
+
+        const resp = await fetch('https://api-edge.cognitive.microsofttranslator.com/detect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify([{ text }])
+        })
+        if (!resp.ok) return detect_local(text)
+        const data = await resp.json() as Array<{ language: string }>
+        if (data[0]?.language) {
+            return BING_LANG_MAP[data[0].language] ?? detect_local(text)
+        }
+    } catch { /* fallback */ }
     return detect_local(text)
+}
+
+const GOOGLE_LANG_MAP: Record<string, LanguageCode> = {
+    'zh-CN': 'zh_cn', 'zh-TW': 'zh_tw', 'zh': 'zh_cn',
+    'en': 'en', 'ja': 'ja', 'ko': 'ko', 'fr': 'fr', 'es': 'es',
+    'ru': 'ru', 'de': 'de', 'it': 'it', 'tr': 'tr', 'pt': 'pt_pt',
+    'vi': 'vi', 'id': 'id', 'th': 'th', 'ms': 'ms', 'ar': 'ar',
+    'hi': 'hi', 'uk': 'uk', 'he': 'he', 'nl': 'nl', 'pl': 'pl',
+    'sv': 'sv', 'fa': 'fa', 'no': 'nb_no'
+}
+
+async function google_detect(text: string): Promise<LanguageCode> {
+    try {
+        const resp = await fetch(
+            `https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`
+        )
+        if (!resp.ok) return detect_local(text)
+        const data = await resp.json() as [unknown, unknown, string]
+        const detected = data[2]
+        if (detected) {
+            return GOOGLE_LANG_MAP[detected] ?? detect_local(text)
+        }
+    } catch { /* fallback */ }
+    return detect_local(text)
+}
+
+export async function detectLanguage(text: string, engine?: string): Promise<LanguageCode> {
+    const effective_engine = engine ?? 'local'
+    switch (effective_engine) {
+        case 'bing':
+            return bing_detect(text)
+        case 'google':
+            return google_detect(text)
+        case 'local':
+        default:
+            return detect_local(text)
+    }
 }
