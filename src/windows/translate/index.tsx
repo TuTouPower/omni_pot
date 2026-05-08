@@ -89,15 +89,27 @@ export default function TranslateWindow(): React.ReactElement {
       const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
 
       try {
-        const result = await service.translate(
-          textToTranslate,
-          sourceLanguage,
-          effectiveTarget,
-          instanceConfig
-        )
-        resultsMap[instanceKey] = result
-        if (useTranslateStore.getState().requestId === id) {
-          setResult(instanceKey, result)
+        if (service.translateStream) {
+          let accumulated = ''
+          setResult(instanceKey, '')
+          for await (const chunk of service.translateStream(textToTranslate, sourceLanguage, effectiveTarget, instanceConfig)) {
+            accumulated += chunk
+            if (useTranslateStore.getState().requestId === id) {
+              setResult(instanceKey, accumulated)
+            }
+          }
+          resultsMap[instanceKey] = accumulated
+        } else {
+          const result = await service.translate(
+            textToTranslate,
+            sourceLanguage,
+            effectiveTarget,
+            instanceConfig
+          )
+          resultsMap[instanceKey] = result
+          if (useTranslateStore.getState().requestId === id) {
+            setResult(instanceKey, result)
+          }
         }
       } catch {
         resultsMap[instanceKey] = null

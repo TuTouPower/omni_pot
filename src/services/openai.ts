@@ -74,6 +74,60 @@ export const openaiService: TranslateService = {
     name: 'OpenAI',
     languages: OPENAI_LANGUAGES,
 
+    async *translateStream(
+        text: string,
+        from: LanguageCode,
+        to: LanguageCode,
+        config: ServiceConfig
+    ): AsyncGenerator<string, void, unknown> {
+        const model = (config.model as string) || 'gpt-3.5-turbo'
+        const request_arguments_raw = (config.requestArguments as string) || '{"temperature":0.1}'
+        let request_arguments: Record<string, unknown> = { temperature: 0.1 }
+        try { request_arguments = JSON.parse(request_arguments_raw) } catch { /* defaults */ }
+
+        const system_prompt = build_system_prompt(config, from, to)
+        const url = build_url(config)
+        const headers = build_headers(config)
+
+        const payload: Record<string, unknown> = {
+            ...request_arguments,
+            model,
+            messages: [
+                { role: 'system', content: system_prompt },
+                { role: 'user', content: text }
+            ],
+            stream: true
+        }
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        })
+
+        if (!resp.ok) throw new Error(`OpenAI API error: ${resp.status}`)
+
+        const reader = resp.body?.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (reader) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ''
+            for (const line of lines) {
+                const trimmed = line.trim()
+                if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
+                    const json = JSON.parse(trimmed.slice(6))
+                    const content = json.choices?.[0]?.delta?.content
+                    if (content) yield content
+                }
+            }
+        }
+    },
+
     async translate(
         text: string,
         from: LanguageCode,
