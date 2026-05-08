@@ -71,7 +71,9 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
   'bing@default': { serviceKey: 'bing', config: {} },
   'google@default': { serviceKey: 'google', config: {} },
   'deepl@default': { serviceKey: 'deepl', config: {} },
-  'tesseract@default': { serviceKey: 'tesseract', config: {} }
+  'tesseract@default': { serviceKey: 'tesseract', config: {} },
+  'mymemory@default': { serviceKey: 'mymemory', config: {} },
+  'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} }
 }
 
 export const DEFAULT_CONFIG: AppConfig = {
