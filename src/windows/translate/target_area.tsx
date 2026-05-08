@@ -178,6 +178,15 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     )
   }
 
+  const handleSwitchInstance = useCallback((oldInstanceKey: string, newInstanceKey: string) => {
+    if (oldInstanceKey === newInstanceKey) return
+    const list = useConfigStore.getState().config.translate_service_list
+    const updated = list.map((k) => k === oldInstanceKey ? newInstanceKey : k)
+    useConfigStore.getState().set('translate_service_list', updated)
+  }, [])
+
+  const allInstanceKeys = Object.keys(serviceInstances)
+
   return (
     <div className="flex flex-col gap-2 p-2 overflow-y-auto" style={{ maxHeight: '300px' }}>
       {serviceList.map((instanceKey) => {
@@ -185,10 +194,23 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         const service = translateServiceRegistry.get(serviceKey)
         if (!service) return null
 
+        const sameTypeInstances = allInstanceKeys.filter((k) => getServiceKey(k) === serviceKey)
+
         return (
           <Card key={instanceKey} variant="bordered" className="shadow-none" data-result-key={instanceKey}>
             <Card.Header className="flex justify-between px-3 py-1">
               <span className="text-xs font-semibold">{service.name}</span>
+              {sameTypeInstances.length > 1 && (
+                <select
+                  value={instanceKey}
+                  onChange={(e) => handleSwitchInstance(instanceKey, e.target.value)}
+                  className="text-xs bg-default-100 border border-default-200 rounded px-1 py-0.5 outline-none"
+                >
+                  {sameTypeInstances.map((ik) => (
+                    <option key={ik} value={ik}>{ik.split('@')[1]}</option>
+                  ))}
+                </select>
+              )}
             </Card.Header>
             <Card.Content className="px-3 py-2">
               {renderResult(instanceKey)}
