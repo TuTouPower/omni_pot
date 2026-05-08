@@ -46,6 +46,10 @@ export default function ScreenshotWindow(): React.ReactElement {
     }, [])
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (e.button === 2) {
+            window.electronAPI.window.close()
+            return
+        }
         setSelecting(true)
         setStart({ x: e.clientX, y: e.clientY })
         setEnd(null)
@@ -140,6 +144,7 @@ export default function ScreenshotWindow(): React.ReactElement {
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            onContextMenu={(e) => e.preventDefault()}
         >
             <div className="fixed inset-0 bg-black/30" />
             {selection_rect && (

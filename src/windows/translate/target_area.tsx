@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { Card, Button, Spinner } from '@heroui/react'
-import { MdContentCopy } from 'react-icons/md'
+import { MdContentCopy, MdAutorenew } from 'react-icons/md'
 import { TbTransformFilled } from 'react-icons/tb'
 import { VscUnmute } from 'react-icons/vsc'
 import { useTranslateStore } from '../../stores/translate_store'
@@ -12,9 +12,10 @@ import type { DictResult } from '@shared/types/service'
 interface TargetAreaProps {
   serviceList: string[]
   ttsServiceList: string[]
+  onRetry?: (instanceKey: string) => void
 }
 
-export function TargetArea({ serviceList, ttsServiceList }: TargetAreaProps): React.ReactElement {
+export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaProps): React.ReactElement {
   const results = useTranslateStore((s) => s.results)
   const isTranslating = useTranslateStore((s) => s.isTranslating)
   const targetLanguage = useTranslateStore((s) => s.targetLanguage)
@@ -79,7 +80,16 @@ export function TargetArea({ serviceList, ttsServiceList }: TargetAreaProps): Re
     }
 
     if (result === null) {
-      return <p className="text-danger text-xs">Translation failed</p>
+      return (
+        <div className="flex items-center gap-2">
+          <p className="text-danger text-xs">Translation failed</p>
+          {onRetry && (
+            <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => onRetry(instanceKey)}>
+              <MdAutorenew className="text-base" />
+            </Button>
+          )}
+        </div>
+      )
     }
 
     if (result === undefined) {

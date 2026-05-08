@@ -216,6 +216,30 @@ export default function TranslateWindow(): React.ReactElement {
     window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop)
   }, [alwaysOnTop])
 
+  const handleRetry = useCallback(async (instanceKey: string) => {
+    const textToTranslate = useTranslateStore.getState().sourceText
+    if (!textToTranslate.trim()) return
+
+    const serviceKey = getServiceKey(instanceKey)
+    const service = translateServiceRegistry.get(serviceKey)
+    if (!service) return
+
+    const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
+    const detected = sourceLanguage === 'auto' ? detectLanguage(textToTranslate) : null
+
+    let effectiveTarget = targetLanguage
+    if (sourceLanguage === 'auto' && detected && detected === targetLanguage) {
+      effectiveTarget = secondLanguage
+    }
+
+    try {
+      const result = await service.translate(textToTranslate, sourceLanguage, effectiveTarget, instanceConfig)
+      setResult(instanceKey, result)
+    } catch {
+      setResult(instanceKey, null)
+    }
+  }, [sourceLanguage, targetLanguage, secondLanguage, serviceInstances, setResult])
+
   const showSource = forceShowSource || !hideSource
 
   return (
@@ -238,7 +262,7 @@ export default function TranslateWindow(): React.ReactElement {
 
       {showSource && <SourceArea onTranslate={handleTranslate} inputRef={inputRef} />}
       <LanguageArea />
-      <TargetArea serviceList={serviceList} ttsServiceList={ttsServiceList} />
+      <TargetArea serviceList={serviceList} ttsServiceList={ttsServiceList} onRetry={handleRetry} />
     </div>
   )
 }
