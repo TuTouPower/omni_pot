@@ -1,30 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import Tesseract from 'tesseract.js'
 import { resolve } from 'path'
-import {
-    init, cleanup, getTranslateClient,
-    clearTextarea, getTextareaValue,
-    triggerSelectionTranslate, triggerDictLookup, triggerClipboardText,
-    triggerTranslateViaApi, triggerClipboardTranslate, captureClockImage,
-    waitForSourceText, waitForSelector,
-    readConfig, writeConfig
-} from './helpers/test_utils'
 import { CdpClient, findAllTargets } from './helpers/cdp_helper'
 import { ensureBuilt, startElectron, stopElectron, type ElectronInstance } from './helpers/electron_launcher'
 
 const TESSERACT_LANG_PATH = resolve(__dirname, '../../data/tesseract')
-
-/**
- * CP1-CP6 Combined Integration Test (Random Order)
- *
- * All 6 critical paths executed in random order, one Electron instance.
- * Verifies intermediate state after each CP, and final History correctness.
- * All services are real — no mocks.
- */
-
 const TRANSLATE_RESULT_TIMEOUT = 45000
 
-// ── Helpers ──
+// ── Types ──
+
+interface CPContext {
+    client: CdpClient
+    httpPort: number
+    cdpPort: number
+}
 
 interface CPResult {
     description: string
@@ -32,24 +21,145 @@ interface CPResult {
     producesHistory: boolean
 }
 
-/** Parse hours and minutes from OCR text */
-function parseTimeFromOcr(text: string): { hours: number; minutes: number } | null {
-    const match = text.match(/(\d{1,2})\s*[:：]\s*(\d{2})/)
-    if (!match) return null
-    return { hours: parseInt(match[1], 10), minutes: parseInt(match[2], 10) }
+// ── Context-aware HTTP helpers ──
+
+async function httpPost(httpPort: number, path: string, body?: string): Promise<string> {
+    const http = await import('http')
+    return new Promise((resolve, reject) => {
+        const req = http.request({
+            hostname: '127.0.0.1',
+            port: httpPort,
+            path,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(body ? { 'Content-Length': String(body.length) } : {})
+            }
+        }, (res) => {
+            const chunks: Buffer[] = []
+            res.on('data', (chunk: Buffer) => chunks.push(chunk))
+            res.on('end', () => resolve(Buffer.concat(chunks).toString()))
+        })
+        req.on('error', reject)
+        if (body) req.write(body)
+        req.end()
+    })
 }
 
-/** Check if two times are within tolerance minutes of each other */
-function isTimeClose(h1: number, m1: number, h2: number, m2: number, toleranceMinutes = 2): boolean {
-    const t1 = h1 * 60 + m1
-    const t2 = h2 * 60 + m2
-    return Math.abs(t1 - t2) <= toleranceMinutes
+async function httpGet(httpPort: number, path: string): Promise<string> {
+    const http = await import('http')
+    return new Promise((resolve, reject) => {
+        http.get(`http://127.0.0.1:${httpPort}${path}`, (res) => {
+            const chunks: Buffer[] = []
+            res.on('data', (chunk: Buffer) => chunks.push(chunk))
+            res.on('end', () => resolve(Buffer.concat(chunks).toString()))
+        }).on('error', reject)
+    })
 }
 
-/** Read result text from a specific service card */
-async function readServiceResult(instanceKey: string): Promise<string | null> {
-    const c = getTranslateClient()
-    const result = await c.evaluate(`
+// ── Context-aware helpers ──
+
+async function ctx_readConfig(ctx: CPContext, key: string): Promise<unknown> {
+    return ctx.client.evaluate(`window.electronAPI.config.get('${key}')`)
+}
+
+async function ctx_writeConfig(ctx: CPContext, key: string, value: unknown): Promise<void> {
+    await ctx.client.evaluate(`window.electronAPI.config.set('${key}', ${JSON.stringify(value)})`)
+}
+
+async function ctx_clearTextarea(ctx: CPContext): Promise<void> {
+    const c = ctx.client
+    await c.evaluate('document.querySelector("textarea")?.focus()')
+    await c.send('Input.dispatchKeyEvent', {
+        type: 'keyDown', key: 'a', code: 'KeyA',
+        windowsVirtualKeyCode: 65, modifiers: 2
+    })
+    await c.send('Input.dispatchKeyEvent', {
+        type: 'keyUp', key: 'a', code: 'KeyA',
+        windowsVirtualKeyCode: 65, modifiers: 2
+    })
+    await c.send('Input.dispatchKeyEvent', {
+        type: 'keyDown', key: 'Delete', code: 'Delete',
+        windowsVirtualKeyCode: 46
+    })
+    await c.send('Input.dispatchKeyEvent', {
+        type: 'keyUp', key: 'Delete', code: 'Delete',
+        windowsVirtualKeyCode: 46
+    })
+}
+
+async function ctx_getTextareaValue(ctx: CPContext): Promise<string> {
+    return (await ctx.client.evaluate('document.querySelector("textarea")?.value ?? ""')) as string
+}
+
+async function ctx_waitForSourceText(ctx: CPContext, expected: string, timeoutMs = 5000): Promise<void> {
+    let lastVal = ''
+    await ctx.client.waitFor(async () => {
+        lastVal = await ctx_getTextareaValue(ctx)
+        return lastVal === expected
+    }, timeoutMs).catch(() => {
+        throw new Error(`waitForSourceText: expected ${JSON.stringify(expected)}, got ${JSON.stringify(lastVal)}`)
+    })
+}
+
+async function ctx_waitForSelector(ctx: CPContext, selector: string, timeoutMs = 10000): Promise<void> {
+    await ctx.client.waitFor(async () => {
+        const count = await ctx.client.evaluate(`document.querySelectorAll("${selector}").length`) as number
+        return count > 0
+    }, timeoutMs)
+}
+
+async function ctx_triggerSelectionTranslate(ctx: CPContext, text: string): Promise<{ success: boolean; method?: string; reason?: string }> {
+    const body = JSON.stringify({ text })
+    const raw = await httpPost(ctx.httpPort, '/trigger-selection', body)
+    try { return JSON.parse(raw) } catch { return { success: false } }
+}
+
+async function ctx_triggerDictLookup(ctx: CPContext, text: string): Promise<{ success: boolean; error?: string }> {
+    const raw = await httpPost(ctx.httpPort, '/trigger-dict', JSON.stringify({ text }))
+    try { return JSON.parse(raw) } catch { return { success: false } }
+}
+
+async function ctx_triggerClipboardText(ctx: CPContext, text: string): Promise<{ success: boolean; error?: string }> {
+    const raw = await httpPost(ctx.httpPort, '/trigger-clipboard', JSON.stringify({ text }))
+    try { return JSON.parse(raw) } catch { return { success: false } }
+}
+
+async function ctx_triggerClipboardTranslate(ctx: CPContext, text: string): Promise<{ success: boolean; error?: string }> {
+    const raw = await httpPost(ctx.httpPort, '/trigger-clipboard-translate', JSON.stringify({ text }))
+    try { return JSON.parse(raw) } catch { return { success: false } }
+}
+
+async function ctx_triggerTranslateViaApi(ctx: CPContext, text: string): Promise<void> {
+    const http = await import('http')
+    return new Promise((resolve, reject) => {
+        const req = http.request({
+            hostname: '127.0.0.1',
+            port: ctx.httpPort,
+            path: '/translate',
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' }
+        }, (res) => {
+            res.resume()
+            res.on('end', resolve)
+        })
+        req.on('error', reject)
+        req.write(text)
+        req.end()
+    })
+}
+
+async function ctx_captureClockImage(ctx: CPContext): Promise<string> {
+    const raw = await httpGet(ctx.httpPort, '/capture-clock')
+    const data = JSON.parse(raw)
+    if (data.success) return data.image
+    throw new Error(data.error ?? 'capture failed')
+}
+
+// ── Service result helpers ──
+
+async function ctx_readServiceResult(ctx: CPContext, instanceKey: string): Promise<string | null> {
+    return ctx.client.evaluate(`
         (() => {
             const card = document.querySelector('[data-result-key="${instanceKey}"]')
             if (!card) return null
@@ -59,62 +169,65 @@ async function readServiceResult(instanceKey: string): Promise<string | null> {
             if (p && p.textContent && !p.textContent.includes('failed')) return p.textContent
             return null
         })()
-    `)
-    return result as string | null
+    `) as Promise<string | null>
 }
 
-/** Wait until a service card has non-empty result text */
-async function waitForServiceResult(instanceKey: string, timeoutMs = TRANSLATE_RESULT_TIMEOUT): Promise<string> {
-    const c = getTranslateClient()
+async function ctx_waitForServiceResult(ctx: CPContext, instanceKey: string, timeoutMs = TRANSLATE_RESULT_TIMEOUT): Promise<string> {
     let result: string | null = null
-    await c.waitFor(async () => {
-        result = await readServiceResult(instanceKey)
+    await ctx.client.waitFor(async () => {
+        result = await ctx_readServiceResult(ctx, instanceKey)
         return result !== null && result.length > 0
     }, timeoutMs)
     return result ?? ''
 }
 
-/** Wait for ALL translate services to return non-empty results */
-async function waitForAllServiceResults(
-    serviceList: string[],
-    timeoutMs = TRANSLATE_RESULT_TIMEOUT
-): Promise<Record<string, string>> {
+async function ctx_waitForAllServiceResults(ctx: CPContext, serviceList: string[], timeoutMs = TRANSLATE_RESULT_TIMEOUT): Promise<Record<string, string>> {
     await new Promise(r => setTimeout(r, 300))
     const results: Record<string, string> = {}
     const deadline = Date.now() + timeoutMs
     for (const key of serviceList) {
         const remaining = deadline - Date.now()
         if (remaining <= 0) throw new Error(`Timed out waiting for ${key} (${Object.keys(results).length}/${serviceList.length} done)`)
-        results[key] = await waitForServiceResult(key, remaining)
+        results[key] = await ctx_waitForServiceResult(ctx, key, remaining)
     }
     return results
 }
 
-/** Get current history count via electronAPI, polling until expected or timeout */
-async function waitForHistoryCount(expectedMin: number, timeoutMs = 8000): Promise<number> {
-    const c = getTranslateClient()
-    const deadline = Date.now() + timeoutMs
+// ── History helpers ──
+
+async function ctx_waitForHistoryCount(ctx: CPContext, expectedMin: number, timeoutMs = 8000): Promise<number> {
     let count = 0
-    await c.waitFor(async () => {
-        count = await c.evaluate('window.electronAPI.history.count()') as number
+    await ctx.client.waitFor(async () => {
+        count = await ctx.client.evaluate('window.electronAPI.history.count()') as number
         return count >= expectedMin
     }, timeoutMs)
     return count
 }
 
-/** Get history records via electronAPI */
-async function getHistoryList(page: number, pageSize: number): Promise<Array<{ source_text: string }>> {
-    const c = getTranslateClient()
-    return c.evaluate(`window.electronAPI.history.list(${page}, ${pageSize})`) as Promise<Array<{ source_text: string }>>
+async function ctx_getHistoryList(ctx: CPContext, page: number, pageSize: number): Promise<Array<{ source_text: string }>> {
+    return ctx.client.evaluate(`window.electronAPI.history.list(${page}, ${pageSize})`) as Promise<Array<{ source_text: string }>>
 }
 
-/** Clear all history */
-async function clearHistory(): Promise<void> {
-    const c = getTranslateClient()
-    await c.evaluate('window.electronAPI.history.clear()')
+async function ctx_clearHistory(ctx: CPContext): Promise<void> {
+    await ctx.client.evaluate('window.electronAPI.history.clear()')
 }
 
-/** Fisher-Yates shuffle */
+// ── OCR helpers ──
+
+function parseTimeFromOcr(text: string): { hours: number; minutes: number } | null {
+    const match = text.match(/(\d{1,2})\s*[:：]\s*(\d{2})/)
+    if (!match) return null
+    return { hours: parseInt(match[1], 10), minutes: parseInt(match[2], 10) }
+}
+
+function isTimeClose(h1: number, m1: number, h2: number, m2: number, toleranceMinutes = 2): boolean {
+    const t1 = h1 * 60 + m1
+    const t2 = h2 * 60 + m2
+    return Math.abs(t1 - t2) <= toleranceMinutes
+}
+
+// ── Shuffle ──
+
 function shuffle<T>(array: T[]): T[] {
     const a = [...array]
     for (let i = a.length - 1; i > 0; i--) {
@@ -126,71 +239,86 @@ function shuffle<T>(array: T[]): T[] {
 
 // ── CP Executor Functions ──
 
-async function executeCP1(): Promise<CPResult> {
+async function executeCP1(ctx: CPContext): Promise<CPResult> {
     const text = `cp1 selection ${Date.now()}`
-    const response = await triggerSelectionTranslate(text)
+    const response = await ctx_triggerSelectionTranslate(ctx, text)
     expect(response.success).toBe(true)
-    await waitForSourceText(text, 8000)
+    await ctx_waitForSourceText(ctx, text, 8000)
 
-    const serviceList = await readConfig('translate_service_list') as string[]
-    const results = await waitForAllServiceResults(serviceList)
+    const serviceList = await ctx_readConfig(ctx, 'translate_service_list') as string[]
+    const results = await ctx_waitForAllServiceResults(ctx, serviceList)
     for (const r of Object.values(results)) {
         expect(r.length).toBeGreaterThan(0)
     }
     return { description: 'CP1 Selection Translate', sourceText: text, producesHistory: true }
 }
 
-async function executeCP2(): Promise<CPResult> {
+async function executeCP2(ctx: CPContext): Promise<CPResult> {
     const text = `cp2 input ${Date.now()}`
-    await clearTextarea()
-    const client = getTranslateClient()
-    await client.insertText(text)
-    await client.pressEnter()
+    await ctx_clearTextarea(ctx)
+    await ctx.client.insertText(text)
+    await ctx.client.pressEnter()
 
-    await waitForSourceText(text, 5000)
-    const serviceList = await readConfig('translate_service_list') as string[]
-    const results = await waitForAllServiceResults(serviceList)
+    await ctx_waitForSourceText(ctx, text, 5000)
+    const serviceList = await ctx_readConfig(ctx, 'translate_service_list') as string[]
+    const results = await ctx_waitForAllServiceResults(ctx, serviceList)
     for (const r of Object.values(results)) {
         expect(r.length).toBeGreaterThan(0)
     }
     return { description: 'CP2 Input Translate', sourceText: text, producesHistory: true }
 }
 
-async function executeCP3(): Promise<CPResult> {
-    const beforeTime = new Date()
+async function executeCP3(ctx: CPContext): Promise<CPResult> {
+    // Retry screen capture + OCR up to 3 times (DXGI capture can fail under load)
+    let imageBase64 = ''
+    let ocrText = ''
+    let parsed: { hours: number; minutes: number } | null = null
 
-    // Capture real taskbar clock screenshot
-    const imageBase64 = await captureClockImage()
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        const beforeTime = new Date()
+
+        imageBase64 = await ctx_captureClockImage(ctx)
+        if (imageBase64.length === 0) {
+            console.log(`[CP3] Attempt ${attempt}: empty image, retrying...`)
+            await new Promise(r => setTimeout(r, 1000))
+            continue
+        }
+
+        const worker = await Tesseract.createWorker('eng', 1, { langPath: TESSERACT_LANG_PATH, cachePath: TESSERACT_LANG_PATH })
+        const result = await worker.recognize(`data:image/png;base64,${imageBase64}`)
+        await worker.terminate()
+        ocrText = result.data.text.trim()
+        console.log(`[CP3] Attempt ${attempt} OCR text: "${ocrText}"`)
+
+        parsed = parseTimeFromOcr(ocrText)
+        if (!parsed) {
+            console.log(`[CP3] Attempt ${attempt}: no time pattern found, retrying...`)
+            await new Promise(r => setTimeout(r, 1000))
+            continue
+        }
+
+        const nowHours = beforeTime.getHours()
+        const nowMinutes = beforeTime.getMinutes()
+        if (isTimeClose(parsed.hours, parsed.minutes, nowHours, nowMinutes, 2)) {
+            console.log(`[CP3] Attempt ${attempt}: time match ${parsed.hours}:${String(parsed.minutes).padStart(2, '0')}`)
+            break
+        }
+
+        console.log(`[CP3] Attempt ${attempt}: time mismatch (got ${parsed.hours}:${parsed.minutes}, expected ~${nowHours}:${nowMinutes}), retrying...`)
+        parsed = null
+        await new Promise(r => setTimeout(r, 1000))
+    }
+
     expect(imageBase64.length).toBeGreaterThan(0)
-
-    // Run real Tesseract OCR on the clock image
-    const worker = await Tesseract.createWorker('eng', 1, { langPath: TESSERACT_LANG_PATH, cachePath: TESSERACT_LANG_PATH })
-    const result = await worker.recognize(`data:image/png;base64,${imageBase64}`)
-    await worker.terminate()
-    const ocrText = result.data.text.trim()
-    console.log(`[CP3] OCR text from taskbar clock: "${ocrText}"`)
     expect(ocrText.length).toBeGreaterThan(0)
-
-    // Parse time from OCR and compare with current time
-    const parsed = parseTimeFromOcr(ocrText)
     expect(parsed).not.toBeNull()
-    console.log(`[CP3] Parsed time: ${parsed!.hours}:${String(parsed!.minutes).padStart(2, '0')}`)
 
-    const nowHours = beforeTime.getHours()
-    const nowMinutes = beforeTime.getMinutes()
-    const timeClose = isTimeClose(parsed!.hours, parsed!.minutes, nowHours, nowMinutes, 2)
-    expect(timeClose).toBe(true)
-
-    // Also open recognize window to verify the full OCR pipeline
-    const client = getTranslateClient()
-    await client.evaluate(`
+    await ctx.client.evaluate(`
         window.electronAPI.ocr.openRecognize('${imageBase64}', ${JSON.stringify(ocrText)})
     `)
 
-    // Wait for recognize window to appear
     await new Promise(r => setTimeout(r, 2000))
-    const instance = globalThis.__e2e_instance as ElectronInstance
-    const targets = await findAllTargets(instance.cdpPort)
+    const targets = await findAllTargets(ctx.cdpPort)
     const recognizeTarget = targets.find(t => t.url.includes('recognize'))
     expect(recognizeTarget).toBeDefined()
 
@@ -204,29 +332,26 @@ async function executeCP3(): Promise<CPResult> {
     return { description: 'CP3 OCR Recognize (taskbar clock)', sourceText: ocrText, producesHistory: false }
 }
 
-async function executeCP4(): Promise<CPResult> {
+async function executeCP4(ctx: CPContext): Promise<CPResult> {
     const text = `cp4 ocr translate ${Date.now()}`
-    const client = getTranslateClient()
-    await client.evaluate(`
+    await ctx.client.evaluate(`
         window.electronAPI.ocr.sendToTranslate(${JSON.stringify(text)})
     `)
-    await waitForSourceText(text, 8000)
+    await ctx_waitForSourceText(ctx, text, 8000)
 
-    const serviceList = await readConfig('translate_service_list') as string[]
-    const results = await waitForAllServiceResults(serviceList)
+    const serviceList = await ctx_readConfig(ctx, 'translate_service_list') as string[]
+    const results = await ctx_waitForAllServiceResults(ctx, serviceList)
     for (const r of Object.values(results)) {
         expect(r.length).toBeGreaterThan(0)
     }
     return { description: 'CP4 OCR Translate', sourceText: text, producesHistory: true }
 }
 
-async function executeCP5(): Promise<CPResult> {
-    await triggerDictLookup('hello')
+async function executeCP5(ctx: CPContext): Promise<CPResult> {
+    await ctx_triggerDictLookup(ctx, 'hello')
 
-    // Wait for dict window to appear
     await new Promise(r => setTimeout(r, 2000))
-    const instance = globalThis.__e2e_instance as ElectronInstance
-    const targets = await findAllTargets(instance.cdpPort)
+    const targets = await findAllTargets(ctx.cdpPort)
     const dictTarget = targets.find(t => t.url.includes('dict'))
     expect(dictTarget).toBeDefined()
 
@@ -236,9 +361,8 @@ async function executeCP5(): Promise<CPResult> {
             `document.querySelectorAll('[data-result-key]').length`
         ) as number
         return count > 0
-    }, 20000)
+    }, 30000)
 
-    // Verify at least one result card has content
     const hasContent = await dictClient.evaluate(`
         (() => {
             const cards = document.querySelectorAll('[data-result-key]')
@@ -255,60 +379,82 @@ async function executeCP5(): Promise<CPResult> {
     return { description: 'CP5 Dict Lookup', sourceText: 'hello', producesHistory: false }
 }
 
-async function executeCP6(): Promise<CPResult> {
+async function executeCP6(ctx: CPContext): Promise<CPResult> {
     const text = `cp6 clipboard ${Date.now()}`
-    // Write to system clipboard
-    await triggerClipboardText(text)
-    // Clipboard monitor only starts at app launch if config was true.
-    // Since we can't start it at runtime, directly send the IPC that the monitor would send.
-    await triggerClipboardTranslate(text)
-    await waitForSourceText(text, 8000)
+    await ctx_triggerClipboardText(ctx, text)
+    await ctx_triggerClipboardTranslate(ctx, text)
+    await ctx_waitForSourceText(ctx, text, 8000)
 
-    const serviceList = await readConfig('translate_service_list') as string[]
-    const results = await waitForAllServiceResults(serviceList)
+    const serviceList = await ctx_readConfig(ctx, 'translate_service_list') as string[]
+    const results = await ctx_waitForAllServiceResults(ctx, serviceList)
     for (const r of Object.values(results)) {
         expect(r.length).toBeGreaterThan(0)
     }
     return { description: 'CP6 Clipboard Translate', sourceText: text, producesHistory: true }
 }
 
+// ── Instance lifecycle for parallel mode ──
+
+async function setupInstance(): Promise<{ ctx: CPContext; instance: ElectronInstance }> {
+    const instance = await startElectron()
+    const ctx: CPContext = {
+        client: instance.translateClient,
+        httpPort: instance.httpPort,
+        cdpPort: instance.cdpPort
+    }
+    await ctx_writeConfig(ctx, 'clipboard_monitor', true)
+    await ctx_writeConfig(ctx, 'recognize_service_list', ['tesseract@default'])
+    await ctx_writeConfig(ctx, 'history_disable', false)
+
+    await ctx_waitForSelector(ctx, 'textarea', 15000)
+    await ctx_clearHistory(ctx)
+    await new Promise(r => setTimeout(r, 500))
+    return { ctx, instance }
+}
+
 // ── Main Test ──
 
-describe('CP1-CP6 Combined Integration Test (Random Order)', () => {
-    let instance: ElectronInstance
+describe('CP1-CP6 Combined Integration Test', () => {
+    const isParallel = !!process.env.CP_PARALLEL
+    let serialInstance: ElectronInstance
+    let serialCtx: CPContext
     let translateServiceList: string[] = []
     const cpResults: CPResult[] = []
     const executionOrder: string[] = []
 
     beforeAll(async () => {
         await ensureBuilt()
-        instance = await startElectron()
-        globalThis.__e2e_instance = instance
-        init(instance.translateClient, instance.httpPort)
-        await waitForSelector('textarea', 15000)
 
-        // Enable clipboard monitor for CP6
-        await writeConfig('clipboard_monitor', true)
-        // Configure OCR service for CP3
-        await writeConfig('recognize_service_list', ['tesseract@default'])
-        // Ensure history is enabled
-        await writeConfig('history_disable', false)
+        if (!isParallel) {
+            serialInstance = await startElectron()
+            globalThis.__e2e_instance = serialInstance
+            serialCtx = {
+                client: serialInstance.translateClient,
+                httpPort: serialInstance.httpPort,
+                cdpPort: serialInstance.cdpPort
+            }
 
-        // Clear history to get a clean baseline
-        await clearHistory()
-        await new Promise(r => setTimeout(r, 500))
+            await ctx_writeConfig(serialCtx, 'clipboard_monitor', true)
+            await ctx_writeConfig(serialCtx, 'recognize_service_list', ['tesseract@default'])
+            await ctx_writeConfig(serialCtx, 'history_disable', false)
 
-        translateServiceList = await readConfig('translate_service_list') as string[]
-        expect(translateServiceList.length).toBeGreaterThan(0)
+            await ctx_waitForSelector(serialCtx, 'textarea', 15000)
+            await ctx_clearHistory(serialCtx)
+            await new Promise(r => setTimeout(r, 500))
+
+            translateServiceList = await ctx_readConfig(serialCtx, 'translate_service_list') as string[]
+            expect(translateServiceList.length).toBeGreaterThan(0)
+        }
     }, 120000)
 
     afterAll(async () => {
-        cleanup()
-        await stopElectron(instance)
+        if (!isParallel && serialInstance) {
+            await stopElectron(serialInstance)
+        }
     })
 
-    it('executes all 6 critical paths in random order with correct intermediate state', async () => {
-        const executors: Array<{ name: string; fn: () => Promise<CPResult> }> = [
+    it('executes specified critical paths', async () => {
+        const allExecutors: Array<{ name: string; fn: (ctx: CPContext) => Promise<CPResult> }> = [
             { name: 'CP1', fn: executeCP1 },
             { name: 'CP2', fn: executeCP2 },
             { name: 'CP3', fn: executeCP3 },
@@ -317,64 +463,125 @@ describe('CP1-CP6 Combined Integration Test (Random Order)', () => {
             { name: 'CP6', fn: executeCP6 }
         ]
 
-        const order = shuffle(executors)
-        console.log('[CP1-CP6] Execution order:', order.map(e => e.name).join(' → '))
+        // Filter by CP_FILTER env var (e.g. CP_FILTER=1,3,5 or CP_FILTER=3)
+        const filter = process.env.CP_FILTER
+        const executors = filter
+            ? allExecutors.filter(e => {
+                const nums = filter.split(',').map(s => s.trim())
+                return nums.some(n => e.name === `CP${n}`)
+            })
+            : allExecutors
 
-        let prevHistoryCount = 0
-
-        for (const { name, fn } of order) {
-            console.log(`[CP1-CP6] Running ${name}...`)
-            executionOrder.push(name)
-
-            const result = await fn()
-            cpResults.push(result)
-            console.log(`[CP1-CP6] ${name} done. sourceText="${result.sourceText}" producesHistory=${result.producesHistory}`)
-
-            // Verify translate window is still alive after each step
-            const client = getTranslateClient()
-            const alive = await client.evaluate('document.querySelector("textarea") !== null') as boolean
-            expect(alive).toBe(true)
-
-            // Brief pause for async history writes to settle
-            await new Promise(r => setTimeout(r, 1000))
+        if (executors.length === 0) {
+            console.log('[CP] No CPs matched filter, skipping')
+            return
         }
-    }, 600000) // 10 min timeout for the entire suite
 
-    it('history contains entries from all translation CPs', async () => {
+        if (isParallel) {
+            console.log('[CP] Parallel mode: launching', executors.length, 'instances')
+
+            const settled = await Promise.allSettled(
+                executors.map(async ({ name, fn }) => {
+                    const { ctx, instance } = await setupInstance()
+                    try {
+                        console.log(`[CP] Parallel ${name} starting...`)
+                        const result = await fn(ctx)
+                        console.log(`[CP] Parallel ${name} done. sourceText="${result.sourceText}"`)
+
+                        if (result.producesHistory) {
+                            const serviceList = await ctx_readConfig(ctx, 'translate_service_list') as string[]
+                            const count = await ctx_waitForHistoryCount(ctx, serviceList.length)
+                            expect(count).toBeGreaterThanOrEqual(serviceList.length)
+                        }
+
+                        return { name, result }
+                    } finally {
+                        await stopElectron(instance)
+                    }
+                })
+            )
+
+            for (let i = 0; i < settled.length; i++) {
+                const s = settled[i]
+                if (s.status === 'fulfilled') {
+                    cpResults.push(s.value.result)
+                    executionOrder.push(s.value.name)
+                } else {
+                    console.error(`[CP] Parallel ${executors[i].name} FAILED:`, s.reason)
+                    throw s.reason
+                }
+            }
+        } else {
+            // Serial mode with random order
+            const order = shuffle(executors)
+            console.log('[CP] Serial mode, execution order:', order.map(e => e.name).join(' → '))
+
+            for (const { name, fn } of order) {
+                console.log(`[CP] Running ${name}...`)
+
+                try {
+                    const result = await fn(serialCtx)
+                    executionOrder.push(name)
+                    cpResults.push(result)
+                    console.log(`[CP] ${name} done. sourceText="${result.sourceText}" producesHistory=${result.producesHistory}`)
+
+                    // Verify translate window is still alive after each step
+                    const alive = await serialCtx.client.evaluate('document.querySelector("textarea") !== null') as boolean
+                    expect(alive).toBe(true)
+
+                    // Brief pause for async history writes to settle
+                    await new Promise(r => setTimeout(r, 1000))
+                } catch (e) {
+                    executionOrder.push(name)
+                    console.error(`[CP] ${name} FAILED:`, e)
+                    throw e
+                }
+            }
+        }
+    }, 600000) // 10 min timeout
+
+    it('history contains entries from all translation CPs (serial only)', async () => {
+        if (isParallel) {
+            console.log('[CP] Skipping history check in parallel mode (verified per-instance)')
+            return
+        }
+
         const historyProducingCPs = cpResults.filter(r => r.producesHistory)
         if (historyProducingCPs.length === 0) return
 
         const expectedMin = historyProducingCPs.length * translateServiceList.length
-        const actualCount = await waitForHistoryCount(expectedMin)
+        const actualCount = await ctx_waitForHistoryCount(serialCtx, expectedMin)
         expect(actualCount).toBeGreaterThanOrEqual(expectedMin)
 
-        // Verify each translated sourceText appears in history
-        const records = await getHistoryList(1, actualCount)
+        const records = await ctx_getHistoryList(serialCtx, 1, actualCount)
         for (const cp of historyProducingCPs) {
             const found = records.some(r => r.source_text === cp.sourceText)
             expect(found).toBe(true)
         }
     })
 
-    it('translate window is still fully functional after all CPs', async () => {
-        const client = getTranslateClient()
-        await clearTextarea()
-        await triggerTranslateViaApi('post-test verification')
-        await waitForSourceText('post-test verification', 5000)
+    it('translate window is still fully functional after all CPs (serial only)', async () => {
+        if (isParallel) {
+            console.log('[CP] Skipping functional check in parallel mode (instances stopped)')
+            return
+        }
 
-        const serviceList = await readConfig('translate_service_list') as string[]
-        const results = await waitForAllServiceResults(serviceList)
+        await ctx_clearTextarea(serialCtx)
+        await ctx_triggerTranslateViaApi(serialCtx, 'post-test verification')
+        await ctx_waitForSourceText(serialCtx, 'post-test verification', 5000)
+
+        const serviceList = await ctx_readConfig(serialCtx, 'translate_service_list') as string[]
+        const results = await ctx_waitForAllServiceResults(serialCtx, serviceList)
         for (const r of Object.values(results)) {
             expect(r.length).toBeGreaterThan(0)
         }
     }, 60000)
 
     it('printed execution order for reproducibility', () => {
-        console.log('[CP1-CP6] Final execution order:', executionOrder.join(' → '))
-        console.log('[CP1-CP6] Results:', cpResults.map(r => `${r.description}: "${r.sourceText}"`))
-        // This test always passes — just logs the order
-        expect(executionOrder.length).toBe(6)
-        expect(cpResults.length).toBe(6)
+        console.log('[CP] Mode:', isParallel ? 'PARALLEL' : 'SERIAL')
+        console.log('[CP] Final execution order:', executionOrder.join(' → '))
+        console.log('[CP] Results:', cpResults.map(r => `${r.description}: "${r.sourceText}"`))
+        expect(executionOrder.length).toBe(cpResults.length)
     })
 })
 

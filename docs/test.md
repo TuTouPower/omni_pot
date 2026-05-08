@@ -33,10 +33,34 @@
 
 ## 测试执行
 
+### 环境变量
+
+| 变量 | 作用 | 示例 |
+|------|------|------|
+| `CP_FILTER` | 只跑指定的 CP（逗号分隔） | `CP_FILTER=1,3,5` |
+| `CP_PARALLEL` | 并行模式：每个 CP 各起一个 Electron 实例同时跑 | `CP_PARALLEL=1` |
+
+### 常用命令
+
 ```bash
-# 正常开发: 只跑注册 + action 流程
+# 串行跑全部 CP（随机顺序，单实例）
 npx vitest run --config vitest.e2e.config.ts
+
+# 串行跑指定 CP
+CP_FILTER=1 npx vitest run --config vitest.e2e.config.ts
+CP_FILTER=1,3,5 npx vitest run --config vitest.e2e.config.ts
+
+# 并行跑全部 CP（每个 CP 独立实例，同时执行）
+CP_PARALLEL=1 npx vitest run --config vitest.e2e.config.ts
+
+# 并行跑指定 CP
+CP_FILTER=1,2 CP_PARALLEL=1 npx vitest run --config vitest.e2e.config.ts
 
 # CI 环境 + 用户允许: 开启 OS 快捷键测试
 E2E_OS_SHORTCUT=1 npx vitest run --config vitest.e2e.config.ts
 ```
+
+### 模式说明
+
+- **串行模式**（默认）：启动一个 Electron 实例，随机顺序依次执行所有 CP。执行过程中验证中间状态，结束后验证 history 汇总和窗口可用性。
+- **并行模式**（`CP_PARALLEL=1`）：每个 CP 启动独立的 Electron 实例，通过 `Promise.allSettled` 同时执行。每个实例内部独立验证 history。串行模式的 history 汇总检查和"窗口仍然可用"检查在并行模式下跳过。
