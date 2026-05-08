@@ -17,6 +17,9 @@ const AUTO_COPY_OPTIONS = [
 const DETECT_ENGINES = [
     { key: 'bing', label: 'Bing' },
     { key: 'google', label: 'Google' },
+    { key: 'baidu', label: 'Baidu' },
+    { key: 'tencent', label: 'Tencent' },
+    { key: 'niutrans', label: 'NiuTrans' },
     { key: 'local', label: 'Local (offline)' }
 ]
 
