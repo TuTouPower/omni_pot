@@ -31,7 +31,7 @@ export async function start_screenshot_capture(
         const base64 = await capture_screenshot(manager)
 
         const display = screen.getPrimaryDisplay()
-        const { width, height } = display.workAreaSize
+        const { width, height } = display.size
 
         const win = manager.focusOrCreate(WindowLabel.SCREENSHOT, {
             label: WindowLabel.SCREENSHOT,
@@ -45,8 +45,8 @@ export async function start_screenshot_capture(
             show: false
         })
 
-        win.setBounds({ x: display.workArea.x, y: display.workArea.y, width, height })
-        win.webContents.send('screenshot:show', base64, mode)
+        win.setBounds({ x: display.bounds.x, y: display.bounds.y, width, height })
+        manager.sendWhenReady(WindowLabel.SCREENSHOT, 'screenshot:show', base64, mode)
         win.show()
     } catch {
         // screenshot capture failed

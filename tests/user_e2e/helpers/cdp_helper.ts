@@ -75,6 +75,19 @@ export class CdpClient {
         await this.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
     }
 
+    async mouseDrag(startX: number, startY: number, endX: number, endY: number, steps = 10): Promise<void> {
+        await this.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: startX, y: startY, button: 'left', clickCount: 1 })
+        await new Promise(r => setTimeout(r, 30))
+        for (let i = 1; i <= steps; i++) {
+            const x = Math.round(startX + (endX - startX) * (i / steps))
+            const y = Math.round(startY + (endY - startY) * (i / steps))
+            await this.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, button: 'left', buttons: 1 })
+            await new Promise(r => setTimeout(r, 10))
+        }
+        await new Promise(r => setTimeout(r, 30))
+        await this.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: endX, y: endY, button: 'left', clickCount: 1 })
+    }
+
     async waitFor(condition: () => Promise<boolean>, timeoutMs = 10000, intervalMs = 300): Promise<void> {
         const start = Date.now()
         while (Date.now() - start < timeoutMs) {
