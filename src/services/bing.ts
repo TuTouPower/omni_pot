@@ -39,14 +39,25 @@ const BING_LANG_MAP: Record<string, string> = {
   he: 'he'
 }
 
-async function getToken(): Promise<{ key: string; token: string }> {
+interface BingPageConfig {
+  ig: string
+  iid: string
+  key: string
+  token: string
+}
+
+async function getPageConfig(): Promise<BingPageConfig> {
   const resp = await fetch('https://www.bing.com/translator')
   const html = await resp.text()
-  const match = html.match(
+  const ig_match = html.match(/IG:"([^"]+)"/)
+  const iid_match = html.match(/data-iid="([^"]+)"/)
+  const token_match = html.match(
     /params_AbusePreventionHelper\s*=\s*\[(\d+),\s*"([^"]+)"/
   )
-  if (!match) throw new Error('Failed to get Bing token')
-  return { key: match[1], token: match[2] }
+  if (!ig_match || !iid_match || !token_match) {
+    throw new Error('Failed to get Bing page config')
+  }
+  return { ig: ig_match[1], iid: iid_match[1], key: token_match[1], token: token_match[2] }
 }
 
 export const bingService: TranslateService = {
@@ -60,23 +71,26 @@ export const bingService: TranslateService = {
     to: LanguageCode,
     _config: ServiceConfig
   ): Promise<string> {
-    const { key, token } = await getToken()
+    const { ig, iid, key, token } = await getPageConfig()
     const fromLang = BING_LANG_MAP[from] ?? from
     const toLang = BING_LANG_MAP[to] ?? to
 
-    const resp = await fetch('https://www.bing.com/ttranslatev3?isVertical=1', {
+    const url = `https://www.bing.com/ttranslatev3?isVertical=1&IG=${ig}&IID=${iid}`
+    const resp = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Referer': 'https://www.bing.com/translator',
-        'Origin': 'https://www.bing.com'
+        'Origin': 'https://www.bing.com',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0'
       },
       body: new URLSearchParams({
         fromLang,
         to: toLang,
         text,
         token,
-        key
+        key,
+        tryFetchingGenderDebiasedTranslations: 'true'
       }).toString()
     })
 
