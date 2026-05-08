@@ -21,11 +21,11 @@
 
 ## 待实现：OCR 服务（缺 1 个）
 
-- [ ] **系统 OCR** — `src/services/ocr/system.ts`
-  - Windows: WinRT OcrEngine（通过 native addon 或 Edge WebView2）
-  - macOS: 捆绑二进制
+- [x] **系统 OCR** — `src/services/ocr/system.ts`
+  - Windows: WinRT OcrEngine（通过 PowerShell 调用）
+  - macOS: 暂不支持（需捆绑二进制）
   - Linux: tesseract CLI
-  - 语言: auto + 18 种
+  - 语言: auto + 24 种
 
 ### 已完成
 
@@ -90,10 +90,10 @@
 
 ## 待实现：基础设施
 
-- [ ] **国际化 (i18n)** — spec 要求 19 种语言
-  - react-i18next 集成
-  - 19 个语言文件: zh_CN, zh_TW, en, ru_RU, pt_BR, de_DE, es_ES, fr_FR, it_IT, ja_JP, ko_KR, pt_PT, tr_TR, nb_NO, nn_NO, fa_IR, uk_UA, ar_AE, he_IL
-  - 配置窗口、托盘菜单、所有 UI 文案
+- [x] **国际化 (i18n)** — 19 种语言
+  - react-i18next 集成 + bindI18nToConfig() 跟随 app_language 配置
+  - 19 个语言文件: en, zh_cn, zh_tw, ru, pt_br, de, es, fr, it, ja, ko, pt_pt, tr, nb_no, nn_no, fa, uk, ar, he
+  - 所有配置窗口 + 翻译窗口 + 识别窗口 + 字典窗口 + 更新窗口已接入 i18n
 
 - [ ] **插件系统** — .potext 文件格式
   - 插件安装/卸载
@@ -107,10 +107,7 @@
   - 更新日志渲染
   - 下载链接
 
-- [ ] **语言检测在线引擎** — bing/google 已实现
-  - [x] bing / google 在线检测 API
-  - [x] baidu / tencent / niutrans 在线检测 API
-  - translate_detect_engine 配置已存在，需要实现对应 API 调用
+- [x] **语言检测在线引擎** — bing/google/baidu/tencent/niutrans + local 已全部实现
 
 ---
 
