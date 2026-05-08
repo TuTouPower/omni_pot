@@ -14,6 +14,7 @@ import { iflytekIntsigOcrService } from './iflytek_intsig_ocr'
 import { iflytekLatexOcrService } from './iflytek_latex_ocr'
 import { simpleLatexOcrService } from './simple_latex_ocr'
 import { qrcodeOcrService } from './qrcode'
+import { systemOcrService } from './system'
 
 export function registerAllOcrServices(): void {
     ocrServiceRegistry.register(tesseractOcrService)
@@ -31,4 +32,5 @@ export function registerAllOcrServices(): void {
     ocrServiceRegistry.register(iflytekLatexOcrService)
     ocrServiceRegistry.register(simpleLatexOcrService)
     ocrServiceRegistry.register(qrcodeOcrService)
+    ocrServiceRegistry.register(systemOcrService)
 }

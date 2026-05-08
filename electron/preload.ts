@@ -59,6 +59,7 @@ const api: ElectronAPI = {
     captureScreenshot: (mode) => ipcRenderer.invoke('ocr:capture-screenshot', mode),
     openRecognize: (base64Image, text) => ipcRenderer.invoke('ocr:open-recognize', base64Image, text),
     sendToTranslate: (text) => ipcRenderer.invoke('ocr:send-to-translate', text),
+    systemRecognize: (base64Image, lang) => ipcRenderer.invoke('ocr:system-recognize', base64Image, lang),
     onScreenshotShow: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, base64: string, mode: string) => callback(base64, mode)
       ipcRenderer.on('screenshot:show', handler)
