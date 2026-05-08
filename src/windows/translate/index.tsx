@@ -39,6 +39,8 @@ export default function TranslateWindow(): React.ReactElement {
   const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
   const configTargetLang = useConfigStore((s) => s.config.translate_target_language)
   const configSourceLang = useConfigStore((s) => s.config.translate_source_language)
+  const appFont = useConfigStore((s) => s.config.app_font)
+  const appFontSize = useConfigStore((s) => s.config.app_font_size)
   const setStoreTargetLang = useTranslateStore((s) => s.setTargetLanguage)
   const setStoreSourceLang = useTranslateStore((s) => s.setSourceLanguage)
 
@@ -243,7 +245,7 @@ export default function TranslateWindow(): React.ReactElement {
   const showSource = forceShowSource || !hideSource
 
   return (
-    <div className="flex flex-col h-screen" style={{ fontSize: 16 }}>
+    <div className="flex flex-col h-screen" style={{ fontSize: appFontSize, fontFamily: appFont === 'default' ? undefined : appFont }}>
       {/* Top bar */}
       <div className="flex justify-between items-center px-2 py-1 drag-region">
         <Button
