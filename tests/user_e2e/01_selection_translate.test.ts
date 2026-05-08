@@ -60,6 +60,10 @@ async function waitForAllServiceResults(
     serviceList: string[],
     timeoutMs = TRANSLATE_RESULT_TIMEOUT
 ): Promise<Record<string, string>> {
+    // Give handleTranslate time to run (it's scheduled via setTimeout(0))
+    // and clear stale results from previous translations.
+    await new Promise(r => setTimeout(r, 300))
+
     const results: Record<string, string> = {}
     const deadline = Date.now() + timeoutMs
     for (const key of serviceList) {
@@ -237,7 +241,9 @@ describe('Critical Path 1: 划词翻译全流程', () => {
         await clearTextarea()
         await triggerTranslateViaApi('test')
         await waitForSourceText('test', 5000)
-        await waitForTranslationComplete(TRANSLATE_RESULT_TIMEOUT)
+
+        const serviceList = await readConfig('translate_service_list') as string[]
+        await waitForAllServiceResults(serviceList, TRANSLATE_RESULT_TIMEOUT)
 
         const c = await getTranslateClient()
         const resultTextarea = await c.evaluate(`
