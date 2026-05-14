@@ -69,7 +69,7 @@ export interface AppConfig {
 
 // service_instances: instance key -> instance config; main process builds default instances on first launch
 export interface ServiceInstancesMap {
-  [instanceKey: string]: { serviceKey: string; config: Record<string, unknown> }
+  [instanceKey: string]: { serviceKey: string; config: import('./service').ServiceConfig }
 }
 
 export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {

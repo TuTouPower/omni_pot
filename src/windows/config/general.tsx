@@ -1,44 +1,43 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card, Label, NumberField, Switch, TextField } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
-import { SimpleSelect } from '../../components/simple_select'
+import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect, ConfigField } from './config_components'
 
 const TRAY_CLICK_OPTIONS = [
-    { key: 'show_config', label: 'Show Config' },
-    { key: 'show_translate', label: 'Show Translate' },
-    { key: 'none', label: 'None' }
+    { value: 'show_config', label: 'Show Config' },
+    { value: 'show_translate', label: 'Show Translate' },
+    { value: 'none', label: 'None' },
 ]
 
 const THEME_OPTIONS = [
-    { key: 'system', label: 'System' },
-    { key: 'light', label: 'Light' },
-    { key: 'dark', label: 'Dark' }
+    { value: 'system' as const, label: '跟随系统' },
+    { value: 'light' as const, label: '浅色' },
+    { value: 'dark' as const, label: '深色' },
 ]
 
-const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24].map((s) => ({ key: String(s), label: `${s}px` }))
+const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${s}px` }))
 
 const IS_MAC = navigator.platform.toLowerCase().includes('mac')
 
 const FONT_OPTIONS = [
-    { key: 'default', label: 'System Default' },
-    { key: 'Arial', label: 'Arial' },
-    { key: 'Consolas', label: 'Consolas' },
-    { key: 'Courier New', label: 'Courier New' },
-    { key: 'Georgia', label: 'Georgia' },
-    { key: 'Microsoft YaHei', label: 'Microsoft YaHei' },
-    { key: 'PingFang SC', label: 'PingFang SC' },
-    { key: 'SimHei', label: 'SimHei' },
-    { key: 'SimSun', label: 'SimSun' },
-    { key: 'Monaco', label: 'Monaco' },
-    { key: 'Segoe UI', label: 'Segoe UI' },
-    { key: 'Tahoma', label: 'Tahoma' },
-    { key: 'Times New Roman', label: 'Times New Roman' },
-    { key: 'Trebuchet MS', label: 'Trebuchet MS' },
-    { key: 'Verdana', label: 'Verdana' },
-    { key: 'Noto Sans SC', label: 'Noto Sans SC' },
-    { key: 'Noto Sans JP', label: 'Noto Sans JP' },
-    { key: 'Noto Sans KR', label: 'Noto Sans KR' },
+    { value: 'default', label: '系统默认' },
+    { value: 'Arial', label: 'Arial' },
+    { value: 'Consolas', label: 'Consolas' },
+    { value: 'Courier New', label: 'Courier New' },
+    { value: 'Georgia', label: 'Georgia' },
+    { value: 'Microsoft YaHei', label: 'Microsoft YaHei' },
+    { value: 'PingFang SC', label: 'PingFang SC' },
+    { value: 'SimHei', label: 'SimHei' },
+    { value: 'SimSun', label: 'SimSun' },
+    { value: 'Monaco', label: 'Monaco' },
+    { value: 'Segoe UI', label: 'Segoe UI' },
+    { value: 'Tahoma', label: 'Tahoma' },
+    { value: 'Times New Roman', label: 'Times New Roman' },
+    { value: 'Trebuchet MS', label: 'Trebuchet MS' },
+    { value: 'Verdana', label: 'Verdana' },
+    { value: 'Noto Sans SC', label: 'Noto Sans SC' },
+    { value: 'Noto Sans JP', label: 'Noto Sans JP' },
+    { value: 'Noto Sans KR', label: 'Noto Sans KR' },
 ]
 
 export default function GeneralPage(): React.ReactElement {
@@ -54,114 +53,90 @@ export default function GeneralPage(): React.ReactElement {
     const [proxyHost, setProxyHost] = useConfig('proxy_host')
     const [proxyPort, setProxyPort] = useConfig('proxy_port')
     const [autoStart, setAutoStart] = useConfig('auto_start')
-    const [trayClickEvent, setTrayClickEvent] = useConfig('tray_click_event')
 
     return (
-        <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">{t('general.title')}</h3>
+        <div className="stack gap-12">
+            <ConfigCard title={t('general.app_settings') || '应用'}>
+                <ConfigRow label={t('general.auto_start') || '开机自启'} sub="登录系统后在后台启动 omni_pot">
+                    <ConfigSwitch on={autoStart as boolean} onChange={setAutoStart} />
+                </ConfigRow>
+                <ConfigRow label={t('general.check_update') || '启动时检查更新'}>
+                    <ConfigSwitch on={checkUpdate as boolean} onChange={setCheckUpdate} />
+                </ConfigRow>
+                <ConfigRow label={t('general.server_port') || '本地 API 端口'} sub="供外部脚本调用，修改后需重启">
+                    <ConfigField
+                        mono
+                        defaultValue={String(serverPort)}
+                        onChange={(v) => setServerPort(Number(v))}
+                        style={{ width: 140 }}
+                    />
+                </ConfigRow>
+            </ConfigCard>
 
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">{t('general.app_settings')}</h4>
-                    <Switch isSelected={checkUpdate} onChange={setCheckUpdate}>
-                        <Switch.Control>
-                            <Switch.Thumb />
-                        </Switch.Control>
-                        <Switch.Content>
-                            <Label className="text-sm">{t('general.check_update')}</Label>
-                        </Switch.Content>
-                    </Switch>
-                    <Switch isSelected={autoStart} onChange={setAutoStart}>
-                        <Switch.Control>
-                            <Switch.Thumb />
-                        </Switch.Control>
-                        <Switch.Content>
-                            <Label className="text-sm">{t('general.auto_start')}</Label>
-                        </Switch.Content>
-                    </Switch>
-                    <SimpleSelect label={t('general.tray_click')} value={trayClickEvent as string} onChange={(v) => setTrayClickEvent(v)} options={TRAY_CLICK_OPTIONS} />
-                    <NumberField
-                        value={serverPort}
-                        onChange={(v) => { if (typeof v === 'number') setServerPort(v) }}
-                        minValue={0}
-                        maxValue={65535}
-                    >
-                        <Label>{t('general.server_port')}</Label>
-                        <NumberField.Group>
-                            <NumberField.DecrementButton />
-                            <NumberField.Input />
-                            <NumberField.IncrementButton />
-                        </NumberField.Group>
-                    </NumberField>
-                </Card.Content>
-            </Card>
-
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">{t('general.appearance')}</h4>
-                    <SimpleSelect label={t('general.theme')} value={appTheme as string} onChange={(v) => setAppTheme(v)} options={THEME_OPTIONS} />
-                    <SimpleSelect label={t('general.font_size')} value={String(fontSize)} onChange={(v) => setFontSize(Number(v))} options={FONT_SIZE_OPTIONS} />
-                    <SimpleSelect label={t('general.font_family')} value={appFont as string} onChange={(v) => setAppFont(v)} options={FONT_OPTIONS} />
-                    <div
-                        className="p-2 rounded-md bg-default-50 text-sm border border-default-200"
-                        style={{ fontFamily: appFont === 'default' ? undefined : (appFont as string), fontSize: Number(fontSize) }}
-                    >
-                        Preview: Hello World 你好世界 こんにちは 안녕하세요
+            <ConfigCard title={t('general.appearance') || '外观'}>
+                <ConfigRow label={t('general.theme') || '主题'}>
+                    <ConfigSelect
+                        value={appTheme as 'system' | 'light' | 'dark'}
+                        onChange={setAppTheme as (v: 'system' | 'light' | 'dark') => void}
+                        options={THEME_OPTIONS}
+                        style={{ minWidth: 160 }}
+                    />
+                </ConfigRow>
+                <ConfigRow label={t('general.font_family') || '字体'}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                        <ConfigSelect
+                            value={appFont as string}
+                            onChange={setAppFont}
+                            options={FONT_OPTIONS}
+                            style={{ minWidth: 140 }}
+                        />
+                        <ConfigSelect
+                            value={String(fontSize)}
+                            onChange={(v) => setFontSize(Number(v))}
+                            options={FONT_SIZE_OPTIONS}
+                            style={{ width: 110 }}
+                        />
                     </div>
-                    {IS_MAC && (
-                        <Switch isSelected={transparent} onChange={setTransparent}>
-                            <Switch.Control>
-                                <Switch.Thumb />
-                            </Switch.Control>
-                            <Switch.Content>
-                                <Label className="text-sm">{t('general.transparent')}</Label>
-                            </Switch.Content>
-                        </Switch>
-                    )}
-                    <Switch isSelected={devMode} onChange={setDevMode}>
-                        <Switch.Control>
-                            <Switch.Thumb />
-                        </Switch.Control>
-                        <Switch.Content>
-                            <Label className="text-sm">{t('general.dev_mode')}</Label>
-                        </Switch.Content>
-                    </Switch>
-                </Card.Content>
-            </Card>
+                </ConfigRow>
+                <div
+                    className="card"
+                    style={{
+                        padding: 10,
+                        fontFamily: appFont === 'default' ? undefined : (appFont as string),
+                        fontSize: Number(fontSize),
+                        color: 'var(--text-dim)',
+                    }}
+                >
+                    Preview: Hello World 你好世界 こんにちは 안녕하세요
+                </div>
+                {IS_MAC && (
+                    <ConfigRow label={t('general.transparent') || '透明背景'} sub="毛玻璃效果，部分平台可能影响性能">
+                        <ConfigSwitch on={transparent as boolean} onChange={setTransparent} />
+                    </ConfigRow>
+                )}
+                <ConfigRow label={t('general.dev_mode') || '开发者模式'} sub="启用 F12 开发者工具">
+                    <ConfigSwitch on={devMode as boolean} onChange={setDevMode} />
+                </ConfigRow>
+            </ConfigCard>
 
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">{t('general.proxy')}</h4>
-                    <Switch isSelected={proxyEnable} onChange={setProxyEnable}>
-                        <Switch.Control>
-                            <Switch.Thumb />
-                        </Switch.Control>
-                        <Switch.Content>
-                            <Label className="text-sm">{t('general.proxy_enable')}</Label>
-                        </Switch.Content>
-                    </Switch>
-                    {proxyEnable && (
-                        <div className="flex gap-2">
-                            <TextField
-                                value={proxyHost as string}
-                                onChange={setProxyHost}
-                                className="flex-1"
-                            >
-                                <Label>{t('general.proxy_host')}</Label>
-                                <TextField.Input />
-                            </TextField>
-                            <TextField
-                                value={proxyPort as string}
-                                onChange={setProxyPort}
-                                className="w-24"
-                            >
-                                <Label>{t('general.proxy_port')}</Label>
-                                <TextField.Input />
-                            </TextField>
-                        </div>
-                    )}
-                </Card.Content>
-            </Card>
+            <ConfigCard title={t('general.proxy') || '网络代理'}>
+                <ConfigRow label={t('general.proxy_enable') || '启用代理'}>
+                    <ConfigSwitch on={proxyEnable as boolean} onChange={setProxyEnable} />
+                </ConfigRow>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 8, opacity: proxyEnable ? 1 : 0.5 }}>
+                    <ConfigField
+                        placeholder="http://127.0.0.1"
+                        defaultValue={proxyHost as string}
+                        onChange={setProxyHost}
+                    />
+                    <ConfigField
+                        mono
+                        placeholder="端口"
+                        defaultValue={proxyPort as string}
+                        onChange={setProxyPort}
+                    />
+                </div>
+            </ConfigCard>
         </div>
     )
 }

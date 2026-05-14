@@ -77,14 +77,14 @@ const GUID = koffi.struct('GUID', {
     Data4: 'uint8[8]'
 })
 
-const CLSID_CUIAutomation: koffi.StructType = {
+const CLSID_CUIAutomation = {
     Data1: 0xff48dba4,
     Data2: 0x60ef,
     Data3: 0x4201,
     Data4: [0xaa, 0x87, 0x54, 0x10, 0x3e, 0xef, 0x59, 0x4e]
 }
 
-const IID_IUIAutomation: koffi.StructType = {
+const IID_IUIAutomation = {
     Data1: 0x30cbe57d,
     Data2: 0xd9d0,
     Data3: 0x452a,

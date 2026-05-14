@@ -111,6 +111,45 @@
 
 - [x] **语言检测在线引擎** — bing/google/baidu/tencent/niutrans + local 已全部实现
 
+- [ ] **代码质量检查体系** — 落地方案见 `docs/code_quality_checks_plan.md`
+  - 第一档：收紧 tsconfig + 接入 ESLint(type-aware) + Electronegativity
+  - 第二档：Knip 死代码 + Gitleaks 密钥扫描 + 格式化检查
+  - 第三档：依赖漏洞扫描 + Semgrep + git hooks + CI 门禁
+  - 注意：`unicorn/filename-case` 需显式设 `snakeCase`；存量项目分档推进不要一次全开
+
+---
+
+## UI 设计对齐（进行中）
+
+**策略**：混合方案（保留 HeroUI 功能逻辑，覆盖所有视觉样式）+ 分步实施
+**设计参考**：`docs/design/example/`
+
+### Step 1：设计令牌 + 全局样式 + 字体
+- [x] 添加 Geist 字体（CDN: jsdelivr geist@1.4.1）
+- [x] 创建 `src/styles/design_tokens.css`（oklch 色彩、圆角、间距变量）
+- [x] 重写 `src/styles/globals.css`（自定义组件类：.btn, .card, .ic-btn, .switch, .select, .chip 等）
+- [x] 更新 `tailwind.config.js`（扩展主题匹配设计稿）
+
+### Step 2：翻译窗口
+- [x] 重写 `src/windows/translate/index.tsx`（标题栏 + 整体布局）
+- [x] 重写 `src/windows/translate/source_area.tsx`（Source Card）
+- [x] 重写 `src/windows/translate/language_area.tsx`（LangPick）
+- [x] 重写 `src/windows/translate/target_area.tsx`（ResultCard）
+
+### Step 3：词典窗口
+- [x] 重写 `src/windows/dict/index.tsx`
+
+### Step 4：配置窗口
+- [x] 重写 `src/windows/config/index.tsx`（侧边栏 + 内容区）
+- [x] 重写各子页面（general, translate, recognize, hotkey, service, history, backup, about）
+
+### Step 5：识别窗口 + 截图窗口
+- [x] 重写 `src/windows/recognize/index.tsx`（双栏布局 + PillSelect/PillButton 操作栏）
+- [x] 重写 `src/windows/screenshot/index.tsx`（暗色覆盖层 + 品牌色选区 + 角落手柄 + 尺寸标签）
+
+### Step 6：更新窗口
+- [x] 重写 `src/windows/updater/index.tsx`（品牌标题 + 更新日志卡片 + 下载链接）
+
 ---
 
 ## 不再实现（API 已停用）

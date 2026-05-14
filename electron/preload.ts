@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { ElectronAPI } from '@shared/types/ipc'
 import type { ConfigKey } from '@shared/types/config'
 
-const api: ElectronAPI = {
+const api: Omit<ElectronAPI, 'ready'> = {
   window: {
     close: () => ipcRenderer.invoke('window:close'),
     minimize: () => ipcRenderer.invoke('window:minimize'),

@@ -1,11 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@heroui/react'
-import { AiFillAppstore, AiFillCloud } from 'react-icons/ai'
-import { PiTranslateFill, PiTextboxFill } from 'react-icons/pi'
-import { MdKeyboardAlt, MdExtension } from 'react-icons/md'
-import { FaHistory } from 'react-icons/fa'
-import { BsInfoSquareFill } from 'react-icons/bs'
+import { Icons } from '../../components/icons'
 import GeneralPage from './general'
 import TranslatePage from './translate_settings'
 import RecognizePage from './recognize_settings'
@@ -19,7 +14,7 @@ type ConfigPage = 'general' | 'translate' | 'recognize' | 'hotkey' | 'service' |
 
 interface NavItem {
     key: ConfigPage
-    labelKey: string
+    label: string
     icon: React.ReactNode
 }
 
@@ -28,14 +23,14 @@ export default function ConfigWindow(): React.ReactElement {
     const [activePage, setActivePage] = useState<ConfigPage>('general')
 
     const pages: NavItem[] = [
-        { key: 'general', labelKey: 'general.title', icon: <AiFillAppstore /> },
-        { key: 'translate', labelKey: 'translate_settings.title', icon: <PiTranslateFill /> },
-        { key: 'recognize', labelKey: 'recognize.title', icon: <PiTextboxFill /> },
-        { key: 'hotkey', labelKey: 'hotkey.title', icon: <MdKeyboardAlt /> },
-        { key: 'service', labelKey: 'service.title', icon: <MdExtension /> },
-        { key: 'history', labelKey: 'history.title', icon: <FaHistory /> },
-        { key: 'backup', labelKey: 'backup.title', icon: <AiFillCloud /> },
-        { key: 'about', labelKey: 'about.title', icon: <BsInfoSquareFill /> }
+        { key: 'general', label: t('general.title') || '通用', icon: <Icons.Grid size={15} /> },
+        { key: 'translate', label: t('translate_settings.title') || '翻译', icon: <Icons.Translate size={15} /> },
+        { key: 'recognize', label: t('recognize.title') || '识别', icon: <Icons.Image size={15} /> },
+        { key: 'hotkey', label: t('hotkey.title') || '快捷键', icon: <Icons.Kbd size={15} /> },
+        { key: 'service', label: t('service.title') || '服务', icon: <Icons.Layers size={15} /> },
+        { key: 'history', label: t('history.title') || '历史', icon: <Icons.Clock size={15} /> },
+        { key: 'backup', label: t('backup.title') || '备份', icon: <Icons.Cloud size={15} /> },
+        { key: 'about', label: t('about.title') || '关于', icon: <Icons.Info size={15} /> },
     ]
 
     const renderPage = (): React.ReactElement => {
@@ -51,27 +46,69 @@ export default function ConfigWindow(): React.ReactElement {
         }
     }
 
-    return (
-        <div className="flex h-screen">
-            {/* Sidebar */}
-            <div className="w-[230px] border-r flex flex-col p-3 gap-1">
-                <h2 className="text-lg font-bold mb-3 px-2">Pot</h2>
-                {pages.map(({ key, labelKey, icon }) => (
-                    <Button
-                        key={key}
-                        variant={activePage === key ? 'secondary' : 'ghost'}
-                        onPress={() => setActivePage(key)}
-                        className="justify-start gap-2"
-                    >
-                        {icon}
-                        {t(labelKey)}
-                    </Button>
-                ))}
-            </div>
+    const cur = pages.find((n) => n.key === activePage)
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-                {renderPage()}
+    return (
+        <div className="op-window" style={{ width: 880, height: 600 }}>
+            <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+                {/* Sidebar */}
+                <div style={{
+                    width: 220,
+                    background: 'var(--bg-card)',
+                    borderRight: '1px solid var(--line-soft)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    <div style={{ height: 38, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div className="op-wordmark">
+                            <span className="dot" style={{ background: 'var(--brand-primary)' }} />
+                            omni_pot
+                        </div>
+                    </div>
+                    <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                        {pages.map((n) => (
+                            <button
+                                key={n.key}
+                                onClick={() => setActivePage(n.key)}
+                                style={{
+                                    height: 32,
+                                    padding: '0 10px',
+                                    borderRadius: 8,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    background: activePage === n.key ? 'var(--bg-elev)' : 'transparent',
+                                    border: '1px solid ' + (activePage === n.key ? 'var(--line)' : 'transparent'),
+                                    color: activePage === n.key ? 'var(--text)' : 'var(--text-dim)',
+                                    fontSize: 13,
+                                    fontWeight: activePage === n.key ? 500 : 400,
+                                    cursor: 'pointer',
+                                    transition: 'background .12s, color .12s',
+                                    fontFamily: 'inherit',
+                                }}
+                            >
+                                <span style={{ color: activePage === n.key ? 'var(--brand-primary)' : 'var(--text-mute)' }}>
+                                    {n.icon}
+                                </span>
+                                {n.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
+                        <div className="hint mono" style={{ fontSize: 10.5 }}>v0.1.0</div>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <div style={{ height: 38, display: 'flex', alignItems: 'center', padding: '0 10px 0 14px', gap: 8 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
+                        <span className="hint mono" style={{ marginLeft: 4 }}>/{activePage}</span>
+                    </div>
+                    <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+                        {renderPage()}
+                    </div>
+                </div>
             </div>
         </div>
     )

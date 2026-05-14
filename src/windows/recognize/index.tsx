@@ -1,17 +1,251 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@heroui/react'
-import { BsPinFill } from 'react-icons/bs'
-import { AiFillCloseCircle, AiOutlineCopy } from 'react-icons/ai'
-import { HiTranslate } from 'react-icons/hi'
-import { LuDelete } from 'react-icons/lu'
-import { MdSmartButton, MdAutorenew } from 'react-icons/md'
+import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
 import { ocrServiceRegistry } from '../../services/registry'
 import { getServiceKey } from '@shared/types/service'
 import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
+
+// OCR engine metadata (subset of SVC_META for action bar)
+const OCR_META: Record<string, { name: string; mono: string; tone: string }> = {
+    system: { name: '系统 OCR', mono: 'SY', tone: 'oklch(54% 0.005 70)' },
+    tesseract: { name: 'Tesseract', mono: 'TE', tone: 'oklch(58% 0.10 50)' },
+    openai_compatible: { name: 'AI 视觉', mono: 'VL', tone: 'oklch(58% 0.02 180)' },
+    baidu_accurate_ocr: { name: '百度高精度', mono: 'BA', tone: 'oklch(58% 0.16 250)' },
+    baidu_ocr: { name: '百度 OCR', mono: 'BD', tone: 'oklch(58% 0.16 250)' },
+    tencent_ocr: { name: '腾讯 OCR', mono: 'TC', tone: 'oklch(60% 0.13 230)' },
+    iflytek_ocr: { name: '讯飞 OCR', mono: 'IF', tone: 'oklch(60% 0.13 220)' },
+    iflytek_latex_ocr: { name: '讯飞 LaTeX', mono: 'TX', tone: 'oklch(60% 0.13 220)' },
+    qrcode: { name: '二维码', mono: 'QR', tone: 'oklch(50% 0.01 70)' },
+}
+
+function SvcTile({ name, size = 22 }: { name: string; size?: number }): React.ReactElement {
+    const m = OCR_META[name] || { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }
+    return (
+        <div
+            className="svc-tile"
+            style={{
+                width: size,
+                height: size,
+                fontSize: size >= 28 ? 11 : 9,
+                color: m.tone,
+                borderColor: 'color-mix(in oklab, ' + m.tone + ' 30%, var(--line))',
+            }}
+        >
+            {m.mono}
+        </div>
+    )
+}
+
+// Compact pill-style select used in the OCR action bar
+function PillSelect({
+    value,
+    options,
+    leading,
+    onChange,
+}: {
+    value: string
+    options: { value: string; label: string; mono?: string }[]
+    leading?: React.ReactNode
+    onChange?: (v: string) => void
+}): React.ReactElement {
+    const [open, setOpen] = useState(false)
+    const cur = options.find((o) => o.value === value)
+
+    useEffect(() => {
+        if (!open) return
+        const close = () => setOpen(false)
+        document.addEventListener('click', close)
+        return () => document.removeEventListener('click', close)
+    }, [open])
+
+    return (
+        <div style={{ position: 'relative' }}>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation()
+                    setOpen((o) => !o)
+                }}
+                style={{
+                    height: 30,
+                    padding: '0 10px',
+                    borderRadius: 8,
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--line)',
+                    color: 'var(--text)',
+                    fontSize: 12.5,
+                    fontWeight: 500,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                }}
+            >
+                {leading}
+                <span>{cur?.label || value}</span>
+                <Icons.Chev size={11} style={{ color: 'var(--text-mute)' }} />
+            </button>
+            {open && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 4px)',
+                        left: 0,
+                        minWidth: '100%',
+                        background: 'var(--bg-elev)',
+                        border: '1px solid var(--line)',
+                        borderRadius: 8,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                        padding: 4,
+                        zIndex: 50,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {options.map((o) => (
+                        <div
+                            key={o.value}
+                            onClick={() => {
+                                onChange?.(o.value)
+                                setOpen(false)
+                            }}
+                            style={{
+                                padding: '6px 10px',
+                                borderRadius: 6,
+                                fontSize: 12.5,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                whiteSpace: 'nowrap',
+                                background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent',
+                                color: o.value === value ? 'var(--brand-primary)' : 'var(--text)',
+                            }}
+                        >
+                            {o.mono && <SvcTile name={o.mono} size={18} />}
+                            <span>{o.label}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
+// Pill-style button — same dimensions as PillSelect, no chevron
+function PillButton({
+    icon,
+    label,
+    onClick,
+}: {
+    icon: React.ReactNode
+    label: string
+    onClick?: () => void
+}): React.ReactElement {
+    return (
+        <button
+            onClick={onClick}
+            style={{
+                height: 30,
+                padding: '0 10px',
+                borderRadius: 8,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--line)',
+                color: 'var(--text)',
+                fontSize: 12.5,
+                fontWeight: 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+            }}
+        >
+            {icon}
+            <span>{label}</span>
+        </button>
+    )
+}
+
+// Export button with dropdown
+function ExportButton({ text }: { text: string }): React.ReactElement {
+    const [open, setOpen] = useState(false)
+
+    useEffect(() => {
+        if (!open) return
+        const close = () => setOpen(false)
+        document.addEventListener('click', close)
+        return () => document.removeEventListener('click', close)
+    }, [open])
+
+    const formats = [
+        { value: 'txt', label: '纯文本', ext: '.txt' },
+        { value: 'md', label: 'Markdown', ext: '.md' },
+    ]
+
+    const handle_export = (fmt: string): void => {
+        const ext = fmt === 'md' ? '.md' : '.txt'
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `ocr_result${ext}`
+        a.click()
+        URL.revokeObjectURL(url)
+        setOpen(false)
+    }
+
+    return (
+        <div style={{ position: 'relative' }}>
+            <button className="ic-btn" title="导出" onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}>
+                <Icons.Export size={16} />
+            </button>
+            {open && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 6px)',
+                        right: 0,
+                        minWidth: 160,
+                        background: 'var(--bg-elev)',
+                        border: '1px solid var(--line)',
+                        borderRadius: 8,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                        padding: 4,
+                        zIndex: 50,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div style={{ padding: '6px 10px', fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                        导出格式
+                    </div>
+                    {formats.map((f) => (
+                        <div
+                            key={f.value}
+                            onClick={() => handle_export(f.value)}
+                            style={{
+                                padding: '6px 10px',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                fontSize: 12.5,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-sunk)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                            <span style={{ flex: 1 }}>{f.label}</span>
+                            <span className="hint mono">{f.ext}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
 
 export default function RecognizeWindow(): React.ReactElement {
     const { t } = useTranslation()
@@ -46,6 +280,27 @@ export default function RecognizeWindow(): React.ReactElement {
 
     const service_list = config.recognize_service_list
     const service_instances = config.service_instances
+
+    // Build OCR engine options from service list
+    const ocr_engine_options = service_list.map((instanceKey) => {
+        const svcKey = getServiceKey(instanceKey)
+        const svc = ocrServiceRegistry.get(svcKey)
+        return {
+            value: instanceKey,
+            label: svc?.name ?? svcKey,
+            mono: svcKey,
+        }
+    })
+
+    // Build language options
+    const lang_options = LANGUAGE_CODES.map((code) => ({
+        value: code,
+        label: LANGUAGE_NAMES[code],
+    }))
+
+    const effectiveService = selectedService || service_list[0] || ''
+    const effectiveServiceKey = effectiveService ? getServiceKey(effectiveService) : ''
+    const effectiveMeta = effectiveServiceKey ? (OCR_META[effectiveServiceKey] || null) : null
 
     const handleRecognize = useCallback(async () => {
         if (!imageBase64) return
@@ -106,122 +361,139 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [alwaysOnTop])
 
     return (
-        <div className="flex flex-col h-screen select-none">
-            {/* Title bar */}
-            <div className="flex justify-between items-center px-2 py-1">
-                <div className="flex items-center gap-1">
-                    <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        color={alwaysOnTop ? 'primary' : 'default'}
-                        onPress={handleTogglePin}
-                    >
-                        <BsPinFill />
-                    </Button>
-                    <span className="text-sm font-medium text-default-600">{t('recognize.title')}</span>
+        <div className="op-window" style={{ width: 860, height: 520 }}>
+            {/* Titlebar */}
+            <div className="op-titlebar">
+                <button
+                    className="ic-btn"
+                    title="置顶"
+                    onClick={handleTogglePin}
+                    style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
+                >
+                    <Icons.Pin size={14} fill={alwaysOnTop} />
+                </button>
+                <div className="op-wordmark" style={{ marginLeft: 2 }}>
+                    <span className="dot" style={{ background: 'var(--brand-primary)' }} />
+                    omni_pot
                 </div>
-                <Button isIconOnly size="sm" variant="light" onPress={handleClose}>
-                    <AiFillCloseCircle />
-                </Button>
+                <span className="op-mode">· 识别</span>
+                <div style={{ flex: 1 }} />
+                <button className="ic-btn" title="关闭" onClick={handleClose}>
+                    <Icons.Close size={14} />
+                </button>
             </div>
 
-            {/* Image preview */}
-            {imageBase64 && (
-                <div className="px-2 pb-2">
-                    <img
-                        src={`data:image/png;base64,${imageBase64}`}
-                        alt="captured"
-                        className="max-h-32 w-auto rounded border border-default-200"
+            {/* Dual-pane: image | text */}
+            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 0, gap: 10, padding: '4px 10px 8px' }}>
+                {/* Image card */}
+                <div className="card" style={{ padding: 6, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <div style={{
+                        flex: 1,
+                        borderRadius: 7,
+                        background: 'var(--bg-sunk)',
+                        border: '1px solid var(--line)',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        {imageBase64 ? (
+                            <img
+                                src={`data:image/png;base64,${imageBase64}`}
+                                alt="captured"
+                                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                            />
+                        ) : (
+                            <div style={{ textAlign: 'center', color: 'var(--text-mute)', fontSize: 13 }}>
+                                <Icons.Image size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
+                                <div>{t('recognize.no_result') || '等待截图…'}</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Text card */}
+                <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                    <textarea
+                        value={recognizedText}
+                        onChange={(e) => setRecognizedText(e.target.value)}
+                        placeholder={t('recognize.no_result') || '识别结果将显示在此…'}
+                        style={{
+                            flex: 1,
+                            padding: '12px 14px',
+                            fontSize: 13.5,
+                            lineHeight: 1.65,
+                            color: 'var(--text)',
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            resize: 'none',
+                            fontFamily: 'inherit',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                        }}
                     />
                 </div>
-            )}
-
-            {/* Editable text */}
-            <div className="flex-1 px-2 pb-2 overflow-auto">
-                <textarea
-                    value={recognizedText}
-                    onChange={(e) => setRecognizedText(e.target.value)}
-                    placeholder={t('recognize.no_result')}
-                    className="w-full h-full text-sm whitespace-pre-wrap break-words font-mono text-default-700 bg-default-50 rounded p-2 border border-default-200 outline-none resize-none"
-                />
             </div>
 
-            {/* Service & Language selectors */}
-            <div className="flex items-center gap-2 px-2 pb-1">
-                <select
-                    value={selectedService}
-                    onChange={(e) => setSelectedService(e.target.value)}
-                    className="text-xs bg-default-100 border border-default-200 rounded px-2 py-1 max-w-[140px]"
-                >
-                    <option value="">{t('recognize.service')}</option>
-                    {service_list.map((k) => {
-                        const svc = ocrServiceRegistry.get(getServiceKey(k))
-                        return <option key={k} value={k}>{svc?.name ?? getServiceKey(k)}</option>
-                    })}
-                </select>
-                <select
+            {/* Action bar */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 10px 10px',
+                borderTop: '1px solid var(--line)',
+            }}>
+                {ocr_engine_options.length > 0 && (
+                    <PillSelect
+                        value={effectiveService}
+                        options={ocr_engine_options}
+                        leading={effectiveMeta ? <SvcTile name={effectiveServiceKey} size={18} /> : undefined}
+                        onChange={setSelectedService}
+                    />
+                )}
+                <PillSelect
                     value={selectedLanguage}
-                    onChange={(e) => setSelectedLanguage(e.target.value)}
-                    className="text-xs bg-default-100 border border-default-200 rounded px-2 py-1 max-w-[100px]"
+                    options={lang_options}
+                    leading={<Icons.Globe size={13} style={{ color: 'var(--text-mute)' }} />}
+                    onChange={setSelectedLanguage}
+                />
+                <PillButton
+                    icon={isRecognizing ? (
+                        <Icons.Cycle size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    ) : (
+                        <Icons.Cycle size={14} />
+                    )}
+                    label={isRecognizing ? '识别中…' : '重新识别'}
+                    onClick={handleRecognize}
+                />
+
+                <div style={{ flex: 1 }} />
+
+                <button className="ic-btn" title="去除换行" onClick={handleDeleteNewline} disabled={!recognizedText}>
+                    <Icons.Newline size={16} />
+                </button>
+                <button className="ic-btn" title="去除空格" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
+                    <Icons.Hash size={16} />
+                </button>
+                <button className="ic-btn" title="复制文本" onClick={handleCopy} disabled={!recognizedText}>
+                    <Icons.Copy size={16} />
+                </button>
+                <ExportButton text={recognizedText} />
+                <button
+                    className="ic-btn"
+                    title="翻译"
+                    style={{ color: recognizedText ? 'var(--brand-primary)' : 'var(--text-mute)' }}
+                    onClick={handleTranslate}
+                    disabled={!recognizedText}
                 >
-                    {LANGUAGE_CODES.map((code) => (
-                        <option key={code} value={code}>{LANGUAGE_NAMES[code]}</option>
-                    ))}
-                </select>
-                <Button
-                    size="sm"
-                    variant="flat"
-                    startContent={<MdAutorenew />}
-                    onPress={handleRecognize}
-                    isDisabled={!imageBase64 || isRecognizing || service_list.length === 0}
-                    isLoading={isRecognizing}
-                >
-                    {t('recognize.re_recognize')}
-                </Button>
+                    <Icons.Translate size={18} />
+                </button>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex justify-between px-2 pb-2 gap-1">
-                <div className="flex items-center gap-1">
-                    <Button
-                        size="sm"
-                        variant="light"
-                        onPress={handleDeleteNewline}
-                        isDisabled={!recognizedText}
-                    >
-                        <MdSmartButton className="text-base" />
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="light"
-                        onPress={handleDeleteAllSpaces}
-                        isDisabled={!recognizedText}
-                    >
-                        <LuDelete className="text-base" />
-                    </Button>
-                </div>
-                <div className="flex items-center gap-1">
-                    <Button
-                        size="sm"
-                        variant="flat"
-                        startContent={<HiTranslate />}
-                        onPress={handleTranslate}
-                        isDisabled={!recognizedText}
-                    >
-                        {t('recognize.translate')}
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="flat"
-                        startContent={<AiOutlineCopy />}
-                        onPress={handleCopy}
-                        isDisabled={!recognizedText}
-                    >
-                        {t('copy')}
-                    </Button>
-                </div>
-            </div>
+            {/* Spin animation for recognizing state */}
+            <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
         </div>
     )
 }

@@ -1,6 +1,8 @@
 {
   "name": "omni-pot",
   "version": "0.1.0",
+  "description": "Cross-platform translation, OCR and dictionary tool",
+  "author": "TuTouPower",
   "private": true,
   "main": "out/main/index.js",
   "scripts": {
@@ -20,8 +22,8 @@
     "@heroui/theme": "^2.4.26",
     "@rollup/rollup-win32-x64-msvc": "^4.60.3",
     "better-sqlite3": "^12.9.0",
-    "electron": "^35.7.5",
     "framer-motion": "^12.38.0",
+    "geist": "^1.7.0",
     "i18next": "^26.0.8",
     "jsqr": "^1.4.0",
     "koffi": "^2.16.2",
@@ -44,6 +46,7 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.5.0",
+    "electron": "^35.7.5",
     "electron-vite": "^5.0.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.14",

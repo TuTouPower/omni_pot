@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Card, Input, Label, Modal } from '@heroui/react'
+import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
-import { SimpleSelect } from '../../components/simple_select'
+import { ConfigCard, ConfigRow, ConfigSelect, ConfigField } from './config_components'
 
 const BACKUP_TYPES = [
-    { key: 'webdav', label: 'WebDAV' },
-    { key: 'local', label: 'Local' }
+    { value: 'webdav', label: 'WebDAV' },
+    { value: 'local', label: '本地文件' },
 ]
 
 export default function BackupSettings(): React.ReactElement {
@@ -50,87 +50,126 @@ export default function BackupSettings(): React.ReactElement {
     }
 
     return (
-        <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">{t('backup.title')}</h3>
-
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">Backup Type</h4>
-                    <SimpleSelect label="Type" value={backupType as string} onChange={(v) => setBackupType(v)} options={BACKUP_TYPES} />
-                </Card.Content>
-            </Card>
+        <div className="stack gap-12">
+            <ConfigCard title={t('backup.title') || '备份'}>
+                <ConfigRow label="备份类型">
+                    <ConfigSelect
+                        value={backupType as string}
+                        onChange={setBackupType}
+                        options={BACKUP_TYPES}
+                        style={{ minWidth: 160 }}
+                    />
+                </ConfigRow>
+            </ConfigCard>
 
             {backupType === 'webdav' && (
-                <Card>
-                    <Card.Content className="gap-3 p-4">
-                        <h4 className="font-semibold">WebDAV</h4>
-                        <Input
-                            label="URL"
+                <ConfigCard title="WebDAV 连接">
+                    <ConfigRow label="服务器地址">
+                        <ConfigField
+                            placeholder="https://dav.example.com/dav"
                             value={webdavUrl}
-                            onChange={(e) => setWebdavUrl(e.target.value)}
-                            placeholder="https://example.com/dav"
+                            onChange={setWebdavUrl}
+                            style={{ minWidth: 280 }}
                         />
-                        <Input
-                            label="Username"
+                    </ConfigRow>
+                    <ConfigRow label="用户名">
+                        <ConfigField
                             value={webdavUsername}
-                            onChange={(e) => setWebdavUsername(e.target.value)}
-                            placeholder="username"
+                            onChange={setWebdavUsername}
+                            style={{ minWidth: 280 }}
                         />
-                        <Input
-                            label="Password"
-                            type="password"
+                    </ConfigRow>
+                    <ConfigRow label="密码">
+                        <ConfigField
                             value={webdavPassword}
-                            onChange={(e) => setWebdavPassword(e.target.value)}
-                            placeholder="password"
+                            onChange={setWebdavPassword}
+                            style={{ minWidth: 280 }}
                         />
-                    </Card.Content>
-                </Card>
+                    </ConfigRow>
+                </ConfigCard>
             )}
 
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <h4 className="font-semibold">Local Backups</h4>
-                    <div className="flex gap-2">
-                        <Button color="primary" onPress={handle_backup}>
-                            {t('backup.create')}
-                        </Button>
-                        <Button color="secondary" onPress={() => { load_backups(); setRestoreModal(true) }}>
-                            {t('backup.restore')}
-                        </Button>
-                    </div>
-                    {status && <p className="text-sm text-default-500">{status}</p>}
-                    {backups.length === 0 && (
-                        <p className="text-sm text-default-400">{t('backup.no_backups')}</p>
-                    )}
-                    {backups.slice(0, 5).map((name) => (
-                        <div key={name} className="text-sm text-default-500">{name}</div>
-                    ))}
-                </Card.Content>
-            </Card>
+            <ConfigCard title="操作">
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn primary" onClick={handle_backup}>
+                        <Icons.Cloud size={14} />
+                        {t('backup.create') || '立即备份'}
+                    </button>
+                    <button className="btn" onClick={() => { load_backups(); setRestoreModal(true) }}>
+                        <Icons.Cycle size={14} />
+                        {t('backup.restore') || '从备份恢复'}
+                    </button>
+                </div>
+                {status && <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
+                <div className="hint">备份内容：配置、历史记录数据库、已安装的插件</div>
+            </ConfigCard>
 
-            <Modal isOpen={restoreModal} onOpenChange={setRestoreModal}>
-                <Modal.Content>
-                    <Modal.Header>
-                        <h4 className="font-semibold">Restore Backup</h4>
-                    </Modal.Header>
-                    <Modal.Body className="gap-2">
-                        {backups.length === 0 && (
-                            <p className="text-sm text-default-500">No backups available.</p>
-                        )}
-                        {backups.map((name) => (
-                            <div key={name} className="flex justify-between items-center p-2 rounded hover:bg-default-100">
-                                <span className="text-sm">{name}</span>
-                                <Button size="sm" color="primary" onPress={() => handle_restore(name)}>
-                                    Restore
-                                </Button>
-                            </div>
-                        ))}
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="ghost" onPress={() => setRestoreModal(false)}>{t('ui.close')}</Button>
-                    </Modal.Footer>
-                </Modal.Content>
-            </Modal>
+            {/* Recent backups */}
+            <ConfigCard title="最近备份">
+                {backups.length === 0 && (
+                    <p style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('backup.no_backups') || '暂无备份'}</p>
+                )}
+                {backups.slice(0, 5).map((name, i) => (
+                    <div key={name} className="row" style={{ paddingBottom: 8, borderBottom: i < Math.min(backups.length, 5) - 1 ? '1px solid var(--line)' : 'none' }}>
+                        <Icons.Cloud size={14} style={{ color: 'var(--text-mute)' }} />
+                        <div style={{ flex: 1 }}>
+                            <div className="mono" style={{ fontSize: 12 }}>{name}</div>
+                        </div>
+                    </div>
+                ))}
+            </ConfigCard>
+
+            {/* Restore modal */}
+            {restoreModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 100,
+                    }}
+                    onClick={() => setRestoreModal(false)}
+                >
+                    <div
+                        className="card"
+                        style={{ width: 400, maxHeight: 400, overflow: 'auto', padding: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="card-head">
+                            <span>恢复备份</span>
+                            <button className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setRestoreModal(false)}>
+                                <Icons.Close size={13} />
+                            </button>
+                        </div>
+                        <div style={{ padding: 4 }}>
+                            {backups.length === 0 && (
+                                <p style={{ fontSize: 13, color: 'var(--text-mute)', padding: 12 }}>No backups available.</p>
+                            )}
+                            {backups.map((name) => (
+                                <div
+                                    key={name}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '8px 12px',
+                                        borderRadius: 6,
+                                        transition: 'background .12s',
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-sunk)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                >
+                                    <span style={{ fontSize: 13 }}>{name}</span>
+                                    <button className="btn sm primary" onClick={() => handle_restore(name)}>恢复</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

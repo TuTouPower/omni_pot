@@ -69,7 +69,7 @@ export const geminiproService: TranslateService = {
     async testConfig(config: ServiceConfig): Promise<boolean> {
         try {
             const result = await this.translate('hello', 'en', 'zh_cn', config)
-            return result.length > 0
+            return typeof result === "string" ? result.length > 0 : !!result
         } catch {
             return false
         }
