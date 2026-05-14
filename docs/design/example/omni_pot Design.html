@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>omni_pot · 设计</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  html, body, #root { height: 100%; }
+  body { background: #f0eee9; overflow: hidden; }
+  .dc-editable, [class^="dc-"], [class*=" dc-"] { font-family: var(--font-sans, system-ui); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="windows/translate.jsx"></script>
+<script type="text/babel" src="windows/other.jsx"></script>
+<script type="text/babel" src="windows/config.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useMemo } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "light",
+  "primary": "#c4623a",
+  "radius": 10,
+  "density": "comfortable"
+}/*EDITMODE-END*/;
+
+const COLOR_OPTIONS = [
+  '#c4623a',  // restrained clay-orange
+  '#3a6ea5',  // restrained azure-blue
+];
+
+function shade(hex, percent) {
+  const num = parseInt(hex.slice(1), 16);
+  let r = (num >> 16) + Math.round(2.55 * percent);
+  let g = ((num >> 8) & 0xff) + Math.round(2.55 * percent);
+  let b = (num & 0xff) + Math.round(2.55 * percent);
+  r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b));
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+function applyTweaks(t) {
+  const root = document.documentElement;
+  document.body.classList.toggle('dark', t.theme === 'dark' || (t.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches));
+  if (t.primary) {
+    root.style.setProperty('--brand-primary', t.primary);
+    root.style.setProperty('--brand-primary-soft', t.primary + '22');
+    root.style.setProperty('--brand-primary-hover', shade(t.primary, -10));
+  }
+  if (typeof t.radius === 'number') {
+    root.style.setProperty('--r-md', t.radius + 'px');
+    root.style.setProperty('--r-lg', (t.radius + 2) + 'px');
+    root.style.setProperty('--r-sm', Math.max(2, t.radius - 2) + 'px');
+  }
+  if (t.density === 'compact') {
+    root.style.setProperty('--row-h', '30px');
+    root.style.setProperty('--pad', '10px');
+    root.style.setProperty('--gap', '8px');
+    root.style.setProperty('--fs-base', '12.5px');
+  } else if (t.density === 'spacious') {
+    root.style.setProperty('--row-h', '40px');
+    root.style.setProperty('--pad', '18px');
+    root.style.setProperty('--gap', '16px');
+    root.style.setProperty('--fs-base', '14px');
+  } else {
+    root.style.setProperty('--row-h', '36px');
+    root.style.setProperty('--pad', '14px');
+    root.style.setProperty('--gap', '12px');
+    root.style.setProperty('--fs-base', '13px');
+  }
+}
+
+// Sample data
+const SAMPLE_SERVICES = [
+  { key: 'deepl@a', name: 'deepl' },
+  { key: 'openai@b', name: 'openai', streaming: true },
+  { key: 'google@c', name: 'google' },
+  { key: 'bing@d', name: 'bing' },
+];
+const SAMPLE_RESULTS = {
+  'deepl@a': { text: '该函数必须满足结合律与交换律——否则到达操作的顺序就会影响结果，从而不再是一个 CRDT。' },
+  'openai@b': { text: '合并函数必须同时满足结合律和交换律；一旦不满足，操作到达的顺序就会改变最终结果，那么它就不再是 CRDT 了。', streaming: true },
+  'google@c': { text: '该函数必须是关联的和可交换的——否则到达操作的顺序很重要，结果不再是 CRDT。' },
+  'bing@d': { loading: true },
+};
+
+// Isolated theme wrapper — forces a primary color + theme class regardless of global tweak.
+// Used by the 4-combo demo so all four show at once.
+function ThemeFrame({ primary, dark, children, style }) {
+  return (
+    <div className={dark ? 'dark' : ''}
+      style={{
+        '--brand-primary': primary,
+        '--brand-primary-soft': primary + '22',
+        '--brand-primary-hover': shade(primary, -10),
+        height: '100%',
+        background: 'var(--bg)',
+        color: 'var(--text)',
+        borderRadius: 'var(--r-lg)',
+        overflow: 'hidden',
+        ...style,
+      }}>
+      {children}
+    </div>
+  );
+}
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  useEffect(() => { applyTweaks(t); }, [t]);
+
+  return (
+    <>
+      <DesignCanvas backgroundColor="#f0eee9" title="omni_pot · 桌面工具界面设计" subtitle="跨平台中性自定义品牌 · 圆角 · 白底分卡 · 克制配色">
+        <DCSection id="overview" title="01 · 翻译窗口" subtitle="划词/输入触发的主入口，纯白外层 · 分卡式内容 · 居中语言切换">
+          <DCArtboard id="translate" label="默认 · 多引擎结果" width={400} height={680}>
+            <TranslateWindow
+              services={SAMPLE_SERVICES}
+              results={SAMPLE_RESULTS}
+              sourceText="The merge function must be both associative and commutative — otherwise the order of arriving operations matters and the result is no longer a CRDT." />
+          </DCArtboard>
+          <DCArtboard id="dict" label="词典 · 单词查询" width={420} height={680}>
+            <DictWindow />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="themes" title="02 · 颜色 × 主题" subtitle="可选橙、蓝两色，搭配亮、暗主题 — 主色仅用于置顶、检测到的语言、翻译按钮等少数关键位置">
+          <DCArtboard id="t-light-orange" label="亮 · 橙 (默认)" width={380} height={640}>
+            <ThemeFrame primary="#c4623a" dark={false}>
+              <TranslateWindow services={SAMPLE_SERVICES.slice(0,3)} results={SAMPLE_RESULTS} sourceText="eventual consistency" />
+            </ThemeFrame>
+          </DCArtboard>
+          <DCArtboard id="t-light-blue" label="亮 · 蓝" width={380} height={640}>
+            <ThemeFrame primary="#3a6ea5" dark={false}>
+              <TranslateWindow services={SAMPLE_SERVICES.slice(0,3)} results={SAMPLE_RESULTS} sourceText="eventual consistency" />
+            </ThemeFrame>
+          </DCArtboard>
+          <DCArtboard id="t-dark-orange" label="暗 · 橙" width={380} height={640}>
+            <ThemeFrame primary="#d0764e" dark={true}>
+              <TranslateWindow services={SAMPLE_SERVICES.slice(0,3)} results={SAMPLE_RESULTS} sourceText="eventual consistency" />
+            </ThemeFrame>
+          </DCArtboard>
+          <DCArtboard id="t-dark-blue" label="暗 · 蓝" width={380} height={640}>
+            <ThemeFrame primary="#5e8fc7" dark={true}>
+              <TranslateWindow services={SAMPLE_SERVICES.slice(0,3)} results={SAMPLE_RESULTS} sourceText="eventual consistency" />
+            </ThemeFrame>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="ocr" title="03 · 识别 / OCR" subtitle="三段式：标题栏 · 图像与文本并置 · 底部动作条（OCR 引擎 · 语言 · 重识别 · 翻译 · 复制 · 导出）">
+          <DCArtboard id="recognize" label="识别窗口" width={860} height={520}>
+            <RecognizeWindow />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="capture" title="04 · 截图覆盖层" subtitle="拖动选取屏幕区域，主色仅用于选区描边与尺寸标签">
+          <DCArtboard id="screenshot" label="截图选区" width={720} height={420}>
+            <ScreenshotOverlay />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="config" title="05 · 配置窗口" subtitle="左侧导航 + 右侧分卡，覆盖 7 个子页面">
+          <DCArtboard id="cfg-general" label="通用" width={880} height={600}>
+            <ConfigWindow initial="general" />
+          </DCArtboard>
+          <DCArtboard id="cfg-translate" label="翻译" width={880} height={600}>
+            <ConfigWindow initial="translate" />
+          </DCArtboard>
+          <DCArtboard id="cfg-hotkey" label="快捷键" width={880} height={600}>
+            <ConfigWindow initial="hotkey" />
+          </DCArtboard>
+          <DCArtboard id="cfg-service" label="服务管理" width={880} height={600}>
+            <ConfigWindow initial="service" />
+          </DCArtboard>
+          <DCArtboard id="cfg-history" label="历史记录" width={880} height={600}>
+            <ConfigWindow initial="history" />
+          </DCArtboard>
+          <DCArtboard id="cfg-backup" label="备份" width={880} height={600}>
+            <ConfigWindow initial="backup" />
+          </DCArtboard>
+          <DCArtboard id="cfg-about" label="关于" width={880} height={600}>
+            <ConfigWindow initial="about" />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="ambient" title="06 · 后台 · 托盘 · 更新" subtitle="不常出现但必须做好的边角料">
+          <DCArtboard id="tray" label="系统托盘菜单" width={300} height={440}>
+            <div style={{ padding: 16, background: '#f0eee9', height: '100%', borderRadius: 12, display:'flex', justifyContent:'center', paddingTop: 32 }}>
+              <TrayMenu />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="updater" label="更新器" width={600} height={420}>
+            <UpdaterWindow />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="states" title="07 · 状态细节" subtitle="加载、错误、空状态、桌面通知">
+          <DCArtboard id="loading" label="翻译中" width={400} height={340}>
+            <TranslateLoadingState />
+          </DCArtboard>
+          <DCArtboard id="error" label="API 错误" width={400} height={340}>
+            <TranslateErrorState />
+          </DCArtboard>
+          <DCArtboard id="empty" label="首次启动" width={400} height={340}>
+            <TranslateEmptyState />
+          </DCArtboard>
+          <DCArtboard id="notif" label="桌面通知" width={360} height={140}>
+            <Notification />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel>
+        <TweakSection title="主题">
+          <TweakRadio label="外观" value={t.theme} onChange={v => setTweak('theme', v)}
+            options={[{value:'light',label:'亮'},{value:'dark',label:'暗'},{value:'auto',label:'跟随'}]} />
+          <TweakColor label="主色调" value={t.primary} options={COLOR_OPTIONS} onChange={v => setTweak('primary', v)} />
+        </TweakSection>
+        <TweakSection title="布局">
+          <TweakSlider label="圆角" value={t.radius} min={4} max={16} step={1} onChange={v => setTweak('radius', v)} />
+          <TweakRadio label="密度" value={t.density} onChange={v => setTweak('density', v)}
+            options={[{value:'compact',label:'紧凑'},{value:'comfortable',label:'舒适'},{value:'spacious',label:'宽松'}]} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+// ===== State variants =====
+function TranslateLoadingState() {
+  return (
+    <div className="op-window" style={{ width: 400, height: 340 }}>
+      <TitlebarLeft mode="翻译" pinned={true} />
+      <div style={{ padding: '4px 10px 12px', display:'flex', flexDirection:'column', gap: 8, flex:1, overflow:'hidden' }}>
+        <div className="card" style={{ padding: '10px 12px' }}>
+          <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>The merge function must be associative and commutative.</div>
+          <div style={{ display:'flex', alignItems:'center', gap:6, marginTop: 8 }}>
+            <span style={{ fontSize: 11.5, color:'var(--text-mute)', fontFamily:'var(--font-mono)' }}>
+              检测为 <span style={{ color:'var(--brand-primary)', fontWeight:600 }}>英文</span>
+            </span>
+            <div style={{flex:1}}/>
+            <button className="ic-btn brand"><Icons.Translate size={15}/></button>
+          </div>
+        </div>
+        <div className="card" style={{ padding: '6px 12px', display:'flex', alignItems:'center', justifyContent:'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>自动检测</span>
+          <Icons.Swap size={18} style={{ color:'var(--text)' }}/>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>简体中文</span>
+        </div>
+        {[0,1].map(i => (
+          <div key={i} className="card" style={{ padding: '10px 12px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap: 8 }}>
+              <SvcTile name={['deepl','openai'][i]} />
+              <div style={{ height: 8, width: 56, background:'var(--bg-sunk)', borderRadius: 4 }}/>
+              <div style={{flex:1}}/>
+              <span className="hint mono">翻译中…</span>
+            </div>
+            <div style={{ marginTop: 8, height: 8, width: '92%', background:'var(--bg-sunk)', borderRadius: 4 }}/>
+            <div style={{ marginTop: 4, height: 8, width: '68%', background:'var(--bg-sunk)', borderRadius: 4 }}/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TranslateErrorState() {
+  return (
+    <div className="op-window" style={{ width: 400, height: 340 }}>
+      <TitlebarLeft mode="翻译" pinned={true} />
+      <div style={{ padding: '4px 10px 12px', display:'flex', flexDirection:'column', gap: 8, flex:1, overflow:'hidden' }}>
+        <div className="card" style={{ padding: '10px 12px' }}>
+          <div style={{ fontSize: 13.5 }}>The merge function must be associative and commutative.</div>
+          <div style={{ display:'flex', alignItems:'center', gap:6, marginTop: 8 }}>
+            <span style={{ fontSize: 11.5, color:'var(--text-mute)', fontFamily:'var(--font-mono)' }}>
+              检测为 <span style={{ color:'var(--brand-primary)', fontWeight:600 }}>英文</span>
+            </span>
+            <div style={{flex:1}}/>
+            <button className="ic-btn brand"><Icons.Translate size={15}/></button>
+          </div>
+        </div>
+        <div className="card" style={{ padding: '10px 12px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap: 8 }}>
+            <SvcTile name="openai" />
+            <div style={{ fontSize: 12.5, fontWeight: 600 }}>OpenAI</div>
+            <span className="chip plain mono" style={{ color:'var(--danger)', borderColor:'color-mix(in oklab, var(--danger) 25%, transparent)', fontSize: 10 }}>401</span>
+            <div style={{flex:1}}/>
+            <button className="ic-btn" title="重试"><Icons.Cycle size={13}/></button>
+          </div>
+          <div style={{ marginTop: 8, color:'var(--danger)', fontSize: 12.5 }}>Invalid API key — 请到「服务 → OpenAI」检查 apiKey 字段</div>
+          <button className="btn xs" style={{ marginTop: 8 }}>打开设置</button>
+        </div>
+        <div className="card" style={{ padding: '10px 12px', opacity: 0.7 }}>
+          <div style={{ display:'flex', alignItems:'center', gap: 8 }}>
+            <SvcTile name="deepl" />
+            <div style={{ fontSize: 12.5, fontWeight: 600 }}>DeepL</div>
+            <span className="chip plain mono" style={{ fontSize: 10 }}>网络超时</span>
+            <div style={{flex:1}}/>
+            <button className="ic-btn"><Icons.Cycle size={13}/></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TranslateEmptyState() {
+  return (
+    <div className="op-window" style={{ width: 400, height: 340 }}>
+      <TitlebarLeft mode="翻译" pinned={false} />
+      <div style={{ flex:1, padding: 28, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', textAlign:'center', gap: 10 }}>
+        <div className="svc-tile" style={{ width: 44, height: 44, borderRadius: 12, background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', fontSize: 16 }}>op</div>
+        <div style={{ fontSize: 15, fontWeight: 600 }}>开始第一次翻译</div>
+        <div className="hint" style={{ maxWidth: 280 }}>选中任意文本后按下快捷键，或直接在此输入。</div>
+        <div style={{ display:'flex', gap: 6, marginTop: 4 }}>
+          <span className="chip mono"><kbd style={{fontSize:10}}>⌥</kbd><kbd style={{fontSize:10}}>Q</kbd> 划词</span>
+          <span className="chip mono"><kbd style={{fontSize:10}}>⌥</kbd><kbd style={{fontSize:10}}>⇧</kbd><kbd style={{fontSize:10}}>S</kbd> OCR</span>
+        </div>
+        <button className="btn sm" style={{ marginTop: 6 }}><Icons.Settings size={12}/>配置快捷键</button>
+      </div>
+    </div>
+  );
+}
+
+function Notification() {
+  return (
+    <div style={{ height: '100%', padding: 12, background:'#f0eee9', display:'flex', alignItems:'center', justifyContent:'center', borderRadius: 12 }}>
+      <div style={{ background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 12, padding: '12px 14px', display:'flex', gap: 12, alignItems:'flex-start', boxShadow:'0 8px 24px rgba(0,0,0,0.08)', width: 320 }}>
+        <div className="svc-tile" style={{ background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', width: 32, height: 32, fontSize: 12 }}>op</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600 }}>已翻译并复制</div>
+          <div className="hint" style={{ marginTop: 2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>该函数必须满足结合律与交换律——</div>
+        </div>
+        <button className="ic-btn"><Icons.Close size={12}/></button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
