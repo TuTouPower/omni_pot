@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfig } from '../../hooks/use_config'
+import { LANGUAGE_NAMES } from '@shared/types/language'
 
 interface SourceAreaProps {
     onTranslate: () => void
+    onDetectedLanguageClick?: () => void
     inputRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
@@ -56,11 +58,13 @@ function cycle_variable_name(text: string): string {
     return apply_format(words, next)
 }
 
-export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.ReactElement | null {
+export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: SourceAreaProps): React.ReactElement | null {
     const { t } = useTranslation()
     const sourceText = useTranslateStore((s) => s.sourceText)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
     const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
+    const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
+    const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
     const [hideSource] = useConfig('hide_source')
     const [dynamicTranslate] = useConfig('dynamic_translate')
 
@@ -105,7 +109,8 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
 
     const handleClear = useCallback(() => {
         setSourceText('')
-    }, [setSourceText])
+        setDetectedLanguage(null)
+    }, [setSourceText, setDetectedLanguage])
 
     useEffect(() => {
         if (!dynamicTranslate || !sourceText.trim()) return
@@ -144,10 +149,15 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
             </div>
             {/* Action bar */}
             <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px 8px' }}>
-                {detectedLanguage && (
-                    <span data-testid="detected-lang" style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4 }}>
-                        检测为 <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{detectedLanguage}</span>
-                    </span>
+                {detectedLanguage && sourceLanguage === 'auto' && (
+                    <button
+                        type="button"
+                        data-testid="detected-lang"
+                        onClick={onDetectedLanguageClick}
+                        style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4, background: 'transparent', border: 0, cursor: onDetectedLanguageClick ? 'pointer' : 'default' }}
+                    >
+                        检测为 <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{LANGUAGE_NAMES[detectedLanguage] || detectedLanguage}</span>
+                    </button>
                 )}
                 <div style={{ flex: 1 }} />
                 <button className="ic-btn" title={t('delete_newline') || '去除换行'} data-testid="source-newline-btn" onClick={handleDeleteNewline}>
@@ -159,7 +169,7 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
                 <button className="ic-btn" title={t('clear') || '清空'} data-testid="source-clear-btn" onClick={handleClear}>
                     <Icons.Trash size={16} />
                 </button>
-                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={onTranslate} style={{ color: 'var(--brand-primary)' }}>
+                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={() => onTranslate()} style={{ color: 'var(--brand-primary)' }}>
                     <Icons.Translate size={18} />
                 </button>
             </div>

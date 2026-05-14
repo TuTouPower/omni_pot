@@ -80,7 +80,7 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
     const displayValue = capturing ? tempValue : currentValue
 
     return (
-        <ConfigRow label={label} sub={sub}>
+        <ConfigRow label={label} sub={sub} testId={`cfg-${configKey}`}>
             <div style={{ display: 'flex', gap: 6 }}>
                 <div
                     className="field"

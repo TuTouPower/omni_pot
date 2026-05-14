@@ -15,7 +15,6 @@ export default function TranslateWindow(): React.ReactElement {
     const sourceText = useTranslateStore((s) => s.sourceText)
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
-    const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
     const setIsTranslating = useTranslateStore((s) => s.setIsTranslating)
     const setResult = useTranslateStore((s) => s.setResult)
     const clearResults = useTranslateStore((s) => s.clearResults)
@@ -39,8 +38,10 @@ export default function TranslateWindow(): React.ReactElement {
     const configSourceLang = useConfigStore((s) => s.config.translate_source_language)
     const appFont = useConfigStore((s) => s.config.app_font)
     const appFontSize = useConfigStore((s) => s.config.app_font_size)
+    const setConfig = useConfigStore((s) => s.set)
     const setStoreTargetLang = useTranslateStore((s) => s.setTargetLanguage)
     const setStoreSourceLang = useTranslateStore((s) => s.setSourceLanguage)
+    const swapLanguages = useTranslateStore((s) => s.swapLanguages)
 
     useEffect(() => {
         setStoreTargetLang(configTargetLang as LanguageCode)
@@ -57,8 +58,10 @@ export default function TranslateWindow(): React.ReactElement {
         const id = nextRequestId()
         setIsTranslating(true)
         clearResults()
+        setDetectedLanguage(null)
 
         const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
+        if (useTranslateStore.getState().requestId !== id) return
         if (detected) setDetectedLanguage(detected)
 
         let effectiveTarget = targetLanguage
@@ -145,7 +148,7 @@ export default function TranslateWindow(): React.ReactElement {
                 if (targetTexts) navigator.clipboard.writeText(targetTexts)
             }
         }
-    }, [sourceLanguage, targetLanguage, detectedLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
+    }, [sourceLanguage, targetLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
@@ -215,8 +218,15 @@ export default function TranslateWindow(): React.ReactElement {
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
 
     const handleToggleAlwaysOnTop = useCallback(() => {
-        window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop)
-    }, [alwaysOnTop])
+        const next = !alwaysOnTop
+        void window.electronAPI.window.setAlwaysOnTop(next)
+            .then(() => setConfig('translate_always_on_top', next))
+            .catch(() => undefined)
+    }, [alwaysOnTop, setConfig])
+
+    const handleSwapLanguages = useCallback(() => {
+        swapLanguages(secondLanguage as LanguageCode)
+    }, [secondLanguage, swapLanguages])
 
     const handleRetry = useCallback(async (instanceKey: string) => {
         const textToTranslate = useTranslateStore.getState().sourceText
@@ -255,6 +265,7 @@ export default function TranslateWindow(): React.ReactElement {
                     className="ic-btn"
                     title="置顶"
                     data-testid="titlebar-pin"
+                    aria-pressed={alwaysOnTop}
                     onClick={handleToggleAlwaysOnTop}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
@@ -273,8 +284,8 @@ export default function TranslateWindow(): React.ReactElement {
 
             {/* Content */}
             <div style={{ flex: 1, overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {showSource && <SourceArea onTranslate={handleTranslate} inputRef={inputRef} />}
-                <LanguageArea />
+                {showSource && <SourceArea onTranslate={handleTranslate} onDetectedLanguageClick={handleSwapLanguages} inputRef={inputRef} />}
+                <LanguageArea onSwap={handleSwapLanguages} />
                 <TargetArea serviceList={serviceList} ttsServiceList={ttsServiceList} onRetry={handleRetry} />
             </div>
         </div>

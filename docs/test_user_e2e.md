@@ -118,7 +118,8 @@ export async function closeApp(launched: LaunchedApp): Promise<void>
   无需手动管理 `--remote-debugging-port`。
 - `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
 - 每个测试独立随机 `httpPort`、**独立 userData 临时目录** —— 测试间隔离。
-- 环境变量把 `userDataDir`、预置 `config`、`firstRun`、`OMNI_POT_E2E=1` 传给 main 进程。
+- 环境变量把 `userDataDir`、预置 `config`、`firstRun`、`OMNI_POT_E2E=1`、
+  `OMNI_POT_E2E_TOKEN` 传给 main 进程；E2E-only HTTP 端点必须带匹配 token。
 - 关闭时清理 userData 临时目录。
 
 ### 4.2 多窗口 Page
@@ -216,7 +217,10 @@ class TranslatePage {
 利用 Playwright 的自动等待：`locator.click()` 自动等元素可见可点击，
 `expect(locator).toHaveText(...)` 自动轮询 —— 不再手写 CDP 轮询与裸 `setTimeout`。
 
-### 4.5 需要源码配合的改动（待实现基础设施）
+当前已落地基础 Page Object：`translate_page.ts`、`dict_page.ts`、`recognize_page.ts`、
+`screenshot_page.ts`、`config_page.ts`、`updater_page.ts`。
+
+### 4.5 需要源码配合的基础设施
 
 > E2E 基础设施已部分落地；剩余项跟踪进度见 `PLAN.md`。
 
@@ -227,35 +231,36 @@ class TranslatePage {
 - 翻译：`titlebar-pin`、`titlebar-close`、`titlebar-mode`、`titlebar-wordmark`、
   `source-input`、`source-translate-btn`、`source-clear-btn`、`source-newline-btn`、
   `source-copy-btn`、`detected-lang`、`lang-source`、`lang-target`、`lang-swap`、
-  结果卡片 `data-result-key` / `data-result-content` / `data-result-error`
-- 词典：标题栏基础选择器与 `dict-card`
-
-仍需继续补齐：
-
-- 翻译：`source-tts-btn`、`result-card`、`result-tts`、`result-copy`、
-  `result-collect`、`result-collapse`、`result-retry`、`result-body`、`result-error`
-- 词典：`dict-word`、`dict-collect`、`dict-tts`、`dict-source-tag`
-- 识别：`ocr-image`、`ocr-text`、`ocr-engine-select`、`ocr-lang-select`、
-  `ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、`ocr-copy-btn`、
-  `ocr-export-btn`、`ocr-translate-btn`
+  结果卡片 `result-card` / `result-tts` / `result-copy` / `result-collect` /
+  `result-collapse` / `result-retry` / `result-body` / `result-error`，以及
+  `data-result-key` / `data-result-content` / `data-result-error`
+- 词典：标题栏基础选择器、`dict-word`、`dict-card`、`dict-source-tag`
+- 识别：标题栏基础选择器、`ocr-image`、`ocr-text`、`ocr-engine-select`、
+  `ocr-lang-select`、`ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、
+  `ocr-copy-btn`、`ocr-export-btn`、`ocr-translate-btn`
 - 截图：`shot-overlay`、`shot-selection`、`shot-size-label`、`shot-hint`
 - 配置：`config-nav-{page}`、`config-title`、`config-close`、各设置项
-  `cfg-{key}`、服务项 `svc-item`、`svc-add-btn`、`svc-toggle`、`svc-edit`、
-  `svc-delete`、`svc-drag-handle`
+  `cfg-{key}`、服务项 `svc-item`、`svc-add-btn`、`svc-delete`、`svc-drag-handle`
 - 更新器：`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
-**(b) E2E HTTP 端点扩充**（`electron/server/index.ts`，仅 `OMNI_POT_E2E`）：
+当前 UI 尚未实现的控件不预埋选择器：翻译源文本朗读 `source-tts-btn`、词典收藏
+`dict-collect`、词典朗读 `dict-tts`、服务启停 `svc-toggle`、服务编辑 `svc-edit`。
+后续实现这些用户功能时，同步补选择器与对应用户路径 spec。
+
+**(b) E2E HTTP 端点扩充**（`electron/server/index.ts`，仅 `OMNI_POT_E2E` +
+`OMNI_POT_E2E_TOKEN` 匹配时启用）：
 
 当前已有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、
 `/trigger-clipboard-translate`、`/capture-clock`、`POST /e2e/open-window`、
-`POST /e2e/reset-config`、`GET /e2e/clipboard`。仍需新增：
+`POST /e2e/reset-config`、`GET /e2e/clipboard`、`GET /e2e/window-state`、
+`POST /e2e/trigger-screenshot`、`POST /e2e/trigger-input-translate`、
+`POST /e2e/tray-action`、`POST /e2e/mock-update`。
 
 | 端点 | 用途 |
 |---|---|
-| `POST /e2e/trigger-screenshot` | 触发截图（指定 mode） |
-| `POST /e2e/trigger-input-translate` | 触发输入翻译 |
-| `POST /e2e/tray-action` | 触发指定托盘菜单项 |
-| `GET /e2e/window-state` | 查询窗口可见性 / 置顶 / bounds |
+| `POST /e2e/trigger-screenshot` | 触发截图（指定 `recognize` / `translate` mode） |
+| `POST /e2e/trigger-input-translate` | 触发输入翻译入口 |
+| `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `clipboard_monitor` / `config` / `tray_click` |
 | `POST /e2e/mock-update` | 注入一个假的“有新版本”用于更新器测试 |
 
 **(c) 独立 userData**：已通过 `OMNI_POT_USER_DATA` 从 Playwright fixture 传给 main 进程，
@@ -266,7 +271,7 @@ class TranslatePage {
 ## 5. 测试文件规划（15 个 spec）
 
 当前基础版 fixture：每个测试启动独立实例 → `resetConfig()` →
-用例用 PO 操作与断言 → 测试结束停止实例并清理 userData。固定顺序，无 shuffle。
+用例用 PO 操作与断言 → 测试结束停止实例并清理 userData。Playwright `workers: 1`，固定顺序，无 shuffle。
 
 ### 5.1 app_lifecycle.spec.ts — 应用生命周期与窗口管理
 
@@ -512,7 +517,7 @@ test:e2e -- <file>  # 单文件调试
 ```
 
 - Playwright 当前由 fixture 为每个测试启动独立 Electron 实例、独立端口、独立 userData。
-- 用例内固定顺序。
+- Playwright `workers: 1`，用例固定顺序执行。
 - `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
 - CI：PR 跑 `core + ui`；nightly 跑 full（含真实网络服务）。
 - issues #1（better-sqlite3 缺失）、#2（双击两次启动）属打包/启动问题，

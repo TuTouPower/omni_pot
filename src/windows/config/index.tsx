@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import GeneralPage from './general'
@@ -21,6 +21,7 @@ interface NavItem {
 export default function ConfigWindow(): React.ReactElement {
     const { t } = useTranslation()
     const [activePage, setActivePage] = useState<ConfigPage>('general')
+    const handleClose = useCallback(() => window.electronAPI.window.close(), [])
 
     const pages: NavItem[] = [
         { key: 'general', label: t('general.title') || '通用', icon: <Icons.Grid size={15} /> },
@@ -69,6 +70,7 @@ export default function ConfigWindow(): React.ReactElement {
                         {pages.map((n) => (
                             <button
                                 key={n.key}
+                                data-testid={`config-nav-${n.key}`}
                                 onClick={() => setActivePage(n.key)}
                                 style={{
                                     height: 32,
@@ -102,8 +104,12 @@ export default function ConfigWindow(): React.ReactElement {
                 {/* Content */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <div style={{ height: 38, display: 'flex', alignItems: 'center', padding: '0 10px 0 14px', gap: 8 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
+                        <div data-testid="config-title" style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
                         <span className="hint mono" style={{ marginLeft: 4 }}>/{activePage}</span>
+                        <div style={{ flex: 1 }} />
+                        <button className="ic-btn" title="关闭" data-testid="config-close" onClick={handleClose}>
+                            <Icons.Close size={14} />
+                        </button>
                     </div>
                     <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
                         {renderPage()}

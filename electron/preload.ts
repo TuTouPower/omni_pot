@@ -88,6 +88,13 @@ const api: Omit<ElectronAPI, 'ready'> = {
     lookup: (text, from, to) => ipcRenderer.invoke('dict:lookup', text, from, to),
     check: () => ipcRenderer.invoke('dict:check'),
     import: (url) => ipcRenderer.invoke('dict:import', url)
+  },
+  update: {
+    onRelease: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, release: Parameters<typeof callback>[0]) => callback(release)
+      ipcRenderer.on('updater:release', handler)
+      return () => { ipcRenderer.off('updater:release', handler) }
+    }
   }
 }
 

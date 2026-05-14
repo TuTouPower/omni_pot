@@ -22,13 +22,14 @@ export function ConfigCard({ title, hint, children }: {
     )
 }
 
-export function ConfigRow({ label, sub, children }: {
+export function ConfigRow({ label, sub, children, testId }: {
     label: string
     sub?: string
     children?: React.ReactNode
+    testId?: string
 }): React.ReactElement {
     return (
-        <div className="row" style={{ minHeight: 36 }}>
+        <div className="row" data-testid={testId} style={{ minHeight: 36 }}>
             <div className="label">
                 {label}
                 {sub && <span className="sub">{sub}</span>}
@@ -38,23 +39,26 @@ export function ConfigRow({ label, sub, children }: {
     )
 }
 
-export function ConfigSwitch({ on, onChange }: {
+export function ConfigSwitch({ on, onChange, testId }: {
     on: boolean
     onChange?: (v: boolean) => void
+    testId?: string
 }): React.ReactElement {
     return (
         <div
+            data-testid={testId}
             className={'switch' + (on ? ' on' : '')}
             onClick={() => onChange && onChange(!on)}
         />
     )
 }
 
-export function ConfigSelect<T extends string>({ value, onChange, options, style }: {
+export function ConfigSelect<T extends string>({ value, onChange, options, style, testId }: {
     value: T
     onChange?: (v: T) => void
     options: { value: T; label: string }[]
     style?: React.CSSProperties
+    testId?: string
 }): React.ReactElement {
     const [open, setOpen] = React.useState(false)
     const ref = React.useRef<HTMLDivElement>(null)
@@ -71,7 +75,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     }, [])
 
     return (
-        <div ref={ref} className="select" style={style} onClick={() => setOpen((o) => !o)}>
+        <div ref={ref} className="select" data-testid={testId} style={style} onClick={() => setOpen((o) => !o)}>
             <span>{cur?.label || value}</span>
             <svg
                 className="chev"
@@ -136,16 +140,17 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     )
 }
 
-export function ConfigField({ defaultValue, value, onChange, placeholder, mono, style }: {
+export function ConfigField({ defaultValue, value, onChange, placeholder, mono, style, testId }: {
     defaultValue?: string
     value?: string
     onChange?: (v: string) => void
     placeholder?: string
     mono?: boolean
     style?: React.CSSProperties
+    testId?: string
 }): React.ReactElement {
     return (
-        <div className="field" style={style}>
+        <div className="field" data-testid={testId} style={style}>
             <input
                 className={mono ? 'mono' : ''}
                 defaultValue={defaultValue}

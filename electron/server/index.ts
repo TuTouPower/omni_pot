@@ -1,15 +1,12 @@
 import http from 'http'
-import { clipboard, desktopCapturer, screen } from 'electron'
+import { app, clipboard, desktopCapturer, screen } from 'electron'
 import { getConfig, getAllConfig, setConfig } from '../config/store'
 import { DEFAULT_CONFIG } from '@shared/types/config'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
-
-const TRANSLATE_OPTS = {
-    label: WindowLabel.TRANSLATE,
-    width: 350,
-    height: 420
-}
+import { get_translate_window_options } from '../windows/translate_options'
+import { start_screenshot_capture } from '../screenshot'
+import { trigger_tray_action } from '../tray'
 
 const DICT_OPTS = {
     label: WindowLabel.DICT,
@@ -18,6 +15,11 @@ const DICT_OPTS = {
 }
 
 const IS_E2E = !!process.env.OMNI_POT_E2E
+const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
+
+function is_e2e_request(req: http.IncomingMessage): boolean {
+    return IS_E2E && !!E2E_TOKEN && req.headers['x-omni-pot-e2e-token'] === E2E_TOKEN
+}
 
 let server: http.Server | null = null
 
@@ -31,7 +33,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
             res.setHeader('Content-Type', 'application/json')
             res.setHeader('Access-Control-Allow-Origin', '*')
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Omni-Pot-E2E-Token')
 
             if (req.method === 'OPTIONS') {
                 res.writeHead(204)
@@ -64,43 +66,68 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
-            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-selection') {
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/trigger-selection') {
                 handleTriggerSelection(mgr, req, res)
                 return
             }
 
-            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-dict') {
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/trigger-dict') {
                 handleTriggerDict(mgr, req, res)
                 return
             }
 
-            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-clipboard') {
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/trigger-clipboard') {
                 handleTriggerClipboard(req, res)
                 return
             }
 
-            if (IS_E2E && req.method === 'POST' && url.pathname === '/trigger-clipboard-translate') {
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/trigger-clipboard-translate') {
                 handleTriggerClipboardTranslate(mgr, req, res)
                 return
             }
 
-            if (IS_E2E && req.method === 'GET' && url.pathname === '/capture-clock') {
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/capture-clock') {
                 handleCaptureClock(res)
                 return
             }
 
-            if (IS_E2E && req.method === 'POST' && url.pathname === '/e2e/open-window') {
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/open-window') {
                 handleOpenWindow(mgr, req, res)
                 return
             }
 
-            if (IS_E2E && req.method === 'POST' && url.pathname === '/e2e/reset-config') {
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/reset-config') {
                 handleResetConfig(res)
                 return
             }
 
-            if (IS_E2E && req.method === 'GET' && url.pathname === '/e2e/clipboard') {
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/clipboard') {
                 handleReadClipboard(res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/window-state') {
+                handleWindowState(mgr, url, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-screenshot') {
+                handle_trigger_screenshot(mgr, req, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-input-translate') {
+                handle_trigger_input_translate(mgr, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/tray-action') {
+                handle_tray_action(req, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/mock-update') {
+                handle_mock_update(mgr, req, res)
                 return
             }
 
@@ -146,7 +173,7 @@ function handleTranslate(
             return
         }
 
-        const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+        const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
 
         res.writeHead(200)
@@ -193,7 +220,7 @@ function handleTriggerSelection(
                     method = result.method
                 }
 
-                mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+                mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
                 mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', textToUse)
 
                 res.writeHead(200)
@@ -292,7 +319,7 @@ function handleTriggerClipboardTranslate(
                 res.end(JSON.stringify({ success: false, error: 'empty text' }))
                 return
             }
-            mgr.focusOrCreate(WindowLabel.TRANSLATE, TRANSLATE_OPTS)
+            mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
             mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', text)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
@@ -363,14 +390,13 @@ function handleOpenWindow(
             }
 
             const windowOpts: Record<string, { label: typeof WindowLabel[keyof typeof WindowLabel]; width: number; height: number }> = {
-                translate: { label: WindowLabel.TRANSLATE, width: 350, height: 420 },
                 dict: { label: WindowLabel.DICT, width: 350, height: 420 },
                 config: { label: WindowLabel.CONFIG, width: 800, height: 600 },
                 recognize: { label: WindowLabel.RECOGNIZE, width: 600, height: 500 },
                 updater: { label: WindowLabel.UPDATER, width: 400, height: 300 },
             }
 
-            const opts = windowOpts[label]
+            const opts = label === 'translate' ? get_translate_window_options() : windowOpts[label]
             if (!opts) {
                 res.writeHead(400)
                 res.end(JSON.stringify({ success: false, error: `unknown label: ${label}` }))
@@ -409,4 +435,144 @@ function handleReadClipboard(res: http.ServerResponse): void {
         res.writeHead(500)
         res.end(JSON.stringify({ success: false, error: String(error) }))
     }
+}
+
+function handleWindowState(
+    mgr: WindowManager,
+    url: URL,
+    res: http.ServerResponse
+): void {
+    const label = url.searchParams.get('label') || WindowLabel.TRANSLATE
+    if (!Object.values(WindowLabel).includes(label as WindowLabel)) {
+        res.writeHead(400)
+        res.end(JSON.stringify({ success: false, error: `unknown label: ${label}` }))
+        return
+    }
+
+    const win = mgr.getWindow(label as WindowLabel)
+    if (!win) {
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true, label, exists: false, visible: false, alwaysOnTop: false, bounds: null }))
+        return
+    }
+
+    res.writeHead(200)
+    res.end(JSON.stringify({
+        success: true,
+        label,
+        exists: true,
+        visible: win.isVisible(),
+        alwaysOnTop: win.isAlwaysOnTop(),
+        bounds: win.getBounds(),
+    }))
+}
+
+function parse_json_body(chunks: Buffer[]): Record<string, unknown> {
+    const body = Buffer.concat(chunks).toString('utf-8').trim()
+    if (!body) return {}
+    const parsed = JSON.parse(body) as unknown
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {}
+}
+
+function handle_trigger_screenshot(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        void (async () => {
+            try {
+                const body = parse_json_body(chunks)
+                const mode = body.mode === 'translate' ? 'translate' : 'recognize'
+                const success = await start_screenshot_capture(mgr, mode)
+                res.writeHead(success ? 200 : 500)
+                res.end(JSON.stringify(success ? { success: true, mode } : { success: false, error: 'screenshot capture failed' }))
+            } catch (error: unknown) {
+                res.writeHead(500)
+                res.end(JSON.stringify({ success: false, error: String(error) }))
+            }
+        })()
+    })
+}
+
+function handle_trigger_input_translate(
+    mgr: WindowManager,
+    res: http.ServerResponse
+): void {
+    try {
+        mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true }))
+    } catch (error: unknown) {
+        res.writeHead(500)
+        res.end(JSON.stringify({ success: false, error: String(error) }))
+    }
+}
+
+function handle_tray_action(
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = parse_json_body(chunks)
+            const action = typeof body.action === 'string' ? body.action : ''
+            if (!action) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'missing action' }))
+                return
+            }
+            if (!trigger_tray_action(action)) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: `unknown tray action: ${action}` }))
+                return
+            }
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true, action }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
+}
+
+function handle_mock_update(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = parse_json_body(chunks)
+            const release = {
+                version: typeof body.version === 'string' ? body.version : '9.9.9',
+                current_version: typeof body.current_version === 'string' ? body.current_version : app.getVersion(),
+                name: typeof body.name === 'string' ? body.name : 'E2E Release',
+                body: typeof body.body === 'string' ? body.body : 'E2E changelog',
+                html_url: typeof body.html_url === 'string' ? body.html_url : '',
+                published_at: typeof body.published_at === 'string' ? body.published_at : '1970-01-01T00:00:00.000Z',
+                assets: [] as Array<{ name: string; url: string }>,
+            }
+
+            mgr.focusOrCreate(WindowLabel.UPDATER, {
+                label: WindowLabel.UPDATER,
+                width: 480,
+                height: 520,
+                resizable: true,
+            })
+            mgr.sendWhenReady(WindowLabel.UPDATER, 'updater:release', release)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true, release }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
 }

@@ -151,11 +151,12 @@ export default function ScreenshotWindow(): React.ReactElement {
             onContextMenu={(e) => e.preventDefault()}
         >
             {/* Dark translucent overlay */}
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(10, 10, 15, 0.55)' }} />
+            <div data-testid="shot-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(10, 10, 15, 0.55)' }} />
 
             {/* Selection area */}
             {selection_rect && selection_rect.width > 0 && selection_rect.height > 0 && (
                 <div
+                    data-testid="shot-selection"
                     style={{
                         position: 'absolute',
                         left: selection_rect.x,
@@ -183,6 +184,7 @@ export default function ScreenshotWindow(): React.ReactElement {
                     ))}
                     {/* Size label */}
                     <div
+                        data-testid="shot-size-label"
                         style={{
                             position: 'absolute',
                             right: 4,
@@ -202,6 +204,7 @@ export default function ScreenshotWindow(): React.ReactElement {
 
             {/* Top hint bar */}
             <div
+                data-testid="shot-hint"
                 style={{
                     position: 'absolute',
                     left: '50%',

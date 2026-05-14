@@ -91,7 +91,7 @@ npm run test:e2e -- <file>  # 单文件调试
 > `test.describe('@core', ...)` 或 `test('@ui ...', ...)` 标注。
 
 - 用户端到端测试当前由 Playwright fixture 为每个测试启动独立 Electron 实例、
-  独立随机端口、独立 userData 目录；用例内固定顺序。
+  独立随机端口、独立 userData 目录；Playwright `workers: 1`，用例固定顺序执行。
 - Playwright `globalSetup` 在每次 `test:e2e` 命令开始时执行一次 `electron-vite build`，
   避免源码修改后继续运行旧 `out/` 产物。
 - 详细的实例生命周期、Page Object、E2E HTTP 端点见 `docs/test_user_e2e.md`。
