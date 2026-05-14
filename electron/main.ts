@@ -1,4 +1,4 @@
-import { app } from 'electron'
+import { app, Menu } from 'electron'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { initConfigStore, isFirstRun, commitFirstRun, getConfig, setConfig } from './config/store'
@@ -49,6 +49,9 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     try {
+    // Remove native application menu (File/Edit/Window/Help)
+    Menu.setApplicationMenu(null)
+
     debug('initializing config store...')
     initConfigStore()
     debug('config store initialized, isFirstRun=%s', isFirstRun())
@@ -81,7 +84,7 @@ if (!gotLock) {
     const startHttpServer = async (retries = 5): Promise<void> => {
       for (let i = 0; i < retries; i++) {
         try {
-          await startServer(windowManager)
+          await startServer(windowManager!)
           debug('HTTP server started')
           return
         } catch (err: unknown) {

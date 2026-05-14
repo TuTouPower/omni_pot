@@ -1,9 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card, Button, Spinner } from '@heroui/react'
-import { AiFillCloseCircle } from 'react-icons/ai'
-import { MdContentCopy } from 'react-icons/md'
-import { BsPinFill } from 'react-icons/bs'
+import { Icons } from '../../components/icons'
 import { useDictStore } from '../../stores/dict_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
@@ -19,14 +16,10 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 
     if (result === null) {
         return (
-            <Card variant="bordered" className="shadow-none">
-                <Card.Header className="px-3 py-1">
-                    <span className="text-xs font-semibold">{service.name}</span>
-                </Card.Header>
-                <Card.Content className="px-3 py-2">
-                    <p className="text-danger text-xs">{t('dict.lookup_failed')}</p>
-                </Card.Content>
-            </Card>
+            <div className="card" style={{ padding: '12px 14px' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{service.name}</div>
+                <p style={{ color: 'var(--danger)', fontSize: 13 }}>{t('dict.lookup_failed')}</p>
+            </div>
         )
     }
 
@@ -40,43 +33,67 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
     }
 
     return (
-        <Card variant="bordered" className="shadow-none" data-result-key={instanceKey}>
-            <Card.Header className="flex justify-between px-3 py-1">
-                <span className="text-xs font-semibold">{service.name}</span>
-                <Button isIconOnly size="sm" variant="light" onPress={handleCopy}>
-                    <MdContentCopy className={`text-base ${copied ? 'text-primary' : ''}`} />
-                </Button>
-            </Card.Header>
-            <Card.Content className="px-3 py-2">
-                {result.pronunciations.length > 0 && (
-                    <div className="flex gap-3 mb-2">
-                        {result.pronunciations.map((p, i) => (
-                            <span key={i} className="text-xs text-default-400">
-                                {p.region && `${p.region} `}{p.phonetic}
-                            </span>
-                        ))}
-                    </div>
-                )}
-                {result.definitions.map((def, i) => (
-                    <div key={i} className="mb-2">
-                        <span className="text-xs font-bold text-primary mr-1">{def.partOfSpeech}</span>
-                        <div className="ml-3">
-                            {def.meanings.map((m, j) => (
-                                <p key={j} className="text-sm">{j + 1}. {m}</p>
-                            ))}
+        <>
+            {/* Definitions card */}
+            <div className="card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
+                <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
+                    {t('dict.definitions') || '释义'}
+                </div>
+                <div className="stack" style={{ gap: 12 }}>
+                    {result.definitions.map((def, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 10 }}>
+                            <div style={{ width: 22, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 11, paddingTop: 3 }}>
+                                {String(i + 1).padStart(2, '0')}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
+                                    <span style={{ fontSize: 14, fontWeight: 500 }}>{def.meanings.join('; ')}</span>
+                                </div>
+                            </div>
                         </div>
+                    ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                    <button className="ic-btn" title={copied ? '已复制' : '复制'} onClick={handleCopy}>
+                        <Icons.Copy size={14} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Pronunciations card */}
+            {result.pronunciations.length > 0 && (
+                <div className="card" style={{ padding: '12px 14px' }}>
+                    <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+                        {t('dict.pronunciations') || '发音'}
                     </div>
-                ))}
-                {result.examples.length > 0 && (
-                    <div className="mt-2 border-t border-default-100 pt-2">
-                        <p className="text-xs font-semibold text-default-400 mb-1">{t('dict.examples')}</p>
-                        {result.examples.slice(0, 3).map((ex, i) => (
-                            <p key={i} className="text-xs text-default-500 italic mb-1">{ex.source}</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                        {result.pronunciations.map((p, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                {p.region && <span className="chip plain mono" style={{ fontSize: 10 }}>{p.region}</span>}
+                                <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>{p.phonetic}</span>
+                            </div>
                         ))}
                     </div>
-                )}
-            </Card.Content>
-        </Card>
+                </div>
+            )}
+
+            {/* Examples card */}
+            {result.examples.length > 0 && (
+                <div className="card" style={{ padding: '12px 14px' }}>
+                    <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+                        {t('dict.examples') || '例句'}
+                    </div>
+                    <div className="stack" style={{ gap: 10 }}>
+                        {result.examples.slice(0, 3).map((ex, i) => (
+                            <div key={i} style={{ borderLeft: '2px solid var(--line-strong)', paddingLeft: 10 }}>
+                                <div style={{ fontSize: 13, lineHeight: 1.55 }}>{ex.source}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </>
     )
 }
 
@@ -170,51 +187,113 @@ export default function DictWindow(): React.ReactElement {
         if (word.trim()) handleLookup(word)
     }, [word, handleLookup])
 
+    // Get first result for the header display
+    const firstResult = serviceList.map((ik) => results[ik]).find((r) => r !== undefined && r !== null) as DictResult | null | undefined
+
     return (
-        <div className="flex flex-col h-screen" style={{ fontSize: 16 }}>
-            <div className="flex justify-between items-center px-2 py-1 drag-region">
-                <Button isIconOnly size="sm" variant="light" color={alwaysOnTop ? 'primary' : 'default'} onPress={handleTogglePin}>
-                    <BsPinFill />
-                </Button>
-                <Button isIconOnly size="sm" variant="light" onPress={handleClose}>
-                    <AiFillCloseCircle />
-                </Button>
-            </div>
-
-            <div className="px-3 pb-2">
-                <div className="flex gap-2">
-                    <input
-                        value={word}
-                        onChange={(e) => setWord(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleManualLookup() }}
-                        placeholder={t('dict.source_placeholder')}
-                        className="flex-1 px-3 py-1.5 rounded-md bg-default-100 text-sm outline-none focus:ring-1 focus:ring-primary"
-                    />
-                    <Button size="sm" color="primary" onPress={handleManualLookup} isDisabled={!word.trim()}>
-                        {t('dict.look_up')}
-                    </Button>
+        <div className="op-window">
+            {/* Titlebar */}
+            <div className="op-titlebar">
+                <button
+                    className="ic-btn"
+                    title="置顶"
+                    onClick={handleTogglePin}
+                    style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
+                >
+                    <Icons.Pin size={14} fill={alwaysOnTop} />
+                </button>
+                <div className="op-wordmark" style={{ marginLeft: 2 }}>
+                    <span className="dot" style={{ background: 'var(--brand-primary)' }} />
+                    omni_pot
                 </div>
+                <span className="op-mode">· 词典</span>
+                <div style={{ flex: 1 }} />
+                <button className="ic-btn" title="关闭" onClick={handleClose}>
+                    <Icons.Close size={14} />
+                </button>
             </div>
 
-            <div className="flex flex-col gap-2 px-2 overflow-y-auto flex-1">
+            <div style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Word header card */}
+                <div className="card" style={{ padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                                <input
+                                    value={word}
+                                    onChange={(e) => setWord(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') handleManualLookup() }}
+                                    placeholder={t('dict.source_placeholder')}
+                                    style={{
+                                        fontSize: 24,
+                                        fontWeight: 600,
+                                        letterSpacing: '-0.01em',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        outline: 'none',
+                                        color: 'var(--text)',
+                                        fontFamily: 'inherit',
+                                        padding: 0,
+                                        width: '100%',
+                                        maxWidth: 300,
+                                    }}
+                                />
+                            </div>
+                            {firstResult && firstResult.pronunciations.length > 0 && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                                    {firstResult.pronunciations.map((p, i) => (
+                                        <span key={i} className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>
+                                            {p.region && `${p.region} `}{p.phonetic}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {firstResult && firstResult.definitions.length > 0 && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                                    {firstResult.definitions.map((def, i) => (
+                                        <span key={i} className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Dictionary not ready */}
                 {dictReady === false && (
-                    <Card variant="bordered" className="shadow-none">
-                        <Card.Content className="px-3 py-3 text-center">
-                            <p className="text-sm text-default-500 mb-2">CC-CEDICT dictionary not downloaded</p>
-                            <Button size="sm" color="primary" onPress={handleImport} isLoading={importing}>
-                                {importing ? 'Downloading...' : 'Download Dictionary (~6MB)'}
-                            </Button>
-                        </Card.Content>
-                    </Card>
+                    <div className="card" style={{ padding: '14px 16px', textAlign: 'center' }}>
+                        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 8 }}>CC-CEDICT dictionary not downloaded</p>
+                        <button className="btn primary" onClick={handleImport} disabled={importing}>
+                            {importing ? 'Downloading...' : 'Download Dictionary (~6MB)'}
+                        </button>
+                    </div>
                 )}
+
+                {/* Loading */}
                 {isLoading && Object.keys(results).length === 0 && (
-                    <div className="flex justify-center py-4"><Spinner size="sm" color="primary" /></div>
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: 16 }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-mute)' }}>查询中…</span>
+                    </div>
                 )}
+
+                {/* Results */}
                 {serviceList.map((instanceKey) => {
                     const result = results[instanceKey]
                     if (result === undefined) return null
                     return <DictResultCard key={instanceKey} instanceKey={instanceKey} result={result} />
                 })}
+
+                {/* Source attribution */}
+                {serviceList.length > 0 && Object.keys(results).length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 4px 0' }}>
+                        <span className="hint mono">来源</span>
+                        {serviceList.map((ik) => {
+                            const sk = getServiceKey(ik)
+                            const svc = translateServiceRegistry.get(sk)
+                            return svc ? <span key={ik} className="chip plain mono" style={{ fontSize: 10 }}>{svc.name}</span> : null
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     )

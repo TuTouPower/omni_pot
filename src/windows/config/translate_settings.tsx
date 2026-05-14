@@ -1,27 +1,26 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card, Label, Switch } from '@heroui/react'
 import { useConfig } from '../../hooks/use_config'
 import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
-import { SimpleSelect } from '../../components/simple_select'
+import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect } from './config_components'
 
-const TARGET_LANGUAGES = LANGUAGE_CODES.filter((c) => c !== 'auto')
 const ALL_LANGUAGES = LANGUAGE_CODES
+const TARGET_LANGUAGES = LANGUAGE_CODES.filter((c) => c !== 'auto')
 
 const AUTO_COPY_OPTIONS = [
-    { key: 'disable', label: 'Disable' },
-    { key: 'source', label: 'Source text' },
-    { key: 'target', label: 'Target text' },
-    { key: 'source_target', label: 'Source + Target' }
+    { value: 'disable' as const, label: '关闭' },
+    { value: 'source' as const, label: '源文本' },
+    { value: 'target' as const, label: '第一个译文' },
+    { value: 'source_target' as const, label: '源 + 译文' },
 ]
 
 const DETECT_ENGINES = [
-    { key: 'bing', label: 'Bing' },
-    { key: 'google', label: 'Google' },
-    { key: 'baidu', label: 'Baidu' },
-    { key: 'tencent', label: 'Tencent' },
-    { key: 'niutrans', label: 'NiuTrans' },
-    { key: 'local', label: 'Local (offline)' }
+    { value: 'bing', label: 'Bing' },
+    { value: 'google', label: 'Google' },
+    { value: 'baidu', label: '百度' },
+    { value: 'tencent', label: '腾讯' },
+    { value: 'niutrans', label: '牛翻译' },
+    { value: 'local', label: '本地 (Lingua)' },
 ]
 
 export default function TranslatePage(): React.ReactElement {
@@ -39,60 +38,55 @@ export default function TranslatePage(): React.ReactElement {
     const [hideLanguage, setHideLanguage] = useConfig('hide_language')
     const [rememberWindowSize, setRememberWindowSize] = useConfig('translate_remember_window_size')
 
-    const allLangItems = ALL_LANGUAGES.map((code) => ({ key: code, label: LANGUAGE_NAMES[code] }))
-    const targetLangItems = TARGET_LANGUAGES.map((code) => ({ key: code, label: LANGUAGE_NAMES[code] }))
+    const allLangOpts = ALL_LANGUAGES.map((code) => ({ value: code, label: LANGUAGE_NAMES[code] }))
+    const targetLangOpts = TARGET_LANGUAGES.map((code) => ({ value: code, label: LANGUAGE_NAMES[code] }))
 
     return (
-        <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold">{t('translate_settings.title')}</h3>
+        <div className="stack gap-12">
+            <ConfigCard title={t('translate_settings.language') || '语言'}>
+                <ConfigRow label={t('translate_settings.source_language') || '源语言'}>
+                    <ConfigSelect value={sourceLang} onChange={setSourceLang} options={allLangOpts} style={{ minWidth: 180 }} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.target_language') || '目标语言'}>
+                    <ConfigSelect value={targetLang} onChange={setTargetLang} options={targetLangOpts} style={{ minWidth: 180 }} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.second_language') || '第二语言'} sub="检测到目标语言相同时切换到此语言">
+                    <ConfigSelect value={secondLang} onChange={setSecondLang} options={targetLangOpts} style={{ minWidth: 180 }} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.detect_engine') || '检测引擎'}>
+                    <ConfigSelect value={detectEngine} onChange={setDetectEngine} options={DETECT_ENGINES} style={{ minWidth: 180 }} />
+                </ConfigRow>
+            </ConfigCard>
 
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <SimpleSelect label={t('translate_settings.source_language')} value={sourceLang} onChange={setSourceLang} options={allLangItems} />
-                    <SimpleSelect label={t('translate_settings.target_language')} value={targetLang} onChange={setTargetLang} options={targetLangItems} />
-                    <SimpleSelect label={t('translate_settings.second_language')} value={secondLang} onChange={setSecondLang} options={targetLangItems} />
-                    <SimpleSelect label={t('translate_settings.detect_engine')} value={detectEngine} onChange={setDetectEngine} options={DETECT_ENGINES} />
-                </Card.Content>
-            </Card>
+            <ConfigCard title={t('translate_settings.behavior') || '行为'}>
+                <ConfigRow label={t('translate_settings.auto_copy') || '自动复制'}>
+                    <ConfigSelect value={autoCopy as 'disable' | 'source' | 'target' | 'source_target'} onChange={setAutoCopy as (v: 'disable' | 'source' | 'target' | 'source_target') => void} options={AUTO_COPY_OPTIONS} style={{ minWidth: 180 }} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.incremental_translate') || '增量翻译'} sub="新选取的文本追加到现有源文本而非替换">
+                    <ConfigSwitch on={incremental} onChange={setIncremental} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.delete_newline') || '自动去除换行'}>
+                    <ConfigSwitch on={deleteNewline} onChange={setDeleteNewline} />
+                </ConfigRow>
+            </ConfigCard>
 
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <SimpleSelect label={t('translate_settings.auto_copy')} value={autoCopy} onChange={(v) => setAutoCopy(v)} options={AUTO_COPY_OPTIONS} />
-                    <Switch isSelected={deleteNewline} onChange={setDeleteNewline}>
-                        <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">{t('translate_settings.delete_newline')}</Label></Switch.Content>
-                    </Switch>
-                    <Switch isSelected={incremental} onChange={setIncremental}>
-                        <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">{t('translate_settings.incremental_translate')}</Label></Switch.Content>
-                    </Switch>
-                </Card.Content>
-            </Card>
-
-            <Card>
-                <Card.Content className="gap-3 p-4">
-                    <Switch isSelected={closeOnBlur} onChange={setCloseOnBlur}>
-                        <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">{t('translate_settings.close_on_blur')}</Label></Switch.Content>
-                    </Switch>
-                    <Switch isSelected={alwaysOnTop} onChange={setAlwaysOnTop}>
-                        <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">{t('translate_settings.always_on_top')}</Label></Switch.Content>
-                    </Switch>
-                    <Switch isSelected={hideSource} onChange={setHideSource}>
-                        <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">{t('translate_settings.hide_source')}</Label></Switch.Content>
-                    </Switch>
-                    <Switch isSelected={hideLanguage} onChange={setHideLanguage}>
-                        <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">{t('translate_settings.hide_language')}</Label></Switch.Content>
-                    </Switch>
-                    <Switch isSelected={rememberWindowSize} onChange={setRememberWindowSize}>
-                        <Switch.Control><Switch.Thumb /></Switch.Control>
-                        <Switch.Content><Label className="text-sm">{t('translate_settings.remember_window_size')}</Label></Switch.Content>
-                    </Switch>
-                </Card.Content>
-            </Card>
+            <ConfigCard title={t('translate_settings.window') || '窗口'}>
+                <ConfigRow label={t('translate_settings.close_on_blur') || '失焦时关闭'}>
+                    <ConfigSwitch on={closeOnBlur} onChange={setCloseOnBlur} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.always_on_top') || '始终置顶'}>
+                    <ConfigSwitch on={alwaysOnTop} onChange={setAlwaysOnTop} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.hide_source') || '隐藏源文本'}>
+                    <ConfigSwitch on={hideSource} onChange={setHideSource} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.hide_language') || '隐藏语言选择'}>
+                    <ConfigSwitch on={hideLanguage} onChange={setHideLanguage} />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.remember_window_size') || '记住窗口大小'}>
+                    <ConfigSwitch on={rememberWindowSize} onChange={setRememberWindowSize} />
+                </ConfigRow>
+            </ConfigCard>
         </div>
     )
 }

@@ -136,29 +136,98 @@ export default function ScreenshotWindow(): React.ReactElement {
     return (
         <div
             ref={containerRef}
-            className="fixed inset-0 cursor-crosshair"
             style={{
+                position: 'fixed',
+                inset: 0,
+                cursor: 'crosshair',
                 backgroundImage: background ? `url(data:image/png;base64,${background})` : 'none',
-                backgroundSize: 'cover'
+                backgroundSize: 'cover',
+                borderRadius: 12,
+                overflow: 'hidden',
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onContextMenu={(e) => e.preventDefault()}
         >
-            <div className="fixed inset-0 bg-black/30" />
-            {selection_rect && (
+            {/* Dark translucent overlay */}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(10, 10, 15, 0.55)' }} />
+
+            {/* Selection area */}
+            {selection_rect && selection_rect.width > 0 && selection_rect.height > 0 && (
                 <div
-                    className="absolute border-2 border-white shadow-lg"
                     style={{
+                        position: 'absolute',
                         left: selection_rect.x,
                         top: selection_rect.y,
                         width: selection_rect.width,
                         height: selection_rect.height,
-                        boxShadow: '0 0 0 9999px rgba(0,0,0,0.3)'
+                        border: '1.5px solid var(--brand-primary)',
+                        boxShadow: '0 0 0 9999px rgba(10, 10, 15, 0.45)',
                     }}
-                />
+                >
+                    {/* Corner handles */}
+                    {[[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y], i) => (
+                        <div
+                            key={i}
+                            style={{
+                                position: 'absolute',
+                                left: x * selection_rect.width - 3,
+                                top: y * selection_rect.height - 3,
+                                width: 6,
+                                height: 6,
+                                background: 'var(--brand-primary)',
+                                borderRadius: 1,
+                            }}
+                        />
+                    ))}
+                    {/* Size label */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            right: 4,
+                            bottom: -22,
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 11,
+                            color: '#fff',
+                            background: 'var(--brand-primary)',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                        }}
+                    >
+                        {Math.round(selection_rect.width)} × {Math.round(selection_rect.height)}
+                    </div>
+                </div>
             )}
+
+            {/* Top hint bar */}
+            <div
+                style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: 14,
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    gap: 6,
+                    padding: '6px 10px',
+                    background: 'rgba(20, 18, 16, 0.85)',
+                    color: '#f5f3f0',
+                    borderRadius: 999,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 11,
+                    pointerEvents: 'none',
+                }}
+            >
+                <span>拖动选取区域</span>
+                <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
+                <span>
+                    <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>↵</kbd> 确认
+                </span>
+                <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
+                <span>
+                    <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>Esc</kbd> 取消
+                </span>
+            </div>
         </div>
     )
 }

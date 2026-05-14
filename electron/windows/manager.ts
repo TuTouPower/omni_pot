@@ -50,7 +50,7 @@ export class WindowManager {
       skipTaskbar: opts.skipTaskbar ?? false,
       show: opts.show ?? true,
       transparent: opts.transparent ?? false,
-      frame: opts.frame ?? true,
+      frame: opts.frame ?? false,
       focusable: opts.focusable ?? true,
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),

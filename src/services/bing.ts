@@ -109,7 +109,7 @@ export const bingService: TranslateService = {
   async testConfig(): Promise<boolean> {
     try {
       const result = await this.translate('hello', 'en', 'zh_cn', {})
-      return result.length > 0
+      return typeof result === "string" ? result.length > 0 : !!result
     } catch {
       return false
     }

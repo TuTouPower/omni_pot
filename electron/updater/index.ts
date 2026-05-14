@@ -1,5 +1,6 @@
 import { app, dialog } from 'electron'
 import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
 import { getConfig } from '../config/store'
 
 const REPO_OWNER = 'TuTouPower'
@@ -52,15 +53,15 @@ export async function checkForUpdate(manager: WindowManager, silent = true): Pro
         }
 
         // Open updater window with release info
-        manager.focusOrCreate('updater', {
+        manager.focusOrCreate(WindowLabel.UPDATER, {
+            label: WindowLabel.UPDATER,
             width: 480,
             height: 520,
-            resizable: true,
-            title: 'Update Available'
+            resizable: true
         })
 
         // Send release data to updater window once ready
-        manager.sendWhenReady('updater', 'updater:release', {
+        manager.sendWhenReady(WindowLabel.UPDATER, 'updater:release', {
             version: latest_version,
             current_version,
             name: release.name,
