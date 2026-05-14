@@ -1,0 +1,425 @@
+/* global React, Titlebar, Switch, Select, LangSelect, Flag, SvcTile, Icons, LANG_NAME */
+const { useState: useStateC } = React;
+
+const NAV = [
+  { id: 'general', label: '通用', icon: <Icons.Grid /> },
+  { id: 'translate', label: '翻译', icon: <Icons.Translate /> },
+  { id: 'recognize', label: '识别', icon: <Icons.Image /> },
+  { id: 'hotkey', label: '快捷键', icon: <Icons.Kbd /> },
+  { id: 'service', label: '服务', icon: <Icons.Layers /> },
+  { id: 'history', label: '历史', icon: <Icons.Clock /> },
+  { id: 'backup', label: '备份', icon: <Icons.Cloud /> },
+  { id: 'about', label: '关于', icon: <Icons.Info /> },
+];
+
+const Row = ({ label, sub, children }) => (
+  <div className="row" style={{ minHeight: 36 }}>
+    <div className="label">{label}{sub && <span className="sub">{sub}</span>}</div>
+    {children}
+  </div>
+);
+
+const Card = ({ title, hint, children }) => (
+  <div className="card">
+    <div className="card-head"><span>{title}</span>{hint && <span className="hint mono" style={{textTransform:'none',letterSpacing:0,marginLeft:'auto',fontWeight:400}}>{hint}</span>}</div>
+    <div className="card-body">{children}</div>
+  </div>
+);
+
+// ===== Pages =====
+const PageGeneral = () => {
+  const [autostart, setAutostart] = useStateC(true);
+  const [check, setCheck] = useStateC(true);
+  const [transparent, setTransparent] = useStateC(true);
+  const [dev, setDev] = useStateC(false);
+  const [proxy, setProxy] = useStateC(false);
+  return (
+    <div className="stack gap-12">
+      <Card title="应用">
+        <Row label="开机自启" sub="登录系统后在后台启动 omni_pot"><Switch on={autostart} onChange={setAutostart}/></Row>
+        <Row label="启动时检查更新"><Switch on={check} onChange={setCheck}/></Row>
+        <Row label="本地 API 端口" sub="供外部脚本调用，修改后需重启">
+          <div className="field" style={{ width: 140 }}><input className="mono" defaultValue="60828" /></div>
+        </Row>
+      </Card>
+
+      <Card title="外观">
+        <Row label="主题">
+          <Select value="auto" options={[{value:'auto',label:'跟随系统'},{value:'light',label:'浅色'},{value:'dark',label:'深色'}]} style={{minWidth:160}}/>
+        </Row>
+        <Row label="界面语言">
+          <Select value="zh_CN" options={[{value:'zh_CN',label:'简体中文'},{value:'en',label:'English'},{value:'ja_JP',label:'日本語'}]} style={{minWidth:160}}/>
+        </Row>
+        <Row label="字体">
+          <div style={{ display:'flex', gap: 6 }}>
+            <Select value="default" options={[{value:'default',label:'系统默认'},{value:'geist',label:'Geist'},{value:'inter',label:'Inter'}]} style={{minWidth:140}}/>
+            <Select value="size" options={[{value:'size',label:'字号 13px'}]} style={{width:110}}/>
+          </div>
+        </Row>
+        <Row label="透明背景" sub="毛玻璃效果，部分平台可能影响性能"><Switch on={transparent} onChange={setTransparent}/></Row>
+        <Row label="开发者模式" sub="启用 F12 开发者工具"><Switch on={dev} onChange={setDev}/></Row>
+      </Card>
+
+      <Card title="网络代理">
+        <Row label="启用代理"><Switch on={proxy} onChange={setProxy}/></Row>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 120px', gap: 8, opacity: proxy ? 1 : 0.5 }}>
+          <div className="field"><input placeholder="http://127.0.0.1" defaultValue="http://127.0.0.1"/></div>
+          <div className="field"><input className="mono" placeholder="端口" defaultValue="7890"/></div>
+        </div>
+        <Row label="不代理的地址" sub="逗号分隔">
+          <div className="field" style={{minWidth:260, opacity: proxy ? 1 : 0.5}}><input className="mono" defaultValue="localhost,127.0.0.1,*.local"/></div>
+        </Row>
+      </Card>
+    </div>
+  );
+};
+
+const PageTranslate = () => {
+  const [stateMap, setStateMap] = useStateC({ auto_copy:'disable', history:false, incr:false, dyn:false, del:true, remember:false, pos:'mouse', size:true, blur:true, top:false, hideS:false, hideL:false, hideW:false });
+  const set = (k,v) => setStateMap(s => ({...s, [k]: v}));
+  return (
+    <div className="stack gap-12">
+      <Card title="语言">
+        <Row label="源语言"><LangSelect value="auto" codes={['auto','en','zh_cn','ja','ko']} style={{minWidth:180}}/></Row>
+        <Row label="目标语言"><LangSelect value="zh_cn" codes={['zh_cn','en','ja','ko','fr']} style={{minWidth:180}}/></Row>
+        <Row label="第二语言" sub="检测到目标语言相同时切换到此语言"><LangSelect value="en" codes={['en','zh_cn','ja']} style={{minWidth:180}}/></Row>
+        <Row label="检测引擎">
+          <Select value="local" options={[{value:'local',label:'本地 (Lingua)'},{value:'google',label:'Google'},{value:'baidu',label:'百度'}]} style={{minWidth:180}}/>
+        </Row>
+      </Card>
+
+      <Card title="行为">
+        <Row label="自动复制">
+          <Select value={stateMap.auto_copy} onChange={v=>set('auto_copy',v)} options={[
+            {value:'disable',label:'关闭'},{value:'source',label:'源文本'},{value:'target',label:'第一个译文'},{value:'source_target',label:'源 + 译文'}
+          ]} style={{minWidth:180}}/>
+        </Row>
+        <Row label="增量翻译" sub="新选取的文本追加到现有源文本而非替换"><Switch on={stateMap.incr} onChange={v=>set('incr',v)}/></Row>
+        <Row label="动态翻译" sub="输入时自动翻译（1s 防抖）"><Switch on={stateMap.dyn} onChange={v=>set('dyn',v)}/></Row>
+        <Row label="自动去除换行"><Switch on={stateMap.del} onChange={v=>set('del',v)}/></Row>
+        <Row label="记住语言选择"><Switch on={stateMap.remember} onChange={v=>set('remember',v)}/></Row>
+        <Row label="禁用历史记录"><Switch on={stateMap.history} onChange={v=>set('history',v)}/></Row>
+      </Card>
+
+      <Card title="窗口">
+        <Row label="窗口位置">
+          <Select value={stateMap.pos} onChange={v=>set('pos',v)} options={[{value:'mouse',label:'鼠标位置'},{value:'pre_state',label:'上次位置'}]} style={{minWidth:160}}/>
+        </Row>
+        <Row label="记住窗口大小"><Switch on={stateMap.size} onChange={v=>set('size',v)}/></Row>
+        <Row label="失焦时关闭"><Switch on={stateMap.blur} onChange={v=>set('blur',v)}/></Row>
+        <Row label="始终置顶"><Switch on={stateMap.top} onChange={v=>set('top',v)}/></Row>
+        <Row label="隐藏源文本"><Switch on={stateMap.hideS} onChange={v=>set('hideS',v)}/></Row>
+        <Row label="隐藏语言选择"><Switch on={stateMap.hideL} onChange={v=>set('hideL',v)}/></Row>
+        <Row label="翻译后隐藏窗口" sub="后台完成翻译并通过通知告知"><Switch on={stateMap.hideW} onChange={v=>set('hideW',v)}/></Row>
+      </Card>
+    </div>
+  );
+};
+
+const PageRecognize = () => (
+  <div className="stack gap-12">
+    <Card title="识别">
+      <Row label="默认识别语言"><LangSelect value="auto" codes={['auto','en','zh_cn','ja','ko']} style={{minWidth:180}}/></Row>
+      <Row label="自动去除换行"><Switch on={false}/></Row>
+      <Row label="自动复制结果"><Switch on={true}/></Row>
+      <Row label="失焦时关闭"><Switch on={false}/></Row>
+      <Row label="识别后隐藏窗口"><Switch on={false}/></Row>
+    </Card>
+  </div>
+);
+
+const PageHotkey = () => {
+  const HK = ({label, sub, value, valid}) => (
+    <Row label={label} sub={sub}>
+      <div style={{ display:'flex', gap: 6 }}>
+        <div className="field" style={{ minWidth: 200, gap: 4 }}>
+          {value ? value.split('+').map((k,i,a) => <React.Fragment key={i}><kbd>{k}</kbd>{i<a.length-1 && <span className="hint">+</span>}</React.Fragment>) : <span className="hint">点击输入快捷键…</span>}
+        </div>
+        <button className="btn sm">{valid ? <><Icons.Check size={12}/>已绑定</> : '绑定'}</button>
+      </div>
+    </Row>
+  );
+  return (
+    <div className="stack gap-12">
+      <Card title="全局快捷键" hint="按下组合键以录入 · Backspace 清除">
+        <HK label="划词翻译" sub="选中文本后按下快捷键即翻译" value="Ctrl+Alt+T" valid />
+        <HK label="输入翻译" sub="呼出翻译窗口并清空源文本" value="Ctrl+Alt+I" valid />
+        <HK label="OCR 识别" sub="截图后将文字提取到识别窗口" value="Ctrl+Alt+S" valid />
+        <HK label="OCR 翻译" sub="截图、识别并自动翻译" value="" />
+      </Card>
+      <div className="card" style={{ background: 'var(--brand-primary-soft)', borderColor:'transparent' }}>
+        <div style={{ padding: 14, display:'flex', gap: 12, alignItems:'flex-start' }}>
+          <Icons.Info size={16} style={{ color:'var(--brand-primary)', marginTop: 1 }}/>
+          <div style={{ fontSize: 12.5, color:'var(--brand-primary)', lineHeight: 1.55 }}>
+            Wayland 用户：系统级快捷键可能不可用。你可以在桌面环境的快捷键设置中调用 <span className="mono">curl localhost:60828/selection_translate</span> 作为替代方案。
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PageService = () => {
+  const [tab, setTab] = useStateC('translate');
+  const tabs = [
+    { id:'translate', label:'翻译', count: 6 },
+    { id:'recognize', label:'识别', count: 2 },
+    { id:'tts', label:'朗读', count: 1 },
+    { id:'collection', label:'收藏', count: 1 },
+  ];
+  const data = {
+    translate: [
+      { key:'deepl', enabled: true },
+      { key:'openai@xb12', name:'openai', label:'OpenAI · GPT-4o', enabled: true, tag:'STREAM' },
+      { key:'google', enabled: true },
+      { key:'bing', enabled: true },
+      { key:'geminipro@kk', name:'geminipro', label:'Gemini Pro · Personal', enabled: false },
+      { key:'ecdict', enabled: true, tag:'OFFLINE' },
+    ],
+    recognize: [
+      { key:'system', enabled: true, tag:'PLATFORM' },
+      { key:'openai_compatible@v', name:'openai_compatible', label:'Qwen2.5-VL · SiliconFlow', enabled: true, tag:'STREAM' },
+    ],
+    tts: [
+      { key:'edge_tts', enabled: true },
+    ],
+    collection: [
+      { key:'anki', enabled: true },
+    ],
+  };
+  const items = data[tab];
+  return (
+    <div className="stack gap-12">
+      {/* Tabs */}
+      <div style={{ display:'flex', gap: 4, padding: 4, background:'var(--bg-sunk)', borderRadius: 8, border:'1px solid var(--line)', alignSelf:'flex-start' }}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={()=>setTab(t.id)} className="btn sm"
+            style={{ background: tab===t.id ? 'var(--bg-elev)' : 'transparent', border:'1px solid '+(tab===t.id?'var(--line)':'transparent'), boxShadow: tab===t.id ? '0 1px 2px rgba(0,0,0,0.04)' : 'none', height: 26 }}>
+            {t.label}
+            <span className="mono" style={{ fontSize: 10, color:'var(--text-mute)', marginLeft: 2 }}>{t.count}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="card">
+        <div className="card-head">
+          <span>已启用服务</span>
+          <span className="hint mono" style={{textTransform:'none',letterSpacing:0,marginLeft:'auto',fontWeight:400}}>拖动排序 · 顶部优先</span>
+        </div>
+        <div style={{ padding: 4 }}>
+          {items.map((s, i) => {
+            const meta = window.SVC_META[s.name || s.key] || {};
+            return (
+              <div key={s.key} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 12px', borderRadius: 8, transition:'background .12s' }}
+                onMouseEnter={e=>e.currentTarget.style.background='var(--bg-sunk)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                <Icons.Drag size={14} style={{ color:'var(--text-mute)', cursor:'grab' }}/>
+                <SvcTile name={s.name || s.key} />
+                <div className="stack" style={{ flex:1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{s.label || meta.name || s.key}</div>
+                  <div className="hint mono" style={{ fontSize: 10.5 }}>{s.key}</div>
+                </div>
+                {s.tag && <span className="chip mono" style={{fontSize:9.5}}>{s.tag}</span>}
+                <Switch on={s.enabled} />
+                <button className="btn ghost icon sm"><Icons.Edit size={13}/></button>
+                <button className="btn ghost icon sm" style={{color:'var(--danger)'}}><Icons.Trash size={13}/></button>
+              </div>
+            );
+          })}
+        </div>
+        <div className="div" />
+        <div style={{ padding: 10, display:'flex', gap: 8 }}>
+          <button className="btn sm"><Icons.Plus size={12}/>添加内置服务</button>
+          <button className="btn sm"><Icons.Plus size={12}/>安装插件 (.potext)</button>
+          <div style={{flex:1}}/>
+          <button className="btn ghost sm">浏览插件市场</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PageHistory = () => {
+  const rows = [
+    { svc:'deepl', src:'reconcile', from:'en', to:'zh_cn', dst:'调和；使一致', t:'2 分钟前' },
+    { svc:'openai', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
+    { svc:'google', src:'eventual consistency', from:'en', to:'zh_cn', dst:'最终一致性', t:'8 分钟前' },
+    { svc:'bing_dict', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
+    { svc:'yandex', src:'走り抜ける', from:'ja', to:'zh_cn', dst:'跑着穿过', t:'今天 11:08' },
+    { svc:'geminipro', src:'お腹が空いた', from:'ja', to:'en', dst:"I'm hungry", t:'昨天 22:11' },
+    { svc:'caiyun', src:'machen', from:'de', to:'zh_cn', dst:'制作；做', t:'昨天 16:45' },
+  ];
+  return (
+    <div className="stack gap-12">
+      <div style={{ display:'flex', gap: 8, alignItems:'center' }}>
+        <div className="field" style={{ flex:1 }}>
+          <Icons.Search size={13} style={{ color:'var(--text-mute)' }}/>
+          <input placeholder="搜索源文本或译文…"/>
+        </div>
+        <Select value="all" options={[{value:'all',label:'全部服务'},{value:'deepl',label:'DeepL'}]} style={{minWidth:120}}/>
+        <Select value="month" options={[{value:'today',label:'今天'},{value:'week',label:'本周'},{value:'month',label:'本月'}]} style={{minWidth:100}}/>
+        <button className="btn sm danger"><Icons.Trash size={12}/>清空</button>
+      </div>
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'32px 1fr 80px 1fr 100px', alignItems:'center', padding:'10px 14px', borderBottom:'1px solid var(--line)', background:'var(--bg-sunk)', fontSize: 11, color:'var(--text-mute)', fontFamily:'var(--font-mono)', textTransform:'uppercase', letterSpacing:'.05em' }}>
+          <div></div><div>源文本</div><div>语言</div><div>译文</div><div>时间</div>
+        </div>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display:'grid', gridTemplateColumns:'32px 1fr 80px 1fr 100px', alignItems:'center', padding:'10px 14px', borderBottom: i<rows.length-1?'1px solid var(--line)':'none', cursor:'pointer', transition:'background .12s', gap: 12 }}
+            onMouseEnter={e=>e.currentTarget.style.background='var(--bg-sunk)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+            <SvcTile name={r.svc} />
+            <div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize: 13 }}>{r.src}</div>
+            <div style={{ display:'flex', alignItems:'center', gap: 4 }}><Flag code={r.from}/><Icons.ChevR size={10} style={{color:'var(--text-mute)'}}/><Flag code={r.to}/></div>
+            <div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize: 13, color:'var(--text-dim)' }}>{r.dst}</div>
+            <div className="hint mono" style={{fontSize: 11}}>{r.t}</div>
+          </div>
+        ))}
+      </div>
+      <div className="between">
+        <div className="hint mono">显示 1 – 7 / 共 2,148 条</div>
+        <div style={{ display:'flex', gap: 4 }}>
+          <button className="btn ghost icon sm" disabled><Icons.Chev style={{transform:'rotate(90deg)'}} size={12}/></button>
+          <button className="btn sm" style={{background:'var(--brand-primary-soft)',color:'var(--brand-primary)',borderColor:'transparent'}}>1</button>
+          <button className="btn ghost sm">2</button>
+          <button className="btn ghost sm">3</button>
+          <button className="btn ghost sm">…</button>
+          <button className="btn ghost sm">108</button>
+          <button className="btn ghost icon sm"><Icons.Chev style={{transform:'rotate(-90deg)'}} size={12}/></button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PageBackup = () => {
+  const [type, setType] = useStateC('webdav');
+  return (
+    <div className="stack gap-12">
+      <Card title="备份目标">
+        <div style={{ display:'flex', gap: 8 }}>
+          {[
+            { v:'webdav', l:'WebDAV', s:'同步到任意 WebDAV 服务器' },
+            { v:'aliyun', l:'阿里云盘', s:'扫码登录 · 国内推荐' },
+            { v:'local', l:'本地文件', s:'导出 ZIP 到本地路径' },
+          ].map(o => (
+            <button key={o.v} onClick={()=>setType(o.v)} style={{ flex:1, padding: 12, borderRadius: 10, border: '1px solid '+(type===o.v?'var(--brand-primary)':'var(--line)'), background: type===o.v?'var(--brand-primary-soft)':'var(--bg-elev)', textAlign:'left', cursor:'pointer' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: type===o.v?'var(--brand-primary)':'var(--text)' }}>{o.l}</div>
+              <div className="hint" style={{ marginTop: 2 }}>{o.s}</div>
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {type==='webdav' && (
+        <Card title="WebDAV 连接">
+          <Row label="服务器地址"><div className="field" style={{minWidth: 280}}><input placeholder="https://dav.example.com/dav" /></div></Row>
+          <Row label="用户名"><div className="field" style={{minWidth: 280}}><input /></div></Row>
+          <Row label="密码"><div className="field" style={{minWidth: 280}}><input type="password" defaultValue="••••••••••" /></div></Row>
+          <div className="row" style={{ marginTop: 4 }}>
+            <div style={{flex:1}}/>
+            <button className="btn sm">测试连接</button>
+          </div>
+        </Card>
+      )}
+
+      <Card title="操作">
+        <div style={{ display:'flex', gap: 8 }}>
+          <button className="btn primary"><Icons.Cloud size={14}/>立即备份</button>
+          <button className="btn"><Icons.Cycle size={14}/>从备份恢复</button>
+        </div>
+        <div className="hint">备份内容：配置、历史记录数据库、已安装的插件</div>
+      </Card>
+
+      <Card title="最近备份">
+        {[
+          { t:'2026-05-09 22:14', size:'248 KB', loc:'WebDAV' },
+          { t:'2026-05-02 09:30', size:'241 KB', loc:'WebDAV' },
+          { t:'2026-04-25 18:02', size:'232 KB', loc:'WebDAV' },
+        ].map((b, i) => (
+          <div key={i} className="row" style={{ paddingBottom: 8, borderBottom: i<2?'1px solid var(--line)':'none' }}>
+            <Icons.Cloud size={14} style={{ color:'var(--text-mute)' }}/>
+            <div style={{ flex:1 }}>
+              <div className="mono" style={{fontSize: 12}}>backup_{b.t.replace(/[: -]/g,'')}.zip</div>
+              <div className="hint" style={{marginTop: 2}}>{b.t} · {b.size}</div>
+            </div>
+            <button className="btn ghost icon sm"><Icons.Copy size={12}/></button>
+            <button className="btn ghost icon sm" style={{color:'var(--danger)'}}><Icons.Trash size={12}/></button>
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+};
+
+const PageAbout = () => (
+  <div className="stack gap-12">
+    <div style={{ padding: 28, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap: 8 }}>
+      <div className="svc-tile" style={{ width: 64, height: 64, borderRadius: 16, background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', fontSize: 22, fontWeight: 700 }}>op</div>
+      <div style={{ fontSize: 22, fontWeight: 600, letterSpacing:'-0.01em' }}>omni_pot</div>
+      <div className="hint mono">version 3.1.0 · darwin-arm64</div>
+      <div className="hint" style={{ maxWidth: 360 }}>一个面向日常使用的桌面翻译与识别工具，支持 21 个翻译引擎、16 个 OCR 服务和自定义插件。</div>
+      <div style={{ display:'flex', gap: 6, marginTop: 4 }}>
+        <button className="btn sm">官网</button>
+        <button className="btn sm">文档</button>
+        <button className="btn sm">反馈</button>
+        <button className="btn primary sm"><Icons.Cloud size={12}/>检查更新</button>
+      </div>
+    </div>
+
+    <Card title="诊断">
+      <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/omni_pot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+      <Row label="配置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/omni_pot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+      <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:60828</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+    </Card>
+  </div>
+);
+
+const PAGES = { general: PageGeneral, translate: PageTranslate, recognize: PageRecognize, hotkey: PageHotkey, service: PageService, history: PageHistory, backup: PageBackup, about: PageAbout };
+
+const ConfigWindow = ({ initial = 'translate' }) => {
+  const [page, setPage] = useStateC(initial);
+  const Page = PAGES[page];
+  const cur = NAV.find(n => n.id === page);
+  return (
+    <div className="op-window" style={{ width: 880, height: 600 }}>
+      <div style={{ display:'flex', flex:1, minHeight: 0 }}>
+        {/* Sidebar */}
+        <div style={{ width: 220, background: 'var(--bg-card)', borderRight: '1px solid var(--line-soft)', display:'flex', flexDirection:'column' }}>
+          <div style={{ height: 38, padding: '0 10px', display:'flex', alignItems:'center', gap: 6 }}>
+            <button className="ic-btn" title="置顶" style={{ color:'var(--text-mute)' }}><Icons.Pin size={12}/></button>
+            <div className="op-wordmark"><span className="dot" style={{ background:'var(--brand-primary)' }}/>omni_pot</div>
+          </div>
+          <div style={{ padding: 8, display:'flex', flexDirection:'column', gap: 2, flex:1 }}>
+            {NAV.map(n => (
+              <button key={n.id} onClick={()=>setPage(n.id)}
+                style={{ height: 32, padding: '0 10px', borderRadius: 8, display:'flex', alignItems:'center', gap: 10,
+                  background: page===n.id?'var(--bg-elev)':'transparent',
+                  border:'1px solid '+(page===n.id?'var(--line)':'transparent'),
+                  color: page===n.id?'var(--text)':'var(--text-dim)',
+                  fontSize: 13, fontWeight: page===n.id?500:400, cursor:'pointer', transition:'background .12s, color .12s' }}>
+                <span style={{ color: page===n.id?'var(--brand-primary)':'var(--text-mute)' }}>{n.icon}</span>
+                {n.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ padding: 12, borderTop:'1px solid var(--line)' }}>
+            <div className="hint mono" style={{ fontSize: 10.5 }}>v3.1.0</div>
+          </div>
+        </div>
+        {/* Content */}
+        <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth: 0 }}>
+          <div style={{ height: 38, display:'flex', alignItems:'center', padding:'0 10px 0 14px', gap: 8 }}>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
+            <span className="hint mono" style={{ marginLeft: 4 }}>/{page}</span>
+            <div style={{flex:1}}/>
+            <button className="ic-btn" title="关闭"><Icons.Close size={13}/></button>
+          </div>
+          <div style={{ flex:1, overflow:'auto', padding: 20 }}>
+            <Page />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { ConfigWindow });
