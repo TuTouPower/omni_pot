@@ -1,11 +1,11 @@
 # E2E 测试基础设施评审意见
 
 > 日期: 2026-05-07
-> 范围: `docs/issues_e2e_test_infra.md` 与当前 E2E/主进程相关代码
+> 范围: `issues_e2e_test_infra.md`（已归档至本目录）与当前 E2E/主进程相关代码
 
 ## 总体结论
 
-`docs/issues_e2e_test_infra.md` 抓住了两个真实问题：
+`issues_e2e_test_infra.md`（本目录）抓住了两个真实问题：
 
 1. `ELECTRON_RUN_AS_NODE=1` 会让 Electron 以普通 Node 模式运行，导致主进程拿不到 Electron API。
 2. HTTP server 当前缺少可靠的启动确认和错误日志，`[main] HTTP server started` 不能证明端口已经监听。

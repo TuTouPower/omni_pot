@@ -45,9 +45,9 @@
 | # | 名称 | 实现文件 | 测试结果 | 说明 |
 |---|------|----------|----------|------|
 | E1 | Bing Translate | `src/services/bing.ts` | ✅ 已修复 | **问题**: token 正则匹配错误 + token/key 分开发送。**修复**: 正则改为 `\[(\d+),\s*"([^"]+)"`，`key` 字段传时间戳 |
-| E2 | Yandex Translate | `src/services/yandex.ts` | ❌ 不可修复 | 返回 403 "Session is invalid"，免费端点已关闭，需要 API key |
-| E3 | Bing Dictionary | `src/services/bing_dict.ts` | ❌ 不可修复 | `api/v6/dictionarywords` 返回 403 "Access disabled"，HTML 页面返回 "No results"。服务已完全停用 |
-| E4 | ECDICT | `src/services/ecdict.ts` | ❌ 需替换 | `pot-app.com/api/dict` 返回 405 Not Allowed。需要替换为 CC-CEDICT 本地方案 |
+| E2 | Yandex Translate | `src/services/yandex.ts` | ❌ 已移除 | 403 "Session is invalid"，免费端点已关闭，代码已删除 |
+| E3 | Bing Dictionary | `src/services/bing_dict.ts` | ❌ 已移除 | API 返回 403 "Access disabled"，服务已停用，代码已删除 |
+| E4 | ECDICT | `src/services/ecdict.ts` | ✅ 已替换 | 已替换为 CC-CEDICT 离线方案（better-sqlite3 + FTS5） |
 | E5 | Cambridge Dictionary | `src/services/cambridge_dict.ts` | ✅ 可用 | HTML 抓取验证通过，所有 CSS 选择器匹配正常 |
 | E6 | Lingva | `src/services/lingva.ts` | ✅ 可用 | 已确认可用 |
 | E7 | Google Translate | `src/services/google.ts` | ✅ 可用 | 已确认可用 |
@@ -60,17 +60,18 @@
 1. **Google GTX** — 主力翻译，质量最好，已有实现
 2. **Bing Translate** — 已修复，辅助翻译，已有实现
 3. **Lingva** — Google 代理，备用，已有实现
-4. **MyMemory** — 独立引擎，需新增实现
+4. **MyMemory** — 独立引擎，已有实现 `src/services/mymemory.ts`
 
 ### 词典服务（当前可用）
 1. **dictionaryapi.dev** — 英文词典首选，完全免费，音标+释义+例句+发音
 2. **Cambridge Dictionary** — 已有 HTML 抓取实现，双语支持
 3. **freedictionaryapi.com** — 备选，数据更丰富
 4. **Datamuse** — 同义词/联想词专用
-5. **CC-CEDICT** — 中英词典离线方案（需替换 ECDICT）
+5. **CC-CEDICT** — 中英词典离线方案，已替换 ECDICT（`src/services/ecdict.ts`）
 
-### 需要处理
-- `src/services/yandex.ts` — 标记为不可用或移除
-- `src/services/bing_dict.ts` — 标记为不可用或移除
-- `src/services/ecdict.ts` — 替换为 CC-CEDICT 本地方案
-- 新增 MyMemory 翻译服务实现（可选）
+### 需要处理（已完成）
+- ~~`src/services/yandex.ts`~~ — 已移除
+- ~~`src/services/bing_dict.ts`~~ — 已移除
+- ~~`src/services/ecdict.ts`~~ — 已替换为 CC-CEDICT 离线方案
+- ~~新增 MyMemory 翻译服务实现~~ — `src/services/mymemory.ts` ✅ 已完成
+- 新增 Free Dictionary 词典服务 — `src/services/free_dictionary.ts` ✅ 已完成

@@ -1,11 +1,11 @@
 # 外部服务依赖清单
 
-> 更新日期: 2026-05-07
-> 所有服务实现在 `src/services/` 目录下，均为完整实现（非 stub）。
+> 更新日期: 2026-05-14
+> 所有服务实现在 `src/services/` 目录下，以 `src/services/index.ts` 注册表为准。
 
 ---
 
-## 翻译服务（18 个）
+## 翻译服务（21 个）
 
 ### 免费可用（无需 API key）
 
@@ -13,8 +13,8 @@
 |------|----------|------|------|
 | **Google** | `google.ts` | 调用 `translate.googleapis.com/translate_a/single?client=gtx`（Google 网页翻译内部接口） | 非官方，可能被限流/封禁 |
 | **Bing** | `bing.ts` | 从 `bing.com/translator` 抓 token，调用 `ttranslatev3` | 非官方，token 格式可能变 |
-| **Yandex** | `yandex.ts` | 调用 Yandex 公开翻译接口 | 非官方，稳定性未知 |
 | **Lingva** | `lingva.ts` | 调用 Lingva Translate 公开实例（可自建） | 依赖第三方实例可用性 |
+| **MyMemory** | `mymemory.ts` | 调用 `api.mymemory.translated.net`，匿名 5000 字符/天 | 免费额度有限 |
 | **Ollama** | `ollama.ts` | 调用本地 Ollama LLM 服务 | 需要本地安装 Ollama 且有模型 |
 
 ### 需要 API key
@@ -35,27 +35,48 @@
 | **Tencent（腾讯）** | `tencent.ts` | 腾讯云 secret_id + secret_key | 有免费额度 |
 | **Volcengine（火山）** | `volcengine.ts` | 火山翻译 appid + secret | 有免费额度 |
 
----
+### 特殊类型（输出词典结果）
 
-## 词典服务（3 个）
-
-| 服务 | 实现文件 | 费用 | 说明 |
-|------|----------|------|------|
-| **Bing Dictionary** | `bing_dict.ts` | 免费 | 调用 Bing 词典公开 API，返回发音/释义/例句 |
-| **ECDICT** | `ecdict.ts` | 免费 | 调用 pot-app.com API，英汉词典 |
-| **Cambridge Dictionary** | `cambridge_dict.ts` | 免费 | 抓取 Cambridge 词典网页，英文释义 |
+| 服务 | 实现文件 | 说明 |
+|------|----------|------|
+| **Cambridge Dictionary** | `cambridge_dict.ts` | 抓取 Cambridge 词典网页，英文释义，输出 `DictResult` |
+| **Free Dictionary** | `free_dictionary.ts` | 调用 dictionaryapi.dev，英文词典，输出 `DictResult` |
+| **ECDict（CC-CEDICT）** | `ecdict.ts` | 离线中英词典（CC-CEDICT SQLite），通过 IPC 调用主进程，输出 `DictResult` |
 
 ---
 
-## OCR 服务（5 个）
+## 词典服务
+
+词典查询通过 `dictionary_service_list` 配置，与翻译服务共用同一注册表。
+以下服务返回 `DictResult`（`type='dict'`），适合在词典窗口使用：
+
+| 服务 | Key | 费用 | 说明 |
+|------|-----|------|------|
+| **Free Dictionary** | `free_dictionary` | 免费 | dictionaryapi.dev，发音/释义/例句 |
+| **ECDict（CC-CEDICT）** | `ecdict` | 免费 | 离线中英词典，better-sqlite3 + FTS5 |
+| **Cambridge Dictionary** | `cambridge_dict` | 免费 | HTML 抓取，英文释义 |
+
+---
+
+## OCR 服务（16 个）
 
 | 服务 | 实现文件 | 需要什么 | 费用 |
 |------|----------|----------|------|
 | **Tesseract** | `ocr/tesseract.ts` | 无（本地 OCR 引擎） | 免费 |
-| **Baidu OCR** | `ocr/baidu_ocr.ts` | 百度云 API key | 有免费额度 |
-| **Tencent OCR** | `ocr/tencent_ocr.ts` | 腾讯云 secret_id + secret_key | 有免费额度 |
-| **Volcengine OCR** | `ocr/volcengine_ocr.ts` | 火山引擎 API key | 有免费额度 |
+| **系统 OCR** | `ocr/system.ts` | 无（WinRT / macOS 原生 / Linux tesseract CLI） | 免费 |
+| **百度 OCR** | `ocr/baidu_ocr.ts` | 百度云 API key | 有免费额度 |
+| **百度高精度** | `ocr/baidu_accurate_ocr.ts` | 百度云 API key | 有免费额度 |
+| **百度图片** | `ocr/baidu_img_ocr.ts` | 百度云 appid + secret | 有免费额度 |
+| **腾讯 OCR** | `ocr/tencent_ocr.ts` | 腾讯云 secret_id + secret_key | 有免费额度 |
+| **腾讯高精度** | `ocr/tencent_accurate_ocr.ts` | 腾讯云 secret_id + secret_key | 有免费额度 |
+| **腾讯图片** | `ocr/tencent_img_ocr.ts` | 腾讯云 secret_id + secret_key | 有免费额度 |
+| **火山引擎 OCR** | `ocr/volcengine_ocr.ts` | 火山引擎 API key | 有免费额度 |
+| **火山多语言 OCR** | `ocr/volcengine_multi_lang_ocr.ts` | 火山引擎 API key | 有免费额度 |
 | **OpenAI Vision** | `ocr/openai_vision.ts` | OpenAI API key | 按 token 计费 |
+| **讯飞 OCR** | `ocr/iflytek_ocr.ts` | 讯飞 appid + apisecret + apikey | 有免费额度 |
+| **讯飞 IntSig** | `ocr/iflytek_intsig_ocr.ts` | 同讯飞 | 有免费额度 |
+| **讯飞 LaTeX** | `ocr/iflytek_latex_ocr.ts` | 同讯飞 | 数学公式 → LaTeX |
+| **Simple LaTeX** | `ocr/simple_latex_ocr.ts` | SimpleTex API | 公式 → LaTeX |
 | **QR Code** | `ocr/qrcode.ts` | 无（本地解析） | 免费 |
 
 ---
@@ -71,18 +92,31 @@
 
 ## 当前可用状态
 
-**默认配置中的服务**（`translate_service_list`）：bing, google
+**默认配置中的服务**（`translate_service_list`）：bing, google, deepl
 
 **开箱即用（无需任何配置）**：
 - ✅ Google — 免费，非官方接口
 - ✅ Bing — 免费，非官方接口
-- ✅ Bing Dictionary — 免费
-- ✅ ECDICT — 免费
+- ✅ MyMemory — 免费，匿名 5000 字符/天
+- ✅ Free Dictionary — 免费（dictionaryapi.dev）
+- ✅ ECDict（CC-CEDICT）— 免费，离线词典
 - ✅ Cambridge Dictionary — 免费
-- ✅ Yandex — 免费
 - ✅ Lingva — 免费（依赖第三方实例）
+- ✅ Tesseract — 免费，本地 OCR
+- ✅ 系统 OCR — 免费，本地
+- ✅ QR Code — 免费，本地解析
 - ⚠️ Ollama — 免费但需本地安装 Ollama + 下载模型
 - ⚠️ DeepL (DeepLX 模式) — 免费但依赖第三方 DeepLX 服务
 
-**需要 API key 才能用**：其余 13 个翻译服务 + 4 个 OCR 服务 + 1 个 TTS 服务
+**需要 API key 才能用**：其余 13 个翻译服务 + 13 个 OCR 服务
 
+---
+
+## 已移除的服务
+
+以下服务因 API 停用已从代码中移除：
+
+| 服务 | 原因 |
+|------|------|
+| **Yandex Translate** | 403，免费端点已关闭 |
+| **Bing Dictionary** | 403，服务已停用 |
