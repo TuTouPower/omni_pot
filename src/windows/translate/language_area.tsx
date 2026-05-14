@@ -105,11 +105,15 @@ export function LanguageArea(): React.ReactElement {
 
     return (
         <div className="card" style={{ padding: '4px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flex: '0 0 auto' }}>
-            <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} />
-            <button className="ic-btn" style={{ color: 'var(--text)' }} title="交换语言" onClick={swapLanguages}>
+            <div data-testid="lang-source">
+                <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} />
+            </div>
+            <button className="ic-btn" style={{ color: 'var(--text)' }} title="交换语言" data-testid="lang-swap" onClick={swapLanguages}>
                 <Icons.Swap size={18} />
             </button>
-            <LangPick value={targetLanguage} onChange={setTargetLanguage} options={TARGET_LANGUAGES} />
+            <div data-testid="lang-target">
+                <LangPick value={targetLanguage} onChange={setTargetLanguage} options={TARGET_LANGUAGES} />
+            </div>
         </div>
     )
 }

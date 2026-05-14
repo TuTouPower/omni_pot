@@ -3,13 +3,14 @@ import { join } from 'path'
 import { existsSync, createReadStream } from 'fs'
 import { createGunzip } from 'zlib'
 import Database from 'better-sqlite3'
+import { getUserDataDir } from '../config/store'
 
 let db: Database.Database | undefined
 
 function get_dict_db(): Database.Database {
     if (db) return db
 
-    const dir = app.getPath('userData')
+    const dir = getUserDataDir()
     const db_path = join(dir, 'cc_cedict.db')
 
     db = new Database(db_path)

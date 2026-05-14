@@ -18,8 +18,9 @@ export default function App(): React.ReactElement {
   const child = (() => {
     switch (label) {
       case 'translate':
-      case 'daemon':
         return <TranslateWindow />
+      case 'daemon':
+        return <></>
       case 'config':
         return <ConfigWindow />
       case 'screenshot':

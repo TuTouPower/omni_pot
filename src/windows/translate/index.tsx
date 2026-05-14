@@ -50,10 +50,6 @@ export default function TranslateWindow(): React.ReactElement {
     const [forceShowSource, setForceShowSource] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
 
-    useEffect(() => {
-        window.electronAPI.ready('translate')
-    }, [])
-
     const handleTranslate = useCallback(async (textOverride?: string) => {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
         if (!textToTranslate.trim()) return
@@ -198,6 +194,10 @@ export default function TranslateWindow(): React.ReactElement {
     }, [setSourceText, setDetectedLanguage, clearResults])
 
     useEffect(() => {
+        window.electronAPI.ready('translate')
+    }, [])
+
+    useEffect(() => {
         if (!closeOnBlur) return
         const handleBlur = () => window.electronAPI.window.close()
         window.addEventListener('blur', handleBlur)
@@ -254,18 +254,19 @@ export default function TranslateWindow(): React.ReactElement {
                 <button
                     className="ic-btn"
                     title="置顶"
+                    data-testid="titlebar-pin"
                     onClick={handleToggleAlwaysOnTop}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
                     <Icons.Pin size={14} fill={alwaysOnTop} />
                 </button>
-                <div className="op-wordmark" style={{ marginLeft: 2 }}>
+                <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     <span className="dot" style={{ background: 'var(--brand-primary)' }} />
                     omni_pot
                 </div>
-                <span className="op-mode">· 翻译</span>
+                <span className="op-mode" data-testid="titlebar-mode">· 翻译</span>
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" onClick={handleClose}>
+                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={14} />
                 </button>
             </div>

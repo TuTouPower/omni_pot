@@ -16,7 +16,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 
     if (result === null) {
         return (
-            <div className="card" style={{ padding: '12px 14px' }}>
+            <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{service.name}</div>
                 <p style={{ color: 'var(--danger)', fontSize: 13 }}>{t('dict.lookup_failed')}</p>
             </div>
@@ -35,7 +35,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
     return (
         <>
             {/* Definitions card */}
-            <div className="card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
+            <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
                 <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
                     {t('dict.definitions') || '释义'}
                 </div>
@@ -115,7 +115,6 @@ export default function DictWindow(): React.ReactElement {
     const [importing, setImporting] = useState(false)
 
     useEffect(() => {
-        window.electronAPI.ready('dict')
         window.electronAPI.dict.check().then(({ ready }) => setDictReady(ready))
     }, [])
 
@@ -171,6 +170,10 @@ export default function DictWindow(): React.ReactElement {
     }, [handleLookup])
 
     useEffect(() => {
+        window.electronAPI.ready('dict')
+    }, [])
+
+    useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') window.electronAPI.window.close()
         }
@@ -197,18 +200,19 @@ export default function DictWindow(): React.ReactElement {
                 <button
                     className="ic-btn"
                     title="置顶"
+                    data-testid="titlebar-pin"
                     onClick={handleTogglePin}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
                     <Icons.Pin size={14} fill={alwaysOnTop} />
                 </button>
-                <div className="op-wordmark" style={{ marginLeft: 2 }}>
+                <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     <span className="dot" style={{ background: 'var(--brand-primary)' }} />
                     omni_pot
                 </div>
-                <span className="op-mode">· 词典</span>
+                <span className="op-mode" data-testid="titlebar-mode">· 词典</span>
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" onClick={handleClose}>
+                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={14} />
                 </button>
             </div>

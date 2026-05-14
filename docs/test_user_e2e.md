@@ -10,7 +10,7 @@
 
 ## 1. 为什么从头重做
 
-现有 `tests/user_e2e/` 只有一个 `01_all_critical_paths.test.ts`，存在结构性问题：
+旧 `tests/user_e2e/01_all_critical_paths.test.ts` 曾存在结构性问题，已随 Playwright 迁移删除：
 
 | 问题 | 后果 |
 |---|---|
@@ -108,7 +108,6 @@ interface LaunchedApp {
   userDataDir: string
 }
 
-export async function ensureBuilt(): Promise<void>          // 复用文件锁共享构建
 export async function launchApp(opts: AppOptions): Promise<LaunchedApp>
 export async function closeApp(launched: LaunchedApp): Promise<void>
 ```
@@ -117,9 +116,9 @@ export async function closeApp(launched: LaunchedApp): Promise<void>
 
 - 用 `electron.launch({ args: ['out/main/index.js'], env })` 启动；Playwright 自带 CDP 接管，
   无需手动管理 `--remote-debugging-port`。
-- 每个 spec 独立随机 `httpPort`、**独立 userData 临时目录** —— 文件级隔离。
+- `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
+- 每个测试独立随机 `httpPort`、**独立 userData 临时目录** —— 测试间隔离。
 - 环境变量把 `userDataDir`、预置 `config`、`firstRun`、`OMNI_POT_E2E=1` 传给 main 进程。
-- `ensureBuilt()` 沿用文件锁共享一次 `electron-vite build`（可从现有 launcher 迁移）。
 - 关闭时清理 userData 临时目录。
 
 ### 4.2 多窗口 Page
@@ -219,18 +218,23 @@ class TranslatePage {
 
 ### 4.5 需要源码配合的改动（待实现基础设施）
 
-> **以下均为 E2E 基础设施待实现项，当前源码尚不具备。**
-> 跟踪进度见 `PLAN.md`。
+> E2E 基础设施已部分落地；剩余项跟踪进度见 `PLAN.md`。
 
-测试要稳定，必须给源码加 **稳定选择器** 与 **E2E 端点**。下列均为 E2E 基础设施待实现项，
-当前源码未发现 `data-testid`：
+测试要稳定，必须给源码加 **稳定选择器** 与 **E2E 端点**。
+
+已落地的基础选择器：
 
 - 翻译：`titlebar-pin`、`titlebar-close`、`titlebar-mode`、`titlebar-wordmark`、
   `source-input`、`source-translate-btn`、`source-clear-btn`、`source-newline-btn`、
-  `source-tts-btn`、`source-copy-btn`、`detected-lang`、`lang-source`、`lang-target`、
-  `lang-swap`、`result-card`（带 `data-result-key`）、`result-tts`、`result-copy`、
+  `source-copy-btn`、`detected-lang`、`lang-source`、`lang-target`、`lang-swap`、
+  结果卡片 `data-result-key` / `data-result-content` / `data-result-error`
+- 词典：标题栏基础选择器与 `dict-card`
+
+仍需继续补齐：
+
+- 翻译：`source-tts-btn`、`result-card`、`result-tts`、`result-copy`、
   `result-collect`、`result-collapse`、`result-retry`、`result-body`、`result-error`
-- 词典：`dict-card`、`dict-word`、`dict-collect`、`dict-tts`、`dict-source-tag`
+- 词典：`dict-word`、`dict-collect`、`dict-tts`、`dict-source-tag`
 - 识别：`ocr-image`、`ocr-text`、`ocr-engine-select`、`ocr-lang-select`、
   `ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、`ocr-copy-btn`、
   `ocr-export-btn`、`ocr-translate-btn`
@@ -240,32 +244,29 @@ class TranslatePage {
   `svc-delete`、`svc-drag-handle`
 - 更新器：`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
-**(b) E2E HTTP 端点扩充**（待实现 — `electron/server/index.ts`，仅 `OMNI_POT_E2E`）：
+**(b) E2E HTTP 端点扩充**（`electron/server/index.ts`，仅 `OMNI_POT_E2E`）：
 
-当前仅有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、
-`/trigger-clipboard-translate`、`/capture-clock`。需新增：
+当前已有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、
+`/trigger-clipboard-translate`、`/capture-clock`、`POST /e2e/open-window`、
+`POST /e2e/reset-config`、`GET /e2e/clipboard`。仍需新增：
 
 | 端点 | 用途 |
 |---|---|
-| `POST /e2e/open-window` | 按 label 打开任意窗口（config / updater / recognize…） |
 | `POST /e2e/trigger-screenshot` | 触发截图（指定 mode） |
 | `POST /e2e/trigger-input-translate` | 触发输入翻译 |
-| `GET /e2e/clipboard` | 读取系统剪贴板（验证复制类操作） |
 | `POST /e2e/tray-action` | 触发指定托盘菜单项 |
 | `GET /e2e/window-state` | 查询窗口可见性 / 置顶 / bounds |
-| `POST /e2e/reset-config` | 重置配置到默认值 |
 | `POST /e2e/mock-update` | 注入一个假的“有新版本”用于更新器测试 |
 
-**(c) 独立 userData**（待实现 — 当前 `tests/user_e2e/helpers/electron_launcher.ts` 只传
-`OMNI_POT_SERVER_PORT` 与 `OMNI_POT_E2E`，未传独立 userDataDir）：需让 main 进程支持
-从环境变量读取自定义 userData 路径，实现文件级隔离。
+**(c) 独立 userData**：已通过 `OMNI_POT_USER_DATA` 从 Playwright fixture 传给 main 进程，
+每个测试使用独立临时目录，关闭时清理。
 
 ---
 
 ## 5. 测试文件规划（15 个 spec）
 
-每个 spec：`beforeAll` 启动独立实例 → `beforeEach` `resetConfig()` →
-用例用 PO 操作与断言 → `afterAll` 停止实例。固定顺序，无 shuffle。
+当前基础版 fixture：每个测试启动独立实例 → `resetConfig()` →
+用例用 PO 操作与断言 → 测试结束停止实例并清理 userData。固定顺序，无 shuffle。
 
 ### 5.1 app_lifecycle.spec.ts — 应用生命周期与窗口管理
 
@@ -508,12 +509,11 @@ test:e2e            # 全部 spec（Playwright full project）
 test:e2e:core       # @core 标签（app_lifecycle + translate_core），PR 快速门禁
 test:e2e:ui         # @ui 标签（translate_* + dict + recognize + screenshot + config_*）
 test:e2e -- <file>  # 单文件调试
-test:e2e:legacy     # 旧 Vitest + CDP E2E（遗留，待迁移/删除）
 ```
 
-- Playwright 文件级并行（每文件独立实例、独立端口、独立 userData）。
-- 文件内串行、固定顺序。
-- `ensureBuilt()` 文件锁共享一次构建。
+- Playwright 当前由 fixture 为每个测试启动独立 Electron 实例、独立端口、独立 userData。
+- 用例内固定顺序。
+- `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
 - CI：PR 跑 `core + ui`；nightly 跑 full（含真实网络服务）。
 - issues #1（better-sqlite3 缺失）、#2（双击两次启动）属打包/启动问题，
   E2E 难直接覆盖 → CI 单独加“打包产物启动验证”作业（打包 → 启动安装好的应用 →
@@ -548,5 +548,4 @@ test:e2e:legacy     # 旧 Vitest + CDP E2E（遗留，待迁移/删除）
 4. **P1 行为与窗口**：`translate_behavior` / `screenshot_window` / `app_lifecycle`。
 5. **P2 管理类**：`config_service_mgmt` / `config_history_backup` /
    `updater_and_tray` / `i18n`。
-6. 旧 `01_all_critical_paths.test.ts` 在 `translate_core` + `recognize_window` +
-   `dict_window` 落地后删除。
+6. 旧 Vitest + CDP E2E 文件已删除；后续只扩展 Playwright spec。
