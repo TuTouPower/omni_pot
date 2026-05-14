@@ -96,19 +96,22 @@ function LangPick({ value, onChange, options }: {
     )
 }
 
-export function LanguageArea(): React.ReactElement {
+interface LanguageAreaProps {
+    onSwap: () => void
+}
+
+export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement {
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
     const setSourceLanguage = useTranslateStore((s) => s.setSourceLanguage)
     const setTargetLanguage = useTranslateStore((s) => s.setTargetLanguage)
-    const swapLanguages = useTranslateStore((s) => s.swapLanguages)
 
     return (
         <div className="card" style={{ padding: '4px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flex: '0 0 auto' }}>
             <div data-testid="lang-source">
                 <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} />
             </div>
-            <button className="ic-btn" style={{ color: 'var(--text)' }} title="交换语言" data-testid="lang-swap" onClick={swapLanguages}>
+            <button className="ic-btn" style={{ color: 'var(--text)' }} title="交换语言" data-testid="lang-swap" onClick={onSwap}>
                 <Icons.Swap size={18} />
             </button>
             <div data-testid="lang-target">

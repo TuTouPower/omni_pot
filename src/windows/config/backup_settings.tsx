@@ -57,6 +57,7 @@ export default function BackupSettings(): React.ReactElement {
                         value={backupType as string}
                         onChange={setBackupType}
                         options={BACKUP_TYPES}
+                        testId="cfg-backup_type"
                         style={{ minWidth: 160 }}
                     />
                 </ConfigRow>
@@ -69,6 +70,7 @@ export default function BackupSettings(): React.ReactElement {
                             placeholder="https://dav.example.com/dav"
                             value={webdavUrl}
                             onChange={setWebdavUrl}
+                            testId="cfg-webdav_url"
                             style={{ minWidth: 280 }}
                         />
                     </ConfigRow>
@@ -76,6 +78,7 @@ export default function BackupSettings(): React.ReactElement {
                         <ConfigField
                             value={webdavUsername}
                             onChange={setWebdavUsername}
+                            testId="cfg-webdav_username"
                             style={{ minWidth: 280 }}
                         />
                     </ConfigRow>
@@ -83,6 +86,7 @@ export default function BackupSettings(): React.ReactElement {
                         <ConfigField
                             value={webdavPassword}
                             onChange={setWebdavPassword}
+                            testId="cfg-webdav_password"
                             style={{ minWidth: 280 }}
                         />
                     </ConfigRow>

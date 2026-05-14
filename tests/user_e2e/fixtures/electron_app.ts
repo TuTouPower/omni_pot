@@ -5,6 +5,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import http from 'http'
 import { createServer } from 'net'
+import { randomUUID } from 'crypto'
 
 const PROJECT_ROOT = resolve(__dirname, '../../..')
 const MAIN_JS = resolve(PROJECT_ROOT, 'out/main/index.js')
@@ -47,6 +48,7 @@ export interface LaunchedApp {
     app: ElectronApplication
     httpPort: number
     userDataDir: string
+    e2eToken: string
 }
 
 export async function launchApp(opts: {
@@ -55,10 +57,12 @@ export async function launchApp(opts: {
 } = {}): Promise<LaunchedApp> {
     const httpPort = await getFreePort()
     const userDataDir = mkdtempSync(join(tmpdir(), 'omni-pot-e2e-'))
+    const e2eToken = randomUUID()
 
     const env: Record<string, string> = {
         ...process.env as Record<string, string>,
         OMNI_POT_E2E: '1',
+        OMNI_POT_E2E_TOKEN: e2eToken,
         OMNI_POT_SERVER_PORT: String(httpPort),
         OMNI_POT_USER_DATA: userDataDir,
     }
@@ -79,7 +83,7 @@ export async function launchApp(opts: {
 
     await waitForHttpServer(httpPort)
 
-    return { app, httpPort, userDataDir }
+    return { app, httpPort, userDataDir, e2eToken }
 }
 
 export async function closeApp(launched: LaunchedApp): Promise<void> {

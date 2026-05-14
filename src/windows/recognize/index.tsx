@@ -45,11 +45,13 @@ function PillSelect({
     options,
     leading,
     onChange,
+    testId,
 }: {
     value: string
     options: { value: string; label: string; mono?: string }[]
     leading?: React.ReactNode
     onChange?: (v: string) => void
+    testId?: string
 }): React.ReactElement {
     const [open, setOpen] = useState(false)
     const cur = options.find((o) => o.value === value)
@@ -64,6 +66,7 @@ function PillSelect({
     return (
         <div style={{ position: 'relative' }}>
             <button
+                data-testid={testId}
                 onClick={(e) => {
                     e.stopPropagation()
                     setOpen((o) => !o)
@@ -139,13 +142,16 @@ function PillButton({
     icon,
     label,
     onClick,
+    testId,
 }: {
     icon: React.ReactNode
     label: string
     onClick?: () => void
+    testId?: string
 }): React.ReactElement {
     return (
         <button
+            data-testid={testId}
             onClick={onClick}
             style={{
                 height: 30,
@@ -199,7 +205,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
 
     return (
         <div style={{ position: 'relative' }}>
-            <button className="ic-btn" title="导出" onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}>
+            <button className="ic-btn" title="导出" data-testid="ocr-export-btn" onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}>
                 <Icons.Export size={16} />
             </button>
             {open && (
@@ -367,18 +373,19 @@ export default function RecognizeWindow(): React.ReactElement {
                 <button
                     className="ic-btn"
                     title="置顶"
+                    data-testid="titlebar-pin"
                     onClick={handleTogglePin}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
                     <Icons.Pin size={14} fill={alwaysOnTop} />
                 </button>
-                <div className="op-wordmark" style={{ marginLeft: 2 }}>
+                <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     <span className="dot" style={{ background: 'var(--brand-primary)' }} />
                     omni_pot
                 </div>
-                <span className="op-mode">· 识别</span>
+                <span className="op-mode" data-testid="titlebar-mode">· 识别</span>
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" onClick={handleClose}>
+                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={14} />
                 </button>
             </div>
@@ -387,17 +394,20 @@ export default function RecognizeWindow(): React.ReactElement {
             <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 0, gap: 10, padding: '4px 10px 8px' }}>
                 {/* Image card */}
                 <div className="card" style={{ padding: 6, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div style={{
-                        flex: 1,
-                        borderRadius: 7,
-                        background: 'var(--bg-sunk)',
-                        border: '1px solid var(--line)',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}>
+                    <div
+                        data-testid="ocr-image"
+                        style={{
+                            flex: 1,
+                            borderRadius: 7,
+                            background: 'var(--bg-sunk)',
+                            border: '1px solid var(--line)',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
                         {imageBase64 ? (
                             <img
                                 src={`data:image/png;base64,${imageBase64}`}
@@ -416,6 +426,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 {/* Text card */}
                 <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                     <textarea
+                        data-testid="ocr-text"
                         value={recognizedText}
                         onChange={(e) => setRecognizedText(e.target.value)}
                         placeholder={t('recognize.no_result') || '识别结果将显示在此…'}
@@ -451,6 +462,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         options={ocr_engine_options}
                         leading={effectiveMeta ? <SvcTile name={effectiveServiceKey} size={18} /> : undefined}
                         onChange={setSelectedService}
+                        testId="ocr-engine-select"
                     />
                 )}
                 <PillSelect
@@ -458,6 +470,7 @@ export default function RecognizeWindow(): React.ReactElement {
                     options={lang_options}
                     leading={<Icons.Globe size={13} style={{ color: 'var(--text-mute)' }} />}
                     onChange={setSelectedLanguage}
+                    testId="ocr-lang-select"
                 />
                 <PillButton
                     icon={isRecognizing ? (
@@ -467,22 +480,24 @@ export default function RecognizeWindow(): React.ReactElement {
                     )}
                     label={isRecognizing ? '识别中…' : '重新识别'}
                     onClick={handleRecognize}
+                    testId="ocr-reocr-btn"
                 />
 
                 <div style={{ flex: 1 }} />
 
-                <button className="ic-btn" title="去除换行" onClick={handleDeleteNewline} disabled={!recognizedText}>
+                <button className="ic-btn" title="去除换行" data-testid="ocr-newline-btn" onClick={handleDeleteNewline} disabled={!recognizedText}>
                     <Icons.Newline size={16} />
                 </button>
-                <button className="ic-btn" title="去除空格" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
+                <button className="ic-btn" title="去除空格" data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
                     <Icons.Hash size={16} />
                 </button>
-                <button className="ic-btn" title="复制文本" onClick={handleCopy} disabled={!recognizedText}>
+                <button className="ic-btn" title="复制文本" data-testid="ocr-copy-btn" onClick={handleCopy} disabled={!recognizedText}>
                     <Icons.Copy size={16} />
                 </button>
                 <ExportButton text={recognizedText} />
                 <button
                     className="ic-btn"
+                    data-testid="ocr-translate-btn"
                     title="翻译"
                     style={{ color: recognizedText ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                     onClick={handleTranslate}

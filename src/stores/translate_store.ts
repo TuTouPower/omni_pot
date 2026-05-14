@@ -21,7 +21,7 @@ interface TranslateStore {
   setDetectedLanguage: (lang: LanguageCode | null) => void
   setResult: (instanceKey: string, result: string | DictResult | null) => void
   setIsTranslating: (flag: boolean) => void
-  swapLanguages: () => void
+  swapLanguages: (fallbackLanguage?: LanguageCode) => void
   clearResults: () => void
   nextRequestId: () => number
 }
@@ -48,11 +48,18 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
   setResult: (instanceKey, result) =>
     set((state) => ({ results: { ...state.results, [instanceKey]: result } })),
   setIsTranslating: (flag) => set({ isTranslating: flag }),
-  swapLanguages: () => {
-    const { sourceLanguage, targetLanguage } = get()
-    if (sourceLanguage !== 'auto') {
-      set({ sourceLanguage: targetLanguage, targetLanguage: sourceLanguage })
+  swapLanguages: (fallbackLanguage) => {
+    const { sourceLanguage, targetLanguage, detectedLanguage } = get()
+    if (sourceLanguage === 'auto') {
+      if (detectedLanguage) {
+        const nextSourceLanguage = detectedLanguage === targetLanguage && fallbackLanguage && fallbackLanguage !== 'auto'
+          ? fallbackLanguage
+          : targetLanguage
+        set({ sourceLanguage: nextSourceLanguage, targetLanguage: detectedLanguage, detectedLanguage: null })
+      }
+      return
     }
+    set({ sourceLanguage: targetLanguage, targetLanguage: sourceLanguage, detectedLanguage: null })
   },
   clearResults: () => set({ results: {} }),
   nextRequestId: () => {

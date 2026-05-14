@@ -115,7 +115,7 @@ function SortableCard({
 
     return (
         <div ref={setNodeRef} style={style}>
-            <div className="card" data-result-key={instanceKey} style={{ padding: '10px 12px' }}>
+            <div className="card" data-testid="result-card" data-result-key={instanceKey} style={{ padding: '10px 12px' }}>
                 {/* Header row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--text-mute)' }}>
@@ -130,22 +130,22 @@ function SortableCard({
                         </span>
                     )}
                     <div style={{ flex: 1 }} />
-                    <button className="ic-btn" title="朗读" onClick={() => {
+                    <button data-testid="result-tts" className="ic-btn" title="朗读" onClick={() => {
                         const r = results[instanceKey]
                         if (typeof r === 'string') onTts(r, instanceKey)
                     }}>
                         <Icons.Volume size={16} />
                     </button>
-                    <button className="ic-btn" title="复制" onClick={() => {
+                    <button data-testid="result-copy" className="ic-btn" title="复制" onClick={() => {
                         const r = results[instanceKey]
                         if (typeof r === 'string') onCopy(r)
                     }}>
                         <Icons.Copy size={16} />
                     </button>
-                    <button className="ic-btn" title="收藏" onClick={() => onCollect(instanceKey)}>
+                    <button data-testid="result-collect" className="ic-btn" title="收藏" onClick={() => onCollect(instanceKey)}>
                         <Icons.Heart size={16} />
                     </button>
-                    <button className="ic-btn" title={collapsed ? '展开' : '收起'} onClick={() => onToggleCollapse(instanceKey)}>
+                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? '展开' : '收起'} onClick={() => onToggleCollapse(instanceKey)}>
                         <Icons.Chev size={17} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
                     </button>
                 </div>
@@ -153,16 +153,16 @@ function SortableCard({
                 {/* Content */}
                 {!collapsed && (
                     result === null ? (
-                        <div data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div data-testid="result-error" data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ color: 'var(--danger)', fontSize: 13 }}>翻译失败</span>
                             {onRetry && (
-                                <button className="ic-btn" title="重试" onClick={() => onRetry(instanceKey)} style={{ color: 'var(--danger)' }}>
+                                <button data-testid="result-retry" className="ic-btn" title="重试" onClick={() => onRetry(instanceKey)} style={{ color: 'var(--danger)' }}>
                                     <Icons.Cycle size={14} />
                                 </button>
                             )}
                         </div>
                     ) : result === undefined ? null : (
-                        <div data-result-content style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
+                        <div data-testid="result-body" data-result-content style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
                             {typeof result === 'string'
                                 ? (result || <span style={{ color: 'var(--text-mute)' }}>…</span>)
                                 : <DictResultInline result={result as DictResult} />

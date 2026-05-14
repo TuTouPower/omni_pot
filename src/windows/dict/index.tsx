@@ -17,7 +17,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
     if (result === null) {
         return (
             <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{service.name}</div>
+                <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{service.name}</div>
                 <p style={{ color: 'var(--danger)', fontSize: 13 }}>{t('dict.lookup_failed')}</p>
             </div>
         )
@@ -224,6 +224,7 @@ export default function DictWindow(): React.ReactElement {
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                                 <input
+                                    data-testid="dict-word"
                                     value={word}
                                     onChange={(e) => setWord(e.target.value)}
                                     onKeyDown={(e) => { if (e.key === 'Enter') handleManualLookup() }}

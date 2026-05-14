@@ -17,21 +17,21 @@
 
 ### P0: Playwright E2E 基础设施落地
 
-- [x] 安装 Playwright 依赖（`npm install`）
-- [x] 实现 `tests/user_e2e/fixtures/electron_app.ts` — Electron 启动/停止 fixture
-- [x] 实现 `tests/user_e2e/fixtures/app_fixture.ts` / `e2e_api.ts` — AppFixture 与 E2E HTTP 封装（基础版）
-- [x] 源码侧补齐 smoke / 翻译 / 词典基础用例所需 `data-testid`
-- [ ] 继续补齐其余窗口 `data-testid`（见 `docs/test_user_e2e.md` 4.5 节清单）
-- [ ] 扩充全部 E2E HTTP 端点（已完成 `open-window` / `reset-config` / `clipboard`；其余见 `docs/test_user_e2e.md` 4.5 节表格）
-- [x] 实现独立 userData 临时目录（环境变量传入 main 进程）
-- [x] 删除旧 Vitest + CDP E2E 文件与 legacy 脚本（剩余关键路径由 P1/P2 Playwright spec 继续补齐）
+- [X] 安装 Playwright 依赖（`npm install`）
+- [X] 实现 `tests/user_e2e/fixtures/electron_app.ts` — Electron 启动/停止 fixture
+- [X] 实现 `tests/user_e2e/fixtures/app_fixture.ts` / `e2e_api.ts` — AppFixture 与 E2E HTTP 封装（基础版）
+- [X] 源码侧补齐翻译 / 词典基础用例所需 `data-testid`
+- [X] 继续补齐其余窗口 `data-testid`（已覆盖当前 UI 已实现控件；尚不存在的朗读/收藏/服务编辑控件不预埋假选择器）
+- [X] 扩充全部 E2E HTTP 端点（`open-window` / `reset-config` / `clipboard` / `window-state` / `trigger-screenshot` / `trigger-input-translate` / `tray-action` / `mock-update`）
+- [X] 实现独立 userData 临时目录（环境变量传入 main 进程）
+- [X] 删除旧 Vitest + CDP E2E 文件与 legacy 脚本（剩余关键路径由 P1/P2 Playwright spec 继续补齐）
 
 ### P1: P0 守护已知 bug 的 spec
 
-- [ ] `translate_titlebar.spec.ts` — issues #4 #8
-- [ ] `translate_source_area.spec.ts` — issue #5
-- [ ] `translate_language_area.spec.ts` — issues #6 #7
-- [ ] `translate_core.spec.ts` — issue #3（全部免费翻译服务）
+- [ ] `translate_titlebar.spec.ts` — issues #4 #8（已建初版，仍需补齐布局/拖拽断言）
+- [ ] `translate_source_area.spec.ts` — issue #5（已建初版，仍需补齐键盘/IME/朗读断言）
+- [ ] `translate_language_area.spec.ts` — issues #6 #7（已建初版，仍需补齐语言选择与重译断言）
+- [ ] `translate_core.spec.ts` — issue #3（已建初版，仍需补齐全部免费翻译服务用例）
 
 ### P1: 核心窗口 spec
 
@@ -53,22 +53,22 @@
 ### P2: 其他
 
 - [ ] 修复已知 bug — 见 `docs/issues/issues.md`
-- [ ] 插件系统（`.potext` 格式）
+- [ ] 插件系统（`.potext` 格式，暂时不做）
 - [ ] 代码质量检查体系 — 见 `docs/code_quality_checks_plan.md`
 
 ---
 
 ## 已完成
 
-- [x] 全部 UI 重写（翻译/词典/识别/截图/配置/更新器窗口）
-- [x] Bing Translate 修复
-- [x] 全部 22 个 API 测试完成 — 结果见 `docs/external_services/api_test_results.md`
-- [x] MyMemory 翻译服务 — `src/services/mymemory.ts`
-- [x] Free Dictionary 词典服务 — `src/services/free_dictionary.ts`
-- [x] CC-CEDICT 离线词典 — 替换原 ECDICT，IPC bridge 架构
-- [x] 字典模式（独立窗口 + 快捷键 + 服务列表）
-- [x] OCR E2E 测试（真实 Tesseract.js + 真实翻译 API）
-- [x] 截图覆盖层修复
-- [x] 国际化（19 种语言）
-- [x] E2E 测试方向统一为 Playwright
-- [x] 文档审阅与清理 — 见 `docs/issues/documentation_review.md`
+- [X] 全部 UI 重写（翻译/词典/识别/截图/配置/更新器窗口）
+- [X] Bing Translate 修复
+- [X] 全部 22 个 API 测试完成 — 结果见 `docs/external_services/api_test_results.md`
+- [X] MyMemory 翻译服务 — `src/services/mymemory.ts`
+- [X] Free Dictionary 词典服务 — `src/services/free_dictionary.ts`
+- [X] CC-CEDICT 离线词典 — 替换原 ECDICT，IPC bridge 架构
+- [X] 字典模式（独立窗口 + 快捷键 + 服务列表）
+- [X] OCR E2E 测试（真实 Tesseract.js + 真实翻译 API）
+- [X] 截图覆盖层修复
+- [X] 国际化（19 种语言）
+- [X] E2E 测试方向统一为 Playwright
+- [X] 文档审阅与清理 — 见 `docs/issues/documentation_review.md`

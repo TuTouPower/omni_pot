@@ -52,7 +52,7 @@ export default function HistorySettings(): React.ReactElement {
         <div className="stack gap-12">
             <ConfigCard title={t('history.title') || '历史记录'}>
                 <ConfigRow label={t('history.disable') || '禁用历史记录'}>
-                    <ConfigSwitch on={historyDisable} onChange={setHistoryDisable} />
+                    <ConfigSwitch on={historyDisable} onChange={setHistoryDisable} testId="cfg-history_disable" />
                 </ConfigRow>
             </ConfigCard>
 

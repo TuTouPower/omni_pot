@@ -26,7 +26,7 @@ export async function capture_screenshot(manager: WindowManager): Promise<string
 export async function start_screenshot_capture(
     manager: WindowManager,
     mode: 'recognize' | 'translate'
-): Promise<void> {
+): Promise<boolean> {
     try {
         const base64 = await capture_screenshot(manager)
 
@@ -48,7 +48,8 @@ export async function start_screenshot_capture(
         win.setBounds({ x: display.bounds.x, y: display.bounds.y, width, height })
         manager.sendWhenReady(WindowLabel.SCREENSHOT, 'screenshot:show', base64, mode)
         win.show()
+        return true
     } catch {
-        // screenshot capture failed
+        return false
     }
 }

@@ -3,6 +3,50 @@ import type { Page, Locator } from '@playwright/test'
 export class TranslatePage {
     constructor(private page: Page) {}
 
+    wordmark(): Locator {
+        return this.page.getByTestId('titlebar-wordmark')
+    }
+
+    modeLabel(): Locator {
+        return this.page.getByTestId('titlebar-mode')
+    }
+
+    pinButton(): Locator {
+        return this.page.getByTestId('titlebar-pin')
+    }
+
+    closeButton(): Locator {
+        return this.page.getByTestId('titlebar-close')
+    }
+
+    sourceInput(): Locator {
+        return this.page.getByTestId('source-input')
+    }
+
+    translateButton(): Locator {
+        return this.page.getByTestId('source-translate-btn')
+    }
+
+    detectedLanguage(): Locator {
+        return this.page.getByTestId('detected-lang')
+    }
+
+    sourceLanguage(): Locator {
+        return this.page.getByTestId('lang-source')
+    }
+
+    targetLanguage(): Locator {
+        return this.page.getByTestId('lang-target')
+    }
+
+    resultBodies(): Locator {
+        return this.page.getByTestId('result-body')
+    }
+
+    resultErrors(): Locator {
+        return this.page.getByTestId('result-error')
+    }
+
     // Titlebar
     clickPin(): Promise<void> {
         return this.page.getByTestId('titlebar-pin').click()
@@ -68,6 +112,10 @@ export class TranslatePage {
 
     clickSwap(): Promise<void> {
         return this.page.getByTestId('lang-swap').click()
+    }
+
+    clickDetectedLanguage(): Promise<void> {
+        return this.page.getByTestId('detected-lang').click()
     }
 
     // Result cards

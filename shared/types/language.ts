@@ -8,11 +8,11 @@ export const LANGUAGE_CODES = [
 export type LanguageCode = typeof LANGUAGE_CODES[number]
 
 export const LANGUAGE_NAMES: Record<LanguageCode, string> = {
-  auto: 'Auto Detect',
+  auto: '自动检测',
   zh_cn: '简体中文',
   zh_tw: '繁體中文',
   yue: '粤语',
-  en: 'English',
+  en: '英文',
   ja: '日本語',
   ko: '한국어',
   fr: 'Français',

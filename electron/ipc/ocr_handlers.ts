@@ -6,7 +6,7 @@ import { writeFile, unlink } from 'fs/promises'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { start_screenshot_capture } from '../screenshot'
-import { getConfig, setConfig } from '../config/store'
+import { get_translate_window_options, attach_translate_resize_persistence } from '../windows/translate_options'
 
 async function windows_ocr(image_path: string, lang: string): Promise<string> {
     const bcp47 = lang || 'en-US'
@@ -73,7 +73,7 @@ async function linux_ocr(image_path: string, lang: string): Promise<string> {
 
 export function registerOcrHandlers(manager: WindowManager): void {
     ipcMain.handle('ocr:capture-screenshot', async (_event, mode: 'recognize' | 'translate') => {
-        await start_screenshot_capture(manager, mode)
+        return start_screenshot_capture(manager, mode)
     })
 
     ipcMain.handle('ocr:open-recognize', async (event, base64Image: string, text: string) => {
@@ -93,23 +93,8 @@ export function registerOcrHandlers(manager: WindowManager): void {
     })
 
     ipcMain.handle('ocr:send-to-translate', async (_event, text: string) => {
-        const rememberSize = getConfig('translate_remember_window_size') as boolean
-        const w = rememberSize ? (getConfig('translate_window_width') as number) : 350
-        const h = rememberSize ? (getConfig('translate_window_height') as number) : 420
-
-        const win = manager.focusOrCreate(WindowLabel.TRANSLATE, {
-            label: WindowLabel.TRANSLATE,
-            width: w,
-            height: h
-        })
-
-        if (rememberSize && !win.listenerCount('resize')) {
-            win.on('resize', () => {
-                const [cw, ch] = win.getSize()
-                setConfig('translate_window_width', cw)
-                setConfig('translate_window_height', ch)
-            })
-        }
+        const win = manager.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+        attach_translate_resize_persistence(win)
 
         manager.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
     })

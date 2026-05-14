@@ -120,6 +120,8 @@ export default function ServiceSettings(): React.ReactElement {
                         return (
                             <div
                                 key={instanceKey}
+                                data-testid="svc-item"
+                                data-service-key={instanceKey}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -131,7 +133,7 @@ export default function ServiceSettings(): React.ReactElement {
                                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-sunk)'}
                                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                             >
-                                <Icons.Drag size={14} style={{ color: 'var(--text-mute)', cursor: 'grab' }} />
+                                <Icons.Drag data-testid="svc-drag-handle" size={14} style={{ color: 'var(--text-mute)', cursor: 'grab' }} />
                                 <div
                                     className="svc-tile"
                                     style={{ color: 'var(--text-dim)' }}
@@ -157,6 +159,7 @@ export default function ServiceSettings(): React.ReactElement {
                                     <Icons.Chev size={12} style={{ transform: 'rotate(-90deg)' }} />
                                 </button>
                                 <button
+                                    data-testid="svc-delete"
                                     className="btn ghost icon sm"
                                     style={{ color: serviceList.length <= 1 ? 'var(--text-mute)' : 'var(--danger)' }}
                                     disabled={serviceList.length <= 1}
@@ -170,7 +173,7 @@ export default function ServiceSettings(): React.ReactElement {
                 </div>
                 <div className="div" />
                 <div style={{ padding: 10, display: 'flex', gap: 8 }}>
-                    <button className="btn sm" onClick={() => setShowAddModal(true)}>
+                    <button className="btn sm" data-testid="svc-add-btn" onClick={() => setShowAddModal(true)}>
                         <Icons.Plus size={12} />
                         {t('service.add') || '添加服务'}
                     </button>

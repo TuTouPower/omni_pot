@@ -36,6 +36,9 @@ export class WindowManager {
       return existing
     }
 
+    this.readyLabels.delete(opts.label)
+    this.pendingQueue.delete(opts.label)
+
     const point = screen.getCursorScreenPoint()
     const display = screen.getDisplayNearestPoint(point)
     const { workArea } = display
@@ -88,6 +91,8 @@ export class WindowManager {
       console.log('[wm] window closed:', opts.label)
       this.byLabel.delete(opts.label)
       this.labelById.delete(win.id)
+      this.readyLabels.delete(opts.label)
+      this.pendingQueue.delete(opts.label)
     })
 
     this.byLabel.set(opts.label, win)

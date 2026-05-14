@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 
@@ -25,9 +25,17 @@ export default function UpdaterWindow(): React.ReactElement {
     const [release, setRelease] = useState<ReleaseInfo | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const main_release_received = useRef(false)
 
     useEffect(() => {
+        const cleanup = window.electronAPI.update.onRelease((release_info) => {
+            main_release_received.current = true
+            setRelease(release_info)
+            setError(null)
+            setLoading(false)
+        })
         window.electronAPI.ready('updater')
+        return cleanup
     }, [])
 
     useEffect(() => {
@@ -38,6 +46,7 @@ export default function UpdaterWindow(): React.ReactElement {
                 })
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
                 const data = await resp.json()
+                if (main_release_received.current) return
                 setRelease({
                     version: data.tag_name.replace(/^v/, ''),
                     current_version: '0.1.0',
@@ -51,9 +60,9 @@ export default function UpdaterWindow(): React.ReactElement {
                     }))
                 })
             } catch (err) {
-                setError(String(err))
+                if (!main_release_received.current) setError(String(err))
             } finally {
-                setLoading(false)
+                if (!main_release_received.current) setLoading(false)
             }
         }
         fetch_latest()
@@ -104,7 +113,7 @@ export default function UpdaterWindow(): React.ReactElement {
             <div style={{ padding: '8px 16px 18px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflow: 'auto' }}>
                 {/* Loading state */}
                 {loading && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                    <div data-testid="updater-progress" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
                         <Icons.Cycle size={24} style={{ color: 'var(--text-mute)', animation: 'spin 1s linear infinite' }} />
                     </div>
                 )}
@@ -157,7 +166,7 @@ export default function UpdaterWindow(): React.ReactElement {
 
                         {/* Changelog card */}
                         {release.body && (
-                            <div className="card" style={{ flex: 1, overflow: 'auto', padding: 14 }}>
+                            <div className="card" data-testid="updater-changelog" style={{ flex: 1, overflow: 'auto', padding: 14 }}>
                                 <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
                                     更新日志
                                 </div>
@@ -202,10 +211,10 @@ export default function UpdaterWindow(): React.ReactElement {
 
                         {/* Actions */}
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button className="btn" onClick={handleClose}>
+                            <button className="btn" data-testid="updater-later" onClick={handleClose}>
                                 {t('update_later') || '稍后提醒'}
                             </button>
-                            <button className="btn primary" onClick={handleOpenRelease}>
+                            <button className="btn primary" data-testid="updater-confirm" onClick={handleOpenRelease}>
                                 {t('open_release_page') || '查看详情'}
                             </button>
                         </div>
