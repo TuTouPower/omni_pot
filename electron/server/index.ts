@@ -1,6 +1,7 @@
 import http from 'http'
 import { clipboard, desktopCapturer, screen } from 'electron'
-import { getConfig, getAllConfig } from '../config/store'
+import { getConfig, getAllConfig, setConfig } from '../config/store'
+import { DEFAULT_CONFIG } from '@shared/types/config'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 
@@ -85,6 +86,21 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (IS_E2E && req.method === 'GET' && url.pathname === '/capture-clock') {
                 handleCaptureClock(res)
+                return
+            }
+
+            if (IS_E2E && req.method === 'POST' && url.pathname === '/e2e/open-window') {
+                handleOpenWindow(mgr, req, res)
+                return
+            }
+
+            if (IS_E2E && req.method === 'POST' && url.pathname === '/e2e/reset-config') {
+                handleResetConfig(res)
+                return
+            }
+
+            if (IS_E2E && req.method === 'GET' && url.pathname === '/e2e/clipboard') {
+                handleReadClipboard(res)
                 return
             }
 
@@ -327,4 +343,70 @@ function handleCaptureClock(res: http.ServerResponse): void {
             res.end(JSON.stringify({ success: false, error: String(error) }))
         }
     })()
+}
+
+function handleOpenWindow(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = JSON.parse(Buffer.concat(chunks).toString('utf-8'))
+            const label = body.label as string
+            if (!label) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'missing label' }))
+                return
+            }
+
+            const windowOpts: Record<string, { label: typeof WindowLabel[keyof typeof WindowLabel]; width: number; height: number }> = {
+                translate: { label: WindowLabel.TRANSLATE, width: 350, height: 420 },
+                dict: { label: WindowLabel.DICT, width: 350, height: 420 },
+                config: { label: WindowLabel.CONFIG, width: 800, height: 600 },
+                recognize: { label: WindowLabel.RECOGNIZE, width: 600, height: 500 },
+                updater: { label: WindowLabel.UPDATER, width: 400, height: 300 },
+            }
+
+            const opts = windowOpts[label]
+            if (!opts) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: `unknown label: ${label}` }))
+                return
+            }
+
+            mgr.focusOrCreate(opts.label, opts)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
+}
+
+function handleResetConfig(res: http.ServerResponse): void {
+    try {
+        for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
+            setConfig(key as keyof typeof DEFAULT_CONFIG, value)
+        }
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true }))
+    } catch (error: unknown) {
+        res.writeHead(500)
+        res.end(JSON.stringify({ success: false, error: String(error) }))
+    }
+}
+
+function handleReadClipboard(res: http.ServerResponse): void {
+    try {
+        const text = clipboard.readText()
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true, text }))
+    } catch (error: unknown) {
+        res.writeHead(500)
+        res.end(JSON.stringify({ success: false, error: String(error) }))
+    }
 }

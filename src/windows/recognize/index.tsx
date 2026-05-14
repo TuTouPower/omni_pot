@@ -259,15 +259,15 @@ export default function RecognizeWindow(): React.ReactElement {
     const config = useConfigStore((s) => s.config)
 
     useEffect(() => {
-        window.electronAPI.ready('recognize')
-    }, [])
-
-    useEffect(() => {
         const unsub = window.electronAPI.ocr.onRecognizeShow((base64, text) => {
             setImageBase64(base64)
             setRecognizedText(text)
         })
         return unsub
+    }, [])
+
+    useEffect(() => {
+        window.electronAPI.ready('recognize')
     }, [])
 
     useEffect(() => {

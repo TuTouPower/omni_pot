@@ -84,14 +84,14 @@ npm run test:e2e            # 全部 spec（full project）
 npm run test:e2e:core       # 核心用户路径（@core 标签），PR 快速门禁
 npm run test:e2e:ui         # UI 回归（@ui 标签）
 npm run test:e2e -- <file>  # 单文件调试
-npm run test:e2e:legacy     # 旧 Vitest + CDP E2E（遗留，待迁移/删除）
 ```
 
-> **注意**: `test:e2e:core` 和 `test:e2e:ui` 通过 Playwright `--grep @core` / `--grep @ui`
-> 标签分组，spec 文件中需用 `test.describe('@core', ...)` 或 `test('@ui ...', ...)` 标注。
-> 旧 Vitest + CDP E2E 通过 `test:e2e:legacy` 运行，待迁移或删除。
+> **注意**: `test:e2e:core` 和 `test:e2e:ui` 分别指定 Playwright `core` / `ui`
+> project；对应 project 通过 `@core` / `@ui` 标签分组，spec 文件中需用
+> `test.describe('@core', ...)` 或 `test('@ui ...', ...)` 标注。
 
-- 用户端到端测试为 Playwright 文件级并行：每个 spec 文件独立 Electron 实例、
-  独立随机端口、独立 userData 目录；文件内串行、固定顺序。
-- 首次运行由 `ensureBuilt()` 文件锁共享一次构建。
+- 用户端到端测试当前由 Playwright fixture 为每个测试启动独立 Electron 实例、
+  独立随机端口、独立 userData 目录；用例内固定顺序。
+- Playwright `globalSetup` 在每次 `test:e2e` 命令开始时执行一次 `electron-vite build`，
+  避免源码修改后继续运行旧 `out/` 产物。
 - 详细的实例生命周期、Page Object、E2E HTTP 端点见 `docs/test_user_e2e.md`。

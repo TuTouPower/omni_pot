@@ -153,7 +153,7 @@ function SortableCard({
                 {/* Content */}
                 {!collapsed && (
                     result === null ? (
-                        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ color: 'var(--danger)', fontSize: 13 }}>翻译失败</span>
                             {onRetry && (
                                 <button className="ic-btn" title="重试" onClick={() => onRetry(instanceKey)} style={{ color: 'var(--danger)' }}>

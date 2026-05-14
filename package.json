@@ -10,10 +10,9 @@
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
-    "test:e2e": "npx playwright test",
-    "test:e2e:core": "npx playwright test --grep @core",
-    "test:e2e:ui": "npx playwright test --grep @ui",
-    "test:e2e:legacy": "vitest run --config vitest.e2e.config.ts",
+    "test:e2e": "npx playwright test --project=full",
+    "test:e2e:core": "npx playwright test --project=core",
+    "test:e2e:ui": "npx playwright test --project=ui --pass-with-no-tests",
     "start": "electron-vite preview"
   },
   "dependencies": {
@@ -53,6 +52,7 @@
     "electron": "^35.7.5",
     "electron-vite": "^5.0.0",
     "jsdom": "^29.1.1",
+    "playwright": "^1.60.0",
     "postcss": "^8.5.14",
     "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3",

@@ -7,6 +7,7 @@ export default defineConfig({
     fullyParallel: false,
     retries: 0,
     reporter: [['html', { open: 'never' }], ['list']],
+    globalSetup: './tests/user_e2e/global_setup.ts',
     projects: [
         {
             name: 'core',

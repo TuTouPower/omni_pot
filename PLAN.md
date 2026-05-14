@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-功能与 UI 重写在代码层已基本完成。E2E 测试方向已统一为 Playwright，基础设施待落地。
+功能与 UI 重写在代码层已基本完成。E2E 测试方向已统一为 Playwright，基础设施已初步落地，后续继续补齐完整用户路径 spec。
 
 ---
 
@@ -17,13 +17,14 @@
 
 ### P0: Playwright E2E 基础设施落地
 
-- [ ] 安装 Playwright 依赖（`npm install`）
-- [ ] 实现 `tests/user_e2e/fixtures/electron_app.ts` — Electron 启动/停止 fixture
-- [ ] 实现 `tests/user_e2e/fixtures/app_fixture.ts` — AppFixture（多窗口 Page Object 封装）
-- [ ] 源码侧补齐 `data-testid`（见 `docs/test_user_e2e.md` 4.5 节清单）
-- [ ] 扩充 E2E HTTP 端点（见 `docs/test_user_e2e.md` 4.5 节表格）
-- [ ] 实现独立 userData 临时目录（环境变量传入 main 进程）
-- [ ] 迁移旧 Vitest + CDP E2E（`tests/user_e2e/01_all_critical_paths.test.ts`）至 Playwright 或删除
+- [x] 安装 Playwright 依赖（`npm install`）
+- [x] 实现 `tests/user_e2e/fixtures/electron_app.ts` — Electron 启动/停止 fixture
+- [x] 实现 `tests/user_e2e/fixtures/app_fixture.ts` / `e2e_api.ts` — AppFixture 与 E2E HTTP 封装（基础版）
+- [x] 源码侧补齐 smoke / 翻译 / 词典基础用例所需 `data-testid`
+- [ ] 继续补齐其余窗口 `data-testid`（见 `docs/test_user_e2e.md` 4.5 节清单）
+- [ ] 扩充全部 E2E HTTP 端点（已完成 `open-window` / `reset-config` / `clipboard`；其余见 `docs/test_user_e2e.md` 4.5 节表格）
+- [x] 实现独立 userData 临时目录（环境变量传入 main 进程）
+- [x] 删除旧 Vitest + CDP E2E 文件与 legacy 脚本（剩余关键路径由 P1/P2 Playwright spec 继续补齐）
 
 ### P1: P0 守护已知 bug 的 spec
 

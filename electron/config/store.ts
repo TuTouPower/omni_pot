@@ -12,6 +12,11 @@ interface PersistedShape extends Partial<AppConfig> {
 let config_path: string
 let data: PersistedShape = {}
 
+/** Get the effective userData directory (respects E2E override). */
+export function getUserDataDir(): string {
+    return process.env['OMNI_POT_USER_DATA'] || app.getPath('userData')
+}
+
 /** Map Electron locale to our app language code and default target language. */
 function resolveSystemLanguage(): string {
     const locale = (app.getLocale() ?? 'en').toLowerCase()
@@ -20,7 +25,8 @@ function resolveSystemLanguage(): string {
 }
 
 export function initConfigStore(): void {
-    const dir = app.getPath('userData')
+    // Allow E2E tests to specify a custom userData directory
+    const dir = getUserDataDir()
     config_path = join(dir, 'config.json')
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
 
@@ -32,6 +38,19 @@ export function initConfigStore(): void {
         }
     } else {
         data = {}
+    }
+
+    // E2E: inject preset config from environment variable
+    if (process.env['OMNI_POT_PRESET_CONFIG']) {
+        try {
+            const preset = JSON.parse(process.env['OMNI_POT_PRESET_CONFIG'])
+            data = { ...data, ...preset }
+        } catch { /* ignore bad JSON */ }
+    }
+
+    // E2E: force first-run state
+    if (process.env['OMNI_POT_FIRST_RUN'] === '1') {
+        data.__initialized = undefined
     }
 
     if (!data.__initialized) {

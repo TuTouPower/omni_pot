@@ -127,6 +127,7 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
                     onChange={(e) => setSourceText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={t('source_placeholder')}
+                    data-testid="source-input"
                     style={{
                         width: '100%',
                         fontSize: 13.5,
@@ -144,21 +145,21 @@ export function SourceArea({ onTranslate, inputRef }: SourceAreaProps): React.Re
             {/* Action bar */}
             <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px 8px' }}>
                 {detectedLanguage && (
-                    <span style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4 }}>
+                    <span data-testid="detected-lang" style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4 }}>
                         检测为 <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{detectedLanguage}</span>
                     </span>
                 )}
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title={t('delete_newline') || '去除换行'} onClick={handleDeleteNewline}>
+                <button className="ic-btn" title={t('delete_newline') || '去除换行'} data-testid="source-newline-btn" onClick={handleDeleteNewline}>
                     <Icons.Newline size={16} />
                 </button>
-                <button className="ic-btn" title={t('copy') || '复制原文'} onClick={handleCopy}>
+                <button className="ic-btn" title={t('copy') || '复制原文'} data-testid="source-copy-btn" onClick={handleCopy}>
                     <Icons.Copy size={16} />
                 </button>
-                <button className="ic-btn" title={t('clear') || '清空'} onClick={handleClear}>
+                <button className="ic-btn" title={t('clear') || '清空'} data-testid="source-clear-btn" onClick={handleClear}>
                     <Icons.Trash size={16} />
                 </button>
-                <button className="ic-btn brand" title={t('translate') || '翻译'} onClick={onTranslate} style={{ color: 'var(--brand-primary)' }}>
+                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={onTranslate} style={{ color: 'var(--brand-primary)' }}>
                     <Icons.Translate size={18} />
                 </button>
             </div>

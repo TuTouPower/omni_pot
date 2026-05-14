@@ -1,7 +1,7 @@
-import { app } from 'electron'
 import { join } from 'path'
 import { existsSync, mkdirSync } from 'fs'
 import Database from 'better-sqlite3'
+import { getUserDataDir } from '../config/store'
 
 export interface HistoryRecord {
     id: number
@@ -18,7 +18,7 @@ let db: Database.Database | undefined
 function get_db(): Database.Database {
     if (db) return db
 
-    const dir = app.getPath('userData')
+    const dir = getUserDataDir()
     const db_path = join(dir, 'history.db')
 
     db = new Database(db_path)
