@@ -1,7 +1,9 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useTranslateStore } from '../../stores/translate_store'
-import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
+import { language_name } from '../../i18n/language_names'
+import { LANGUAGE_CODES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
 
 const SOURCE_LANGUAGES = ['auto', ...LANGUAGE_CODES.filter((c) => c !== 'auto')]
@@ -14,6 +16,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
     testId: string
     optionTestIdPrefix: string
 }): React.ReactElement {
+    const { t } = useTranslation()
     const [open, setOpen] = React.useState(false)
     const ref = React.useRef<HTMLDivElement>(null)
 
@@ -47,7 +50,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                     fontFamily: 'inherit',
                 }}
             >
-                {LANGUAGE_NAMES[value] || value}
+                {language_name(t, value)}
                 <Icons.Chev size={12} style={{ color: 'var(--text-mute)', marginTop: 1 }} />
             </button>
             {open && (
@@ -91,7 +94,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                                 if (code !== value) e.currentTarget.style.background = 'transparent'
                             }}
                         >
-                            {LANGUAGE_NAMES[code as LanguageCode] || code}
+                            {language_name(t, code as LanguageCode)}
                         </div>
                     ))}
                 </div>
@@ -105,6 +108,7 @@ interface LanguageAreaProps {
 }
 
 export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement {
+    const { t } = useTranslation()
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
     const setSourceLanguage = useTranslateStore((s) => s.setSourceLanguage)
@@ -115,7 +119,7 @@ export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement 
             <div data-testid="lang-source">
                 <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} testId="lang-source-button" optionTestIdPrefix="lang-source-option" />
             </div>
-            <button className="ic-btn" style={{ color: 'var(--text)' }} title="交换语言" data-testid="lang-swap" onClick={onSwap}>
+            <button className="ic-btn" style={{ color: 'var(--text)' }} title={t('swap_languages')} data-testid="lang-swap" onClick={onSwap}>
                 <Icons.Swap size={18} />
             </button>
             <div data-testid="lang-target">

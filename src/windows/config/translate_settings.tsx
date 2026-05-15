@@ -1,18 +1,21 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
-import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
+import { language_options } from '../../i18n/language_names'
+import { LANGUAGE_CODES } from '@shared/types/language'
 import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect } from './config_components'
 
 const ALL_LANGUAGES = LANGUAGE_CODES
 const TARGET_LANGUAGES = LANGUAGE_CODES.filter((c) => c !== 'auto')
 
-const AUTO_COPY_OPTIONS = [
-    { value: 'disable' as const, label: '关闭' },
-    { value: 'source' as const, label: '源文本' },
-    { value: 'target' as const, label: '第一个译文' },
-    { value: 'source_target' as const, label: '源 + 译文' },
-]
+const AUTO_COPY_VALUES = ['disable', 'source', 'target', 'source_target'] as const
+
+const AUTO_COPY_LABEL_KEYS: Record<typeof AUTO_COPY_VALUES[number], string> = {
+    disable: 'translate_settings.auto_copy_disable',
+    source: 'translate_settings.auto_copy_source',
+    target: 'translate_settings.auto_copy_target',
+    source_target: 'translate_settings.auto_copy_both',
+}
 
 const DETECT_ENGINES = [
     { value: 'bing', label: 'Bing' },
@@ -38,8 +41,9 @@ export default function TranslatePage(): React.ReactElement {
     const [hideLanguage, setHideLanguage] = useConfig('hide_language')
     const [rememberWindowSize, setRememberWindowSize] = useConfig('translate_remember_window_size')
 
-    const allLangOpts = ALL_LANGUAGES.map((code) => ({ value: code, label: LANGUAGE_NAMES[code] }))
-    const targetLangOpts = TARGET_LANGUAGES.map((code) => ({ value: code, label: LANGUAGE_NAMES[code] }))
+    const allLangOpts = language_options(t, ALL_LANGUAGES)
+    const targetLangOpts = language_options(t, TARGET_LANGUAGES)
+    const autoCopyOpts = AUTO_COPY_VALUES.map((value) => ({ value, label: t(AUTO_COPY_LABEL_KEYS[value]) }))
 
     return (
         <div className="stack gap-12">
@@ -60,7 +64,7 @@ export default function TranslatePage(): React.ReactElement {
 
             <ConfigCard title={t('translate_settings.behavior') || '行为'}>
                 <ConfigRow label={t('translate_settings.auto_copy') || '自动复制'}>
-                    <ConfigSelect value={autoCopy as 'disable' | 'source' | 'target' | 'source_target'} onChange={setAutoCopy as (v: 'disable' | 'source' | 'target' | 'source_target') => void} options={AUTO_COPY_OPTIONS} testId="cfg-translate_auto_copy" style={{ minWidth: 180 }} />
+                    <ConfigSelect value={autoCopy as 'disable' | 'source' | 'target' | 'source_target'} onChange={setAutoCopy as (v: 'disable' | 'source' | 'target' | 'source_target') => void} options={autoCopyOpts} testId="cfg-translate_auto_copy" style={{ minWidth: 180 }} />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.incremental_translate') || '增量翻译'} sub="新选取的文本追加到现有源文本而非替换">
                     <ConfigSwitch on={incremental} onChange={setIncremental} testId="cfg-incremental_translate" />

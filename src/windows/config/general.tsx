@@ -9,16 +9,9 @@ const TRAY_CLICK_OPTIONS = [
     { value: 'none', label: 'None' },
 ]
 
-const THEME_OPTIONS = [
-    { value: 'system' as const, label: '跟随系统' },
-    { value: 'light' as const, label: '浅色' },
-    { value: 'dark' as const, label: '深色' },
-]
+const THEME_VALUES = ['system', 'light', 'dark'] as const
 
-const LANGUAGE_OPTIONS = [
-    { value: 'zh_cn' as const, label: '简体中文' },
-    { value: 'en' as const, label: 'English' },
-]
+const LANGUAGE_VALUES = ['zh_cn', 'en'] as const
 
 const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${s}px` }))
 
@@ -59,26 +52,31 @@ export default function GeneralPage(): React.ReactElement {
     const [proxyHost, setProxyHost] = useConfig('proxy_host')
     const [proxyPort, setProxyPort] = useConfig('proxy_port')
     const [autoStart, setAutoStart] = useConfig('auto_start')
+    const themeOptions = THEME_VALUES.map((value) => ({ value, label: t(`general.theme_${value}`) }))
+    const languageOptions = LANGUAGE_VALUES.map((value) => ({ value, label: t(`general.app_language_${value}`) }))
+    const fontOptions = FONT_OPTIONS.map((option) => option.value === 'default'
+        ? { ...option, label: t('general.font_default') }
+        : option)
 
     return (
         <div className="stack gap-12">
             <ConfigCard title={t('general.app_settings') || '应用'}>
-                <ConfigRow label={t('general.auto_start') || '开机自启'} sub="登录系统后在后台启动 omni_pot">
+                <ConfigRow label={t('general.auto_start') || '开机自启'} sub={t('general.auto_start_sub')}>
                     <ConfigSwitch on={autoStart as boolean} onChange={setAutoStart} testId="cfg-auto_start" />
                 </ConfigRow>
                 <ConfigRow label={t('general.check_update') || '启动时检查更新'}>
                     <ConfigSwitch on={checkUpdate as boolean} onChange={setCheckUpdate} testId="cfg-check_update" />
                 </ConfigRow>
-                <ConfigRow label="界面语言">
+                <ConfigRow label={t('general.app_language') || '界面语言'}>
                     <ConfigSelect
                         value={appLanguage as 'zh_cn' | 'en'}
                         onChange={setAppLanguage as (v: 'zh_cn' | 'en') => void}
-                        options={LANGUAGE_OPTIONS}
+                        options={languageOptions}
                         testId="cfg-app_language"
                         style={{ minWidth: 160 }}
                     />
                 </ConfigRow>
-                <ConfigRow label={t('general.server_port') || '本地 API 端口'} sub="供外部脚本调用，修改后需重启">
+                <ConfigRow label={t('general.server_port') || '本地 API 端口'} sub={t('general.server_port_sub')}>
                     <ConfigField
                         mono
                         defaultValue={String(serverPort)}
@@ -94,7 +92,7 @@ export default function GeneralPage(): React.ReactElement {
                     <ConfigSelect
                         value={appTheme as 'system' | 'light' | 'dark'}
                         onChange={setAppTheme as (v: 'system' | 'light' | 'dark') => void}
-                        options={THEME_OPTIONS}
+                        options={themeOptions}
                         testId="cfg-app_theme"
                         style={{ minWidth: 160 }}
                     />
@@ -104,7 +102,7 @@ export default function GeneralPage(): React.ReactElement {
                         <ConfigSelect
                             value={appFont as string}
                             onChange={setAppFont}
-                            options={FONT_OPTIONS}
+                            options={fontOptions}
                             testId="cfg-app_font"
                             style={{ minWidth: 140 }}
                         />
@@ -126,14 +124,14 @@ export default function GeneralPage(): React.ReactElement {
                         color: 'var(--text-dim)',
                     }}
                 >
-                    Preview: Hello World 你好世界 こんにちは 안녕하세요
+                    {t('preview')}: Hello World 你好世界 こんにちは 안녕하세요
                 </div>
                 {IS_MAC && (
-                    <ConfigRow label={t('general.transparent') || '透明背景'} sub="毛玻璃效果，部分平台可能影响性能">
+                    <ConfigRow label={t('general.transparent') || '透明背景'} sub={t('general.transparent_sub')}>
                         <ConfigSwitch on={transparent as boolean} onChange={setTransparent} testId="cfg-transparent" />
                     </ConfigRow>
                 )}
-                <ConfigRow label={t('general.dev_mode') || '开发者模式'} sub="启用 F12 开发者工具">
+                <ConfigRow label={t('general.dev_mode') || '开发者模式'} sub={t('general.dev_mode_sub')}>
                     <ConfigSwitch on={devMode as boolean} onChange={setDevMode} testId="cfg-dev_mode" />
                 </ConfigRow>
             </ConfigCard>
@@ -151,7 +149,7 @@ export default function GeneralPage(): React.ReactElement {
                     />
                     <ConfigField
                         mono
-                        placeholder="端口"
+                        placeholder={t('general.proxy_port')}
                         defaultValue={proxyPort as string}
                         onChange={setProxyPort}
                         testId="cfg-proxy_port"

@@ -974,7 +974,7 @@ export async function getSelectedText(): Promise<string>
 - react-i18next，多语言 JSON locale 文件
 - `app_language` 变更时绑定 config store，调用 `i18n.changeLanguage()`，
   所有 `useTranslation()` 组件即时重渲染
-- 语言显示要求中文可读文本（如"自动检测"、"简体中文"、"检测为英文"）
+- 语言名、检测标签、更新器操作和系统托盘菜单跟随当前界面语言；缺失的 locale key 回退到默认英文
 
 ---
 

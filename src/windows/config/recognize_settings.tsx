@@ -1,10 +1,11 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
-import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
+import { language_options } from '../../i18n/language_names'
+import { LANGUAGE_CODES } from '@shared/types/language'
 import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect } from './config_components'
 
-const ALL_LANGUAGES = LANGUAGE_CODES.map((code) => ({ value: code, label: LANGUAGE_NAMES[code] }))
+const ALL_LANGUAGES = LANGUAGE_CODES
 
 export default function RecognizeSettings(): React.ReactElement {
     const { t } = useTranslation()
@@ -13,12 +14,13 @@ export default function RecognizeSettings(): React.ReactElement {
     const [autoCopy, setAutoCopy] = useConfig('recognize_auto_copy')
     const [closeOnBlur, setCloseOnBlur] = useConfig('recognize_close_on_blur')
     const [hideWindow, setHideWindow] = useConfig('recognize_hide_window')
+    const allLangOpts = language_options(t, ALL_LANGUAGES)
 
     return (
         <div className="stack gap-12">
             <ConfigCard title={t('recognize.title') || '识别'}>
                 <ConfigRow label={t('recognize.language') || '默认识别语言'}>
-                    <ConfigSelect value={language} onChange={setLanguage} options={ALL_LANGUAGES} testId="cfg-recognize_language" style={{ minWidth: 180 }} />
+                    <ConfigSelect value={language} onChange={setLanguage} options={allLangOpts} testId="cfg-recognize_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
                 <ConfigRow label={t('recognize.delete_newline') || '自动去除换行'}>
                     <ConfigSwitch on={deleteNewline} onChange={setDeleteNewline} testId="cfg-recognize_delete_newline" />

@@ -138,6 +138,10 @@ export class E2eApi {
         return this.request('POST', '/e2e/tray-action', { action }) as Promise<{ success: boolean; action?: string; error?: string }>
     }
 
+    async trayMenu(): Promise<{ success: boolean; labels: string[]; error?: string }> {
+        return this.request('GET', '/e2e/tray-menu') as Promise<{ success: boolean; labels: string[]; error?: string }>
+    }
+
     async mockUpdate(release: Partial<{
         version: string
         current_version: string

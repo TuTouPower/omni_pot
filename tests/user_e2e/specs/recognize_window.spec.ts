@@ -4,6 +4,7 @@ import { AppFixture } from '../fixtures/app_fixture'
 import { RecognizePage } from '../pages/recognize_page'
 
 const recognize_config = {
+    app_language: 'zh_cn',
     recognize_service_list: ['system@default', 'tesseract@default'],
     service_instances: {
         'system@default': { serviceKey: 'system', config: {} },

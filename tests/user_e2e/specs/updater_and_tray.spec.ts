@@ -42,7 +42,7 @@ test.describe('@ui updater and tray', () => {
                 }],
             })
 
-            await expect(updater.titleMode()).toContainText('更新')
+            await expect(updater.titleMode()).toContainText('Update')
             await expect(updater.body()).toContainText('1.0.0 → 2.0.0')
             await expect(updater.body()).toContainText('2026-05-15')
             await expect(updater.changelog()).toContainText('Added updater and tray coverage')
