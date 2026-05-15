@@ -8,7 +8,7 @@ import {
     stopClipboardMonitor,
     isClipboardMonitoring
 } from '../clipboard'
-import { getConfig } from '../config/store'
+import { getConfig, setConfig } from '../config/store'
 import { get_translate_window_options } from '../windows/translate_options'
 
 let tray: Tray | null = null
@@ -51,6 +51,9 @@ export function trigger_tray_click(): boolean {
     open_config_window()
     return true
   }
+  if (action === 'none') {
+    return true
+  }
   return false
 }
 
@@ -62,8 +65,10 @@ export function trigger_tray_action(action: string): boolean {
     case 'clipboard_monitor':
       if (isClipboardMonitoring()) {
         stopClipboardMonitor()
+        setConfig('clipboard_monitor', false)
       } else if (windowManager) {
         startClipboardMonitor(windowManager)
+        setConfig('clipboard_monitor', true)
       }
       rebuildMenu()
       return true

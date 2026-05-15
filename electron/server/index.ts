@@ -542,6 +542,17 @@ function handle_tray_action(
     })
 }
 
+function parse_mock_update_assets(value: unknown): Array<{ name: string; url: string }> {
+    if (!Array.isArray(value)) return []
+    return value.flatMap((asset) => {
+        if (!asset || typeof asset !== 'object' || Array.isArray(asset)) return []
+        const record = asset as Record<string, unknown>
+        return typeof record.name === 'string' && typeof record.url === 'string'
+            ? [{ name: record.name, url: record.url }]
+            : []
+    })
+}
+
 function handle_mock_update(
     mgr: WindowManager,
     req: http.IncomingMessage,
@@ -559,7 +570,7 @@ function handle_mock_update(
                 body: typeof body.body === 'string' ? body.body : 'E2E changelog',
                 html_url: typeof body.html_url === 'string' ? body.html_url : '',
                 published_at: typeof body.published_at === 'string' ? body.published_at : '1970-01-01T00:00:00.000Z',
-                assets: [] as Array<{ name: string; url: string }>,
+                assets: parse_mock_update_assets(body.assets),
             }
 
             mgr.focusOrCreate(WindowLabel.UPDATER, {
