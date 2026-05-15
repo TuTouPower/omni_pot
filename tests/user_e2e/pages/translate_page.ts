@@ -315,13 +315,34 @@ export class TranslatePage {
     }
 
     async drag_result_card(sourceKey: string, targetKey: string): Promise<void> {
-        const source_box = await this.resultDragHandle(sourceKey).boundingBox()
-        const target_box = await this.resultCard(targetKey).boundingBox()
+        const source_handle = this.resultDragHandle(sourceKey)
+        const target_card = this.resultCard(targetKey)
+        await source_handle.scrollIntoViewIfNeeded()
+        await target_card.scrollIntoViewIfNeeded()
+        await source_handle.scrollIntoViewIfNeeded()
+
+        const source_box = await source_handle.boundingBox()
+        const target_box = await target_card.boundingBox()
         if (!source_box || !target_box) throw new Error('Result card drag target is not visible')
 
-        await this.page.mouse.move(source_box.x + source_box.width / 2, source_box.y + source_box.height / 2)
+        const viewport = this.page.viewportSize()
+        if (viewport && (
+            source_box.y < 0
+            || source_box.y + source_box.height > viewport.height
+            || target_box.y < 0
+            || target_box.y + target_box.height > viewport.height
+        )) {
+            throw new Error('Result card drag source and target must be visible together')
+        }
+
+        const source_x = source_box.x + source_box.width / 2
+        const source_y = source_box.y + source_box.height / 2
+        const target_y = target_box.y + target_box.height / 2
+
+        await this.page.mouse.move(source_x, source_y)
         await this.page.mouse.down()
-        await this.page.mouse.move(target_box.x + target_box.width / 2, target_box.y + target_box.height / 2, { steps: 12 })
+        await this.page.mouse.move(source_x, source_y + Math.sign(target_y - source_y) * 8)
+        await this.page.mouse.move(source_x, target_y, { steps: 16 })
         await this.page.mouse.up()
     }
 
