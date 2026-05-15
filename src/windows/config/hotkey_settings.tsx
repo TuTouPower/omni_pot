@@ -37,11 +37,12 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
     const [currentValue, setCurrentValue] = useConfig(configKey)
     const [capturing, setCapturing] = useState(false)
     const [tempValue, setTempValue] = useState('')
-    const inputRef = useRef<HTMLInputElement>(null)
+    const [status, setStatus] = useState('')
+    const fieldRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        if (capturing && inputRef.current) {
-            inputRef.current.focus()
+        if (capturing && fieldRef.current) {
+            fieldRef.current.focus()
         }
     }, [capturing])
 
@@ -62,11 +63,20 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
 
     const handleConfirm = async (): Promise<void> => {
         if (tempValue) {
-            await window.electronAPI.hotkey.register(configKey, tempValue)
-            setCurrentValue(tempValue)
+            const success = await window.electronAPI.hotkey.register(configKey, tempValue)
+            if (success) {
+                if (currentValue && currentValue !== tempValue) {
+                    await window.electronAPI.hotkey.unregister(configKey, currentValue)
+                }
+                setCurrentValue(tempValue)
+                setStatus('绑定成功')
+            } else {
+                setStatus('绑定失败')
+            }
         } else {
             await window.electronAPI.hotkey.unregister(configKey, currentValue)
             setCurrentValue('')
+            setStatus('已清除')
         }
         setCapturing(false)
         setTempValue('')
@@ -84,7 +94,8 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
             <div style={{ display: 'flex', gap: 6 }}>
                 <div
                     className="field"
-                    ref={inputRef}
+                    ref={fieldRef}
+                    data-testid={`cfg-${configKey}-field`}
                     style={{ minWidth: 200, gap: 4 }}
                     tabIndex={0}
                     onKeyDown={capturing ? handleKeyDown : undefined}
@@ -101,15 +112,16 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
                     )}
                 </div>
                 {!capturing ? (
-                    <button className="btn sm" onClick={() => { setCapturing(true); setTempValue('') }}>
+                    <button className="btn sm" data-testid={`cfg-${configKey}-bind`} onClick={() => { setCapturing(true); setTempValue(''); setStatus('') }}>
                         {currentValue ? <><Icons.Check size={12} /> {t('ui.set') || '已绑定'}</> : (t('ui.set') || '绑定')}
                     </button>
                 ) : (
                     <>
-                        <button className="btn sm primary" onClick={handleConfirm}>{t('ui.ok') || '确认'}</button>
-                        <button className="btn sm ghost" onClick={handleCancel}>{t('ui.cancel') || '取消'}</button>
+                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={handleConfirm}>{t('ui.ok') || '确认'}</button>
+                        <button className="btn sm ghost" data-testid={`cfg-${configKey}-cancel`} onClick={handleCancel}>{t('ui.cancel') || '取消'}</button>
                     </>
                 )}
+                {status && <span className="hint" data-testid={`cfg-${configKey}-status`}>{status}</span>}
             </div>
         </ConfigRow>
     )

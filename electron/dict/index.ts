@@ -61,8 +61,9 @@ export function import_from_text(text: string): number {
 
     let count = 0
     const insert_many = database.transaction(() => {
-        for (const line of lines) {
-            if (line.startsWith('#') || !line.trim()) continue
+        for (const raw_line of lines) {
+            const line = raw_line.trim()
+            if (line.startsWith('#') || !line) continue
             const match = CEDICT_LINE_RE.exec(line)
             if (!match) continue
             const [, traditional, simplified, pinyin, english] = match
@@ -79,15 +80,14 @@ export function import_from_text(text: string): number {
 }
 
 function find_bundled_cedict(): string | null {
-    // Production: process.resourcesPath/data/dict/cedict.txt.gz
-    const prod_path = join(process.resourcesPath, 'data', 'dict', 'cedict.txt.gz')
-    if (existsSync(prod_path)) return prod_path
+    const candidates = [
+        join(process.resourcesPath, 'data', 'dict', 'cedict.txt.gz'),
+        join(app.getAppPath(), 'data', 'dict', 'cedict.txt.gz'),
+        join(app.getAppPath(), '..', '..', 'data', 'dict', 'cedict.txt.gz'),
+        join(process.cwd(), 'data', 'dict', 'cedict.txt.gz')
+    ]
 
-    // Development: project root data/dict/cedict.txt.gz
-    const dev_path = join(app.getAppPath(), 'data', 'dict', 'cedict.txt.gz')
-    if (existsSync(dev_path)) return dev_path
-
-    return null
+    return candidates.find((path) => existsSync(path)) ?? null
 }
 
 function read_gzip_file(path: string): Promise<string> {

@@ -19,6 +19,9 @@ export interface ElectronAPI {
     setAlwaysOnTop(flag: boolean): Promise<void>
     getLabel(): Promise<string>
   }
+  shell: {
+    openExternal(url: string): Promise<boolean>
+  }
   config: {
     get(key: ConfigKey): Promise<unknown>
     set(key: ConfigKey, value: unknown): Promise<void>

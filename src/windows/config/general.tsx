@@ -15,6 +15,11 @@ const THEME_OPTIONS = [
     { value: 'dark' as const, label: '深色' },
 ]
 
+const LANGUAGE_OPTIONS = [
+    { value: 'zh_cn' as const, label: '简体中文' },
+    { value: 'en' as const, label: 'English' },
+]
+
 const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${s}px` }))
 
 const IS_MAC = navigator.platform.toLowerCase().includes('mac')
@@ -42,6 +47,7 @@ const FONT_OPTIONS = [
 
 export default function GeneralPage(): React.ReactElement {
     const { t } = useTranslation()
+    const [appLanguage, setAppLanguage] = useConfig('app_language')
     const [appTheme, setAppTheme] = useConfig('app_theme')
     const [appFont, setAppFont] = useConfig('app_font')
     const [fontSize, setFontSize] = useConfig('app_font_size')
@@ -62,6 +68,15 @@ export default function GeneralPage(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label={t('general.check_update') || '启动时检查更新'}>
                     <ConfigSwitch on={checkUpdate as boolean} onChange={setCheckUpdate} testId="cfg-check_update" />
+                </ConfigRow>
+                <ConfigRow label="界面语言">
+                    <ConfigSelect
+                        value={appLanguage as 'zh_cn' | 'en'}
+                        onChange={setAppLanguage as (v: 'zh_cn' | 'en') => void}
+                        options={LANGUAGE_OPTIONS}
+                        testId="cfg-app_language"
+                        style={{ minWidth: 160 }}
+                    />
                 </ConfigRow>
                 <ConfigRow label={t('general.server_port') || '本地 API 端口'} sub="供外部脚本调用，修改后需重启">
                     <ConfigField

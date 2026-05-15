@@ -4,8 +4,15 @@ import { Icons } from '../../components/icons'
 import { useDictStore } from '../../stores/dict_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
+import { collectionServiceRegistry } from '../../services/index'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
+
+function dict_result_to_text(result: DictResult): string {
+    return result.definitions
+        .map((d) => `${d.partOfSpeech} ${d.meanings.join('; ')}`)
+        .join('\n')
+}
 
 function DictResultCard({ instanceKey, result }: { instanceKey: string; result: DictResult | null }): React.ReactElement | null {
     const { t } = useTranslation()
@@ -24,10 +31,8 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
     }
 
     const handleCopy = () => {
-        const text = result.definitions
-            .map((d) => `${d.partOfSpeech} ${d.meanings.join('; ')}`)
-            .join('\n')
-        navigator.clipboard.writeText(text)
+        const text = dict_result_to_text(result)
+        void navigator.clipboard.writeText(text).catch(() => undefined)
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
     }
@@ -36,12 +41,13 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
         <>
             {/* Definitions card */}
             <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
-                <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
+                <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{service.name}</div>
+                <div data-testid="dict-definitions" className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
                     {t('dict.definitions') || '释义'}
                 </div>
                 <div className="stack" style={{ gap: 12 }}>
                     {result.definitions.map((def, i) => (
-                        <div key={i} style={{ display: 'flex', gap: 10 }}>
+                        <div key={i} data-testid="dict-definition" style={{ display: 'flex', gap: 10 }}>
                             <div style={{ width: 22, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 11, paddingTop: 3 }}>
                                 {String(i + 1).padStart(2, '0')}
                             </div>
@@ -55,7 +61,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
                     ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                    <button className="ic-btn" title={copied ? '已复制' : '复制'} onClick={handleCopy}>
+                    <button className="ic-btn" data-testid="dict-copy-btn" title={copied ? '已复制' : '复制'} onClick={handleCopy}>
                         <Icons.Copy size={14} />
                     </button>
                 </div>
@@ -63,13 +69,13 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 
             {/* Pronunciations card */}
             {result.pronunciations.length > 0 && (
-                <div className="card" style={{ padding: '12px 14px' }}>
+                <div className="card" data-testid="dict-pronunciations" style={{ padding: '12px 14px' }}>
                     <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
                         {t('dict.pronunciations') || '发音'}
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                         {result.pronunciations.map((p, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div key={i} data-testid="dict-pronunciation" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 {p.region && <span className="chip plain mono" style={{ fontSize: 10 }}>{p.region}</span>}
                                 <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>{p.phonetic}</span>
                             </div>
@@ -80,13 +86,13 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 
             {/* Examples card */}
             {result.examples.length > 0 && (
-                <div className="card" style={{ padding: '12px 14px' }}>
+                <div className="card" data-testid="dict-examples" style={{ padding: '12px 14px' }}>
                     <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
                         {t('dict.examples') || '例句'}
                     </div>
                     <div className="stack" style={{ gap: 10 }}>
                         {result.examples.slice(0, 3).map((ex, i) => (
-                            <div key={i} style={{ borderLeft: '2px solid var(--line-strong)', paddingLeft: 10 }}>
+                            <div key={i} data-testid="dict-example" style={{ borderLeft: '2px solid var(--line-strong)', paddingLeft: 10 }}>
                                 <div style={{ fontSize: 13, lineHeight: 1.55 }}>{ex.source}</div>
                             </div>
                         ))}
@@ -108,11 +114,13 @@ export default function DictWindow(): React.ReactElement {
     const clearResults = useDictStore((s) => s.clearResults)
 
     const serviceList = useConfigStore((s) => s.config.dictionary_service_list)
+    const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
     const [importing, setImporting] = useState(false)
+    const [collected, setCollected] = useState(false)
 
     useEffect(() => {
         window.electronAPI.dict.check().then(({ ready }) => setDictReady(ready))
@@ -132,10 +140,13 @@ export default function DictWindow(): React.ReactElement {
         if (!trimmed) return
 
         setWord(trimmed)
+        setCollected(false)
         setIsLoading(true)
         clearResults()
 
         const lookupWord = trimmed.split(' ')[0]
+        const source_language = /^[a-zA-Z]/.test(lookupWord) ? 'en' : 'zh_cn'
+        const target_language = source_language === 'en' ? 'zh_cn' : 'en'
 
         const promises = serviceList.map(async (instanceKey) => {
             const serviceKey = getServiceKey(instanceKey)
@@ -146,7 +157,7 @@ export default function DictWindow(): React.ReactElement {
             }
             const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
             try {
-                const result = await service.translate(lookupWord, 'en', 'zh_cn', instanceConfig)
+                const result = await service.translate(lookupWord, source_language, target_language, instanceConfig)
                 if (typeof result === 'object' && result.type === 'dict') {
                     setResult(instanceKey, result)
                 } else {
@@ -186,12 +197,25 @@ export default function DictWindow(): React.ReactElement {
         window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop)
     }, [alwaysOnTop])
 
-    const handleManualLookup = useCallback(() => {
-        if (word.trim()) handleLookup(word)
-    }, [word, handleLookup])
-
-    // Get first result for the header display
     const firstResult = serviceList.map((ik) => results[ik]).find((r) => r !== undefined && r !== null) as DictResult | null | undefined
+
+    const handleCollect = useCallback(async () => {
+        const trimmed_word = word.trim()
+        if (!trimmed_word) return
+
+        if (firstResult) {
+            const result_text = dict_result_to_text(firstResult)
+            for (const collInstanceKey of collectionServiceList) {
+                const collKey = getServiceKey(collInstanceKey)
+                const service = collectionServiceRegistry.get(collKey)
+                if (!service) continue
+                const instance_config = serviceInstances[collInstanceKey]?.config ?? {}
+                await service.send(trimmed_word, 'auto', 'zh_cn', result_text, instance_config).catch(() => undefined)
+            }
+        }
+
+        setCollected(true)
+    }, [word, firstResult, collectionServiceList, serviceInstances])
 
     return (
         <div className="op-window">
@@ -223,26 +247,18 @@ export default function DictWindow(): React.ReactElement {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                                <input
+                                <div
                                     data-testid="dict-word"
-                                    value={word}
-                                    onChange={(e) => setWord(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') handleManualLookup() }}
-                                    placeholder={t('dict.source_placeholder')}
                                     style={{
                                         fontSize: 24,
                                         fontWeight: 600,
                                         letterSpacing: '-0.01em',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        outline: 'none',
                                         color: 'var(--text)',
-                                        fontFamily: 'inherit',
-                                        padding: 0,
-                                        width: '100%',
-                                        maxWidth: 300,
+                                        minHeight: 30,
                                     }}
-                                />
+                                >
+                                    {word || t('dict.source_placeholder')}
+                                </div>
                             </div>
                             {firstResult && firstResult.pronunciations.length > 0 && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
@@ -261,6 +277,16 @@ export default function DictWindow(): React.ReactElement {
                                 </div>
                             )}
                         </div>
+                        <button
+                            className="ic-btn"
+                            data-testid="dict-collect-btn"
+                            title="收藏"
+                            aria-pressed={collected}
+                            onClick={handleCollect}
+                            style={{ color: collected ? 'var(--brand-primary)' : undefined }}
+                        >
+                            <Icons.Heart size={16} fill={collected} />
+                        </button>
                     </div>
                 </div>
 

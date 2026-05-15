@@ -258,6 +258,109 @@ export class TranslatePage {
         return this.page.locator('[data-result-key]')
     }
 
+    resultAction(instanceKey: string, testId: string): Locator {
+        return this.resultCard(instanceKey).getByTestId(testId)
+    }
+
+    resultDragHandle(instanceKey: string): Locator {
+        return this.resultAction(instanceKey, 'result-drag')
+    }
+
+    resultBody(instanceKey: string): Locator {
+        return this.resultCard(instanceKey).getByTestId('result-body')
+    }
+
+    resultError(instanceKey: string): Locator {
+        return this.resultCard(instanceKey).getByTestId('result-error')
+    }
+
+    resultRetryButton(instanceKey: string): Locator {
+        return this.resultAction(instanceKey, 'result-retry')
+    }
+
+    async result_action_order(instanceKey: string): Promise<string[]> {
+        const expected = new Set(['result-tts', 'result-copy', 'result-collect', 'result-collapse'])
+        return this.resultCard(instanceKey).locator('[data-testid]').evaluateAll((elements, ids) => {
+            const expected_ids = new Set(ids as string[])
+            return elements
+                .map((element) => element.getAttribute('data-testid') ?? '')
+                .filter((id) => expected_ids.has(id))
+        }, Array.from(expected))
+    }
+
+    async result_card_keys(): Promise<string[]> {
+        return this.resultCards().evaluateAll((elements) => elements
+            .map((element) => element.getAttribute('data-result-key') ?? '')
+            .filter(Boolean))
+    }
+
+    clickResultCopy(instanceKey: string): Promise<void> {
+        return this.resultAction(instanceKey, 'result-copy').click()
+    }
+
+    clickResultCollect(instanceKey: string): Promise<void> {
+        return this.resultAction(instanceKey, 'result-collect').click()
+    }
+
+    clickResultCollapse(instanceKey: string): Promise<void> {
+        return this.resultAction(instanceKey, 'result-collapse').click()
+    }
+
+    clickResultRetry(instanceKey: string): Promise<void> {
+        return this.resultRetryButton(instanceKey).click()
+    }
+
+    async drag_result_card(sourceKey: string, targetKey: string): Promise<void> {
+        const source_box = await this.resultDragHandle(sourceKey).boundingBox()
+        const target_box = await this.resultCard(targetKey).boundingBox()
+        if (!source_box || !target_box) throw new Error('Result card drag target is not visible')
+
+        await this.page.mouse.move(source_box.x + source_box.width / 2, source_box.y + source_box.height / 2)
+        await this.page.mouse.down()
+        await this.page.mouse.move(target_box.x + target_box.width / 2, target_box.y + target_box.height / 2, { steps: 12 })
+        await this.page.mouse.up()
+    }
+
+    async fail_then_succeed_lingva_translation_once(translation: string): Promise<void> {
+        let request_count = 0
+        await this.page.route('https://lingva.lunar.icu/api/v1/*/zh/**', async (route) => {
+            request_count += 1
+            if (request_count === 1) {
+                await route.fulfill({
+                    status: 500,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ error: 'e2e translation failure' }),
+                })
+                return
+            }
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ translation }),
+            })
+        }, { times: 2 })
+    }
+
+    async fulfill_lingva_translation_once(translation: string): Promise<void> {
+        await this.page.route('https://lingva.lunar.icu/api/v1/*/zh/**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ translation }),
+            })
+        }, { times: 1 })
+    }
+
+    async fulfill_free_dictionary_once(result: unknown): Promise<void> {
+        await this.page.route('https://api.dictionaryapi.dev/api/v2/entries/en/*', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(result),
+            })
+        }, { times: 1 })
+    }
+
     async waitForNoDetectedLanguage(duration = 2_000): Promise<void> {
         const end = Date.now() + duration
         while (Date.now() < end) {
@@ -302,5 +405,13 @@ export class TranslatePage {
     async hasResultError(instanceKey: string): Promise<boolean> {
         const card = this.resultCard(instanceKey)
         return card.locator('[data-result-error]').count().then(c => c > 0)
+    }
+
+    async documentTheme(): Promise<string | undefined> {
+        return this.page.evaluate(() => document.documentElement.dataset.theme)
+    }
+
+    async documentHasDarkClass(): Promise<boolean> {
+        return this.page.evaluate(() => document.documentElement.classList.contains('dark'))
     }
 }
