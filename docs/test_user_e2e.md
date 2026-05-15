@@ -97,7 +97,8 @@ tests/user_e2e/
 import { _electron as electron, type ElectronApplication } from 'playwright'
 
 interface AppOptions {
-  userDataDir?: string         // 独立 userData 临时目录，保证测试间隔离
+  userDataDir?: string         // 复用既有 userData；未传时创建独立临时目录
+  cleanupUserDataDir?: boolean // closeApp 时是否清理 userData
   config?: Partial<AppConfig>  // 启动前预写入的 config.json
   firstRun?: boolean           // 模拟首次运行（空 config）
 }
@@ -106,6 +107,7 @@ interface LaunchedApp {
   app: ElectronApplication
   httpPort: number             // E2E HTTP 端点端口
   userDataDir: string
+  cleanupUserDataDir: boolean
 }
 
 export async function launchApp(opts: AppOptions): Promise<LaunchedApp>
@@ -120,7 +122,7 @@ export async function closeApp(launched: LaunchedApp): Promise<void>
 - 每个测试独立随机 `httpPort`、**独立 userData 临时目录** —— 测试间隔离。
 - 环境变量把 `userDataDir`、预置 `config`、`firstRun`、`OMNI_POT_E2E=1`、
   `OMNI_POT_E2E_TOKEN` 传给 main 进程；E2E-only HTTP 端点必须带匹配 token。
-- 关闭时清理 userData 临时目录。
+- 关闭时默认清理 userData 临时目录；需要验证重启持久化时可复用同一 userData，最终停止时再清理。
 
 ### 4.2 多窗口 Page
 
@@ -244,7 +246,9 @@ class TranslatePage {
 - 配置：`config-wordmark`、`config-pin`、`config-version`、`config-route`、
   `config-nav-{page}`、`config-title`、`config-close`、各设置项
   `cfg-{key}`、服务项 `svc-item`、服务 tab `svc-tab-{listKey}`、`svc-add-btn`、
-  `svc-add-option`、`svc-delete`、`svc-move-up`、`svc-move-down`、`svc-drag-handle`
+  `svc-add-option`、`svc-delete`、`svc-move-up`、`svc-move-down`、`svc-drag-handle`、
+  历史 `history-row` / `history-clear` / `history-edit-*` / `history-prev` / `history-next`、
+  备份 `backup-create` / `backup-row` / `backup-restore-*`
 - 更新器：`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
 当前 UI 尚未实现的控件不预埋选择器：词典收藏 `dict-collect`、词典朗读 `dict-tts`、
@@ -448,7 +452,7 @@ class TranslatePage {
 
 - 备份目标切换 WebDAV / 本地；断言**无”阿里云盘”**选项（见 `docs/design/example_todo.md` A4）
 - 本地备份 → 生成 zip，列表列出
-- 恢复 → 配置被覆盖
+- 恢复 → 配置与历史记录被覆盖
 - 备份内容含配置与 CC-CEDICT 数据库
 
 ### 5.14 updater_and_tray.spec.ts — 更新器 + 托盘

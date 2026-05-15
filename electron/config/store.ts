@@ -12,6 +12,24 @@ interface PersistedShape extends Partial<AppConfig> {
 let config_path: string
 let data: PersistedShape = {}
 
+function to_persisted_shape(value: unknown): PersistedShape {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+    const config = value as Record<string, unknown>
+    if (Object.prototype.hasOwnProperty.call(config, '__proto__')
+        || Object.prototype.hasOwnProperty.call(config, 'constructor')
+        || Object.prototype.hasOwnProperty.call(config, 'prototype')) return {}
+    return config as PersistedShape
+}
+
+function read_config_from_disk(): PersistedShape {
+    if (!existsSync(config_path)) return {}
+    try {
+        return to_persisted_shape(JSON.parse(readFileSync(config_path, 'utf-8')) as unknown)
+    } catch {
+        return {}
+    }
+}
+
 /** Get the effective userData directory (respects E2E override). */
 export function getUserDataDir(): string {
     return process.env['OMNI_POT_USER_DATA'] || app.getPath('userData')
@@ -30,15 +48,7 @@ export function initConfigStore(): void {
     config_path = join(dir, 'config.json')
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
 
-    if (existsSync(config_path)) {
-        try {
-            data = JSON.parse(readFileSync(config_path, 'utf-8')) as PersistedShape
-        } catch {
-            data = {}
-        }
-    } else {
-        data = {}
-    }
+    data = read_config_from_disk()
 
     // E2E: inject preset config from environment variable
     if (process.env['OMNI_POT_PRESET_CONFIG']) {
@@ -110,10 +120,35 @@ export function getAllConfig(): AppConfig {
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
+function write_config_to_disk(): void {
+    writeFileSync(config_path, JSON.stringify(data, null, 2), 'utf-8')
+}
+
+function cancel_pending_save(): void {
+    if (saveTimer) {
+        clearTimeout(saveTimer)
+        saveTimer = null
+    }
+}
+
+export function flush_config(): void {
+    cancel_pending_save()
+    write_config_to_disk()
+}
+
+export function cancel_pending_config_save(): void {
+    cancel_pending_save()
+}
+
+export function reload_config_from_disk(): void {
+    cancel_pending_save()
+    data = read_config_from_disk()
+}
+
 function saveToDisk(): void {
-    if (saveTimer) clearTimeout(saveTimer)
+    cancel_pending_save()
     saveTimer = setTimeout(() => {
-        writeFileSync(config_path, JSON.stringify(data, null, 2), 'utf-8')
+        write_config_to_disk()
         saveTimer = null
     }, 300)
 }

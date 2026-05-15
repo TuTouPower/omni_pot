@@ -49,14 +49,18 @@ export interface LaunchedApp {
     httpPort: number
     userDataDir: string
     e2eToken: string
+    cleanupUserDataDir: boolean
 }
 
 export async function launchApp(opts: {
     config?: Record<string, unknown>
     firstRun?: boolean
+    userDataDir?: string
+    cleanupUserDataDir?: boolean
 } = {}): Promise<LaunchedApp> {
     const httpPort = await getFreePort()
-    const userDataDir = mkdtempSync(join(tmpdir(), 'omni-pot-e2e-'))
+    const userDataDir = opts.userDataDir ?? mkdtempSync(join(tmpdir(), 'omni-pot-e2e-'))
+    const cleanupUserDataDir = opts.cleanupUserDataDir ?? !opts.userDataDir
     const e2eToken = randomUUID()
 
     const env: Record<string, string> = {
@@ -68,8 +72,9 @@ export async function launchApp(opts: {
     }
     delete env.ELECTRON_RUN_AS_NODE
 
-    const presetConfig = opts.firstRun ? opts.config : { __initialized: true, ...opts.config }
-    if (presetConfig) {
+    const shouldPresetConfig = opts.firstRun || opts.config !== undefined || opts.userDataDir === undefined
+    const presetConfig = opts.firstRun ? opts.config : { __initialized: true, ...(opts.config ?? {}) }
+    if (shouldPresetConfig && presetConfig) {
         env.OMNI_POT_PRESET_CONFIG = JSON.stringify(presetConfig)
     }
     if (opts.firstRun) {
@@ -83,12 +88,14 @@ export async function launchApp(opts: {
 
     await waitForHttpServer(httpPort)
 
-    return { app, httpPort, userDataDir, e2eToken }
+    return { app, httpPort, userDataDir, e2eToken, cleanupUserDataDir }
 }
 
 export async function closeApp(launched: LaunchedApp): Promise<void> {
     await launched.app.close()
-    try {
-        rmSync(launched.userDataDir, { recursive: true, force: true })
-    } catch { /* ignore cleanup errors */ }
+    if (launched.cleanupUserDataDir) {
+        try {
+            rmSync(launched.userDataDir, { recursive: true, force: true })
+        } catch { /* ignore cleanup errors */ }
+    }
 }

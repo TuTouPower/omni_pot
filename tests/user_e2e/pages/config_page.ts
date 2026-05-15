@@ -1,4 +1,13 @@
 import type { Locator, Page } from '@playwright/test'
+import type { HistoryRecord } from '@shared/types/ipc'
+
+function exact_text(text: string): RegExp {
+    return new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
+}
+
+function css_attribute_value(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
 
 export class ConfigPage {
     constructor(private page: Page) {}
@@ -103,6 +112,100 @@ export class ConfigPage {
 
     addServiceButton(): Locator {
         return this.page.getByTestId('svc-add-btn')
+    }
+
+    historyRows(): Locator {
+        return this.page.getByTestId('history-row')
+    }
+
+    historyRowBySource(sourceText: string): Locator {
+        return this.historyRows().filter({ has: this.page.getByTestId('history-source').filter({ hasText: exact_text(sourceText) }) })
+    }
+
+    historyClearButton(): Locator {
+        return this.page.getByTestId('history-clear')
+    }
+
+    historyEmpty(): Locator {
+        return this.page.getByTestId('history-empty')
+    }
+
+    historyCount(): Locator {
+        return this.page.getByTestId('history-count')
+    }
+
+    historyPage(): Locator {
+        return this.page.getByTestId('history-page')
+    }
+
+    historyNextButton(): Locator {
+        return this.page.getByTestId('history-next')
+    }
+
+    historyPrevButton(): Locator {
+        return this.page.getByTestId('history-prev')
+    }
+
+    historyEditModal(): Locator {
+        return this.page.getByTestId('history-edit-modal')
+    }
+
+    historyEditSource(): Locator {
+        return this.page.getByTestId('history-edit-source')
+    }
+
+    historyEditTarget(): Locator {
+        return this.page.getByTestId('history-edit-target')
+    }
+
+    historyEditSaveButton(): Locator {
+        return this.page.getByTestId('history-edit-save')
+    }
+
+    backupCreateButton(): Locator {
+        return this.page.getByTestId('backup-create')
+    }
+
+    backupOpenRestoreButton(): Locator {
+        return this.page.getByTestId('backup-restore-open')
+    }
+
+    backupStatus(): Locator {
+        return this.page.getByTestId('backup-status')
+    }
+
+    backupContentHint(): Locator {
+        return this.page.getByTestId('backup-content-hint')
+    }
+
+    backupRows(): Locator {
+        return this.page.getByTestId('backup-row')
+    }
+
+    backupRestoreModal(): Locator {
+        return this.page.getByTestId('backup-restore-modal')
+    }
+
+    backupRestoreRows(): Locator {
+        return this.page.getByTestId('backup-restore-row')
+    }
+
+    backupRestoreAction(name: string): Locator {
+        return this.page.locator(`[data-testid="backup-restore-row"][data-backup-name="${css_attribute_value(name)}"]`).getByTestId('backup-restore-action')
+    }
+
+    async latestBackupName(): Promise<string> {
+        const name = await this.backupRows().first().getAttribute('data-backup-name')
+        if (!name) throw new Error('Backup row does not have a backup name')
+        return name
+    }
+
+    async addHistoryRecord(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<void> {
+        await this.page.evaluate((nextRecord) => window.electronAPI.history.add(nextRecord), record)
+    }
+
+    historyRecordCount(): Promise<number> {
+        return this.page.evaluate(() => window.electronAPI.history.count())
     }
 
     aboutLink(name: 'home' | 'docs' | 'feedback'): Locator {

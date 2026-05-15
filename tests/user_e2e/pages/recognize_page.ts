@@ -67,8 +67,14 @@ export class RecognizePage {
         return this.pinButton().click()
     }
 
-    clickClose(): Promise<void> {
-        return this.closeButton().click()
+    async clickClose(): Promise<void> {
+        const close_promise = this.page.waitForEvent('close').catch(() => undefined)
+        try {
+            await this.closeButton().click()
+        } catch (error) {
+            if (!this.page.isClosed()) throw error
+        }
+        await close_promise
     }
 
     clickEngineSelect(): Promise<void> {

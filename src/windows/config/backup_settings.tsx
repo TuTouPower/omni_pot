@@ -9,6 +9,10 @@ const BACKUP_TYPES = [
     { value: 'local', label: '本地文件' },
 ]
 
+function error_message(error: unknown): string {
+    return error instanceof Error ? error.message : String(error)
+}
+
 export default function BackupSettings(): React.ReactElement {
     const { t } = useTranslation()
     const [backupType, setBackupType] = useConfig('backup_type')
@@ -21,31 +25,43 @@ export default function BackupSettings(): React.ReactElement {
     const [restoreModal, setRestoreModal] = useState(false)
 
     const load_backups = useCallback(async () => {
-        const list = await window.electronAPI.backup.list()
-        setBackups(list)
+        try {
+            const list = await window.electronAPI.backup.list()
+            setBackups(list)
+        } catch (error) {
+            setStatus(`Error: ${error_message(error)}`)
+        }
     }, [])
 
-    useEffect(() => { load_backups() }, [load_backups])
+    useEffect(() => { void load_backups() }, [load_backups])
 
     const handle_backup = async (): Promise<void> => {
         setStatus('Creating backup...')
-        const result = await window.electronAPI.backup.create()
-        if (result.success) {
-            setStatus(`Backup created: ${result.path}`)
-            load_backups()
-        } else {
-            setStatus(`Error: ${result.error}`)
+        try {
+            const result = await window.electronAPI.backup.create()
+            if (result.success) {
+                setStatus(`Backup created: ${result.path}`)
+                void load_backups()
+            } else {
+                setStatus(`Error: ${result.error}`)
+            }
+        } catch (error) {
+            setStatus(`Error: ${error_message(error)}`)
         }
     }
 
     const handle_restore = async (name: string): Promise<void> => {
         setStatus('Restoring...')
-        const result = await window.electronAPI.backup.restore(name)
-        if (result.success) {
-            setStatus('Restored successfully. Please restart the app.')
-            setRestoreModal(false)
-        } else {
-            setStatus(`Error: ${result.error}`)
+        try {
+            const result = await window.electronAPI.backup.restore(name)
+            if (result.success) {
+                setStatus('Restored successfully. Please restart the app.')
+                setRestoreModal(false)
+            } else {
+                setStatus(`Error: ${result.error}`)
+            }
+        } catch (error) {
+            setStatus(`Error: ${error_message(error)}`)
         }
     }
 
@@ -95,26 +111,26 @@ export default function BackupSettings(): React.ReactElement {
 
             <ConfigCard title="操作">
                 <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn primary" onClick={handle_backup}>
+                    <button data-testid="backup-create" className="btn primary" onClick={handle_backup}>
                         <Icons.Cloud size={14} />
                         {t('backup.create') || '立即备份'}
                     </button>
-                    <button className="btn" onClick={() => { load_backups(); setRestoreModal(true) }}>
+                    <button data-testid="backup-restore-open" className="btn" onClick={() => { void load_backups(); setRestoreModal(true) }}>
                         <Icons.Cycle size={14} />
                         {t('backup.restore') || '从备份恢复'}
                     </button>
                 </div>
-                {status && <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
-                <div className="hint">备份内容：配置、历史记录数据库、已安装的插件</div>
+                {status && <p data-testid="backup-status" style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
+                <div data-testid="backup-content-hint" className="hint">备份内容：配置、历史记录数据库、CC-CEDICT 词典数据库</div>
             </ConfigCard>
 
             {/* Recent backups */}
             <ConfigCard title="最近备份">
                 {backups.length === 0 && (
-                    <p style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('backup.no_backups') || '暂无备份'}</p>
+                    <p data-testid="backup-empty" style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('backup.no_backups') || '暂无备份'}</p>
                 )}
                 {backups.slice(0, 5).map((name, i) => (
-                    <div key={name} className="row" style={{ paddingBottom: 8, borderBottom: i < Math.min(backups.length, 5) - 1 ? '1px solid var(--line)' : 'none' }}>
+                    <div key={name} data-testid="backup-row" data-backup-name={name} className="row" style={{ paddingBottom: 8, borderBottom: i < Math.min(backups.length, 5) - 1 ? '1px solid var(--line)' : 'none' }}>
                         <Icons.Cloud size={14} style={{ color: 'var(--text-mute)' }} />
                         <div style={{ flex: 1 }}>
                             <div className="mono" style={{ fontSize: 12 }}>{name}</div>
@@ -126,6 +142,7 @@ export default function BackupSettings(): React.ReactElement {
             {/* Restore modal */}
             {restoreModal && (
                 <div
+                    data-testid="backup-restore-modal"
                     style={{
                         position: 'fixed',
                         inset: 0,
@@ -144,17 +161,19 @@ export default function BackupSettings(): React.ReactElement {
                     >
                         <div className="card-head">
                             <span>恢复备份</span>
-                            <button className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setRestoreModal(false)}>
+                            <button data-testid="backup-restore-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setRestoreModal(false)}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
                         <div style={{ padding: 4 }}>
                             {backups.length === 0 && (
-                                <p style={{ fontSize: 13, color: 'var(--text-mute)', padding: 12 }}>No backups available.</p>
+                                <p data-testid="backup-restore-empty" style={{ fontSize: 13, color: 'var(--text-mute)', padding: 12 }}>No backups available.</p>
                             )}
                             {backups.map((name) => (
                                 <div
                                     key={name}
+                                    data-testid="backup-restore-row"
+                                    data-backup-name={name}
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
@@ -167,7 +186,7 @@ export default function BackupSettings(): React.ReactElement {
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
                                     <span style={{ fontSize: 13 }}>{name}</span>
-                                    <button className="btn sm primary" onClick={() => handle_restore(name)}>恢复</button>
+                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => handle_restore(name)}>恢复</button>
                                 </div>
                             ))}
                         </div>

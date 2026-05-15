@@ -9,35 +9,58 @@ import { ConfigPage } from '../pages/config_page'
 import { UpdaterPage } from '../pages/updater_page'
 
 export class AppFixture {
-    readonly app: ElectronApplication
-    readonly api: E2eApi
+    app: ElectronApplication
+    api: E2eApi
     private httpPort: number
     private userDataDir: string
     private e2eToken: string
+    private cleanupUserDataDir: boolean
 
     private constructor(launched: LaunchedApp) {
         this.app = launched.app
         this.httpPort = launched.httpPort
         this.userDataDir = launched.userDataDir
         this.e2eToken = launched.e2eToken
+        this.cleanupUserDataDir = launched.cleanupUserDataDir
         this.api = new E2eApi(launched.httpPort, launched.e2eToken)
     }
 
     static async start(opts: {
         config?: Record<string, unknown>
         firstRun?: boolean
+        userDataDir?: string
+        cleanupUserDataDir?: boolean
     } = {}): Promise<AppFixture> {
         const launched = await launchApp(opts)
         return new AppFixture(launched)
     }
 
-    async stop(): Promise<void> {
+    async stop(options: { preserveUserData?: boolean } = {}): Promise<void> {
         await closeApp({
             app: this.app,
             httpPort: this.httpPort,
             userDataDir: this.userDataDir,
             e2eToken: this.e2eToken,
+            cleanupUserDataDir: options.preserveUserData ? false : this.cleanupUserDataDir,
         })
+    }
+
+    async restart(): Promise<void> {
+        await closeApp({
+            app: this.app,
+            httpPort: this.httpPort,
+            userDataDir: this.userDataDir,
+            e2eToken: this.e2eToken,
+            cleanupUserDataDir: false,
+        })
+        const launched = await launchApp({
+            userDataDir: this.userDataDir,
+            cleanupUserDataDir: this.cleanupUserDataDir,
+        })
+        this.app = launched.app
+        this.httpPort = launched.httpPort
+        this.e2eToken = launched.e2eToken
+        this.api = new E2eApi(launched.httpPort, launched.e2eToken)
     }
 
     async firstWindow(): Promise<Page> {
