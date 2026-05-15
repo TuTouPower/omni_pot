@@ -125,6 +125,30 @@ export class RecognizePage {
         return this.text().fill(text)
     }
 
+    async fulfill_baidu_ocr_services(enabled_text: string, disabled_text: string): Promise<void> {
+        await this.page.route('https://aip.baidubce.com/oauth/2.0/token**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ access_token: 'e2e-token', expires_in: 3600 }),
+            })
+        })
+        await this.page.route('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ words_result: [{ words: disabled_text }] }),
+            })
+        })
+        await this.page.route('https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ words_result: [{ words: enabled_text }] }),
+            })
+        })
+    }
+
     titlebarOrder(): Promise<string[]> {
         const items = [
             { name: 'pin', locator: this.pinButton() },

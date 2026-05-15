@@ -7,6 +7,20 @@ const screenshot_config = {
     service_instances: {},
 }
 
+const screenshot_ocr_config = {
+    recognize_service_list: ['baidu_ocr@disabled', 'baidu_accurate_ocr@enabled'],
+    service_instances: {
+        'baidu_ocr@disabled': {
+            serviceKey: 'baidu_ocr',
+            config: { client_id: 'disabled', client_secret: 'disabled', enable: false },
+        },
+        'baidu_accurate_ocr@enabled': {
+            serviceKey: 'baidu_accurate_ocr',
+            config: { client_id: 'enabled', client_secret: 'enabled' },
+        },
+    },
+}
+
 async function expect_screenshot_closed(omni: AppFixture): Promise<void> {
     await expect.poll(async () => (await omni.api.windowState('screenshot')).exists).toBe(false)
 }
@@ -107,6 +121,25 @@ test.describe('@ui screenshot window', () => {
             await expect(recognize.image().locator('img')).toBeVisible()
             await expect_recognize_image_size(recognize, 220, 160)
             await expect(recognize.text()).toHaveValue('')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user captures screenshot and sees enabled OCR result while disabled service is skipped', async () => {
+        const omni = await AppFixture.start({ config: screenshot_ocr_config })
+
+        try {
+            const screenshot = await omni.triggerScreenshot('recognize')
+            await screenshot.fulfill_baidu_ocr_services('启用服务结果', '停用服务不应显示')
+            await expect.poll(async () => await screenshot.root_background_image()).toContain('data:image/png;base64')
+
+            await screenshot.drag_and_release(100, 100, 320, 260)
+
+            await expect_screenshot_closed(omni)
+            const recognize = await omni.recognize()
+            await expect(recognize.image().locator('img')).toBeVisible()
+            await expect(recognize.text()).toHaveValue('启用服务结果')
         } finally {
             await omni.stop()
         }

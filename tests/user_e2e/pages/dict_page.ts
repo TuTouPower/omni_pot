@@ -80,6 +80,16 @@ export class DictPage {
         return this.collectButton().click()
     }
 
+    async fulfill_anki_collection_once(): Promise<void> {
+        await this.page.route('http://localhost:8765/', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ result: null, error: null }),
+            })
+        }, { times: 1 })
+    }
+
     clickFirstCopy(): Promise<void> {
         return this.copyButtons().first().click()
     }

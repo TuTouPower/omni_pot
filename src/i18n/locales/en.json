@@ -132,7 +132,19 @@
         "ocr": "OCR",
         "collection": "Collection",
         "add": "Add",
-        "remove": "Remove"
+        "remove": "Remove",
+        "instances": "Service Instances",
+        "sort_top_first": "Sort · Top first",
+        "edit": "Edit",
+        "edit_service": "Edit Service",
+        "instance_name": "Instance Name",
+        "config_json": "Config JSON",
+        "test": "Test",
+        "testing": "Testing…",
+        "test_success": "Test succeeded",
+        "test_failed": "Test failed",
+        "test_unavailable": "This service does not support testing",
+        "invalid_config": "Invalid config JSON"
     },
     "history": {
         "title": "History",

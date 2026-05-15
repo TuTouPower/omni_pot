@@ -306,7 +306,7 @@ enum WindowLabel {
 - **无搜索框**
 - **无换行符号**
 - 每个词的右上角放置**收藏按钮**，支持收藏单个词汇
-- 遍历 `dictionary_service_list`，并行调用各词典服务的 `translate()`；
+- 遍历 `dictionary_service_list` 中启用的实例，并行调用各词典服务的 `translate()`；
   返回 `DictResult`（`type='dict'`）的服务渲染为词典卡片
 
 ### 6.3 数据流
@@ -459,12 +459,12 @@ Wayland 用户提示：系统级快捷键可能不可用，可用 `curl localhos
 
 Tabs 切换五类服务：翻译 / 字典 / 识别 / 语音合成 / 收藏。
 
-- 每类显示已启用的**服务实例**列表，支持上移/下移排序（顶部优先）
-- 每个实例项：拖拽手柄、服务图标、实例名、实例 key、上移按钮、下移按钮、删除按钮
+- 每类显示**服务实例**列表，支持启停、上移/下移与拖拽排序（顶部优先）
+- 每个实例项：拖拽手柄、服务图标、实例名、实例 key、启停开关、编辑按钮、上移按钮、下移按钮、删除按钮
 - 底部：“添加内置服务”按钮（打开内置服务选择）
 - 添加实例后写入对应 `*_service_list` 与 `service_instances`
 - 删除实例后从对应 `*_service_list` 移除，并同步删除 `service_instances` 项
-- 服务启停、编辑/测试保存、真实拖拽排序尚未在当前 UI 实现；后续实现这些用户功能时同步补规格与用户 E2E
+- 编辑实例可修改显示名与 JSON 配置；测试按钮调用服务 `testConfig()` 并显示成功/失败，保存后持久化到 `service_instances`
 
 ### 9.8 配置页: 历史
 
@@ -572,6 +572,7 @@ interface DictResult {
 - 用户可添加同一服务的多个实例，配置各不相同
 - 首次启动为部分内置服务自动建默认实例（key 形如 `bing@default`）
 - `service_instances` 配置项存 `instanceKey → { serviceKey, config }` 映射
+- `config.instanceName` 覆盖列表显示名；`config.enable=false` 时该实例保留在列表中但不参与翻译、词典、OCR、TTS、收藏执行
 - `translate_service_list` / `dictionary_service_list` / `recognize_service_list` /
   `tts_service_list` / `collection_service_list` 储存的是**实例 key**
 - `getServiceKey(instanceKey)` 提取裸 serviceKey；`createServiceInstanceKey(serviceKey)` 生成新实例 key
@@ -770,14 +771,14 @@ interface DictResult {
 
 #### 服务列表
 
-| 键 | 类型 | 默认值 |
-|---|---|---|
-| `translate_service_list` | string[] | `['bing@default','google@default','deepl@default']` |
-| `dictionary_service_list` | string[] | `['free_dictionary@default','ecdict@default']` |
-| `recognize_service_list` | string[] | `[]` |
-| `tts_service_list` | string[] | `[]` |
-| `collection_service_list` | string[] | `[]` |
-| `service_instances` | ServiceInstancesMap | `DEFAULT_SERVICE_INSTANCES` |
+| 键 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `translate_service_list` | string[] | `['bing@default','google@default','deepl@default']` | 翻译实例顺序 |
+| `dictionary_service_list` | string[] | `['free_dictionary@default','ecdict@default']` | 词典实例顺序 |
+| `recognize_service_list` | string[] | `[]` | OCR 实例顺序 |
+| `tts_service_list` | string[] | `[]` | TTS 实例顺序 |
+| `collection_service_list` | string[] | `[]` | 收藏实例顺序 |
+| `service_instances` | ServiceInstancesMap | `DEFAULT_SERVICE_INSTANCES` | 实例配置；`config.instanceName` 为显示名，`config.enable=false` 表示停用 |
 
 #### 备份设置
 

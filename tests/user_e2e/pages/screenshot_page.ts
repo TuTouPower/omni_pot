@@ -39,6 +39,30 @@ export class ScreenshotPage {
         return this.root().evaluate((el) => getComputedStyle(el).backgroundImage)
     }
 
+    async fulfill_baidu_ocr_services(enabled_text: string, disabled_text: string): Promise<void> {
+        await this.page.route('https://aip.baidubce.com/oauth/2.0/token**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ access_token: 'e2e-token', expires_in: 3600 }),
+            })
+        })
+        await this.page.route('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ words_result: [{ words: disabled_text }] }),
+            })
+        })
+        await this.page.route('https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ words_result: [{ words: enabled_text }] }),
+            })
+        })
+    }
+
     async begin_selection(start_x: number, start_y: number, end_x: number, end_y: number): Promise<void> {
         await this.page.mouse.move(start_x, start_y)
         await this.page.mouse.down()

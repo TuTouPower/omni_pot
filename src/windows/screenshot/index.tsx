@@ -84,8 +84,8 @@ export default function ScreenshotWindow(): React.ReactElement {
             const { useConfigStore } = await import('@/stores/config_store')
 
             const config = useConfigStore.getState().config
-            const service_list = config.recognize_service_list
             const service_instances = config.service_instances
+            const service_list = config.recognize_service_list.filter((instance_key) => service_instances[instance_key]?.config.enable !== false)
             const language = config.recognize_language as import('@shared/types/language').LanguageCode
 
             let full_text = ''

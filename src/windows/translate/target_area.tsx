@@ -1,7 +1,7 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useTranslateStore } from '../../stores/translate_store'
@@ -120,6 +120,7 @@ function SortableCard({
     const result_text = result_to_text(result)
     const isStreaming = results[instanceKey] !== undefined && results[instanceKey] !== null && typeof results[instanceKey] === 'string'
     const is_collected = collectedKeys.has(instanceKey)
+    const is_playing = playingKey === instanceKey
 
     return (
         <div ref={setNodeRef} style={style}>
@@ -138,7 +139,7 @@ function SortableCard({
                         </span>
                     )}
                     <div style={{ flex: 1 }} />
-                    <button data-testid="result-tts" className="ic-btn" title="朗读" disabled={!ttsAvailable || !result_text} onClick={() => {
+                    <button data-testid="result-tts" className="ic-btn" title="朗读" aria-pressed={is_playing} disabled={!ttsAvailable || !result_text} style={{ color: is_playing ? 'var(--brand-primary)' : undefined }} onClick={() => {
                         if (result_text) onTts(result_text, instanceKey)
                     }}>
                         <Icons.Volume size={16} />
@@ -153,7 +154,10 @@ function SortableCard({
                         className="ic-btn"
                         title="收藏"
                         aria-pressed={is_collected}
-                        onClick={() => onCollect(instanceKey)}
+                        disabled={!collectionAvailable || !result_text}
+                        onClick={() => {
+                            if (collectionAvailable && result_text) onCollect(instanceKey)
+                        }}
                         style={{ color: is_collected ? 'var(--brand-primary)' : undefined }}
                     >
                         <Icons.Heart size={16} fill={is_collected} />
@@ -228,8 +232,15 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
 
     const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
+    const enabledCollectionServiceList = useMemo(
+        () => collectionServiceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        [collectionServiceList, serviceInstances]
+    )
 
     const playingRef = useRef<HTMLAudioElement | null>(null)
+    const playingCleanupRef = useRef<(() => void) | null>(null)
+    const playingRequestRef = useRef(0)
+    const playingActiveRef = useRef(false)
     const [playingKey, setPlayingKey] = useState<string | null>(null)
     const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
     const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
@@ -252,9 +263,12 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     }, [setSourceText])
 
     const handleTts = useCallback(async (text: string, key: string) => {
-        if (playingRef.current) {
-            playingRef.current.pause()
-            playingRef.current = null
+        if (playingActiveRef.current) {
+            playingRequestRef.current += 1
+            playingActiveRef.current = false
+            playingRef.current?.pause()
+            playingCleanupRef.current?.()
+            playingCleanupRef.current = null
             setPlayingKey(null)
             return
         }
@@ -265,64 +279,117 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         const ttsService = ttsServiceRegistry.get(svcKey)
         if (!ttsService) return
 
+        const request_id = playingRequestRef.current + 1
+        playingRequestRef.current = request_id
+        playingActiveRef.current = true
+        setPlayingKey(key)
         try {
-            setPlayingKey(key)
-            const audioBuffer = await ttsService.synthesize(text, targetLanguage, {})
+            const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
+            const audioBuffer = await ttsService.synthesize(text, targetLanguage, instanceConfig)
+            if (playingRequestRef.current !== request_id || !playingActiveRef.current) return
+
             const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
             const url = URL.createObjectURL(blob)
             const audio = new Audio(url)
+            let cleaned = false
+            const reset_audio = (): void => {
+                if (cleaned) return
+                cleaned = true
+                if (playingRef.current === audio) {
+                    playingRef.current = null
+                }
+                if (playingCleanupRef.current === reset_audio) {
+                    playingCleanupRef.current = null
+                }
+                if (playingRequestRef.current === request_id) {
+                    playingActiveRef.current = false
+                    setPlayingKey(null)
+                }
+                URL.revokeObjectURL(url)
+            }
             playingRef.current = audio
-            audio.onended = () => {
-                playingRef.current = null
-                setPlayingKey(null)
-                URL.revokeObjectURL(url)
-            }
-            audio.onerror = () => {
-                playingRef.current = null
-                setPlayingKey(null)
-                URL.revokeObjectURL(url)
-            }
-            audio.play()
+            playingCleanupRef.current = reset_audio
+            audio.onended = reset_audio
+            audio.onerror = reset_audio
+            await audio.play().catch(() => reset_audio())
         } catch {
-            setPlayingKey(null)
+            if (playingRequestRef.current === request_id) {
+                playingActiveRef.current = false
+                setPlayingKey(null)
+            }
         }
-    }, [targetLanguage, ttsServiceList])
+    }, [targetLanguage, ttsServiceList, serviceInstances])
+
+    useEffect(() => {
+        return () => {
+            playingRequestRef.current += 1
+            playingActiveRef.current = false
+            const audio = playingRef.current
+            const cleanup = playingCleanupRef.current
+            playingRef.current = null
+            playingCleanupRef.current = null
+            audio?.pause()
+            cleanup?.()
+        }
+    }, [])
+
+    useEffect(() => {
+        setCollectedKeys(new Set())
+    }, [sourceText])
+
+    useEffect(() => {
+        if (isTranslating) {
+            setCollectedKeys(new Set())
+        }
+    }, [isTranslating])
 
     const handleCollect = useCallback(async (instanceKey: string) => {
         const result = results[instanceKey]
-        if (!result || !sourceText.trim()) return
+        if (!result || !sourceText.trim() || enabledCollectionServiceList.length === 0) return
 
         const resultText = typeof result === 'string'
             ? result
             : (result as DictResult).definitions.map((d) => d.meanings.join('; ')).join('\n')
 
-        for (const collInstanceKey of collectionServiceList) {
+        let collected = false
+        for (const collInstanceKey of enabledCollectionServiceList) {
             const collKey = getServiceKey(collInstanceKey)
             const svc = collectionServiceRegistry.get(collKey)
             if (!svc) continue
             const cfg = serviceInstances[collInstanceKey]?.config ?? {}
             try {
                 await svc.send(sourceText, sourceLanguage, targetLanguage, resultText, cfg)
+                collected = true
             } catch { /* skip failed services */ }
         }
 
-        setCollectedKeys((prev) => new Set(prev).add(instanceKey))
-    }, [results, sourceText, sourceLanguage, targetLanguage, collectionServiceList, serviceInstances])
+        if (collected) {
+            setCollectedKeys((prev) => new Set(prev).add(instanceKey))
+        }
+    }, [results, sourceText, sourceLanguage, targetLanguage, enabledCollectionServiceList, serviceInstances])
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
-    const handleDragEnd = useCallback((event: { active: { id: string | number }; over: { id: string | number } | null }) => {
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
         const { active, over } = event
         if (!over || active.id === over.id) return
-        const list = useConfigStore.getState().config.translate_service_list
-        const oldIdx = list.indexOf(String(active.id))
-        const newIdx = list.indexOf(String(over.id))
+        const oldIdx = serviceList.indexOf(String(active.id))
+        const newIdx = serviceList.indexOf(String(over.id))
         if (oldIdx === -1 || newIdx === -1) return
-        const updated = [...list]
-        const [moved] = updated.splice(oldIdx, 1)
-        updated.splice(newIdx, 0, moved)
+
+        const enabledList = [...serviceList]
+        const [moved] = enabledList.splice(oldIdx, 1)
+        enabledList.splice(newIdx, 0, moved)
+        const enabledSet = new Set(serviceList)
+        let enabledIdx = 0
+        const updated = useConfigStore.getState().config.translate_service_list.map((instanceKey) => {
+            if (!enabledSet.has(instanceKey)) return instanceKey
+            const reorderedKey = enabledList[enabledIdx]
+            enabledIdx += 1
+            return reorderedKey
+        })
         useConfigStore.getState().set('translate_service_list', updated)
-    }, [])
+    }, [serviceList])
 
     return (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -344,7 +411,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                             playingKey={playingKey}
                             collectedKeys={collectedKeys}
                             ttsAvailable={ttsServiceList.length > 0}
-                            collectionAvailable={collectionServiceList.length > 0}
+                            collectionAvailable={enabledCollectionServiceList.length > 0}
                         />
                     ))}
                 </div>
