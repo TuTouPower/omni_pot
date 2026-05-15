@@ -4,7 +4,7 @@
 > 测试目录：`tests/user_e2e/`
 > 测试总则与分层职责见 `docs/test.md`；本文是 E2E 这一层的详细设计。
 > E2E 框架为 **Playwright**（`@playwright/test` + Electron）。
-> 功能定义见 `docs/spec.md`，UI 元素见 `docs/design/ui_design.md` 与 `docs/design/example/`。
+> 功能与 UI 定义见 `docs/spec.md`；UI 设计稿原型见 `docs/design/example/`。
 
 ---
 

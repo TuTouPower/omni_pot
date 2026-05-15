@@ -30,7 +30,6 @@
 
 - `CLAUDE.md` 不再索引 `docs/critical_paths.md`。
 - `docs/spec.md` 不再把 `docs/critical_paths.md` 作为相关文档。
-- `docs/design/ui_design.md` 不再引用 `docs/critical_paths.md`。
 - `docs/test_user_e2e.md` 开头不再引用 `docs/critical_paths.md`。
 
 剩余的 `critical_paths.md` 字样只出现在历史设计/计划文档中，可按历史参考处理，不作为当前主文档断链阻塞项。

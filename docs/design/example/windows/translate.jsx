@@ -230,9 +230,9 @@ const DictWindow = ({ width = 420, height }) => {
 
         <div style={{ display:'flex', alignItems:'center', gap: 6, padding: '4px 4px 0' }}>
           <span className="hint mono">来源</span>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>Cambridge</span>
+          <span className="chip plain mono" style={{ fontSize: 10 }}>Free Dictionary</span>
           <span className="chip plain mono" style={{ fontSize: 10 }}>ECDict</span>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>Bing</span>
+          <span className="chip plain mono" style={{ fontSize: 10 }}>Cambridge</span>
         </div>
       </div>
     </div>
