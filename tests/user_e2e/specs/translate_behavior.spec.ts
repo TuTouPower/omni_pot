@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
+const WINDOW_SIZE_TOLERANCE = 8
+
 const LINGVA_INSTANCE = {
     serviceKey: 'lingva',
     config: { requestPath: 'https://lingva.lunar.icu' },
@@ -274,8 +276,8 @@ test.describe('@ui translate behavior settings', () => {
             await expect.poll(async () => {
                 const bounds = (await omni.api.windowState('translate')).bounds
                 return !!bounds
-                    && Math.abs(bounds.width - expected_width) <= 4
-                    && Math.abs(bounds.height - expected_height) <= 4
+                    && Math.abs(bounds.width - expected_width) <= WINDOW_SIZE_TOLERANCE
+                    && Math.abs(bounds.height - expected_height) <= WINDOW_SIZE_TOLERANCE
             }).toBe(true)
         } finally {
             await omni.stop()

@@ -45,13 +45,14 @@
 - [X] `translate_behavior.spec.ts`
 - [X] `screenshot_window.spec.ts`
 - [X] `app_lifecycle.spec.ts`
-- [ ] `config_service_mgmt.spec.ts`
+- [X] `config_service_mgmt.spec.ts`
 - [ ] `config_history_backup.spec.ts`
 - [ ] `updater_and_tray.spec.ts`
 - [ ] `i18n.spec.ts`
 
 ### P2: 其他
 
+- [ ] 服务管理未实现功能：服务启停、编辑/测试保存、真实拖拽排序，并同步补规格与用户 E2E
 - [ ] 修复已知 bug — 见 `docs/issues/issues.md`
 - [ ] 插件系统（`.potext` 格式，暂时不做）
 - [ ] 代码质量检查体系 — 见 `docs/code_quality_checks_plan.md`

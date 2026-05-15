@@ -2,6 +2,11 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
 const lingva_config = {
+    app_language: 'zh_cn',
+    dynamic_translate: false,
+    translate_detect_engine: 'local',
+    translate_source_language: 'en',
+    translate_target_language: 'zh_cn',
     translate_service_list: ['lingva@default'],
     service_instances: {
         'lingva@default': { serviceKey: 'lingva', config: { requestPath: 'https://lingva.lunar.icu' } },

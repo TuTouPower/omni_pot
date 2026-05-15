@@ -1,5 +1,9 @@
 import type { Page, Locator } from '@playwright/test'
 
+function is_target_closed_error(error: unknown): boolean {
+    return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
+}
+
 export class DictPage {
     constructor(private page: Page) {}
 
@@ -60,8 +64,12 @@ export class DictPage {
         return this.pinButton().click()
     }
 
-    clickClose(): Promise<void> {
-        return this.closeButton().click()
+    async clickClose(): Promise<void> {
+        try {
+            await this.closeButton().click()
+        } catch (error) {
+            if (!is_target_closed_error(error)) throw error
+        }
     }
 
     getModeLabel(): Promise<string | null> {
