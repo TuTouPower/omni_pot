@@ -21,7 +21,7 @@ async function expect_config(omni: AppFixture, key: string, value: unknown): Pro
 async function expect_service_config(omni: AppFixture, instance_key: string, value: Record<string, unknown>): Promise<void> {
     await expect.poll(async () => {
         const instances = (await omni.api.getConfig()).service_instances as Record<string, ServiceInstanceConfig>
-        return instances[instance_key]?.config
+        return instances[instance_key].config
     }).toEqual(value)
 }
 
@@ -87,7 +87,7 @@ test.describe('@ui config service management', () => {
             await expect(config.serviceItem(google_key)).toContainText('Google')
             await expect.poll(async () => {
                 const instances = (await omni.api.getConfig()).service_instances as Record<string, { serviceKey: string }>
-                return instances[google_key]?.serviceKey
+                return instances[google_key].serviceKey
             }).toBe('google')
 
             await config.deleteService(google_key)

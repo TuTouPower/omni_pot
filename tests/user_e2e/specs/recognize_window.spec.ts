@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { RecognizePage } from '../pages/recognize_page'
+import type { RecognizePage } from '../pages/recognize_page'
 
 const recognize_config = {
     app_language: 'zh_cn',

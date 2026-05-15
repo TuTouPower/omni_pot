@@ -9,7 +9,7 @@ export const anki_service: CollectionService = {
 
     async send(word, _source, _target, result, config): Promise<void> {
         const port = Number(config.port) || 8765
-        const res = await fetch(`http://localhost:${port}`, {
+        const res = await fetch(`http://localhost:${String(port)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -25,7 +25,7 @@ export const anki_service: CollectionService = {
                 }
             })
         })
-        const data = await res.json()
+        const data = (await res.json()) as { error?: string }
         if (data.error) {
             throw new Error(data.error)
         }

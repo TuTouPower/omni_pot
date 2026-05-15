@@ -117,7 +117,7 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
                     </button>
                 ) : (
                     <>
-                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={handleConfirm}>{t('ui.ok') || '确认'}</button>
+                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={() => { handleConfirm().catch(console.error); }}>{t('ui.ok') || '确认'}</button>
                         <button className="btn sm ghost" data-testid={`cfg-${configKey}-cancel`} onClick={handleCancel}>{t('ui.cancel') || '取消'}</button>
                     </>
                 )}

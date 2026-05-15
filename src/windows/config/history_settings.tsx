@@ -25,14 +25,14 @@ export default function HistorySettings(): React.ReactElement {
         setRecords(rows)
     }, [])
 
-    useEffect(() => { load_page(page) }, [page, load_page])
+    useEffect(() => { load_page(page).catch(console.error) }, [page, load_page])
 
     const total_pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
     const handle_clear = async (): Promise<void> => {
         await window.electronAPI.history.clear()
         setPage(1)
-        load_page(1)
+        load_page(1).catch(console.error)
     }
 
     const handle_select = (record: HistoryRecord): void => {
@@ -45,7 +45,7 @@ export default function HistorySettings(): React.ReactElement {
         if (!selected) return
         await window.electronAPI.history.update(selected.id, editSource, editTarget)
         setSelected(null)
-        load_page(page)
+        load_page(page).catch(console.error)
     }
 
     return (
@@ -58,7 +58,7 @@ export default function HistorySettings(): React.ReactElement {
 
             {/* Search + controls */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button data-testid="history-clear" className="btn sm danger" onClick={handle_clear}>
+                <button data-testid="history-clear" className="btn sm danger" onClick={() => { handle_clear().catch(console.error); }}>
                     <Icons.Trash size={12} />
                     {t('history.clear') || '清空'}
                 </button>
@@ -101,7 +101,7 @@ export default function HistorySettings(): React.ReactElement {
                                 transition: 'background .12s',
                                 gap: 12,
                             }}
-                            onClick={() => handle_select(r)}
+                            onClick={() => { handle_select(r); }}
                             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-sunk)'}
                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                         >
@@ -126,11 +126,11 @@ export default function HistorySettings(): React.ReactElement {
                 <div className="between">
                     <div data-testid="history-count" className="hint mono">共 {total} 条</div>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <button data-testid="history-prev" className="btn ghost icon sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                        <button data-testid="history-prev" className="btn ghost icon sm" disabled={page <= 1} onClick={() => { setPage(page - 1); }}>
                             <Icons.Chev size={12} style={{ transform: 'rotate(90deg)' }} />
                         </button>
                         <span data-testid="history-page" className="hint mono" style={{ padding: '0 8px' }}>{page} / {total_pages}</span>
-                        <button data-testid="history-next" className="btn ghost icon sm" disabled={page >= total_pages} onClick={() => setPage(page + 1)}>
+                        <button data-testid="history-next" className="btn ghost icon sm" disabled={page >= total_pages} onClick={() => { setPage(page + 1); }}>
                             <Icons.Chev size={12} style={{ transform: 'rotate(-90deg)' }} />
                         </button>
                     </div>
@@ -150,16 +150,16 @@ export default function HistorySettings(): React.ReactElement {
                         justifyContent: 'center',
                         zIndex: 100,
                     }}
-                    onClick={() => setSelected(null)}
+                    onClick={() => { setSelected(null); }}
                 >
                     <div
                         className="card"
                         style={{ width: 480, padding: 0 }}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); }}
                     >
                         <div className="card-head">
                             <span>{selected.service_key}</span>
-                            <button data-testid="history-edit-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setSelected(null)}>
+                            <button data-testid="history-edit-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => { setSelected(null); }}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
@@ -167,18 +167,18 @@ export default function HistorySettings(): React.ReactElement {
                             <div>
                                 <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>源文本</label>
                                 <div className="field" style={{ width: '100%' }}>
-                                    <input data-testid="history-edit-source" value={editSource} onChange={(e) => setEditSource(e.target.value)} />
+                                    <input data-testid="history-edit-source" value={editSource} onChange={(e) => { setEditSource(e.target.value); }} />
                                 </div>
                             </div>
                             <div>
                                 <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>译文</label>
                                 <div className="field" style={{ width: '100%' }}>
-                                    <input data-testid="history-edit-target" value={editTarget} onChange={(e) => setEditTarget(e.target.value)} />
+                                    <input data-testid="history-edit-target" value={editTarget} onChange={(e) => { setEditTarget(e.target.value); }} />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                                <button data-testid="history-edit-cancel" className="btn ghost" onClick={() => setSelected(null)}>{t('ui.cancel') || '取消'}</button>
-                                <button data-testid="history-edit-save" className="btn primary" onClick={handle_save}>{t('ui.save') || '保存'}</button>
+                                <button data-testid="history-edit-cancel" className="btn ghost" onClick={() => { setSelected(null); }}>{t('ui.cancel') || '取消'}</button>
+                                <button data-testid="history-edit-save" className="btn primary" onClick={() => { handle_save().catch(console.error); }}>{t('ui.save') || '保存'}</button>
                             </div>
                         </div>
                     </div>

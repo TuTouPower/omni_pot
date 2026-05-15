@@ -66,7 +66,7 @@ export const tencentService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Tencent translate API error: ${resp.status}`)
+            throw new Error(`Tencent translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -77,7 +77,7 @@ export const tencentService: TranslateService = {
         }
 
         if (data.Response?.Error) {
-            throw new Error(`Tencent API error: ${data.Response.Error.Message ?? data.Response.Error.Code}`)
+            throw new Error(`Tencent API error: ${data.Response.Error.Message ?? String(data.Response.Error.Code)}`)
         }
 
         return data.Response?.TargetText ?? ''

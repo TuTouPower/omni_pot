@@ -33,7 +33,7 @@ $result.Text
             '-NoProfile', '-NonInteractive', '-Command', ps_script
         ], { maxBuffer: 10 * 1024 * 1024, timeout: 30000 }, (err, stdout, stderr) => {
             if (err) {
-                const msg = stderr?.trim() || err.message
+                const msg = stderr.trim() || err.message
                 if (msg.includes('Language package not installed') || msg.includes('0x00000000')) {
                     reject(new Error('Language package not installed. See: https://learn.microsoft.com/en-us/windows/powertoys/text-extractor#supported-languages'))
                 } else {
@@ -49,14 +49,14 @@ $result.Text
 async function linux_ocr(image_path: string, lang: string): Promise<string> {
     const args = [image_path, 'stdout']
     if (lang && lang !== 'auto') {
-        const tesseract_lang = lang.split('-')[0]
+        const tesseract_lang = lang.split('-')[0] ?? lang
         args.push('-l', tesseract_lang)
     }
 
     return new Promise((resolve, reject) => {
         execFile('tesseract', args, { timeout: 30000 }, (err, stdout, stderr) => {
             if (err) {
-                const msg = stderr?.trim() || err.message
+                const msg = stderr.trim() || err.message
                 if (msg.includes('os error 2')) {
                     reject(new Error('Tesseract not installed'))
                 } else if (msg.includes('data')) {
@@ -76,11 +76,7 @@ export function registerOcrHandlers(manager: WindowManager): void {
         return start_screenshot_capture(manager, mode)
     })
 
-    ipcMain.handle('ocr:open-recognize', async (event, base64Image: string, text: string) => {
-        const { screen } = await import('electron')
-        const display = screen.getPrimaryDisplay()
-        const { width, height } = display.workAreaSize
-
+    ipcMain.handle('ocr:open-recognize', (_event, base64Image: string, text: string) => {
         manager.focusOrCreate(WindowLabel.RECOGNIZE, {
             label: WindowLabel.RECOGNIZE,
             width: 400,
@@ -92,7 +88,7 @@ export function registerOcrHandlers(manager: WindowManager): void {
         manager.sendWhenReady(WindowLabel.RECOGNIZE, 'recognize:show', base64Image, text)
     })
 
-    ipcMain.handle('ocr:send-to-translate', async (_event, text: string) => {
+    ipcMain.handle('ocr:send-to-translate', (_event, text: string) => {
         const win = manager.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
         attach_translate_resize_persistence(win)
 
@@ -103,7 +99,7 @@ export function registerOcrHandlers(manager: WindowManager): void {
         const platform = process.platform
 
         // Write image to temp file
-        const tmp_path = join(tmpdir(), `omni_pot_ocr_${Date.now()}.png`)
+        const tmp_path = join(tmpdir(), `omni_pot_ocr_${String(Date.now())}.png`)
         const buffer = Buffer.from(base64Image, 'base64')
         await writeFile(tmp_path, buffer)
 

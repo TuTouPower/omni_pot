@@ -1,8 +1,18 @@
 import { useState, useCallback, useRef } from 'react'
 
-export function use_tts() {
+function useTts() {
     const [is_playing, set_is_playing] = useState(false)
     const audio_ref = useRef<HTMLAudioElement | null>(null)
+
+    const stop = useCallback(() => {
+        if (audio_ref.current) {
+            const src = audio_ref.current.src
+            audio_ref.current.pause()
+            if (src) URL.revokeObjectURL(src)
+            audio_ref.current = null
+        }
+        set_is_playing(false)
+    }, [])
 
     const play = useCallback(async (audio_buffer: ArrayBuffer) => {
         stop()
@@ -22,17 +32,9 @@ export function use_tts() {
         }
         set_is_playing(true)
         await audio.play()
-    }, [])
-
-    const stop = useCallback(() => {
-        if (audio_ref.current) {
-            const src = audio_ref.current.src
-            audio_ref.current.pause()
-            if (src) URL.revokeObjectURL(src)
-            audio_ref.current = null
-        }
-        set_is_playing(false)
-    }, [])
+    }, [stop])
 
     return { is_playing, play, stop }
 }
+
+export const use_tts = useTts

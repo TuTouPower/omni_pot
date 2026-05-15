@@ -64,7 +64,7 @@ export default function TranslatePage(): React.ReactElement {
 
             <ConfigCard title={t('translate_settings.behavior') || '行为'}>
                 <ConfigRow label={t('translate_settings.auto_copy') || '自动复制'}>
-                    <ConfigSelect value={autoCopy as 'disable' | 'source' | 'target' | 'source_target'} onChange={setAutoCopy as (v: 'disable' | 'source' | 'target' | 'source_target') => void} options={autoCopyOpts} testId="cfg-translate_auto_copy" style={{ minWidth: 180 }} />
+                    <ConfigSelect value={autoCopy} onChange={setAutoCopy} options={autoCopyOpts} testId="cfg-translate_auto_copy" style={{ minWidth: 180 }} />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.incremental_translate') || '增量翻译'} sub="新选取的文本追加到现有源文本而非替换">
                     <ConfigSwitch on={incremental} onChange={setIncremental} testId="cfg-incremental_translate" />

@@ -6,8 +6,8 @@ const mockService: TranslateService = {
   key: 'mock',
   name: 'Mock Service',
   languages: ['auto', 'en', 'zh_cn'],
-  translate: async (text) => `translated: ${text}`,
-  testConfig: async () => true
+  translate: (text) => Promise.resolve(`translated: ${text}`),
+  testConfig: () => Promise.resolve(true)
 }
 
 describe('ServiceRegistry', () => {

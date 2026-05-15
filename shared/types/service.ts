@@ -59,5 +59,5 @@ export function createServiceInstanceKey(serviceKey: string): string {
 }
 
 export function getServiceKey(instanceKey: string): string {
-  return instanceKey.split('@')[0]
+  return instanceKey.split('@')[0] ?? instanceKey
 }

@@ -7,6 +7,14 @@ const SERVICE_ID = 'sf8e6aca1'
 
 const IFLYTEK_OCR_LANGUAGES: LanguageCode[] = ['auto', 'zh_cn', 'zh_tw', 'en']
 
+interface IflytekOcrTextJson {
+    pages?: Array<{
+        lines?: Array<{
+            words?: Array<{ content?: string }>
+        }>
+    }>
+}
+
 export const iflytekOcrService: OcrService = {
     key: 'iflytek_ocr',
     name: 'iFlytek OCR',
@@ -48,7 +56,7 @@ export const iflytekOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`iFlytek OCR API error: ${resp.status}`)
+            throw new Error(`iFlytek OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -57,14 +65,14 @@ export const iflytekOcrService: OcrService = {
         }
 
         if (data.header?.code && data.header.code !== 0) {
-            throw new Error(`iFlytek OCR error: ${data.header.message ?? data.header.code}`)
+            throw new Error(`iFlytek OCR error: ${String(data.header.message ?? data.header.code)}`)
         }
 
         if (!data.payload?.result?.text) {
             throw new Error('iFlytek OCR: no result in response')
         }
 
-        const text_json = JSON.parse(atob(data.payload.result.text))
+        const text_json = JSON.parse(atob(data.payload.result.text)) as IflytekOcrTextJson
         let result = ''
         for (const page of text_json.pages ?? []) {
             for (const line of page.lines ?? []) {

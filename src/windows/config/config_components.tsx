@@ -51,11 +51,11 @@ export function ConfigSwitch({ on, onChange, testId }: {
             aria-checked={on}
             tabIndex={0}
             className={'switch' + (on ? ' on' : '')}
-            onClick={() => onChange && onChange(!on)}
+            onClick={() => onChange?.(!on)}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    onChange && onChange(!on)
+                    onChange?.(!on)
                 }
             }}
         />
@@ -80,11 +80,11 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
+        return () => { document.removeEventListener('mousedown', handleClickOutside); }
     }, [])
 
     return (
-        <div ref={ref} className="select" data-testid={testId} style={style} onClick={() => setOpen((o) => !o)}>
+        <div ref={ref} className="select" data-testid={testId} style={style} onClick={() => { setOpen((o) => !o); }}>
             <span>{cur?.label || value}</span>
             <svg
                 className="chev"
@@ -120,7 +120,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
                             data-testid={testId ? `${testId}-option-${o.value}` : undefined}
                             onClick={(e) => {
                                 e.stopPropagation()
-                                onChange && onChange(o.value)
+                                onChange?.(o.value)
                                 setOpen(false)
                             }}
                             style={{
@@ -165,7 +165,7 @@ export function ConfigField({ defaultValue, value, onChange, placeholder, mono, 
                 className={mono ? 'mono' : ''}
                 defaultValue={defaultValue}
                 value={value}
-                onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+                onChange={onChange ? (e) => { onChange(e.target.value); } : undefined}
                 placeholder={placeholder}
             />
         </div>

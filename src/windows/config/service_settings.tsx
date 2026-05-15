@@ -39,7 +39,9 @@ function service_has_test_config(service: unknown): service is TestableService {
 }
 
 function visible_config_text(config: ServiceConfig): string {
-    const { enable: _enable, instanceName: _instanceName, ...values } = config
+    const values = { ...config }
+    delete values.enable
+    delete values.instanceName
     return JSON.stringify(values, null, 4)
 }
 
@@ -57,6 +59,10 @@ function parse_config_text(text: string): ServiceConfig | null {
         }
     }
     return result
+}
+
+function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
+    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
 }
 
 interface ServiceItemRowProps {
@@ -122,12 +128,12 @@ function ServiceItemRow({
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{name}</div>
                 <div className="hint mono" style={{ fontSize: 10.5 }}>{instanceKey}</div>
             </div>
-            <ConfigSwitch on={isEnabled} onChange={() => onToggle(instanceKey)} testId="svc-toggle" />
+            <ConfigSwitch on={isEnabled} onChange={() => { onToggle(instanceKey); }} testId="svc-toggle" />
             <button
                 data-testid="svc-edit"
                 className="btn ghost icon sm"
                 title={t('service.edit')}
-                onClick={() => onEdit(instanceKey)}
+                onClick={() => { onEdit(instanceKey); }}
             >
                 <Icons.Settings size={13} />
             </button>
@@ -135,7 +141,7 @@ function ServiceItemRow({
                 data-testid="svc-move-up"
                 className="btn ghost icon sm"
                 disabled={index === 0}
-                onClick={() => onMoveUp(index)}
+                onClick={() => { onMoveUp(index); }}
             >
                 <Icons.Chev size={12} style={{ transform: 'rotate(90deg)' }} />
             </button>
@@ -143,7 +149,7 @@ function ServiceItemRow({
                 data-testid="svc-move-down"
                 className="btn ghost icon sm"
                 disabled={!canMoveDown}
-                onClick={() => onMoveDown(index)}
+                onClick={() => { onMoveDown(index); }}
             >
                 <Icons.Chev size={12} style={{ transform: 'rotate(-90deg)' }} />
             </button>
@@ -152,7 +158,7 @@ function ServiceItemRow({
                 className="btn ghost icon sm"
                 style={{ color: canDelete ? 'var(--danger)' : 'var(--text-mute)' }}
                 disabled={!canDelete}
-                onClick={() => onRemove(instanceKey)}
+                onClick={() => { onRemove(instanceKey); }}
             >
                 <Icons.Trash size={13} />
             </button>
@@ -179,7 +185,7 @@ export default function ServiceSettings(): React.ReactElement {
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
     const getInstanceName = (instanceKey: string): string => {
-        const customName = serviceInstances[instanceKey]?.config.instanceName
+        const customName = get_service_config(serviceInstances, instanceKey).instanceName
         if (typeof customName === 'string' && customName.trim()) return customName
         const svcKey = getServiceKey(instanceKey)
         const svc = registry.get(svcKey)
@@ -191,7 +197,7 @@ export default function ServiceSettings(): React.ReactElement {
     }
 
     const updateServiceConfig = (instanceKey: string, nextConfig: ServiceConfig): void => {
-        const currentInstance = serviceInstances[instanceKey] ?? { serviceKey: getServiceKey(instanceKey), config: {} }
+        const currentInstance = (serviceInstances as Partial<ServiceInstancesMap>)[instanceKey] ?? { serviceKey: getServiceKey(instanceKey), config: {} }
         setServiceInstances({
             ...serviceInstances,
             [instanceKey]: {
@@ -202,7 +208,7 @@ export default function ServiceSettings(): React.ReactElement {
     }
 
     const toggleService = (instanceKey: string): void => {
-        const currentConfig = serviceInstances[instanceKey]?.config ?? {}
+        const currentConfig = get_service_config(serviceInstances, instanceKey)
         updateServiceConfig(instanceKey, {
             ...currentConfig,
             enable: currentConfig.enable === false,
@@ -212,8 +218,8 @@ export default function ServiceSettings(): React.ReactElement {
     const removeService = (instanceKey: string): void => {
         if (serviceList.length <= 1) return
         const newList = serviceList.filter((k) => k !== instanceKey)
-        const newInstances: ServiceInstancesMap = { ...serviceInstances }
-        delete newInstances[instanceKey]
+        const { [instanceKey]: removed, ...newInstances } = serviceInstances
+        void removed
         useConfigStore.getState().set(activeTab, newList)
         setServiceInstances(newInstances)
     }
@@ -233,18 +239,20 @@ export default function ServiceSettings(): React.ReactElement {
     const moveUp = (index: number): void => {
         if (index <= 0) return
         const newList = [...serviceList]
-        const temp = newList[index]
-        newList[index] = newList[index - 1]
-        newList[index - 1] = temp
+        const [current] = newList.slice(index, index + 1) as [string]
+        const [previous] = newList.slice(index - 1, index) as [string]
+        newList[index] = previous
+        newList[index - 1] = current
         useConfigStore.getState().set(activeTab, newList)
     }
 
     const moveDown = (index: number): void => {
         if (index >= serviceList.length - 1) return
         const newList = [...serviceList]
-        const temp = newList[index]
-        newList[index] = newList[index + 1]
-        newList[index + 1] = temp
+        const [current] = newList.slice(index, index + 1) as [string]
+        const [next] = newList.slice(index + 1, index + 2) as [string]
+        newList[index] = next
+        newList[index + 1] = current
         useConfigStore.getState().set(activeTab, newList)
     }
 
@@ -255,13 +263,13 @@ export default function ServiceSettings(): React.ReactElement {
         const newIndex = serviceList.indexOf(String(over.id))
         if (oldIndex === -1 || newIndex === -1) return
         const newList = [...serviceList]
-        const [moved] = newList.splice(oldIndex, 1)
+        const [moved] = newList.splice(oldIndex, 1) as [string]
         newList.splice(newIndex, 0, moved)
         useConfigStore.getState().set(activeTab, newList)
     }
 
     const openEdit = (instanceKey: string): void => {
-        const config = serviceInstances[instanceKey]?.config ?? {}
+        const config = get_service_config(serviceInstances, instanceKey)
         editing_key_ref.current = instanceKey
         edit_test_request_ref.current += 1
         setEditingKey(instanceKey)
@@ -293,7 +301,7 @@ export default function ServiceSettings(): React.ReactElement {
         try {
             const parsed = parse_config_text(editConfigText)
             if (!parsed || !editingKey) return null
-            const currentConfig = serviceInstances[editingKey]?.config ?? {}
+            const currentConfig = get_service_config(serviceInstances, editingKey)
             const name = editName.trim()
             return {
                 ...parsed,
@@ -352,7 +360,7 @@ export default function ServiceSettings(): React.ReactElement {
                         role="tab"
                         data-testid={`svc-tab-${tab.key}`}
                         aria-selected={activeTab === tab.key}
-                        onClick={() => setActiveTab(tab.key)}
+                        onClick={() => { setActiveTab(tab.key); }}
                         className="btn sm"
                         style={{
                             background: activeTab === tab.key ? 'var(--bg-elev)' : 'transparent',
@@ -379,7 +387,7 @@ export default function ServiceSettings(): React.ReactElement {
                         <div style={{ padding: 4 }}>
                             {serviceList.map((instanceKey, index) => {
                                 const svcKey = getServiceKey(instanceKey)
-                                const isEnabled = serviceInstances[instanceKey]?.config.enable !== false
+                                const isEnabled = get_service_config(serviceInstances, instanceKey).enable !== false
                                 return (
                                     <ServiceItemRow
                                         key={instanceKey}
@@ -403,7 +411,7 @@ export default function ServiceSettings(): React.ReactElement {
                 </DndContext>
                 <div className="div" />
                 <div style={{ padding: 10, display: 'flex', gap: 8 }}>
-                    <button className="btn sm" data-testid="svc-add-btn" onClick={() => setShowAddModal(true)}>
+                    <button className="btn sm" data-testid="svc-add-btn" onClick={() => { setShowAddModal(true); }}>
                         <Icons.Plus size={12} />
                         {t('service.add') || '添加服务'}
                     </button>
@@ -421,16 +429,16 @@ export default function ServiceSettings(): React.ReactElement {
                         justifyContent: 'center',
                         zIndex: 100,
                     }}
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => { setShowAddModal(false); }}
                 >
                     <div
                         className="card"
                         style={{ width: 400, maxHeight: 400, overflow: 'auto', padding: 0 }}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); }}
                     >
                         <div className="card-head">
                             <span>{t('service.add') || '添加服务'}</span>
-                            <button className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setShowAddModal(false)}>
+                            <button className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => { setShowAddModal(false); }}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
@@ -440,7 +448,7 @@ export default function ServiceSettings(): React.ReactElement {
                                     key={svc.key}
                                     data-testid="svc-add-option"
                                     data-service-template={svc.key}
-                                    onClick={() => addService(svc.key)}
+                                    onClick={() => { addService(svc.key); }}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
@@ -484,7 +492,7 @@ export default function ServiceSettings(): React.ReactElement {
                     <div
                         className="card"
                         style={{ width: 480, padding: 0 }}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); }}
                     >
                         <div className="card-head">
                             <span>{t('service.edit_service')}</span>
@@ -496,7 +504,7 @@ export default function ServiceSettings(): React.ReactElement {
                             <label className="stack gap-4" style={{ fontSize: 12, color: 'var(--text-dim)' }}>
                                 {t('service.instance_name')}
                                 <div className="field">
-                                    <input data-testid="svc-edit-name" value={editName} onChange={(e) => update_edit_name(e.target.value)} />
+                                    <input data-testid="svc-edit-name" value={editName} onChange={(e) => { update_edit_name(e.target.value); }} />
                                 </div>
                             </label>
                             <label className="stack gap-4" style={{ fontSize: 12, color: 'var(--text-dim)' }}>
@@ -505,7 +513,7 @@ export default function ServiceSettings(): React.ReactElement {
                                     data-testid="svc-edit-config"
                                     className="mono"
                                     value={editConfigText}
-                                    onChange={(e) => update_edit_config_text(e.target.value)}
+                                    onChange={(e) => { update_edit_config_text(e.target.value); }}
                                     style={{
                                         minHeight: 140,
                                         resize: 'vertical',

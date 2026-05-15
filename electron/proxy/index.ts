@@ -7,7 +7,7 @@ export function applyProxy(): void {
     const port = getConfig('proxy_port') as string
 
     if (!enabled || !host) {
-        session.defaultSession.setProxy({ mode: 'direct' })
+        session.defaultSession.setProxy({ mode: 'direct' }).catch(console.error)
         return
     }
 
@@ -15,5 +15,5 @@ export function applyProxy(): void {
     session.defaultSession.setProxy({
         mode: 'fixed_servers',
         proxyRules: `http=${proxy_url};https=${proxy_url}`
-    })
+    }).catch(console.error)
 }

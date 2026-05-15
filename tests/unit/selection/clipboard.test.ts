@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type * as node_crypto from 'node:crypto'
+import type { getSelectedTextViaClipboard as getSelectedTextViaClipboardType } from '../../../electron/selection/clipboard'
 
 const { mockReadText, mockWriteText, mockClear, mockWrite, mockRandomUUID } = vi.hoisted(() => {
     let mockClipboardText = ''
@@ -31,7 +33,7 @@ vi.mock('electron', () => ({
 }))
 
 vi.mock('node:crypto', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('node:crypto')>()
+    const actual = await importOriginal<typeof node_crypto>()
     return {
         ...actual,
         randomUUID: mockRandomUUID,
@@ -41,7 +43,7 @@ vi.mock('node:crypto', async (importOriginal) => {
 const identitySuppression = async <T>(fn: () => Promise<T>): Promise<T> => fn()
 
 describe('getSelectedTextViaClipboard', () => {
-    let getSelectedTextViaClipboard: typeof import('../../../electron/selection/clipboard').getSelectedTextViaClipboard
+    let getSelectedTextViaClipboard: typeof getSelectedTextViaClipboardType
 
     beforeEach(async () => {
         vi.clearAllMocks()
@@ -69,7 +71,7 @@ describe('getSelectedTextViaClipboard', () => {
             NativeImage: {},
         }))
         vi.doMock('node:crypto', async (importOriginal) => {
-            const actual = await importOriginal<typeof import('node:crypto')>()
+            const actual = await importOriginal<typeof node_crypto>()
             return {
                 ...actual,
                 randomUUID: mockRandomUUID,
@@ -81,8 +83,9 @@ describe('getSelectedTextViaClipboard', () => {
     })
 
     it('returns selected text on successful copy', async () => {
-        const simulateCopy = vi.fn().mockImplementation(async () => {
+        const simulateCopy = vi.fn().mockImplementation(() => {
             mockWriteText('selected text')
+            return Promise.resolve()
         })
 
         const result = await getSelectedTextViaClipboard(simulateCopy, identitySuppression)
@@ -104,8 +107,9 @@ describe('getSelectedTextViaClipboard', () => {
         mockWriteText('same')
 
         // simulateCopy writes "same" (same as original) into clipboard
-        const simulateCopy = vi.fn().mockImplementation(async () => {
+        const simulateCopy = vi.fn().mockImplementation(() => {
             mockWriteText('same')
+            return Promise.resolve()
         })
 
         const result = await getSelectedTextViaClipboard(simulateCopy, identitySuppression)
@@ -118,8 +122,9 @@ describe('getSelectedTextViaClipboard', () => {
         // Set initial clipboard content so backup captures it
         mockWriteText('original content')
 
-        const simulateCopy = vi.fn().mockImplementation(async () => {
+        const simulateCopy = vi.fn().mockImplementation(() => {
             mockWriteText('new selected text')
+            return Promise.resolve()
         })
 
         await getSelectedTextViaClipboard(simulateCopy, identitySuppression)

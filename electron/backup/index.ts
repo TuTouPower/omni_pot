@@ -73,7 +73,7 @@ for (let i = 0; i < 256; i += 1) {
 function crc32(data: Buffer): number {
     let crc = 0xffffffff
     for (const byte of data) {
-        crc = CRC32_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8)
+        crc = (CRC32_TABLE[(crc ^ byte) & 0xff] ?? 0) ^ (crc >>> 8)
     }
     return (crc ^ 0xffffffff) >>> 0
 }
@@ -208,7 +208,7 @@ function read_zip_entries(path: string): ZipEntry[] {
         if (seen.has(name)) throw new Error(`Duplicate backup entry: ${name}`)
         seen.add(name)
 
-        const max_size = MAX_ZIP_ENTRY_BYTES[name]
+        const max_size = MAX_ZIP_ENTRY_BYTES[name] ?? 0
         if (uncompressed_size > max_size || compressed_size > max_size) {
             throw new Error(`Backup entry is too large: ${name}`)
         }

@@ -51,7 +51,7 @@ function percentEncode(str: string): string {
 async function buildSignature(params: Record<string, string>, accesskeySecret: string): Promise<string> {
     const sortedKeys = Object.keys(params).sort()
     const canonicalQuery = sortedKeys
-        .map((k) => `${percentEncode(k)}=${percentEncode(params[k])}`)
+        .map((k) => `${percentEncode(k)}=${percentEncode(params[k] ?? '')}`)
         .join('&')
     const stringToSign = `GET&${percentEncode('/')}&${percentEncode(canonicalQuery)}`
     const hex = await hmac(`${accesskeySecret}&`, stringToSign, 'SHA-1')
@@ -99,7 +99,7 @@ export const alibabaService: TranslateService = {
 
         const resp = await fetch(url.toString())
         if (!resp.ok) {
-            throw new Error(`Alibaba translate API error: ${resp.status}`)
+            throw new Error(`Alibaba translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {

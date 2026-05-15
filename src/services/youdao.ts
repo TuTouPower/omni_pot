@@ -43,6 +43,10 @@ const YOUDAO_LANG_MAP: Record<string, string> = {
     he: 'he'
 }
 
+function regex_capture(match: RegExpMatchArray, index: number): string {
+    return match[index] ?? ''
+}
+
 function buildSign(appKey: string, text: string, salt: string, key: string): string {
     const input = text.length <= 20
         ? text
@@ -80,7 +84,7 @@ export const youdaoService: TranslateService = {
 
         const resp = await fetch(`https://openapi.youdao.com/api?${params.toString()}`)
         if (!resp.ok) {
-            throw new Error(`Youdao translate API error: ${resp.status}`)
+            throw new Error(`Youdao translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -116,7 +120,7 @@ export const youdaoService: TranslateService = {
                 .map((exp) => {
                     const match = exp.match(/^([a-z]+\.)\s*(.*)/)
                     if (match) {
-                        return { partOfSpeech: match[1], meanings: [match[2]] }
+                        return { partOfSpeech: regex_capture(match, 1), meanings: [regex_capture(match, 2)] }
                     }
                     return { partOfSpeech: '', meanings: [exp] }
                 })

@@ -48,9 +48,9 @@ const INPUT_STRUCT = koffi.struct('INPUT', {
 
 const SendInput = user32.func(
     'unsigned int __stdcall SendInput(unsigned int cInputs, INPUT *pInputs, int cbSize)'
-)
+) as unknown as (c_inputs: number, inputs: unknown, cb_size: number) => number
 
-async function sendCtrlC(): Promise<void> {
+function sendCtrlC(): Promise<void> {
     const inputs = [
         { type: INPUT_KEYBOARD, u: { ki: { wVk: VK_CONTROL, wScan: 0, dwFlags: 0, time: 0, dwExtraInfo: 0n } } },
         { type: INPUT_KEYBOARD, u: { ki: { wVk: VK_C, wScan: 0, dwFlags: 0, time: 0, dwExtraInfo: 0n } } },
@@ -60,8 +60,9 @@ async function sendCtrlC(): Promise<void> {
 
     const sent = SendInput(4, inputs, koffi.sizeof(INPUT_STRUCT))
     if (sent !== 4) {
-        throw new Error(`SendInput failed: ${sent}/4 events delivered`)
+        throw new Error(`SendInput failed: ${String(sent)}/4 events delivered`)
     }
+    return Promise.resolve()
 }
 
 const S_OK = 0
@@ -70,7 +71,7 @@ const COINIT_APARTMENTTHREADED = 0x2
 const CLSCTX_INPROC_SERVER = 0x1
 const UIA_TextPatternId = 10014
 
-const GUID = koffi.struct('GUID', {
+koffi.struct('GUID', {
     Data1: 'uint32',
     Data2: 'uint16',
     Data3: 'uint16',
@@ -91,14 +92,17 @@ const IID_IUIAutomation = {
     Data4: [0xab, 0x13, 0x7a, 0xc5, 0xac, 0x48, 0x25, 0xee]
 }
 
+type NativePointer = object
+type NativeProto = Parameters<typeof koffi.call>[1]
+
 const CoInitializeEx = ole32.func(
     'int32 __stdcall CoInitializeEx(void *pvReserved, uint32 dwCoInit)'
-)
+) as unknown as (reserved: null, co_init: number) => number
 const CoCreateInstance = ole32.func(
     'int32 __stdcall CoCreateInstance(GUID *rclsid, void *pUnkOuter, uint32 dwClsCtx, GUID *riid, _Out_ void **ppv)'
-)
-const CoUninitialize = ole32.func('void __stdcall CoUninitialize()')
-const SysFreeString = oleaut32.func('void __stdcall SysFreeString(wchar_t *bstrString)')
+) as unknown as (clsid: unknown, outer: null, cls_context: number, iid: unknown, out: Array<NativePointer | null>) => number
+const CoUninitialize = ole32.func('void __stdcall CoUninitialize()') as unknown as () => void
+const SysFreeString = oleaut32.func('void __stdcall SysFreeString(wchar_t *bstrString)') as unknown as (value: unknown) => void
 
 const ReleaseProto = koffi.proto('uint32 __stdcall UiaRelease(void *self)')
 const GetFocusedElementProto = koffi.proto(
@@ -120,17 +124,25 @@ const GetTextProto = koffi.proto(
     'int32 __stdcall UiaGetText(void *self, int32 maxLength, _Out_ wchar_t **text)'
 )
 
-function readVtableFunc(obj: unknown, index: number): unknown {
-    const vtablePtr = koffi.decode(obj, 'void *')
-    const funcPtrs = koffi.decode(vtablePtr, 'void *', index + 1)
-    return funcPtrs[index]
+function readVtableFunc(obj: NativePointer, index: number): NativePointer {
+    const vtablePtr = koffi.decode(obj, 'void *') as NativePointer
+    const funcPtrs = koffi.decode(vtablePtr, 'void *', index + 1) as NativePointer[]
+    const fn = funcPtrs.at(index)
+    if (fn === undefined) throw new Error('Missing COM vtable function')
+    return fn
 }
 
-function release(obj: unknown): void {
-    if (obj) {
-        const fn = readVtableFunc(obj, 2)
-        koffi.call(fn, ReleaseProto, obj)
-    }
+function call_i32(fn: NativePointer, proto: NativeProto, ...args: unknown[]): number {
+    return koffi.call(fn, proto, ...args) as number
+}
+
+function call_u32(fn: NativePointer, proto: NativeProto, ...args: unknown[]): number {
+    return koffi.call(fn, proto, ...args) as number
+}
+
+function release(obj: NativePointer): void {
+    const fn = readVtableFunc(obj, 2)
+    call_u32(fn, ReleaseProto, obj)
 }
 
 function getTextByUIAutomation(): string | null {
@@ -141,10 +153,8 @@ function getTextByUIAutomation(): string | null {
     if (hr !== S_OK) {
         return null
     }
-    const comInitialized = true
-
     try {
-        const ppv = [null]
+        const ppv: Array<NativePointer | null> = [null]
         const hr2 = CoCreateInstance(
             CLSID_CUIAutomation, null, CLSCTX_INPROC_SERVER, IID_IUIAutomation, ppv
         )
@@ -153,8 +163,8 @@ function getTextByUIAutomation(): string | null {
         }
         const pAutomation = ppv[0]
 
-        const elementOut = [null]
-        const hr3 = koffi.call(
+        const elementOut: Array<NativePointer | null> = [null]
+        const hr3 = call_i32(
             readVtableFunc(pAutomation, 8), GetFocusedElementProto, pAutomation, elementOut
         )
         if (hr3 !== S_OK || !elementOut[0]) {
@@ -163,8 +173,8 @@ function getTextByUIAutomation(): string | null {
         }
         const pElement = elementOut[0]
 
-        const patternOut = [null]
-        const hr4 = koffi.call(
+        const patternOut: Array<NativePointer | null> = [null]
+        const hr4 = call_i32(
             readVtableFunc(pElement, 16), GetCurrentPatternProto,
             pElement, UIA_TextPatternId, patternOut
         )
@@ -175,8 +185,8 @@ function getTextByUIAutomation(): string | null {
         }
         const pPattern = patternOut[0]
 
-        const rangesOut = [null]
-        const hr5 = koffi.call(
+        const rangesOut: Array<NativePointer | null> = [null]
+        const hr5 = call_i32(
             readVtableFunc(pPattern, 5), GetSelectionProto, pPattern, rangesOut
         )
         if (hr5 !== S_OK || !rangesOut[0]) {
@@ -188,7 +198,7 @@ function getTextByUIAutomation(): string | null {
         const pRanges = rangesOut[0]
 
         const lengthOut = [0]
-        const hr6 = koffi.call(
+        const hr6 = call_i32(
             readVtableFunc(pRanges, 3), GetLengthProto, pRanges, lengthOut
         )
         if (hr6 !== S_OK) {
@@ -199,12 +209,12 @@ function getTextByUIAutomation(): string | null {
             return null
         }
 
-        const length = lengthOut[0]
+        const length = lengthOut[0] ?? 0
         const texts: string[] = []
 
         for (let i = 0; i < length; i++) {
-            const rangeOut = [null]
-            const hr7 = koffi.call(
+            const rangeOut: Array<NativePointer | null> = [null]
+            const hr7 = call_i32(
                 readVtableFunc(pRanges, 4), GetElementProto, pRanges, i, rangeOut
             )
             if (hr7 !== S_OK || !rangeOut[0]) {
@@ -212,12 +222,12 @@ function getTextByUIAutomation(): string | null {
             }
             const pRange = rangeOut[0]
 
-            const textOut = [null]
-            const hr8 = koffi.call(
+            const textOut: Array<NativePointer | null> = [null]
+            const hr8 = call_i32(
                 readVtableFunc(pRange, 12), GetTextProto, pRange, -1, textOut
             )
             if (hr8 === S_OK && textOut[0]) {
-                const text = koffi.decode(textOut[0], 'str16')
+                const text = koffi.decode(textOut[0], 'str16') as unknown as string
                 texts.push(text)
                 SysFreeString(textOut[0])
             }
@@ -233,9 +243,7 @@ function getTextByUIAutomation(): string | null {
         const result = texts.join('\n').trim()
         return result.length > 0 ? result : null
     } finally {
-        if (comInitialized) {
-            CoUninitialize()
-        }
+        CoUninitialize()
     }
 }
 

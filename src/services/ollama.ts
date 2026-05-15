@@ -45,7 +45,7 @@ export const ollamaService: TranslateService = {
             })
         })
 
-        if (!resp.ok) throw new Error(`Ollama API error: ${resp.status}`)
+        if (!resp.ok) throw new Error(`Ollama API error: ${String(resp.status)}`)
 
         const reader = resp.body?.getReader()
         const decoder = new TextDecoder()
@@ -96,7 +96,7 @@ export const ollamaService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Ollama API error: ${resp.status}`)
+            throw new Error(`Ollama API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {

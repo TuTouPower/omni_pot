@@ -1,7 +1,7 @@
 import { globalShortcut } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
-import { getConfig, setConfig } from '../config/store'
+import { getConfig } from '../config/store'
 import type { ConfigKey } from '@shared/types/config'
 import { start_screenshot_capture } from '../screenshot'
 import { get_translate_window_options } from '../windows/translate_options'
@@ -36,13 +36,13 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
     case 'hotkey_input_translate':
       return toggleOrSend('translate:input-translate')
     case 'hotkey_selection_translate':
-      return () => { void triggerSelectionTranslate(mgr) }
+      return () => { triggerSelectionTranslate(mgr).catch(console.error) }
     case 'hotkey_ocr_recognize':
-      return () => { void start_screenshot_capture(mgr, 'recognize') }
+      return () => { start_screenshot_capture(mgr, 'recognize').catch(console.error) }
     case 'hotkey_ocr_translate':
-      return () => { void start_screenshot_capture(mgr, 'translate') }
+      return () => { start_screenshot_capture(mgr, 'translate').catch(console.error) }
     case 'hotkey_selection_dictionary':
-      return () => { void triggerSelectionDictionary(mgr) }
+      return () => { triggerSelectionDictionary(mgr).catch(console.error) }
     default:
       return () => {}
   }
@@ -85,7 +85,6 @@ async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
 }
 
 export function registerHotkey(
-  name: string,
   shortcut: string,
   action: () => void
 ): boolean {
@@ -116,8 +115,9 @@ const HOTKEY_KEYS: ConfigKey[] = [
 export function registerGlobalShortcutsFromConfig(): void {
   if (!windowManager) return
   for (const name of HOTKEY_KEYS) {
-    const shortcut = String(getConfig(name) ?? '')
+    const value = getConfig(name)
+    const shortcut = typeof value === 'string' ? value : ''
     if (!shortcut) continue
-    registerHotkey(name, shortcut, buildHotkeyAction(name, windowManager))
+    registerHotkey(shortcut, buildHotkeyAction(name, windowManager))
   }
 }

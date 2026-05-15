@@ -43,12 +43,17 @@ export const googleService: TranslateService = {
 
     const resp = await fetch(url.toString())
     if (!resp.ok) {
-      throw new Error(`Google translate API ${resp.status}`)
+      throw new Error(`Google translate API ${String(resp.status)}`)
     }
     const data = (await resp.json()) as Array<unknown>
     const segments = data[0] as Array<Array<unknown>> | undefined
     if (!segments) throw new Error('Google translate returned empty body')
-    return segments.map((seg) => String(seg[0] ?? '')).join('')
+    return segments.map((seg) => {
+      const value = seg[0]
+      return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+        ? String(value)
+        : ''
+    }).join('')
   },
 
   async testConfig(config: ServiceConfig): Promise<boolean> {

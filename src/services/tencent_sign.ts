@@ -18,7 +18,7 @@ export async function signTencentRequest(opts: TencentSignOpts): Promise<{
 
     const timestamp = Math.floor(Date.now() / 1000)
     const d = new Date(timestamp * 1000)
-    const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+    const date = `${String(d.getUTCFullYear())}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 
     const contentType = 'application/json; charset=utf-8'
     const hashedPayload = await sha256(body)
@@ -28,7 +28,7 @@ export async function signTencentRequest(opts: TencentSignOpts): Promise<{
     const canonicalRequest = `POST\n/\n\n${canonicalHeaders}\n${signedHeaders}\n${hashedPayload}`
 
     const credentialScope = `${date}/${service}/tc3_request`
-    const stringToSign = `TC3-HMAC-SHA256\n${timestamp}\n${credentialScope}\n${await sha256(canonicalRequest)}`
+    const stringToSign = `TC3-HMAC-SHA256\n${String(timestamp)}\n${credentialScope}\n${await sha256(canonicalRequest)}`
 
     const kDate = await hmac(`TC3${secretKey}`, date, 'SHA-256')
     const kService = await hmac(hexToBytes(kDate).buffer as ArrayBuffer, service, 'SHA-256')

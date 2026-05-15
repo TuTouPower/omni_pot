@@ -21,9 +21,9 @@ export const useDictStore = create<DictStore>()((set) => ({
     results: {},
     isLoading: false,
 
-    setWord: (text) => set({ word: text }),
+    setWord: (text) => { set({ word: text }); },
     setResult: (instanceKey, result) =>
-        set((state) => ({ results: { ...state.results, [instanceKey]: result } })),
-    setIsLoading: (flag) => set({ isLoading: flag }),
-    clearResults: () => set({ results: {} })
+        { set((state) => ({ results: { ...state.results, [instanceKey]: result } })); },
+    setIsLoading: (flag) => { set({ isLoading: flag }); },
+    clearResults: () => { set({ results: {} }); }
 }))

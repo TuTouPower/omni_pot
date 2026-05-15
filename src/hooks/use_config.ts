@@ -7,7 +7,7 @@ export function useConfig<K extends ConfigKey>(
 ): [AppConfig[K], (value: AppConfig[K]) => void] {
   const value = useConfigStore((s) => s.config[key])
   const setValue = useCallback(
-    (newValue: AppConfig[K]) => useConfigStore.getState().set(key, newValue),
+    (newValue: AppConfig[K]) => { useConfigStore.getState().set(key, newValue); },
     [key]
   )
   return [value, setValue]

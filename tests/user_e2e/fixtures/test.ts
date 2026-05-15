@@ -2,7 +2,8 @@ import { test as base, expect } from '@playwright/test'
 import { AppFixture } from './app_fixture'
 
 export const test = base.extend<{ omni: AppFixture }>({
-    omni: async ({}, use) => {
+    omni: async (args, use) => {
+        void args
         const omni = await AppFixture.start()
         await omni.resetConfig()
         await use(omni)

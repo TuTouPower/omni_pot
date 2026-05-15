@@ -1,5 +1,4 @@
 import { join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
 import Database from 'better-sqlite3'
 import { getUserDataDir } from '../config/store'
 

@@ -84,7 +84,7 @@ export const volcengineMultiLangOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Volcengine Multi-lang OCR API error: ${resp.status}`)
+            throw new Error(`Volcengine Multi-lang OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -93,7 +93,7 @@ export const volcengineMultiLangOcrService: OcrService = {
         }
 
         if (data.ResponseMetadata?.Error) {
-            throw new Error(`Volcengine Multi-lang OCR error: ${data.ResponseMetadata.Error.Message ?? data.ResponseMetadata.Error.Code}`)
+            throw new Error(`Volcengine Multi-lang OCR error: ${String(data.ResponseMetadata.Error.Message ?? data.ResponseMetadata.Error.Code)}`)
         }
 
         return data.data?.ocr_infos?.map((t) => t.text).join('\n') ?? ''

@@ -9,8 +9,13 @@ import { translateServiceRegistry } from '../../services/registry'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { detectLanguage } from '../../services/detect'
 import { getServiceKey } from '@shared/types/service'
-import type { DictResult } from '@shared/types/service'
+import type { DictResult, ServiceConfig } from '@shared/types/service'
+import type { ServiceInstancesMap } from '@shared/types/config'
 import type { LanguageCode } from '@shared/types/language'
+
+function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
+    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
+}
 
 function normalize_source_text(text: string): string {
     return text.replace(/-\s+/g, '').replace(/\s+/g, ' ')
@@ -25,13 +30,12 @@ export default function TranslateWindow(): React.ReactElement {
     const clearResults = useTranslateStore((s) => s.clearResults)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
     const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
-    const requestId = useTranslateStore((s) => s.requestId)
     const nextRequestId = useTranslateStore((s) => s.nextRequestId)
 
     const serviceList = useConfigStore((s) => s.config.translate_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
     const enabledServiceList = useMemo(
-        () => serviceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        () => serviceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [serviceList, serviceInstances]
     )
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
@@ -44,7 +48,7 @@ export default function TranslateWindow(): React.ReactElement {
     const historyDisable = useConfigStore((s) => s.config.history_disable)
     const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
     const enabledTtsServiceList = useMemo(
-        () => ttsServiceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        () => ttsServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [ttsServiceList, serviceInstances]
     )
     const configTargetLang = useConfigStore((s) => s.config.translate_target_language)
@@ -63,7 +67,7 @@ export default function TranslateWindow(): React.ReactElement {
         setStoreTargetLang(configTargetLang as LanguageCode)
         setStoreSourceLang(configSourceLang as LanguageCode)
         const timer = window.setTimeout(() => { languageConfigReadyRef.current = true }, 0)
-        return () => window.clearTimeout(timer)
+        return () => { window.clearTimeout(timer); }
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
@@ -119,7 +123,7 @@ export default function TranslateWindow(): React.ReactElement {
                 }
                 return
             }
-            const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
+            const instanceConfig = get_service_config(serviceInstances, instanceKey)
 
             try {
                 if (service.translateStream) {
@@ -193,10 +197,10 @@ export default function TranslateWindow(): React.ReactElement {
                 clipboardText = textToTranslate
             } else if (autoCopy === 'target') {
                 clipboardText = targetTexts
-            } else if (autoCopy === 'source_target') {
+            } else {
                 clipboardText = targetTexts ? `${textToTranslate}\n\n${targetTexts}` : textToTranslate
             }
-            if (clipboardText) void navigator.clipboard.writeText(clipboardText).catch(() => undefined)
+            if (clipboardText) navigator.clipboard.writeText(clipboardText).catch(() => undefined)
         }
     }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy, historyDisable])
 
@@ -215,7 +219,7 @@ export default function TranslateWindow(): React.ReactElement {
 
             setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => handleTranslate(nextText), 0)
+            setTimeout(() => { handleTranslate(nextText).catch(console.error) }, 0)
         })
         return unsub
     }, [prepareIncomingText, setSourceText, handleTranslate])
@@ -226,7 +230,7 @@ export default function TranslateWindow(): React.ReactElement {
             const nextText = prepareIncomingText(text)
             setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => handleTranslate(nextText), 0)
+            setTimeout(() => { handleTranslate(nextText).catch(console.error) }, 0)
         })
         return unsub
     }, [prepareIncomingText, setSourceText, handleTranslate])
@@ -237,7 +241,7 @@ export default function TranslateWindow(): React.ReactElement {
             const nextText = prepareIncomingText(text)
             setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => handleTranslate(nextText), 0)
+            setTimeout(() => { handleTranslate(nextText).catch(console.error) }, 0)
         })
         return unsub
     }, [prepareIncomingText, setSourceText, handleTranslate])
@@ -259,18 +263,18 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') window.electronAPI.window.close()
+            if (e.key === 'Escape') window.electronAPI.window.close().catch(console.error)
         }
         window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
+        return () => { window.removeEventListener('keydown', handleKeyDown); }
     }, [])
 
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
 
     const handleToggleAlwaysOnTop = useCallback(() => {
         const next = !alwaysOnTop
-        void window.electronAPI.window.setAlwaysOnTop(next)
-            .then(() => setConfig('translate_always_on_top', next))
+        window.electronAPI.window.setAlwaysOnTop(next).catch(console.error)
+            .then(() => { setConfig('translate_always_on_top', next); })
             .catch(() => undefined)
     }, [alwaysOnTop, setConfig])
 
@@ -301,7 +305,7 @@ export default function TranslateWindow(): React.ReactElement {
         }
 
         const instanceKey = enabledTtsServiceList[0]
-        if (!instanceKey || sourceTtsBusyRef.current) return
+        if (!instanceKey) return
 
         const serviceKey = getServiceKey(instanceKey)
         const ttsService = ttsServiceRegistry.get(serviceKey)
@@ -330,7 +334,7 @@ export default function TranslateWindow(): React.ReactElement {
                 ? await detectLanguage(text, config.translate_detect_engine)
                 : currentSourceLanguage
             if (!isCurrentSourceTtsRequest()) return
-            const instanceConfig = config.service_instances[instanceKey]?.config ?? {}
+            const instanceConfig = get_service_config(config.service_instances, instanceKey)
 
             const audioBuffer = await ttsService.synthesize(text, language, instanceConfig)
             if (!isCurrentSourceTtsRequest()) return
@@ -362,7 +366,7 @@ export default function TranslateWindow(): React.ReactElement {
             audio.onerror = cleanup
             setSourceTtsBusy(false)
             setSourceTtsPlaying(true)
-            void audio.play().catch(cleanup)
+            audio.play().catch(cleanup)
         } catch {
             if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
                 sourceAudioRef.current = null
@@ -423,7 +427,7 @@ export default function TranslateWindow(): React.ReactElement {
         const service = translateServiceRegistry.get(serviceKey)
         if (!service) return
 
-        const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
+        const instanceConfig = get_service_config(serviceInstances, instanceKey)
         const detected = retrySourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
         if (!isCurrentRetry()) return
 
@@ -460,7 +464,7 @@ export default function TranslateWindow(): React.ReactElement {
                     title="置顶"
                     data-testid="titlebar-pin"
                     aria-pressed={alwaysOnTop}
-                    onClick={handleToggleAlwaysOnTop}
+                    onClick={() => { handleToggleAlwaysOnTop(); }}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
                     <Icons.Pin size={14} fill={alwaysOnTop} />
@@ -471,7 +475,7 @@ export default function TranslateWindow(): React.ReactElement {
                 </div>
                 <span className="op-mode" data-testid="titlebar-mode">· 翻译</span>
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
+                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={() => { handleClose().catch(console.error); }}>
                     <Icons.Close size={14} />
                 </button>
             </div>
@@ -480,8 +484,8 @@ export default function TranslateWindow(): React.ReactElement {
             <div style={{ flex: 1, overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {showSource && (
                     <SourceArea
-                        onTranslate={handleTranslate}
-                        onTts={handleSourceTts}
+                        onTranslate={() => { handleTranslate().catch(console.error); }}
+                        onTts={() => { handleSourceTts().catch(console.error); }}
                         ttsAvailable={sourceTtsAvailable}
                         ttsBusy={sourceTtsBusy}
                         ttsPlaying={sourceTtsPlaying}
@@ -490,7 +494,7 @@ export default function TranslateWindow(): React.ReactElement {
                     />
                 )}
                 {!hideLanguage && <LanguageArea onSwap={handleSwapLanguages} />}
-                <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={handleRetry} />
+                <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />
             </div>
         </div>
     )

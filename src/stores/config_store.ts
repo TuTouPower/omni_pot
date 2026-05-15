@@ -36,6 +36,6 @@ export const useConfigStore = create<ConfigStore>()((set, get) => ({
     set((state) => ({
       config: { ...state.config, [key]: value }
     }))
-    window.electronAPI.config.set(key, value)
+    window.electronAPI.config.set(key, value).catch(console.error)
   }
 }))

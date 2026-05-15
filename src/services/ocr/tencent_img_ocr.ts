@@ -67,7 +67,7 @@ export const tencentImgOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Tencent Image OCR API error: ${resp.status}`)
+            throw new Error(`Tencent Image OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -80,7 +80,7 @@ export const tencentImgOcrService: OcrService = {
         }
 
         if (data.Response?.Error) {
-            throw new Error(`Tencent Image OCR error: ${data.Response.Error.Message ?? data.Response.Error.Code}`)
+            throw new Error(`Tencent Image OCR error: ${String(data.Response.Error.Message ?? data.Response.Error.Code)}`)
         }
 
         const items = data.Response?.ImageRecord?.Value

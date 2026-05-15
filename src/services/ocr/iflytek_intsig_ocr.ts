@@ -47,7 +47,7 @@ export const iflytekIntsigOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`iFlytek IntSig OCR API error: ${resp.status}`)
+            throw new Error(`iFlytek IntSig OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {

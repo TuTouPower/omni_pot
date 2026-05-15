@@ -62,7 +62,7 @@ export const openaiVisionOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`OpenAI Vision API error: ${resp.status}`)
+            throw new Error(`OpenAI Vision API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -72,12 +72,12 @@ export const openaiVisionOcrService: OcrService = {
         return data.choices?.[0]?.message?.content ?? ''
     },
 
-    async testConfig(config: ServiceConfig): Promise<boolean> {
+    testConfig(config: ServiceConfig): Promise<boolean> {
         try {
             const api_key = (config.apiKey as string) || ''
-            return api_key.length > 0
+            return Promise.resolve(api_key.length > 0)
         } catch {
-            return false
+            return Promise.resolve(false)
         }
     }
 }

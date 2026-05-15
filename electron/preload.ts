@@ -19,7 +19,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
     getAll: () => ipcRenderer.invoke('config:getAll'),
     onChange: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, key: ConfigKey, value: unknown) =>
-        callback(key, value)
+        { callback(key, value); }
       ipcRenderer.on('config:changed', handler)
       return () => {
         ipcRenderer.off('config:changed', handler)
@@ -33,27 +33,27 @@ const api: Omit<ElectronAPI, 'ready'> = {
   text: {
     getSelection: () => ipcRenderer.invoke('text:getSelection'),
     onTranslateFromSelection: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('translate:from-selection', handler)
       return () => { ipcRenderer.off('translate:from-selection', handler) }
     },
     onInputTranslate: (callback) => {
-      const handler = () => callback()
+      const handler = () => { callback(); }
       ipcRenderer.on('translate:input-translate', handler)
       return () => { ipcRenderer.off('translate:input-translate', handler) }
     },
     onTranslateFromApi: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('translate:from-api', handler)
       return () => { ipcRenderer.off('translate:from-api', handler) }
     },
     onTranslateFromClipboard: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('translate:from-clipboard', handler)
       return () => { ipcRenderer.off('translate:from-clipboard', handler) }
     },
     onDictLookup: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('dict:lookup', handler)
       return () => { ipcRenderer.off('dict:lookup', handler) }
     }
@@ -64,12 +64,12 @@ const api: Omit<ElectronAPI, 'ready'> = {
     sendToTranslate: (text) => ipcRenderer.invoke('ocr:send-to-translate', text),
     systemRecognize: (base64Image, lang) => ipcRenderer.invoke('ocr:system-recognize', base64Image, lang),
     onScreenshotShow: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, base64: string, mode: string) => callback(base64, mode)
+      const handler = (_event: Electron.IpcRendererEvent, base64: string, mode: string) => { callback(base64, mode); }
       ipcRenderer.on('screenshot:show', handler)
       return () => { ipcRenderer.off('screenshot:show', handler) }
     },
     onRecognizeShow: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, base64: string, text: string) => callback(base64, text)
+      const handler = (_event: Electron.IpcRendererEvent, base64: string, text: string) => { callback(base64, text); }
       ipcRenderer.on('recognize:show', handler)
       return () => { ipcRenderer.off('recognize:show', handler) }
     }
@@ -94,7 +94,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
   },
   update: {
     onRelease: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, release: Parameters<typeof callback>[0]) => callback(release)
+      const handler = (_event: Electron.IpcRendererEvent, release: Parameters<typeof callback>[0]) => { callback(release); }
       ipcRenderer.on('updater:release', handler)
       return () => { ipcRenderer.off('updater:release', handler) }
     }
@@ -103,5 +103,5 @@ const api: Omit<ElectronAPI, 'ready'> = {
 
 contextBridge.exposeInMainWorld('electronAPI', {
   ...api,
-  ready: (label: string) => ipcRenderer.send('renderer:ready', label)
+  ready: (label: string) => { ipcRenderer.send('renderer:ready', label); }
 })

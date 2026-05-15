@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 
 function makeWindowStub(opts: unknown): Record<string, unknown> {
   const win: Record<string, unknown> = {
@@ -67,7 +67,7 @@ describe('WindowManager', () => {
 
     expect(BrowserWindow).not.toHaveBeenCalled()
     expect(win2).toBe(win)
-    expect(win.focus).toHaveBeenCalledTimes(1)
+    expect((win as unknown as { focus: Mock }).focus).toHaveBeenCalledTimes(1)
   })
 
   it('looks up label by browser window id', () => {
@@ -84,7 +84,7 @@ describe('WindowManager', () => {
       label: WindowLabel.TRANSLATE,
       width: 350,
       height: 420
-    }) as unknown as { on: import('vitest').Mock }
+    }) as unknown as { on: Mock }
     const closedHandler = win.on.mock.calls.find((c) => c[0] === 'closed')?.[1] as () => void
     expect(closedHandler).toBeTypeOf('function')
     closedHandler()

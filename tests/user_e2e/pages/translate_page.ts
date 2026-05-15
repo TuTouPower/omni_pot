@@ -172,12 +172,12 @@ export class TranslatePage {
             release_response = resolve
         })
         let resolve_request = (): void => {}
-        let reject_request = (_error: Error): void => {}
+        let reject_request: (error: Error) => void = () => {}
         const request_promise = new Promise<void>((resolve, reject) => {
             resolve_request = resolve
             reject_request = reject
         })
-        const timeout = setTimeout(() => reject_request(new Error('Timed out waiting for Lingva translation request')), 10_000)
+        const timeout = setTimeout(() => { reject_request(new Error('Timed out waiting for Lingva translation request')); }, 10_000)
 
         await this.page.route('https://lingva.lunar.icu/api/v1/*/zh/**', async (route) => {
             clearTimeout(timeout)
@@ -250,7 +250,7 @@ export class TranslatePage {
     }
 
     async resizeWindowTo(width: number, height: number): Promise<void> {
-        await this.page.evaluate((size) => window.resizeTo(size.width, size.height), { width, height })
+        await this.page.evaluate((size) => { window.resizeTo(size.width, size.height); }, { width, height })
     }
 
     // Result cards
@@ -285,7 +285,7 @@ export class TranslatePage {
     async result_action_order(instanceKey: string): Promise<string[]> {
         const expected = new Set(['result-tts', 'result-copy', 'result-collect', 'result-collapse'])
         return this.resultCard(instanceKey).locator('[data-testid]').evaluateAll((elements, ids) => {
-            const expected_ids = new Set(ids as string[])
+            const expected_ids = new Set(ids)
             return elements
                 .map((element) => element.getAttribute('data-testid') ?? '')
                 .filter((id) => expected_ids.has(id))
@@ -401,12 +401,12 @@ export class TranslatePage {
             release_response = resolve
         })
         let resolve_request = (): void => {}
-        let reject_request = (_error: Error): void => {}
+        let reject_request: (error: Error) => void = () => {}
         const request_promise = new Promise<void>((resolve, reject) => {
             resolve_request = resolve
             reject_request = reject
         })
-        const timeout = setTimeout(() => reject_request(new Error('Timed out waiting for Lingva TTS request')), 10_000)
+        const timeout = setTimeout(() => { reject_request(new Error('Timed out waiting for Lingva TTS request')); }, 10_000)
 
         await this.page.route('https://lingva.lunar.icu/api/v1/audio/**', async (route) => {
             request_count += 1
@@ -427,7 +427,7 @@ export class TranslatePage {
                 while (Date.now() < end) {
                     await this.page.waitForTimeout(50)
                     if (request_count !== expected_count) {
-                        throw new Error(`Expected ${expected_count} Lingva TTS request(s), got ${request_count}`)
+                        throw new Error(`Expected ${String(expected_count)} Lingva TTS request(s), got ${String(request_count)}`)
                     }
                 }
             },
@@ -450,7 +450,7 @@ export class TranslatePage {
         while (Date.now() < end) {
             const count = await this.detectedLanguage().count()
             if (count > 0) {
-                throw new Error(`Expected no detected language label, found ${count}`)
+                throw new Error(`Expected no detected language label, found ${String(count)}`)
             }
             await this.page.waitForTimeout(Math.min(100, end - Date.now()))
         }

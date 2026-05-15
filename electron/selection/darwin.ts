@@ -1,5 +1,5 @@
 import type { SelectedTextResult } from './index'
 
-export async function readSelectedTextDarwin(): Promise<SelectedTextResult> {
-    return { text: '', method: 'none', reason: 'unsupported-platform' }
+export function readSelectedTextDarwin(): Promise<SelectedTextResult> {
+    return Promise.resolve({ text: '', method: 'none', reason: 'unsupported-platform' })
 }

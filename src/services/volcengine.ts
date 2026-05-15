@@ -75,7 +75,7 @@ export const volcengineService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Volcengine translate API error: ${resp.status}`)
+            throw new Error(`Volcengine translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -84,7 +84,7 @@ export const volcengineService: TranslateService = {
         }
 
         if (data.ResponseMetadata?.Error) {
-            throw new Error(`Volcengine API error: ${data.ResponseMetadata.Error.Message ?? data.ResponseMetadata.Error.Code}`)
+            throw new Error(`Volcengine API error: ${data.ResponseMetadata.Error.Message ?? String(data.ResponseMetadata.Error.Code)}`)
         }
 
         return data.TranslationList?.[0]?.Translation ?? ''

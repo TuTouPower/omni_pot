@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'fs'
+import { writeFileSync, mkdirSync, rmSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 
 describe('Config Store - pure logic', () => {
-    const test_dir = join(tmpdir(), 'pot-test-config-' + Date.now())
+    const test_dir = join(tmpdir(), `pot-test-config-${String(Date.now())}`)
     const config_path = join(test_dir, 'config.json')
 
     beforeEach(() => {
@@ -15,20 +15,20 @@ describe('Config Store - pure logic', () => {
         rmSync(test_dir, { recursive: true, force: true })
     })
 
-    it('reads config from JSON file', async () => {
+    it('reads config from JSON file', () => {
         const config = { app_language: 'zh_cn', app_theme: 'dark' }
         writeFileSync(config_path, JSON.stringify(config))
 
-        const raw = JSON.parse(readFileSync(config_path, 'utf-8'))
+        const raw = JSON.parse(readFileSync(config_path, 'utf-8')) as typeof config
         expect(raw.app_language).toBe('zh_cn')
         expect(raw.app_theme).toBe('dark')
     })
 
-    it('writes config to JSON file', async () => {
+    it('writes config to JSON file', () => {
         const config = { app_language: 'en' }
         writeFileSync(config_path, JSON.stringify(config, null, 2))
 
-        const raw = JSON.parse(readFileSync(config_path, 'utf-8'))
+        const raw = JSON.parse(readFileSync(config_path, 'utf-8')) as typeof config
         expect(raw.app_language).toBe('en')
     })
 
@@ -45,7 +45,7 @@ describe('Config Store - pure logic', () => {
         writeFileSync(config_path, 'not valid json {{{')
         let parsed: Record<string, unknown> = {}
         try {
-            parsed = JSON.parse(readFileSync(config_path, 'utf-8'))
+            parsed = JSON.parse(readFileSync(config_path, 'utf-8')) as Record<string, unknown>
         } catch {
             parsed = {}
         }

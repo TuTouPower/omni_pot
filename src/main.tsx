@@ -5,7 +5,7 @@ import './styles/globals.css'
 import { registerAllServices } from './services'
 import { useConfigStore } from './stores/config_store'
 import type { AppConfig } from '@shared/types/config'
-import i18n, { bindI18nToConfig } from './i18n'
+import { bindI18nToConfig } from './i18n'
 
 const theme_query = window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -37,11 +37,16 @@ async function bootstrap(): Promise<void> {
   bindI18nToConfig()
   bind_theme_to_config()
 
-  createRoot(document.getElementById('root')!).render(
+  const root_element = document.getElementById('root')
+  if (!root_element) {
+    throw new Error('Root element not found')
+  }
+
+  createRoot(root_element).render(
     <React.StrictMode>
       <App />
     </React.StrictMode>
   )
 }
 
-void bootstrap()
+bootstrap().catch(console.error)

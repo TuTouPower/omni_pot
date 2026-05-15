@@ -69,9 +69,9 @@ test.describe('@ui config history and backup settings', () => {
             for (let index = 1; index <= 25; index += 1) {
                 await config.addHistoryRecord({
                     service_key: 'lingva@default',
-                    source_text: `source ${index}`,
+                    source_text: `source ${String(index)}`,
                     source_lang: 'en',
-                    target_text: `译文 ${index}`,
+                    target_text: `译文 ${String(index)}`,
                     target_lang: 'zh_cn',
                 })
             }
