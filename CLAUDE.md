@@ -1,5 +1,42 @@
 # omni_pot 项目约定
 
+## 项目介绍
+
+omni_pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron + React + TypeScript 构建。
+支持多翻译引擎、截图 OCR、划词翻译/词典、剪贴板监听等功能，常驻系统托盘。
+
+技术栈：Electron 39 + React 19 + TypeScript 6 + electron-vite + Tailwind CSS + Zustand + better-sqlite3
+
+## 常用命令
+
+| 命令 | 用途 |
+|---|---|
+| `npm run dev` | 启动开发模式（热重载） |
+| `npm run build` | 构建（不打包） |
+| `npm run dist` | 构建 + 打包（NSIS 安装版 + 便携版） |
+| `npm run typecheck` | TypeScript 类型检查 |
+| `npm run lint` | ESLint 检查 |
+| `npm test` | 运行单元测试 |
+| `npm run test:e2e` | 运行端到端测试 |
+| `npm run test:e2e:core` | 运行核心 e2e 测试 |
+| `npm run start` | 预览构建产物 |
+
+## 目录结构
+
+| 目录 | 说明 |
+|---|---|
+| `electron/` | 主进程代码（窗口管理、IPC、服务、配置等） |
+| `src/` | 渲染进程代码（React UI） |
+| `shared/` | 主进程/渲染进程共享类型 |
+| `public/` | 静态资源（logo 等） |
+| `resources/` | 应用图标（icon.png, icon.ico） |
+| `data/` | 词典数据、Tesseract 训练数据 |
+| `tests/` | 单元测试 |
+| `tests/user_e2e/` | 端到端测试 |
+| `docs/` | 项目文档 |
+| `out/` | 构建输出 |
+| `release/` | 打包输出 |
+
 ## 项目背景
 
 - 本项目基于新技术栈（Electron + React + TypeScript）重写 pot-desktop，实现其全部功能。
