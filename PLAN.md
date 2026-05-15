@@ -43,7 +43,7 @@
 ### P2: 行为与管理类 spec
 
 - [X] `translate_behavior.spec.ts`
-- [ ] `screenshot_window.spec.ts`
+- [X] `screenshot_window.spec.ts`
 - [ ] `app_lifecycle.spec.ts`
 - [ ] `config_service_mgmt.spec.ts`
 - [ ] `config_history_backup.spec.ts`

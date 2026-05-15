@@ -45,23 +45,21 @@ export default function ScreenshotWindow(): React.ReactElement {
         return unsub
     }, [])
 
-    const handleMouseDown = useCallback((e: React.MouseEvent) => {
-        if (e.button === 2) {
-            window.electronAPI.window.close()
-            return
-        }
-        setSelecting(true)
-        setStart({ x: e.clientX, y: e.clientY })
+    const reset_selection = useCallback(() => {
+        setSelecting(false)
+        setStart(null)
         setEnd(null)
     }, [])
 
-    const handleMouseMove = useCallback((e: React.MouseEvent) => {
-        if (!selecting) return
-        setEnd({ x: e.clientX, y: e.clientY })
-    }, [selecting])
+    const close_window = useCallback(() => window.electronAPI.window.close().catch(() => undefined), [])
 
-    const handleMouseUp = useCallback(async () => {
-        if (!selecting || !start || !end) {
+    const cancel_selection = useCallback(() => {
+        reset_selection()
+        void close_window()
+    }, [reset_selection, close_window])
+
+    const confirm_selection = useCallback(async () => {
+        if (!start || !end) {
             setSelecting(false)
             return
         }
@@ -73,9 +71,7 @@ export default function ScreenshotWindow(): React.ReactElement {
             height: Math.abs(end.y - start.y)
         }
 
-        setSelecting(false)
-        setStart(null)
-        setEnd(null)
+        reset_selection()
 
         if (rect.width < 5 || rect.height < 5) {
             return
@@ -123,8 +119,44 @@ export default function ScreenshotWindow(): React.ReactElement {
             // crop or recognize failed
         }
 
-        window.electronAPI.window.close()
-    }, [selecting, start, end, background, mode])
+        await close_window()
+    }, [start, end, reset_selection, background, mode, close_window])
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (e.button === 2) {
+            cancel_selection()
+            return
+        }
+        setSelecting(true)
+        setStart({ x: e.clientX, y: e.clientY })
+        setEnd(null)
+    }, [cancel_selection])
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+        if (!selecting) return
+        setEnd({ x: e.clientX, y: e.clientY })
+    }, [selecting])
+
+    const handleMouseUp = useCallback(() => {
+        if (!selecting) return
+        void confirm_selection()
+    }, [selecting, confirm_selection])
+
+    useEffect(() => {
+        const handle_key_down = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault()
+                cancel_selection()
+                return
+            }
+            if (event.key === 'Enter' && selecting) {
+                event.preventDefault()
+                void confirm_selection()
+            }
+        }
+        window.addEventListener('keydown', handle_key_down)
+        return () => window.removeEventListener('keydown', handle_key_down)
+    }, [cancel_selection, confirm_selection, selecting])
 
     const selection_rect = start && end ? {
         x: Math.min(start.x, end.x),
@@ -136,6 +168,7 @@ export default function ScreenshotWindow(): React.ReactElement {
     return (
         <div
             ref={containerRef}
+            data-testid="shot-root"
             style={{
                 position: 'fixed',
                 inset: 0,
@@ -171,6 +204,7 @@ export default function ScreenshotWindow(): React.ReactElement {
                     {[[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y], i) => (
                         <div
                             key={i}
+                            data-testid="shot-corner-handle"
                             style={{
                                 position: 'absolute',
                                 left: x * selection_rect.width - 3,
