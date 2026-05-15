@@ -44,7 +44,7 @@
 
 - [X] `translate_behavior.spec.ts`
 - [X] `screenshot_window.spec.ts`
-- [ ] `app_lifecycle.spec.ts`
+- [X] `app_lifecycle.spec.ts`
 - [ ] `config_service_mgmt.spec.ts`
 - [ ] `config_history_backup.spec.ts`
 - [ ] `updater_and_tray.spec.ts`

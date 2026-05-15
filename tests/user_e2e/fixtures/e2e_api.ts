@@ -111,6 +111,7 @@ export class E2eApi {
         label: string
         exists: boolean
         visible: boolean
+        focused: boolean
         alwaysOnTop: boolean
         bounds: { x: number; y: number; width: number; height: number } | null
     }> {
@@ -119,6 +120,7 @@ export class E2eApi {
             label: string
             exists: boolean
             visible: boolean
+            focused: boolean
             alwaysOnTop: boolean
             bounds: { x: number; y: number; width: number; height: number } | null
         }>

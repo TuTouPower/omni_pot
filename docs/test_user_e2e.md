@@ -263,6 +263,7 @@ class TranslatePage {
 |---|---|
 | `POST /e2e/trigger-screenshot` | 触发截图（指定 `recognize` / `translate` mode） |
 | `POST /e2e/trigger-input-translate` | 触发输入翻译入口 |
+| `GET /e2e/window-state` | 查询窗口存在、可见、聚焦、置顶与 bounds 状态 |
 | `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `clipboard_monitor` / `config` / `tray_click` |
 | `POST /e2e/mock-update` | 注入一个假的“有新版本”用于更新器测试 |
 
@@ -273,8 +274,8 @@ class TranslatePage {
 
 ## 5. 测试文件规划（15 个 spec）
 
-当前基础版 fixture：每个测试启动独立实例 → `resetConfig()` →
-用例用 PO 操作与断言 → 测试结束停止实例并清理 userData。Playwright `workers: 1`，固定顺序，无 shuffle。
+当前基础版 fixture：常规用例每个测试启动独立实例 → `resetConfig()` →
+用例用 PO 操作与断言 → 测试结束停止实例并清理 userData。生命周期类用例可手动 `AppFixture.start()`，以覆盖首次运行、窗口常驻等启动状态。Playwright `workers: 1`，固定顺序，无 shuffle。
 
 ### 5.1 app_lifecycle.spec.ts — 应用生命周期与窗口管理
 
