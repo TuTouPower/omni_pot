@@ -95,9 +95,10 @@ input, textarea, select { font: inherit; color: inherit; background: transparent
 }
 .op-mode {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-mute);
-  letter-spacing: 0;
+  font-weight: 500;
+  margin-left: 2px;
 }
 .op-titlebar .spacer { flex: 1; }
 .op-wmctl { display: flex; gap: 4px; -webkit-app-region: no-drag; }
@@ -109,9 +110,16 @@ input, textarea, select { font: inherit; color: inherit; background: transparent
 .op-wmctl button:hover { background: var(--bg-sunk); color: var(--text); }
 .op-wmctl button.close:hover { background: var(--danger); color: white; }
 
+/* Titlebar pin / close buttons (inline, used in TitlebarLeft) */
+.op-pin:hover, .op-close:hover {
+  background: var(--bg-sunk) !important;
+  color: var(--text) !important;
+}
+.op-close:hover { background: var(--danger) !important; color: white !important; }
+
 /* Wordmark */
-.op-wordmark { font-family: var(--font-mono); font-weight: 600; font-size: 12px; letter-spacing: -0.02em; color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
-.op-wordmark .dot { width: 8px; height: 8px; border-radius: 2px; background: var(--brand-primary); }
+.op-wordmark { font-family: var(--font-sans); font-weight: 600; font-size: 13px; letter-spacing: -0.005em; color: var(--text); display: inline-flex; align-items: center; gap: 7px; }
+.op-wordmark .dot { width: 7px; height: 7px; border-radius: 2px; background: var(--brand-primary); }
 
 /* Button */
 .btn {

@@ -1,10 +1,17 @@
 import log from 'electron-log/main'
 import { join } from 'path'
+import { app } from 'electron'
 
 export function initLog(userDataDir: string): void {
     log.transports.file.resolvePathFn = () => join(userDataDir, 'logs', 'main.log')
     log.transports.file.maxSize = 5 * 1024 * 1024
-    log.transports.console.level = 'debug'
+    if (app.isPackaged) {
+        log.transports.file.level = 'info'
+        log.transports.console.level = false
+    } else {
+        log.transports.file.level = 'debug'
+        log.transports.console.level = 'debug'
+    }
     log.initialize()
     log.errorHandler.startCatching()
 }

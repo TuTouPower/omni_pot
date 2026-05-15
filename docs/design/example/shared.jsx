@@ -13,13 +13,13 @@ const Icons = {
   Min: (p) => <Icon {...p} d="M5 12h14" />,
   Max: (p) => <Icon {...p} d="M5 5h14v14H5z" />,
   Restore: (p) => <Icon {...p} d={["M8 8h11v11H8z","M5 5h11v3","M5 5v11h3"]} />,
-  Pin: (p) => <Icon {...p} d={["M12 17v5","M9 3h6l-1 6 3 3H7l3-3-1-6z"]} />,
+  Pin: (p) => <Icon {...p} d={["M12 16v6","M8 3h8l-1.5 6 2.5 4H7l2.5-4L8 3z"]} />,
   Translate: (p) => <Icon {...p} d={["M4 5h10","M9 4v2c0 4-3 8-7 8","M14 19l3-8 3 8","M15 16h4","M5 8c0 3 4 7 8 7"]} />,
   Volume: (p) => <Icon {...p} d={["M11 5L6 9H3v6h3l5 4V5z","M15 9a4 4 0 010 6","M18 6a8 8 0 010 12"]} />,
   Copy: (p) => <Icon {...p} d={["M8 8h11v11H8z","M5 5h11v3","M5 5v11h3"]} />,
   Trash: (p) => <Icon {...p} d={["M4 7h16","M9 7V4h6v3","M6 7l1 13h10l1-13"]} />,
   Newline: (p) => <Icon {...p} d={["M20 6v6a3 3 0 01-3 3H5","M9 11l-4 4 4 4"]} />,
-  Swap: (p) => <Icon {...p} d={["M7 7h13l-3-3","M17 17H4l3 3"]} />,
+  Swap: (p) => <Icon {...p} d={["M4 9h14","M15 6l3 3-3 3","M20 15H6","M9 12l-3 3 3 3"]} />,
   Chev: (p) => <Icon {...p} d="M6 9l6 6 6-6" />,
   ChevR: (p) => <Icon {...p} d="M9 6l6 6-6 6" />,
   Plus: (p) => <Icon {...p} d="M12 5v14M5 12h14" />,
@@ -55,17 +55,18 @@ const SVC_META = {
   deepl: { name: 'DeepL', mono: 'DL', tone: 'oklch(70% 0.10 240)' },
   bing: { name: 'Bing', mono: 'BG', tone: 'oklch(65% 0.10 200)' },
   google: { name: 'Google', mono: 'GG', tone: 'oklch(68% 0.10 130)' },
-  yandex: { name: 'Yandex', mono: 'YD', tone: 'oklch(65% 0.13 25)' },
+  mymemory: { name: 'MyMemory', mono: 'MM', tone: 'oklch(60% 0.10 290)' },
   lingva: { name: 'Lingva', mono: 'LV', tone: 'oklch(65% 0.10 170)' },
   ecdict: { name: 'ECDict', mono: 'EC', tone: 'oklch(64% 0.10 60)' },
+  mymemory: { name: 'MyMemory', mono: 'MM', tone: 'oklch(60% 0.12 170)' },
+  free_dictionary: { name: 'Free Dictionary', mono: 'FD', tone: 'oklch(58% 0.10 240)' },
+  free_dictionary: { name: 'Free Dictionary', mono: 'FD', tone: 'oklch(60% 0.12 145)' },
   openai: { name: 'OpenAI', mono: 'AI', tone: 'oklch(58% 0.02 180)' },
   geminipro: { name: 'Gemini', mono: 'GM', tone: 'oklch(64% 0.12 280)' },
   chatglm: { name: 'ChatGLM', mono: 'GL', tone: 'oklch(60% 0.12 30)' },
   ollama: { name: 'Ollama', mono: 'OL', tone: 'oklch(55% 0.005 70)' },
   baidu: { name: '百度', mono: 'BD', tone: 'oklch(58% 0.16 250)' },
   baidu_field: { name: '百度领域', mono: 'BF', tone: 'oklch(58% 0.16 250)' },
-  bing_dict: { name: 'Bing 词典', mono: 'BD', tone: 'oklch(65% 0.10 200)' },
-  caiyun: { name: '彩云小译', mono: 'CY', tone: 'oklch(70% 0.12 220)' },
   cambridge_dict: { name: 'Cambridge', mono: 'CD', tone: 'oklch(58% 0.13 25)' },
   alibaba: { name: '阿里巴巴', mono: 'AB', tone: 'oklch(60% 0.15 30)' },
   tencent: { name: '腾讯', mono: 'TC', tone: 'oklch(60% 0.13 230)' },
@@ -119,7 +120,7 @@ const Flag = ({ code }) => <span className="flag">{LANG_LABEL[code] || code.slic
 // Window chrome — frameless, custom controls (cross-platform neutral)
 const Titlebar = ({ title, right, hideControls }) => (
   <div className="op-titlebar">
-    <div className="op-wordmark"><span className="dot" />{title || 'omni_pot'}</div>
+    <div className="op-wordmark">{title || 'omni_pot'}</div>
     <div className="spacer" />
     {right}
     {!hideControls && (

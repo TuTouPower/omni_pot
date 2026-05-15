@@ -52,6 +52,8 @@
 
 ### P2: 其他
 
+- [ ] CSP `connect-src` 放开 — 当前 `'self'` 阻止了所有外部翻译 API 请求，需改为允许外部连接
+- [ ] 命名统一 — 给用户看的显示名用 **Omni Pot**，代码/文件名/package name 一律用 **omni_pot**
 - [X] 服务管理未实现功能：服务启停、编辑/测试保存、真实拖拽排序，并同步补规格与用户 E2E
 - [X] 修复已知 bug — 见 `docs/issues/issues.md`
 - [ ] 插件系统（`.potext` 格式，暂时不做）
