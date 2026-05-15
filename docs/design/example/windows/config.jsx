@@ -196,7 +196,8 @@ const PageHotkey = () => {
 const PageService = () => {
   const [tab, setTab] = useStateC('translate');
   const tabs = [
-    { id:'translate', label:'翻译', count: 6 },
+    { id:'translate', label:'翻译', count: 7 },
+    { id:'dictionary', label:'字典', count: 3 },
     { id:'recognize', label:'识别', count: 2 },
     { id:'tts', label:'朗读', count: 1 },
     { id:'collection', label:'收藏', count: 1 },
@@ -204,11 +205,17 @@ const PageService = () => {
   const data = {
     translate: [
       { key:'deepl', enabled: true },
-      { key:'openai@xb12', name:'openai', label:'OpenAI · GPT-4o', enabled: true, tag:'STREAM' },
-      { key:'google', enabled: true },
       { key:'bing', enabled: true },
+      { key:'google', enabled: true },
+      { key:'lingva', enabled: true },
+      { key:'mymemory', enabled: true },
+      { key:'openai@xb12', name:'openai', label:'OpenAI · GPT-4o', enabled: true, tag:'STREAM' },
       { key:'geminipro@kk', name:'geminipro', label:'Gemini Pro · Personal', enabled: false },
+    ],
+    dictionary: [
+      { key:'free_dictionary', enabled: true },
       { key:'ecdict', enabled: true, tag:'OFFLINE' },
+      { key:'cambridge_dict', enabled: true },
     ],
     recognize: [
       { key:'system', enabled: true, tag:'PLATFORM' },
@@ -263,9 +270,6 @@ const PageService = () => {
         <div className="div" />
         <div style={{ padding: 10, display:'flex', gap: 8 }}>
           <button className="btn sm"><Icons.Plus size={12}/>添加内置服务</button>
-          <button className="btn sm"><Icons.Plus size={12}/>安装插件 (.potext)</button>
-          <div style={{flex:1}}/>
-          <button className="btn ghost sm">浏览插件市场</button>
         </div>
       </div>
     </div>
@@ -280,7 +284,7 @@ const PageHistory = () => {
     { svc:'free_dictionary', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
     { svc:'mymemory', src:'走り抜ける', from:'ja', to:'zh_cn', dst:'跑着穿过', t:'今天 11:08' },
     { svc:'geminipro', src:'お腹が空いた', from:'ja', to:'en', dst:"I'm hungry", t:'昨天 22:11' },
-    { svc:'caiyun', src:'machen', from:'de', to:'zh_cn', dst:'制作；做', t:'昨天 16:45' },
+    { svc:'lingva', src:'machen', from:'de', to:'zh_cn', dst:'制作；做', t:'昨天 16:45' },
   ];
   return (
     <div className="stack gap-12">
@@ -365,7 +369,7 @@ const PageBackup = () => {
           <button className="btn primary"><Icons.Cloud size={14}/>立即备份</button>
           <button className="btn"><Icons.Cycle size={14}/>从备份恢复</button>
         </div>
-        <div className="hint">备份内容：配置、历史记录数据库、已安装的插件</div>
+        <div className="hint">备份内容：配置、历史记录数据库、CC-CEDICT 词典数据库</div>
       </Card>
 
       <Card title="最近备份">
@@ -395,7 +399,7 @@ const PageAbout = () => (
       <div className="svc-tile" style={{ width: 64, height: 64, borderRadius: 16, background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', fontSize: 22, fontWeight: 700 }}>op</div>
       <div style={{ fontSize: 22, fontWeight: 600, letterSpacing:'-0.01em' }}>Omni Pot</div>
       <div className="hint mono">version 3.1.0 · darwin-arm64</div>
-      <div className="hint" style={{ maxWidth: 360 }}>一个面向日常使用的桌面翻译与识别工具，支持 21 个翻译引擎、16 个 OCR 服务和自定义插件。</div>
+      <div className="hint" style={{ maxWidth: 360 }}>一个面向日常使用的桌面翻译与识别工具，覆盖主流在线翻译、离线词典与 OCR 服务，开箱即用。</div>
       <div style={{ display:'flex', gap: 6, marginTop: 4 }}>
         <button className="btn sm">官网</button>
         <button className="btn sm">文档</button>

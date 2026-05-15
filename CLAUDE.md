@@ -54,10 +54,9 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 
 | 文档 | 作用 |
 |---|---|
-| `docs/spec.md` | **产品规格** — omni_pot 功能、窗口、服务、配置的权威定义 |
-| `docs/design/ui_design.md` | 全部窗口的 UI 设计需求 |
-| `docs/design/example/` | UI 设计稿原型（HTML/JSX/CSS） |
-| `docs/design/example_todo.md` | example 设计稿与 spec 的差异及处理决定 |
+| `docs/spec.md` | **产品规格** — omni_pot 功能、窗口、UI、服务、配置的权威定义 |
+| `docs/design/example/` | UI 设计稿原型（HTML/JSX/CSS，最高优先级） |
+| `docs/design/example_todo.md` | example 设计稿与 spec 的已知偏差备忘 |
 | `docs/test.md` | 测试规范与总则（分层、原则、快捷键策略、运行命令） |
 | `docs/test_user_e2e.md` | 用户端到端测试设计（基础设施、文件规划、各 spec 内容） |
 | `docs/issues/issues.md` | 已知问题记录 |

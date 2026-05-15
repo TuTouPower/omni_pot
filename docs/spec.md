@@ -8,12 +8,11 @@
 - `docs/old_pot/spec.md` — Pot Desktop 3.0.7 原始产品规格（功能蓝本）
 - `docs/superpowers/specs/2026-05-06-pot-desktop-rewrite-design.md` — 重写技术方案
 - `docs/superpowers/specs/2026-05-08-selection-text-extraction-design.md` — 跨平台选中文本提取设计
-- `docs/design/ui_design.md` — UI 设计需求（已迁移自旧文件 `translation_ocr_dictionary_ui_design.md`）
-- `docs/design/example/` — UI 设计稿（HTML/JSX/CSS 原型）
+- `docs/design/example/` — UI 设计稿（HTML/JSX/CSS 原型，最高优先级）
 
 相关文档：
 
-- `docs/design/ui_design.md` — 全部窗口的 UI 设计需求
+- `docs/design/example_todo.md` — example 设计稿与 spec 的已知偏差
 - `docs/test.md` — 测试规范与总则
 - `docs/test_user_e2e.md` — 用户端到端测试设计
 
@@ -51,7 +50,9 @@
 28. [国际化](#28-国际化)
 29. [平台特定行为](#29-平台特定行为)
 30. [测试策略](#30-测试策略)
-31. [分阶段交付计划](#31-分阶段交付计划)
+31. [状态细节](#31-状态细节)
+32. [UI 验收标准](#32-ui-验收标准)
+33. [分阶段交付计划](#33-分阶段交付计划)
 
 ---
 
@@ -77,7 +78,16 @@ React 18 + NextUI，技术老旧；本项目从零实现 spec 中定义的全部
 - 多窗口架构：每个功能是独立的 BrowserWindow
 - 插件式服务接口：翻译 / OCR / TTS / 收藏服务遵循统一接口
 - 服务实例系统：同一服务可创建多个配置不同的实例
-- 卡片式 UI：纯白外层 + 浅色调内卡，圆角，克制配色（橙 / 蓝双主色）
+- 卡片式 UI：纯白外层 + 浅色调内卡，圆角，克制配色（5 主色克制使用）
+
+### 命名规则
+
+| 名称类型 | 形式 | 适用范围 |
+|---|---|---|
+| 面向用户的显示名（wordmark） | `Omni Pot`（首字母大写、含空格） | 窗口标题栏、托盘、关于页、用户文档、README 标题 |
+| 项目代码命名 | `omni_pot`（snake_case 全小写） | package.json `name`、文件夹/文件名、变量名、CSS 类名、配置键、IPC 通道名、命名空间 |
+
+代码中不允许散落 `Omni Pot` 字面量与 `omni_pot` 字面量混用；显示名通过常量或 i18n key 集中管理。
 
 ---
 
@@ -170,8 +180,6 @@ enum WindowLabel {
 
 ## 4. 设计系统
 
-详见 `docs/design/ui_design.md`。要点：
-
 ### 4.1 整体风格
 
 - **卡片式布局**：纯白窗口外层背景，浅色调内卡（接近外层颜色，略带色调）
@@ -181,8 +189,13 @@ enum WindowLabel {
 ### 4.2 主题与主色
 
 - **两种主题**：日间 / 夜间
-- **两种主色**：橙色（默认 `#c4623a`）、蓝色（`#3a6ea5`）
-- 四种组合：日橙、日蓝、夜橙、夜蓝
+- **五种主色**：
+    - 陶土橙 `#c4623a`（默认）
+    - 群青 `#3a6ea5`
+    - 松绿 `#5c8a4f`
+    - 芥末 `#b8902f`
+    - 天蓝 `#5a9bbf`
+- 主题与主色独立选择，共 2 × 5 = 10 种组合
 - 主色**克制使用**，仅用于少数关键位置：置顶按钮（激活态）、检测到的语言名、翻译符号、其他需强调的关键状态
 
 ### 4.3 通用顶部栏
@@ -306,6 +319,9 @@ enum WindowLabel {
 - **无搜索框**
 - **无换行符号**
 - 每个词的右上角放置**收藏按钮**，支持收藏单个词汇
+- 词头处显示词性标签（如 `v.`）与 CEFR 等级标签（如 `CEFR · C1`）
+- 释义、例句之外，独立一张"**词形变化**"卡片，列出该词的形变（如 `reconciled` / `reconciles` / `reconciling` / `reconciliation` / `reconcilable`）
+- 卡片底部展示"**来源**" chips，按当前实际渲染的服务名（cambridge_dict / ecdict / free_dictionary 等）顺序列出
 - 遍历 `dictionary_service_list` 中启用的实例，并行调用各词典服务的 `translate()`；
   返回 `DictResult`（`type='dict'`）的服务渲染为词典卡片
 
@@ -429,7 +445,7 @@ OCR 识别结果窗口。三段式布局。
 ### 9.3 配置页: 通用
 
 - **应用卡片**：开机自启（`auto_start`）、启动时检查更新（`check_update`）、本地 API 端口（`server_port`，修改后需重启）
-- **外观卡片**：主题（`app_theme`：跟随系统 / 浅色 / 深色）、界面语言（`app_language`）、字体（`app_font` / `app_fallback_font`）、字号（`app_font_size`）、透明背景（`transparent`）、开发者模式（`dev_mode`）、托盘点击行为（`tray_click_event`）
+- **外观卡片**：主题（`app_theme`：跟随系统 / 浅色 / 深色）、界面语言（`app_language`）、字体（`app_font` / `app_fallback_font`，与字号 `app_font_size` 同行展示，左侧字体下拉、右侧字号下拉）、主色调（`app_primary_color`，5 个圆形选色按钮）、透明背景（`transparent`）、开发者模式（`dev_mode`）、托盘点击行为（`tray_click_event`）
 - **网络代理卡片**：启用代理（`proxy_enable`）、代理地址（`proxy_host`）、代理端口（`proxy_port`）
 
 ### 9.4 配置页: 翻译
@@ -457,7 +473,7 @@ Wayland 用户提示：系统级快捷键可能不可用，可用 `curl localhos
 
 ### 9.7 配置页: 服务
 
-Tabs 切换五类服务：翻译 / 字典 / 识别 / 语音合成 / 收藏。
+Tabs 切换五类服务：翻译 / 字典 / 识别 / 朗读 / 收藏。
 
 - 每类显示**服务实例**列表，支持启停、上移/下移与拖拽排序（顶部优先）
 - 每个实例项：拖拽手柄、服务图标、实例名、实例 key、启停开关、编辑按钮、上移按钮、下移按钮、删除按钮
@@ -483,6 +499,8 @@ Tabs 切换五类服务：翻译 / 字典 / 识别 / 语音合成 / 收藏。
 ### 9.10 配置页: 关于
 
 omni_pot logo + 版本号、简介、官网 / 文档 / 反馈 / 检查更新链接、诊断信息（日志目录 / 配置目录 / 本机 API 地址）。
+
+版本号格式带平台后缀：`version {x.y.z} · {platform-arch}`，如 `version 3.1.0 · darwin-arm64` / `version 3.1.0 · win32-x64`。
 
 ### 9.11 配置数据流
 
@@ -522,12 +540,13 @@ renderer: useConfigStore
 | 元素 | 行为 |
 |---|---|
 | 顶部栏 | 通用左对齐顶部栏，模式标签 `· 更新` |
-| 版本信息 | 当前版本 → 最新版本、发布日期 |
-| 更新日志 | 显示 GitHub release notes 文本 |
-| 下载链接 | release assets 存在时显示下载链接列表 |
-| 操作按钮 | “稍后提醒”关闭窗口；“查看详情”在存在 release URL 时打开发布页 |
+| 版本信息 | `当前版本 → 最新版本 · 发布日期 · 包大小`（如 `3.0.6 → 3.1.0 · 2026-05-09 · 12.4 MB`） |
+| 更新日志 | 渲染 GitHub release notes 的 Markdown |
+| 下载进度 | 下载中显示已下载/总大小 + 百分比 + 进度条（主色填充） |
+| 操作按钮 | `稍后提醒`（关闭窗口）、`立即更新`（触发应用内下载安装；下载中按钮禁用并显示"下载中…"） |
 
-状态：加载中 → 更新详情 / 检查失败 / 已是最新版本。
+状态：加载中 → 更新详情 / 检查失败 / 已是最新版本 / 下载中 / 下载完成待安装。
+下载流程由 `electron/updater/index.ts` 实现，使用 GitHub release assets 作为下载源。
 
 ---
 
@@ -565,10 +584,15 @@ interface TranslateService {
 interface DictResult {
   type: 'dict'
   pronunciations: { region: string; phonetic: string }[]
+  partsOfSpeech?: string[]            // 词头标签，如 ['v.']
+  cefrLevel?: string                   // CEFR 等级，如 'C1'
   definitions: { partOfSpeech: string; meanings: string[] }[]
   examples: { source: string; target: string }[]
+  inflections?: string[]               // 词形变化，如 ['reconciled', 'reconciles', ...]
 }
 ```
+
+> "来源"不存放在 `DictResult` 内，由 renderer 根据实际渲染的服务列表展示。
 
 ### 12.2 服务注册表
 
@@ -595,7 +619,7 @@ interface DictResult {
 - `getServiceKey(instanceKey)` 提取裸 serviceKey；`createServiceInstanceKey(serviceKey)` 生成新实例 key
 
 **默认实例**（`DEFAULT_SERVICE_INSTANCES`）：
-`bing@default`、`google@default`、`deepl@default`、`tesseract@default`、
+`bing@default`、`google@default`、`baidu@default`、`tesseract@default`、
 `mymemory@default`、`free_dictionary@default`、`ecdict@default`。
 
 ---
@@ -692,6 +716,10 @@ interface DictResult {
 - 在线引擎：bing、google、baidu、tencent、niutrans
 - 离线引擎：local
 
+**失败回退**：用户配置的检测引擎调用失败时，按以下顺序依次尝试其他引擎，直到任一成功为止：
+`bing → google → baidu → tencent → niutrans → local`。
+全部失败时，源语言保留为 `auto`，由翻译服务自身处理（不阻塞翻译流程）。
+
 检测结果与目标语言相同时，实际目标回退到 `translate_second_language`。
 
 ---
@@ -716,6 +744,7 @@ interface DictResult {
 |---|---|---|---|
 | `app_language` | string | `'en'` | UI 语言 |
 | `app_theme` | `'system'\|'light'\|'dark'` | `'system'` | 主题 |
+| `app_primary_color` | string | `'#c4623a'` | 主色调，可选 5 种（见 §4.2） |
 | `app_font` | string | `'default'` | 主字体族 |
 | `app_fallback_font` | string | `'default'` | 回退字体族 |
 | `app_font_size` | number | `16` | 基础字号 px |
@@ -790,7 +819,7 @@ interface DictResult {
 
 | 键 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
-| `translate_service_list` | string[] | `['bing@default','google@default','deepl@default']` | 翻译实例顺序 |
+| `translate_service_list` | string[] | `['bing@default','baidu@default','google@default']` | 翻译实例顺序 |
 | `dictionary_service_list` | string[] | `['free_dictionary@default','ecdict@default']` | 词典实例顺序 |
 | `recognize_service_list` | string[] | `[]` | OCR 实例顺序 |
 | `tts_service_list` | string[] | `[]` | TTS 实例顺序 |
@@ -981,7 +1010,8 @@ export async function getSelectedText(): Promise<string>
 - 配置键：`check_update`，默认 `true`
 - 启动时 `checkForUpdate()` 请求 GitHub Releases API 获取最新版本
 - 比较版本号，有更新则创建更新器窗口
-- 更新器窗口显示版本对比、release notes、下载链接
+- 更新器窗口显示版本对比（含包大小）、release notes、下载进度条
+- 用户点击"立即更新"后从 release assets 下载安装包，下载完成后启动安装/替换流程
 
 ---
 
@@ -1023,7 +1053,38 @@ export async function getSelectedText(): Promise<string>
 
 ---
 
-## 31. 分阶段交付计划
+## 31. 状态细节
+
+各窗口需处理以下状态：
+
+- **加载中**：翻译结果卡片显示加载占位（骨架或"翻译中…"）
+- **错误**：结果卡片显示红色错误信息与重试入口；对可定位到配置的错误可提供"打开设置"入口
+- **空状态**：翻译窗口首次启动时显示引导（快捷键提示 + 配置入口）
+- **桌面通知**：`translate_hide_window` 等场景下，后台完成操作后以桌面通知告知
+
+---
+
+## 32. UI 验收标准
+
+- 翻译窗口只有一个默认模式，不再出现"列表式"
+- 语言显示全部使用中文可读文本：检测为英文、自动检测、简体中文
+- 翻译窗口语言转换区域居中，且只包含"自动检测 → 简体中文"的核心信息
+- 翻译输入区、语言转换区、翻译结果区都采用小卡片样式
+- 输入框和结果卡片高度足够，长文本可以在内部滚动，按钮不会被遮挡
+- 翻译结果卡片右上角集中放置朗读、复制、收藏、折叠按钮
+- OCR 窗口第二排为左图右文布局
+- OCR 操作区包含方法选择、识别语言、重新识别、去换行、去空格、复制、导出、翻译
+- OCR 窗口去掉图片尺寸、类型、识别字数、耗时等弱价值信息
+- 词典窗口没有搜索框，支持单词级收藏，含词形变化与来源 chips
+- 配置窗口为左导航 + 右卡片布局，覆盖 8 个页面
+- 截图窗口主色仅用于选区描边与尺寸标签
+- 所有图标按钮大小接近汉字大小
+- 主题支持日/夜 × 5 主色共 10 种组合，且颜色使用克制
+- 通用顶部栏左对齐：置顶按钮 → 软件名 → 模式标签；右上角只保留关闭按钮
+
+---
+
+## 33. 分阶段交付计划
 
 ### P1: 应用壳 + 翻译核心
 
