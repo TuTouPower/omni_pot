@@ -249,6 +249,10 @@ export class TranslatePage {
         await this.page.getByTestId(`lang-target-option-${language}`).click()
     }
 
+    async resizeWindowTo(width: number, height: number): Promise<void> {
+        await this.page.evaluate((size) => window.resizeTo(size.width, size.height), { width, height })
+    }
+
     // Result cards
     resultCard(instanceKey: string): Locator {
         return this.page.locator(`[data-result-key="${instanceKey}"]`)

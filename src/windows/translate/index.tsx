@@ -12,6 +12,10 @@ import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 
+function normalize_source_text(text: string): string {
+    return text.replace(/-\s+/g, '').replace(/\s+/g, ' ')
+}
+
 export default function TranslateWindow(): React.ReactElement {
     const sourceText = useTranslateStore((s) => s.sourceText)
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
@@ -27,16 +31,17 @@ export default function TranslateWindow(): React.ReactElement {
     const serviceList = useConfigStore((s) => s.config.translate_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
-    const closeOnBlur = useConfigStore((s) => s.config.translate_close_on_blur)
     const secondLanguage = useConfigStore((s) => s.config.translate_second_language)
     const incrementalTranslate = useConfigStore((s) => s.config.incremental_translate)
     const deleteNewline = useConfigStore((s) => s.config.translate_delete_newline)
     const autoCopy = useConfigStore((s) => s.config.translate_auto_copy)
     const hideSource = useConfigStore((s) => s.config.hide_source)
+    const hideLanguage = useConfigStore((s) => s.config.hide_language)
     const historyDisable = useConfigStore((s) => s.config.history_disable)
     const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
     const configTargetLang = useConfigStore((s) => s.config.translate_target_language)
     const configSourceLang = useConfigStore((s) => s.config.translate_source_language)
+    const rememberLanguage = useConfigStore((s) => s.config.translate_remember_language)
     const appFont = useConfigStore((s) => s.config.app_font)
     const appFontSize = useConfigStore((s) => s.config.app_font_size)
     const setConfig = useConfigStore((s) => s.set)
@@ -44,10 +49,24 @@ export default function TranslateWindow(): React.ReactElement {
     const setStoreSourceLang = useTranslateStore((s) => s.setSourceLanguage)
     const swapLanguages = useTranslateStore((s) => s.swapLanguages)
 
+    const languageConfigReadyRef = useRef(false)
+
     useEffect(() => {
         setStoreTargetLang(configTargetLang as LanguageCode)
         setStoreSourceLang(configSourceLang as LanguageCode)
+        const timer = window.setTimeout(() => { languageConfigReadyRef.current = true }, 0)
+        return () => window.clearTimeout(timer)
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (!rememberLanguage || !languageConfigReadyRef.current) return
+        if (configSourceLang !== sourceLanguage) {
+            setConfig('translate_source_language', sourceLanguage)
+        }
+        if (configTargetLang !== targetLanguage) {
+            setConfig('translate_target_language', targetLanguage)
+        }
+    }, [rememberLanguage, sourceLanguage, targetLanguage, configSourceLang, configTargetLang, setConfig])
 
     const [forceShowSource, setForceShowSource] = useState(false)
     const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
@@ -157,53 +176,63 @@ export default function TranslateWindow(): React.ReactElement {
 
         if (autoCopy !== 'disable') {
             if (!isActiveRequest()) return
-            if (autoCopy === 'source' || autoCopy === 'source_target') {
-                void navigator.clipboard.writeText(textToTranslate).catch(() => undefined)
+            const targetTexts = Object.values(resultsMap)
+                .filter((r): r is string | DictResult => r !== null)
+                .map((r) => typeof r === 'string' ? r : r.definitions.map((d) => d.meanings.join('; ')).join('\n'))
+                .join('\n')
+            let clipboardText = ''
+            if (autoCopy === 'source') {
+                clipboardText = textToTranslate
+            } else if (autoCopy === 'target') {
+                clipboardText = targetTexts
+            } else if (autoCopy === 'source_target') {
+                clipboardText = targetTexts ? `${textToTranslate}\n\n${targetTexts}` : textToTranslate
             }
-            if (autoCopy === 'target' || autoCopy === 'source_target') {
-                const targetTexts = Object.values(resultsMap)
-                    .filter((r): r is string | DictResult => r !== null)
-                    .map((r) => typeof r === 'string' ? r : r.definitions.map((d) => d.meanings.join('; ')).join('\n'))
-                    .join('\n')
-                if (targetTexts) void navigator.clipboard.writeText(targetTexts).catch(() => undefined)
-            }
+            if (clipboardText) void navigator.clipboard.writeText(clipboardText).catch(() => undefined)
         }
-    }, [sourceLanguage, targetLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
+    }, [sourceLanguage, targetLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy, historyDisable])
+
+    const prepareIncomingText = useCallback((text: string) => {
+        const trimmed = text.trim()
+        const processed = deleteNewline ? normalize_source_text(trimmed) : trimmed
+        const currentText = useTranslateStore.getState().sourceText
+        return incrementalTranslate && currentText ? `${currentText} ${processed}` : processed
+    }, [deleteNewline, incrementalTranslate])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
             if (!text.trim()) return
 
-            const processed = deleteNewline ? text.replace(/-\s+/g, '').replace(/\s+/g, ' ') : text
-            const currentText = useTranslateStore.getState().sourceText
-            const nextText = incrementalTranslate && currentText ? `${currentText} ${processed}` : processed
+            const nextText = prepareIncomingText(text)
 
             setSourceText(nextText)
             setForceShowSource(false)
             setTimeout(() => handleTranslate(nextText), 0)
         })
         return unsub
-    }, [deleteNewline, incrementalTranslate, setSourceText, handleTranslate])
+    }, [prepareIncomingText, setSourceText, handleTranslate])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
             if (!text.trim()) return
-            setSourceText(text)
+            const nextText = prepareIncomingText(text)
+            setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => handleTranslate(text), 0)
+            setTimeout(() => handleTranslate(nextText), 0)
         })
         return unsub
-    }, [setSourceText, handleTranslate])
+    }, [prepareIncomingText, setSourceText, handleTranslate])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
             if (!text.trim()) return
-            setSourceText(text)
+            const nextText = prepareIncomingText(text)
+            setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => handleTranslate(), 0)
+            setTimeout(() => handleTranslate(nextText), 0)
         })
         return unsub
-    }, [setSourceText, handleTranslate])
+    }, [prepareIncomingText, setSourceText, handleTranslate])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onInputTranslate(() => {
@@ -219,13 +248,6 @@ export default function TranslateWindow(): React.ReactElement {
     useEffect(() => {
         window.electronAPI.ready('translate')
     }, [])
-
-    useEffect(() => {
-        if (!closeOnBlur) return
-        const handleBlur = () => window.electronAPI.window.close()
-        window.addEventListener('blur', handleBlur)
-        return () => window.removeEventListener('blur', handleBlur)
-    }, [closeOnBlur])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -459,7 +481,7 @@ export default function TranslateWindow(): React.ReactElement {
                         inputRef={inputRef}
                     />
                 )}
-                <LanguageArea onSwap={handleSwapLanguages} />
+                {!hideLanguage && <LanguageArea onSwap={handleSwapLanguages} />}
                 <TargetArea serviceList={serviceList} ttsServiceList={ttsServiceList} onRetry={handleRetry} />
             </div>
         </div>
