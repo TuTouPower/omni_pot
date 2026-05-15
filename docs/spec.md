@@ -91,7 +91,7 @@ React 18 + NextUI，技术老旧；本项目从零实现 spec 中定义的全部
 | 样式 | Tailwind CSS + 自定义 design tokens（CSS 变量） |
 | 状态管理 | Zustand |
 | 配置存储 | 自实现 JSON 文件读写；变更通过 IPC `config:changed` 主进程广播给所有 renderer |
-| 数据库 | better-sqlite3（翻译历史、CC-CEDICT 词典；native 模块需 electron-rebuild） |
+| 数据库 | better-sqlite3（翻译历史、CC-CEDICT 词典；native 模块由 `electron-builder install-app-deps` rebuild，打包时仅将 `*.node` 解包） |
 | IPC | Electron contextBridge + ipcMain / ipcRenderer |
 | HTTP 服务器 | Node.js `http` 模块 |
 | FFI | koffi（跨平台选中文本提取，调用系统动态库） |
@@ -988,7 +988,7 @@ export async function getSelectedText(): Promise<string>
 | 系统 OCR | WinRT OcrEngine | 原生 API | tesseract CLI |
 | 选中文本 | UI Automation → Ctrl+C 回退 | Accessibility → AppleScript 回退 | 剪贴板回退 |
 | 全局快捷键 | 可靠 | 可靠 | Wayland 下可能不可靠，提供 HTTP API 备选 |
-| native 模块 | better-sqlite3 需 rebuild | 同左 | 同左；WSL 产物不能直接在 Windows 跑 |
+| native 模块 | better-sqlite3 需通过 electron-builder rebuild，打包时 `*.node` 位于 `app.asar.unpacked` | 同左 | 同左；WSL 产物不能直接在 Windows 跑 |
 
 ---
 

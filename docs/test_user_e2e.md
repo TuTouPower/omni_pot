@@ -531,8 +531,9 @@ test:e2e -- <file>  # 单文件调试
 - `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
 - CI：PR 跑 `core + ui`；nightly 跑 full（含真实网络服务）。
 - issues #1（better-sqlite3 缺失）、#2（双击两次启动）属打包/启动问题，
-  E2E 难直接覆盖 → CI 单独加“打包产物启动验证”作业（打包 → 启动安装好的应用 →
-  模拟用户完成一次完整翻译）。
+  E2E 难直接覆盖 → 使用 `npm run dist:dir` 生成 unsigned unpacked 包做本地 smoke 验证，
+  或 CI 单独加“打包产物启动验证”作业
+  （打包 → 启动安装好的应用 → 模拟用户完成一次完整翻译）。
 
 ---
 
@@ -540,8 +541,8 @@ test:e2e -- <file>  # 单文件调试
 
 | issue | 描述 | 对应 spec |
 |---|---|---|
-| #1 | better-sqlite3 模块缺失 | CI 打包冒烟作业 |
-| #2 | 双击两次才启动 | CI 打包冒烟作业（E2E 难直接覆盖） |
+| #1 | better-sqlite3 模块缺失 | 打包配置 + `npm run dist:dir` / CI 打包启动验证 |
+| #2 | 双击两次才启动 | `npm run dist:dir` / CI 打包启动验证（E2E 难直接覆盖） |
 | #3 | Bing 翻译失败 | `translate_core.spec.ts`（全部免费翻译服务用例） |
 | #4 | 置顶/关闭按钮失效 | `translate_titlebar.spec.ts` |
 | #5 | 翻译按钮点击无效 | `translate_source_area.spec.ts` |
