@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
@@ -11,9 +11,14 @@ export default function AboutPage(): React.ReactElement {
     const { t } = useTranslation()
     const [serverPort] = useConfig('server_port')
     const apiUrl = `http://127.0.0.1:${String(serverPort)}`
+    const [logDir, setLogDir] = useState('...')
     const openExternal = (url: string): void => {
         window.electronAPI.shell.openExternal(url).catch(() => undefined)
     }
+
+    useEffect(() => {
+        window.electronAPI.log.getDir().then(setLogDir).catch(() => { setLogDir('unknown'); })
+    }, [])
 
     return (
         <div className="stack gap-12">
@@ -63,7 +68,7 @@ export default function AboutPage(): React.ReactElement {
                     <div className="mono hint" data-testid="about-config-dir" style={{ marginRight: 8 }}>userData/config.json</div>
                 </ConfigRow>
                 <ConfigRow label="日志目录">
-                    <div className="mono hint" data-testid="about-log-dir" style={{ marginRight: 8 }}>userData/logs</div>
+                    <div className="mono hint" data-testid="about-log-dir" style={{ marginRight: 8 }}>{logDir}</div>
                 </ConfigRow>
                 <ConfigRow label="本机 API">
                     <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>

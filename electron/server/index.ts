@@ -8,6 +8,9 @@ import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
 import { readSelectedText } from '../selection'
+import { log } from '../log'
+
+const log_server = log.scope('server')
 
 const DICT_OPTS = {
     label: WindowLabel.DICT,
@@ -142,12 +145,12 @@ export function startServer(mgr: WindowManager): Promise<void> {
         })
 
         server.once('listening', () => {
-            console.log('[server] HTTP server listening on 127.0.0.1:%d', port)
+            log_server.info('HTTP server listening on 127.0.0.1:%d', port)
             resolve()
         })
 
         server.once('error', (err: NodeJS.ErrnoException) => {
-            console.error('[server] HTTP server failed to start on port %d: %s (%s)', port, err.message, err.code)
+            log_server.error('HTTP server failed to start on port %d: %s (%s)', port, err.message, err.code)
             server?.close()
             server = null
             reject(err)
@@ -235,7 +238,7 @@ function handleTriggerSelection(
                 res.writeHead(500)
                 res.end(JSON.stringify({ success: false, error: String(error) }))
             }
-        })().catch(console.error)
+        })().catch((err: unknown) => { log_server.error(err) })
     })
 }
 
@@ -376,7 +379,7 @@ function handleCaptureClock(res: http.ServerResponse): void {
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(error) }))
         }
-    })().catch(console.error)
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleOpenWindow(
@@ -501,7 +504,7 @@ function handle_trigger_screenshot(
                 res.writeHead(500)
                 res.end(JSON.stringify({ success: false, error: String(error) }))
             }
-        })().catch(console.error)
+        })().catch((err: unknown) => { log_server.error(err) })
     })
 }
 

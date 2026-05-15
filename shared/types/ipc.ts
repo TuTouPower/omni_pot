@@ -23,6 +23,9 @@ export interface ElectronAPI {
   shell: {
     openExternal(url: string): Promise<boolean>
   }
+  log: {
+    getDir(): Promise<string>
+  }
   config: {
     get(key: ConfigKey): Promise<unknown>
     set(key: ConfigKey, value: unknown): Promise<void>

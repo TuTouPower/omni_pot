@@ -6,6 +6,9 @@ import type { ConfigKey } from '@shared/types/config'
 import { start_screenshot_capture } from '../screenshot'
 import { get_translate_window_options } from '../windows/translate_options'
 import { readSelectedText } from '../selection'
+import { log } from '../log'
+
+const log_hotkey = log.scope('hotkey')
 
 let windowManager: WindowManager | null = null
 
@@ -36,13 +39,13 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
     case 'hotkey_input_translate':
       return toggleOrSend('translate:input-translate')
     case 'hotkey_selection_translate':
-      return () => { triggerSelectionTranslate(mgr).catch(console.error) }
+      return () => { triggerSelectionTranslate(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_recognize':
-      return () => { start_screenshot_capture(mgr, 'recognize').catch(console.error) }
+      return () => { start_screenshot_capture(mgr, 'recognize').catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_translate':
-      return () => { start_screenshot_capture(mgr, 'translate').catch(console.error) }
+      return () => { start_screenshot_capture(mgr, 'translate').catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_selection_dictionary':
-      return () => { triggerSelectionDictionary(mgr).catch(console.error) }
+      return () => { triggerSelectionDictionary(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     default:
       return () => {}
   }
@@ -58,7 +61,7 @@ async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
     const result = await readSelectedText()
 
     if (!result.text.trim()) {
-        console.log('[hotkey] selection translate: no text, reason=%s', result.reason ?? 'empty')
+        log_hotkey.info('selection translate: no text, reason=%s', result.reason ?? 'empty')
         return
     }
 
@@ -76,7 +79,7 @@ async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
     const result = await readSelectedText()
 
     if (!result.text.trim()) {
-        console.log('[hotkey] selection dictionary: no text, reason=%s', result.reason ?? 'empty')
+        log_hotkey.info('selection dictionary: no text, reason=%s', result.reason ?? 'empty')
         return
     }
 
