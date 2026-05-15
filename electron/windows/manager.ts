@@ -82,6 +82,10 @@ export class WindowManager {
       }
     })
 
+    if (opts.label === WindowLabel.TRANSLATE) {
+      win.setSize(opts.width, opts.height)
+    }
+
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
 
     win.on('blur', () => {

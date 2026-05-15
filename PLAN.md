@@ -46,7 +46,7 @@
 - [X] `screenshot_window.spec.ts`
 - [X] `app_lifecycle.spec.ts`
 - [X] `config_service_mgmt.spec.ts`
-- [ ] `config_history_backup.spec.ts`
+- [X] `config_history_backup.spec.ts`
 - [ ] `updater_and_tray.spec.ts`
 - [ ] `i18n.spec.ts`
 

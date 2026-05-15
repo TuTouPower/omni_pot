@@ -11,43 +11,61 @@ async function first_visible_result_text(translate: TranslatePage): Promise<stri
     return ''
 }
 
+function language_area_config(config: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+        app_language: 'zh_cn',
+        dynamic_translate: false,
+        translate_detect_engine: 'local',
+        translate_service_list: [],
+        ...config,
+    }
+}
+
 test.describe('@ui translate language area', () => {
-    test.describe.configure({ retries: 2 })
+    test('user sees localized language labels and reverses detected direction', async () => {
+        const omni = await AppFixture.start({ config: language_area_config() })
+        try {
+            const translate = await omni.translate()
+            const result = await omni.api.triggerSelection('hello world')
 
-    test('user sees localized language labels and reverses detected direction', async ({ omni }) => {
-        const translate = await omni.translate()
-        const result = await omni.api.triggerSelection('hello world')
+            expect(result.success).toBe(true)
+            await expect(translate.sourceInput()).toHaveValue('hello world', { timeout: 10_000 })
+            await expect(translate.sourceLanguage()).toContainText('自动检测')
+            await expect(translate.sourceLanguage()).not.toContainText('auto')
+            await expect(translate.targetLanguage()).toContainText('简体中文')
+            await expect(translate.targetLanguage()).not.toContainText('zh_cn')
+            await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).not.toContainText('en')
 
-        expect(result.success).toBe(true)
-        await expect(translate.sourceInput()).toHaveValue('hello world', { timeout: 10_000 })
-        await expect(translate.sourceLanguage()).toContainText('自动检测')
-        await expect(translate.sourceLanguage()).not.toContainText('auto')
-        await expect(translate.targetLanguage()).toContainText('简体中文')
-        await expect(translate.targetLanguage()).not.toContainText('zh_cn')
-        await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
-        await expect(translate.detectedLanguage()).not.toContainText('en')
-
-        await translate.clickSwap()
-        await expect(translate.sourceLanguage()).toContainText('简体中文')
-        await expect(translate.targetLanguage()).toContainText('英文')
-        await expect(translate.detectedLanguage()).toHaveCount(0)
+            await translate.clickSwap()
+            await expect(translate.sourceLanguage()).toContainText('简体中文')
+            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect(translate.detectedLanguage()).toHaveCount(0)
+        } finally {
+            await omni.stop()
+        }
     })
 
-    test('user clicks detected language to reverse direction', async ({ omni }) => {
-        const translate = await omni.translate()
-        const result = await omni.api.triggerSelection('hello world')
+    test('user clicks detected language to reverse direction', async () => {
+        const omni = await AppFixture.start({ config: language_area_config() })
+        try {
+            const translate = await omni.translate()
+            const result = await omni.api.triggerSelection('hello world')
 
-        expect(result.success).toBe(true)
-        await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
+            expect(result.success).toBe(true)
+            await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
 
-        await translate.clickDetectedLanguage()
-        await expect(translate.sourceLanguage()).toContainText('简体中文')
-        await expect(translate.targetLanguage()).toContainText('英文')
-        await expect(translate.detectedLanguage()).toHaveCount(0)
+            await translate.clickDetectedLanguage()
+            await expect(translate.sourceLanguage()).toContainText('简体中文')
+            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect(translate.detectedLanguage()).toHaveCount(0)
+        } finally {
+            await omni.stop()
+        }
     })
 
     test('user reverses to fallback target when detected language matches configured target', async () => {
-        const omni = await AppFixture.start({ config: { translate_target_language: 'en', translate_second_language: 'zh_cn' } })
+        const omni = await AppFixture.start({ config: language_area_config({ translate_target_language: 'en', translate_second_language: 'zh_cn' }) })
         try {
             const translate = await omni.translate()
             const result = await omni.api.triggerSelection('hello world')

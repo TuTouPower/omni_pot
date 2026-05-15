@@ -58,7 +58,7 @@ export default function HistorySettings(): React.ReactElement {
 
             {/* Search + controls */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button className="btn sm danger" onClick={handle_clear}>
+                <button data-testid="history-clear" className="btn sm danger" onClick={handle_clear}>
                     <Icons.Trash size={12} />
                     {t('history.clear') || '清空'}
                 </button>
@@ -66,10 +66,10 @@ export default function HistorySettings(): React.ReactElement {
 
             {/* Records table */}
             {records.length > 0 && (
-                <div className="card" style={{ padding: 0 }}>
+                <div data-testid="history-list" className="card" style={{ padding: 0 }}>
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 120px 1fr 120px',
+                        gridTemplateColumns: '1fr 110px 120px 1fr 120px',
                         alignItems: 'center',
                         padding: '10px 14px',
                         borderBottom: '1px solid var(--line)',
@@ -81,6 +81,7 @@ export default function HistorySettings(): React.ReactElement {
                         letterSpacing: '.05em',
                     }}>
                         <div>源文本</div>
+                        <div>语言</div>
                         <div>服务</div>
                         <div>译文</div>
                         <div>时间</div>
@@ -88,9 +89,11 @@ export default function HistorySettings(): React.ReactElement {
                     {records.map((r, i) => (
                         <div
                             key={r.id}
+                            data-testid="history-row"
+                            data-history-id={r.id}
                             style={{
                                 display: 'grid',
-                                gridTemplateColumns: '1fr 120px 1fr 120px',
+                                gridTemplateColumns: '1fr 110px 120px 1fr 120px',
                                 alignItems: 'center',
                                 padding: '10px 14px',
                                 borderBottom: i < records.length - 1 ? '1px solid var(--line)' : 'none',
@@ -102,17 +105,18 @@ export default function HistorySettings(): React.ReactElement {
                             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-sunk)'}
                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                         >
-                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>{r.source_text}</div>
-                            <div className="hint mono" style={{ fontSize: 11 }}>{r.service_key}</div>
-                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: 'var(--text-dim)' }}>{r.target_text}</div>
-                            <div className="hint mono" style={{ fontSize: 11 }}>{r.created_at}</div>
+                            <div data-testid="history-source" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>{r.source_text}</div>
+                            <div data-testid="history-language" className="hint mono" style={{ fontSize: 11 }}>{r.source_lang} → {r.target_lang}</div>
+                            <div data-testid="history-service" className="hint mono" style={{ fontSize: 11 }}>{r.service_key}</div>
+                            <div data-testid="history-target" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: 'var(--text-dim)' }}>{r.target_text}</div>
+                            <div data-testid="history-created-at" className="hint mono" style={{ fontSize: 11 }}>{r.created_at}</div>
                         </div>
                     ))}
                 </div>
             )}
 
             {total === 0 && (
-                <div className="card" style={{ padding: 14, textAlign: 'center' }}>
+                <div data-testid="history-empty" className="card" style={{ padding: 14, textAlign: 'center' }}>
                     <p style={{ fontSize: 13, color: 'var(--text-mute)' }}>暂无历史记录</p>
                 </div>
             )}
@@ -120,13 +124,13 @@ export default function HistorySettings(): React.ReactElement {
             {/* Pagination */}
             {total > 0 && (
                 <div className="between">
-                    <div className="hint mono">共 {total} 条</div>
+                    <div data-testid="history-count" className="hint mono">共 {total} 条</div>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <button className="btn ghost icon sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                        <button data-testid="history-prev" className="btn ghost icon sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                             <Icons.Chev size={12} style={{ transform: 'rotate(90deg)' }} />
                         </button>
-                        <span className="hint mono" style={{ padding: '0 8px' }}>{page} / {total_pages}</span>
-                        <button className="btn ghost icon sm" disabled={page >= total_pages} onClick={() => setPage(page + 1)}>
+                        <span data-testid="history-page" className="hint mono" style={{ padding: '0 8px' }}>{page} / {total_pages}</span>
+                        <button data-testid="history-next" className="btn ghost icon sm" disabled={page >= total_pages} onClick={() => setPage(page + 1)}>
                             <Icons.Chev size={12} style={{ transform: 'rotate(-90deg)' }} />
                         </button>
                     </div>
@@ -136,6 +140,7 @@ export default function HistorySettings(): React.ReactElement {
             {/* Edit modal */}
             {selected && (
                 <div
+                    data-testid="history-edit-modal"
                     style={{
                         position: 'fixed',
                         inset: 0,
@@ -154,7 +159,7 @@ export default function HistorySettings(): React.ReactElement {
                     >
                         <div className="card-head">
                             <span>{selected.service_key}</span>
-                            <button className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setSelected(null)}>
+                            <button data-testid="history-edit-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setSelected(null)}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
@@ -162,18 +167,18 @@ export default function HistorySettings(): React.ReactElement {
                             <div>
                                 <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>源文本</label>
                                 <div className="field" style={{ width: '100%' }}>
-                                    <input value={editSource} onChange={(e) => setEditSource(e.target.value)} />
+                                    <input data-testid="history-edit-source" value={editSource} onChange={(e) => setEditSource(e.target.value)} />
                                 </div>
                             </div>
                             <div>
                                 <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>译文</label>
                                 <div className="field" style={{ width: '100%' }}>
-                                    <input value={editTarget} onChange={(e) => setEditTarget(e.target.value)} />
+                                    <input data-testid="history-edit-target" value={editTarget} onChange={(e) => setEditTarget(e.target.value)} />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                                <button className="btn ghost" onClick={() => setSelected(null)}>{t('ui.cancel') || '取消'}</button>
-                                <button className="btn primary" onClick={handle_save}>{t('ui.save') || '保存'}</button>
+                                <button data-testid="history-edit-cancel" className="btn ghost" onClick={() => setSelected(null)}>{t('ui.cancel') || '取消'}</button>
+                                <button data-testid="history-edit-save" className="btn primary" onClick={handle_save}>{t('ui.save') || '保存'}</button>
                             </div>
                         </div>
                     </div>
