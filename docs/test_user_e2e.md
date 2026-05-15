@@ -460,15 +460,13 @@ class TranslatePage {
 更新器（用 `/e2e/mock-update` 注入假版本）：
 
 - 打开更新器窗口，标题栏 `更新`
-- 渲染版本对比、发布日期、包大小
-- 更新日志 Markdown 正确渲染
-- 下载时进度条显示、主色填充
-- “稍后提醒”关闭窗口；“立即更新”按钮存在、下载中禁用
+- 渲染版本对比、发布日期、更新日志和下载链接
+- “稍后提醒”关闭窗口；“查看详情”按钮存在且可用
 
 托盘：
 
 - 菜单项触发：Input Translate → 打开翻译窗口；Clipboard Monitor → 切换
-  `clipboard_monitor`；Config → 打开配置窗口；Restart / Quit 行为
+  `clipboard_monitor` 并在复制文本后自动翻译；Config → 打开配置窗口
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 
 ### 5.15 i18n.spec.ts — 国际化

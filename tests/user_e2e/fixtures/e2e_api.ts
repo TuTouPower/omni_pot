@@ -145,6 +145,7 @@ export class E2eApi {
         body: string
         html_url: string
         published_at: string
+        assets: Array<{ name: string; url: string }>
     }> = {}): Promise<{
         success: boolean
         release?: {
