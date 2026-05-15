@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
 import { SourceArea } from './source_area'
 import { LanguageArea } from './language_area'
@@ -30,6 +30,10 @@ export default function TranslateWindow(): React.ReactElement {
 
     const serviceList = useConfigStore((s) => s.config.translate_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
+    const enabledServiceList = useMemo(
+        () => serviceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        [serviceList, serviceInstances]
+    )
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
     const secondLanguage = useConfigStore((s) => s.config.translate_second_language)
     const incrementalTranslate = useConfigStore((s) => s.config.incremental_translate)
@@ -39,6 +43,10 @@ export default function TranslateWindow(): React.ReactElement {
     const hideLanguage = useConfigStore((s) => s.config.hide_language)
     const historyDisable = useConfigStore((s) => s.config.history_disable)
     const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
+    const enabledTtsServiceList = useMemo(
+        () => ttsServiceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        [ttsServiceList, serviceInstances]
+    )
     const configTargetLang = useConfigStore((s) => s.config.translate_target_language)
     const configSourceLang = useConfigStore((s) => s.config.translate_source_language)
     const rememberLanguage = useConfigStore((s) => s.config.translate_remember_language)
@@ -101,7 +109,7 @@ export default function TranslateWindow(): React.ReactElement {
 
         const resultsMap: Record<string, string | DictResult | null> = {}
 
-        const promises = serviceList.map(async (instanceKey) => {
+        const promises = enabledServiceList.map(async (instanceKey) => {
             const serviceKey = getServiceKey(instanceKey)
             const service = translateServiceRegistry.get(serviceKey)
             if (!service) {
@@ -190,7 +198,7 @@ export default function TranslateWindow(): React.ReactElement {
             }
             if (clipboardText) void navigator.clipboard.writeText(clipboardText).catch(() => undefined)
         }
-    }, [sourceLanguage, targetLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy, historyDisable])
+    }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy, historyDisable])
 
     const prepareIncomingText = useCallback((text: string) => {
         const trimmed = text.trim()
@@ -292,7 +300,7 @@ export default function TranslateWindow(): React.ReactElement {
             return
         }
 
-        const instanceKey = ttsServiceList[0]
+        const instanceKey = enabledTtsServiceList[0]
         if (!instanceKey || sourceTtsBusyRef.current) return
 
         const serviceKey = getServiceKey(instanceKey)
@@ -368,7 +376,7 @@ export default function TranslateWindow(): React.ReactElement {
                 setSourceTtsBusy(false)
             }
         }
-    }, [sourceTtsPlaying, ttsServiceList, cancelSourceTts])
+    }, [sourceTtsPlaying, enabledTtsServiceList, cancelSourceTts])
 
     useEffect(() => {
         const spokenText = sourceTtsTextRef.current
@@ -436,7 +444,7 @@ export default function TranslateWindow(): React.ReactElement {
         }
     }, [secondLanguage, serviceInstances, setResult])
 
-    const sourceTtsInstanceKey = ttsServiceList[0]
+    const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
     const showSource = forceShowSource || !hideSource
 
@@ -482,7 +490,7 @@ export default function TranslateWindow(): React.ReactElement {
                     />
                 )}
                 {!hideLanguage && <LanguageArea onSwap={handleSwapLanguages} />}
-                <TargetArea serviceList={serviceList} ttsServiceList={ttsServiceList} onRetry={handleRetry} />
+                <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={handleRetry} />
             </div>
         </div>
     )

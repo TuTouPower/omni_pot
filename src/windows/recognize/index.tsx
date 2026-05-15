@@ -300,8 +300,8 @@ export default function RecognizeWindow(): React.ReactElement {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [])
 
-    const service_list = config.recognize_service_list
     const service_instances = config.service_instances
+    const service_list = config.recognize_service_list.filter((instance_key) => service_instances[instance_key]?.config.enable !== false)
 
     // Build OCR engine options from service list
     const ocr_engine_options = service_list.map((instanceKey) => {
@@ -320,7 +320,7 @@ export default function RecognizeWindow(): React.ReactElement {
         label: language_name(t, code),
     }))
 
-    const effectiveService = selectedService || service_list[0] || ''
+    const effectiveService = selectedService && service_list.includes(selectedService) ? selectedService : service_list[0] || ''
     const effectiveServiceKey = effectiveService ? getServiceKey(effectiveService) : ''
     const effectiveMeta = effectiveServiceKey ? (OCR_META[effectiveServiceKey] || null) : null
 
@@ -329,7 +329,7 @@ export default function RecognizeWindow(): React.ReactElement {
         setIsRecognizing(true)
 
         const lang = (selectedLanguage || config.recognize_language) as LanguageCode
-        const instance_key = selectedService || service_list[0]
+        const instance_key = effectiveService
         if (!instance_key) {
             setIsRecognizing(false)
             return
@@ -354,7 +354,7 @@ export default function RecognizeWindow(): React.ReactElement {
             // keep existing text on failure
         }
         setIsRecognizing(false)
-    }, [imageBase64, selectedService, selectedLanguage, service_list, service_instances, config.recognize_language, config.recognize_auto_copy, config.recognize_delete_newline])
+    }, [imageBase64, effectiveService, selectedLanguage, service_instances, config.recognize_language, config.recognize_auto_copy, config.recognize_delete_newline])
 
     const handleCopy = useCallback(async () => {
         if (recognizedText) {

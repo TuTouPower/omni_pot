@@ -302,6 +302,14 @@ export class TranslatePage {
         return this.resultAction(instanceKey, 'result-copy').click()
     }
 
+    result_tts_button(instanceKey: string): Locator {
+        return this.resultAction(instanceKey, 'result-tts')
+    }
+
+    click_result_tts(instanceKey: string): Promise<void> {
+        return this.result_tts_button(instanceKey).click()
+    }
+
     clickResultCollect(instanceKey: string): Promise<void> {
         return this.resultAction(instanceKey, 'result-collect').click()
     }
@@ -374,6 +382,57 @@ export class TranslatePage {
                 body: JSON.stringify({ translation }),
             })
         }, { times: 1 })
+    }
+
+    async fulfill_anki_collection_once(): Promise<void> {
+        await this.page.route('http://localhost:8765/', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ result: null, error: null }),
+            })
+        }, { times: 1 })
+    }
+
+    async hold_lingva_tts(): Promise<{ wait_for_request: () => Promise<void>; wait_for_request_count: (expected_count: number) => Promise<void>; release_response: () => void }> {
+        let request_count = 0
+        let release_response = (): void => {}
+        const release_promise = new Promise<void>((resolve) => {
+            release_response = resolve
+        })
+        let resolve_request = (): void => {}
+        let reject_request = (_error: Error): void => {}
+        const request_promise = new Promise<void>((resolve, reject) => {
+            resolve_request = resolve
+            reject_request = reject
+        })
+        const timeout = setTimeout(() => reject_request(new Error('Timed out waiting for Lingva TTS request')), 10_000)
+
+        await this.page.route('https://lingva.lunar.icu/api/v1/audio/**', async (route) => {
+            request_count += 1
+            clearTimeout(timeout)
+            resolve_request()
+            await release_promise
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ audio: [1, 2, 3] }),
+            })
+        })
+
+        return {
+            wait_for_request: () => request_promise,
+            wait_for_request_count: async (expected_count: number) => {
+                const end = Date.now() + 1_000
+                while (Date.now() < end) {
+                    await this.page.waitForTimeout(50)
+                    if (request_count !== expected_count) {
+                        throw new Error(`Expected ${expected_count} Lingva TTS request(s), got ${request_count}`)
+                    }
+                }
+            },
+            release_response,
+        }
     }
 
     async fulfill_free_dictionary_once(result: unknown): Promise<void> {

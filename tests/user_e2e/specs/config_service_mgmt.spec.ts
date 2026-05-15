@@ -9,8 +9,20 @@ const SERVICE_CATEGORIES = [
     ['collection_service_list', '收藏', []],
 ] as const
 
+type ServiceInstanceConfig = {
+    serviceKey: string
+    config: Record<string, unknown>
+}
+
 async function expect_config(omni: AppFixture, key: string, value: unknown): Promise<void> {
     await expect.poll(async () => (await omni.api.getConfig())[key]).toEqual(value)
+}
+
+async function expect_service_config(omni: AppFixture, instance_key: string, value: Record<string, unknown>): Promise<void> {
+    await expect.poll(async () => {
+        const instances = (await omni.api.getConfig()).service_instances as Record<string, ServiceInstanceConfig>
+        return instances[instance_key]?.config
+    }).toEqual(value)
 }
 
 test.describe('@ui config service management', () => {
@@ -37,6 +49,8 @@ test.describe('@ui config service management', () => {
             await expect(config.serviceItem('bing@default')).toContainText('Bing')
             await expect(config.serviceItem('bing@default')).toContainText('bing@default')
             await expect(config.serviceDragHandle('bing@default')).toBeVisible()
+            await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
+            await expect(config.serviceEdit('bing@default')).toBeVisible()
             await expect(config.serviceMoveUp('bing@default')).toBeDisabled()
             await expect(config.serviceMoveDown('bing@default')).toBeEnabled()
             await expect(config.serviceDelete('bing@default')).toBeEnabled()
@@ -88,7 +102,73 @@ test.describe('@ui config service management', () => {
         }
     })
 
-    test('user reorders translation services and sees result cards follow the order', async () => {
+    test('user disables and re-enables a translation service and result cards follow enabled state', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                app_language: 'zh_cn',
+                translate_service_list: ['bing@default', 'google@default'],
+            },
+        })
+
+        try {
+            const translate = await omni.translate()
+            const config = await omni.openConfig()
+            await config.openSection('service')
+            await config.openServiceCategory('translate_service_list')
+
+            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+            await config.toggleService('bing@default')
+
+            await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'false')
+            await expect_service_config(omni, 'bing@default', { enable: false })
+            await expect.poll(async () => await translate.result_card_keys()).toEqual(['google@default'])
+
+            await config.toggleService('bing@default')
+
+            await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
+            await expect_service_config(omni, 'bing@default', { enable: true })
+            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user edits tests and saves a translation service instance config', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                app_language: 'zh_cn',
+                translate_service_list: ['lingva@default'],
+                service_instances: {
+                    'lingva@default': { serviceKey: 'lingva', config: {} },
+                },
+            },
+        })
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('service')
+            await config.openServiceCategory('translate_service_list')
+
+            await config.openServiceEditor('lingva@default')
+            await expect(config.serviceEditModal()).toBeVisible()
+            await config.fillServiceEditor('Lingva E2E', '{\n    "requestPath": "https://lingva.lunar.icu"\n}')
+            await config.fulfillLingvaTestOnce()
+            await config.testServiceConfig()
+            await expect(config.serviceTestStatus()).toContainText('测试成功')
+            await config.saveServiceConfig()
+
+            await expect(config.serviceEditModal()).toHaveCount(0)
+            await expect(config.serviceItem('lingva@default')).toContainText('Lingva E2E')
+            await expect_service_config(omni, 'lingva@default', {
+                requestPath: 'https://lingva.lunar.icu',
+                instanceName: 'Lingva E2E',
+            })
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user drags translation services and sees result cards follow the order', async () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
@@ -105,7 +185,7 @@ test.describe('@ui config service management', () => {
             await expect.poll(async () => await config.serviceItemKeys()).toEqual(['bing@default', 'google@default'])
             await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
 
-            await config.moveServiceDown('bing@default')
+            await config.dragService('bing@default', 'google@default')
 
             await expect.poll(async () => await config.serviceItemKeys()).toEqual(['google@default', 'bing@default'])
             await expect_config(omni, 'translate_service_list', ['google@default', 'bing@default'])

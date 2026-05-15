@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useDictStore } from '../../stores/dict_store'
@@ -116,6 +116,14 @@ export default function DictWindow(): React.ReactElement {
     const serviceList = useConfigStore((s) => s.config.dictionary_service_list)
     const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
+    const enabledServiceList = useMemo(
+        () => serviceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        [serviceList, serviceInstances]
+    )
+    const enabledCollectionServiceList = useMemo(
+        () => collectionServiceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        [collectionServiceList, serviceInstances]
+    )
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
@@ -148,7 +156,7 @@ export default function DictWindow(): React.ReactElement {
         const source_language = /^[a-zA-Z]/.test(lookupWord) ? 'en' : 'zh_cn'
         const target_language = source_language === 'en' ? 'zh_cn' : 'en'
 
-        const promises = serviceList.map(async (instanceKey) => {
+        const promises = enabledServiceList.map(async (instanceKey) => {
             const serviceKey = getServiceKey(instanceKey)
             const service = translateServiceRegistry.get(serviceKey)
             if (!service) {
@@ -170,7 +178,7 @@ export default function DictWindow(): React.ReactElement {
 
         await Promise.allSettled(promises)
         setIsLoading(false)
-    }, [serviceList, serviceInstances, setWord, setIsLoading, clearResults, setResult])
+    }, [enabledServiceList, serviceInstances, setWord, setIsLoading, clearResults, setResult])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onDictLookup((text: string) => {
@@ -197,25 +205,30 @@ export default function DictWindow(): React.ReactElement {
         window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop)
     }, [alwaysOnTop])
 
-    const firstResult = serviceList.map((ik) => results[ik]).find((r) => r !== undefined && r !== null) as DictResult | null | undefined
+    const firstResult = enabledServiceList.map((ik) => results[ik]).find((r) => r !== undefined && r !== null) as DictResult | null | undefined
+    const collection_available = enabledCollectionServiceList.length > 0
 
     const handleCollect = useCallback(async () => {
         const trimmed_word = word.trim()
-        if (!trimmed_word) return
+        if (!trimmed_word || !firstResult || enabledCollectionServiceList.length === 0) return
 
-        if (firstResult) {
-            const result_text = dict_result_to_text(firstResult)
-            for (const collInstanceKey of collectionServiceList) {
-                const collKey = getServiceKey(collInstanceKey)
-                const service = collectionServiceRegistry.get(collKey)
-                if (!service) continue
-                const instance_config = serviceInstances[collInstanceKey]?.config ?? {}
-                await service.send(trimmed_word, 'auto', 'zh_cn', result_text, instance_config).catch(() => undefined)
-            }
+        const result_text = dict_result_to_text(firstResult)
+        let collected_result = false
+        for (const collInstanceKey of enabledCollectionServiceList) {
+            const collKey = getServiceKey(collInstanceKey)
+            const service = collectionServiceRegistry.get(collKey)
+            if (!service) continue
+            const instance_config = serviceInstances[collInstanceKey]?.config ?? {}
+            try {
+                await service.send(trimmed_word, 'auto', 'zh_cn', result_text, instance_config)
+                collected_result = true
+            } catch { /* skip failed services */ }
         }
 
-        setCollected(true)
-    }, [word, firstResult, collectionServiceList, serviceInstances])
+        if (collected_result) {
+            setCollected(true)
+        }
+    }, [word, firstResult, enabledCollectionServiceList, serviceInstances])
 
     return (
         <div className="op-window">
@@ -282,6 +295,7 @@ export default function DictWindow(): React.ReactElement {
                             data-testid="dict-collect-btn"
                             title="收藏"
                             aria-pressed={collected}
+                            disabled={!collection_available || !firstResult}
                             onClick={handleCollect}
                             style={{ color: collected ? 'var(--brand-primary)' : undefined }}
                         >
@@ -308,17 +322,17 @@ export default function DictWindow(): React.ReactElement {
                 )}
 
                 {/* Results */}
-                {serviceList.map((instanceKey) => {
+                {enabledServiceList.map((instanceKey) => {
                     const result = results[instanceKey]
                     if (result === undefined) return null
                     return <DictResultCard key={instanceKey} instanceKey={instanceKey} result={result} />
                 })}
 
                 {/* Source attribution */}
-                {serviceList.length > 0 && Object.keys(results).length > 0 && (
+                {enabledServiceList.length > 0 && Object.keys(results).length > 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 4px 0' }}>
                         <span className="hint mono">来源</span>
-                        {serviceList.map((ik) => {
+                        {enabledServiceList.map((ik) => {
                             const sk = getServiceKey(ik)
                             const svc = translateServiceRegistry.get(sk)
                             return svc ? <span key={ik} className="chip plain mono" style={{ fontSize: 10 }}>{svc.name}</span> : null

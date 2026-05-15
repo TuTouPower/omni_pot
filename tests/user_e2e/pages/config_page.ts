@@ -110,6 +110,38 @@ export class ConfigPage {
         return this.serviceItem(instanceKey).getByTestId('svc-drag-handle')
     }
 
+    serviceToggle(instanceKey: string): Locator {
+        return this.serviceItem(instanceKey).getByTestId('svc-toggle')
+    }
+
+    serviceEdit(instanceKey: string): Locator {
+        return this.serviceItem(instanceKey).getByTestId('svc-edit')
+    }
+
+    serviceEditModal(): Locator {
+        return this.page.getByTestId('svc-edit-modal')
+    }
+
+    serviceEditName(): Locator {
+        return this.page.getByTestId('svc-edit-name')
+    }
+
+    serviceEditConfig(): Locator {
+        return this.page.getByTestId('svc-edit-config')
+    }
+
+    serviceTestButton(): Locator {
+        return this.page.getByTestId('svc-test')
+    }
+
+    serviceTestStatus(): Locator {
+        return this.page.getByTestId('svc-test-status')
+    }
+
+    serviceEditSaveButton(): Locator {
+        return this.page.getByTestId('svc-edit-save')
+    }
+
     addServiceButton(): Locator {
         return this.page.getByTestId('svc-add-btn')
     }
@@ -256,6 +288,59 @@ export class ConfigPage {
 
     async deleteService(instanceKey: string): Promise<void> {
         await this.serviceDelete(instanceKey).click()
+    }
+
+    async toggleService(instanceKey: string): Promise<void> {
+        await this.serviceToggle(instanceKey).click()
+    }
+
+    async openServiceEditor(instanceKey: string): Promise<void> {
+        await this.serviceEdit(instanceKey).click()
+    }
+
+    async fillServiceEditor(instanceName: string, configJson: string): Promise<void> {
+        await this.serviceEditName().fill(instanceName)
+        await this.serviceEditConfig().fill(configJson)
+    }
+
+    async testServiceConfig(): Promise<void> {
+        await this.serviceTestButton().click()
+    }
+
+    async saveServiceConfig(): Promise<void> {
+        await this.serviceEditSaveButton().click()
+    }
+
+    async fulfillLingvaTestOnce(translation = '你好'): Promise<void> {
+        await this.page.route('https://lingva.lunar.icu/api/v1/en/zh/**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ translation }),
+            })
+        }, { times: 1 })
+    }
+
+    async dragService(sourceKey: string, targetKey: string): Promise<void> {
+        const source_handle = this.serviceDragHandle(sourceKey)
+        const target_item = this.serviceItem(targetKey)
+        await source_handle.scrollIntoViewIfNeeded()
+        await target_item.scrollIntoViewIfNeeded()
+        await source_handle.scrollIntoViewIfNeeded()
+
+        const source_box = await source_handle.boundingBox()
+        const target_box = await target_item.boundingBox()
+        if (!source_box || !target_box) throw new Error('Service drag target is not visible')
+
+        const source_x = source_box.x + source_box.width / 2
+        const source_y = source_box.y + source_box.height / 2
+        const target_y = target_box.y + target_box.height / 2
+
+        await this.page.mouse.move(source_x, source_y)
+        await this.page.mouse.down()
+        await this.page.mouse.move(source_x, source_y + Math.sign(target_y - source_y) * 8)
+        await this.page.mouse.move(source_x, target_y, { steps: 16 })
+        await this.page.mouse.up()
     }
 
     async fillField(testId: string, value: string): Promise<void> {

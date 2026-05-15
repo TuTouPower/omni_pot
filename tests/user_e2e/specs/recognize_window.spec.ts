@@ -12,6 +12,21 @@ const recognize_config = {
     },
 }
 
+const recognize_disable_config = {
+    app_language: 'zh_cn',
+    recognize_service_list: ['baidu_ocr@disabled', 'baidu_accurate_ocr@enabled'],
+    service_instances: {
+        'baidu_ocr@disabled': {
+            serviceKey: 'baidu_ocr',
+            config: { client_id: 'disabled', client_secret: 'disabled' },
+        },
+        'baidu_accurate_ocr@enabled': {
+            serviceKey: 'baidu_accurate_ocr',
+            config: { client_id: 'enabled', client_secret: 'enabled' },
+        },
+    },
+}
+
 async function sample_ocr_image(page: Page): Promise<string> {
     return page.evaluate(() => {
         const canvas = document.createElement('canvas')
@@ -113,6 +128,32 @@ test.describe('@ui recognize window', () => {
 
             await expect(recognize.text()).toHaveValue('Auto Copy Text')
             await expect.poll(async () => (await omni.api.readClipboard()).text).toBe('Auto Copy Text')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user disables the selected OCR service and re-recognize falls back to an enabled service', async () => {
+        const omni = await AppFixture.start({ config: recognize_disable_config })
+
+        try {
+            const recognize = await open_recognize_with_sample(omni, '')
+            await recognize.fulfill_baidu_ocr_services('启用服务结果', '停用服务不应显示')
+
+            await recognize.clickEngineSelect()
+            await recognize.engineOption('baidu_ocr@disabled').click()
+            await expect(recognize.engineSelect()).toContainText('Baidu OCR')
+
+            const config = await omni.openConfig()
+            await config.openSection('service')
+            await config.openServiceCategory('recognize_service_list')
+            await config.toggleService('baidu_ocr@disabled')
+            await expect(config.serviceToggle('baidu_ocr@disabled')).toHaveAttribute('aria-checked', 'false')
+            await config.clickClose()
+
+            await expect(recognize.engineSelect()).toContainText('Baidu Accurate OCR')
+            await recognize.clickReRecognize()
+            await expect(recognize.text()).toHaveValue('启用服务结果')
         } finally {
             await omni.stop()
         }

@@ -13,8 +13,10 @@ test.describe('@ui dict window', () => {
         const omni = await AppFixture.start({
             config: {
                 dictionary_service_list: ['free_dictionary@default'],
+                collection_service_list: ['anki@default'],
                 service_instances: {
                     'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+                    'anki@default': { serviceKey: 'anki', config: { port: 8765 } },
                 },
             },
         })
@@ -39,6 +41,7 @@ test.describe('@ui dict window', () => {
             await dict.clickFirstCopy()
             await expect.poll(async () => (await omni.api.readClipboard()).text).not.toBe('')
 
+            await dict.fulfill_anki_collection_once()
             await dict.clickCollect()
             await expect(dict.collectButton()).toHaveAttribute('aria-pressed', 'true')
 

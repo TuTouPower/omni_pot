@@ -132,7 +132,19 @@
         "ocr": "文字识别",
         "collection": "收藏",
         "add": "添加",
-        "remove": "移除"
+        "remove": "移除",
+        "instances": "服务实例",
+        "sort_top_first": "排序 · 顶部优先",
+        "edit": "编辑",
+        "edit_service": "编辑服务",
+        "instance_name": "实例名称",
+        "config_json": "配置 JSON",
+        "test": "测试",
+        "testing": "测试中…",
+        "test_success": "测试成功",
+        "test_failed": "测试失败",
+        "test_unavailable": "此服务不支持测试",
+        "invalid_config": "配置 JSON 无效"
     },
     "history": {
         "title": "历史记录",
