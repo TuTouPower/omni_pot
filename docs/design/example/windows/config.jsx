@@ -27,19 +27,55 @@ const Card = ({ title, hint, children }) => (
 );
 
 // ===== Pages =====
+const PRIMARY_OPTIONS = [
+  { v:'#c4623a', l:'陶土橙' },
+  { v:'#3a6ea5', l:'群青' },
+  { v:'#5c8a4f', l:'松绿' },
+  { v:'#b8902f', l:'芥末' },
+  { v:'#5a9bbf', l:'天蓝' },
+];
+
+const PrimaryPicker = () => {
+  // Read current value from CSS variable so it reflects external tweaks
+  const cur = (typeof window !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim()) || '#5a9bbf';
+  const norm = (c) => (c || '').replace(/\s/g,'').toLowerCase();
+  const pick = (v) => {
+    // Apply locally and notify host so the tweak persists
+    document.documentElement.style.setProperty('--brand-primary', v);
+    document.documentElement.style.setProperty('--brand-primary-soft', v + '22');
+    try { window.parent.postMessage({type:'__edit_mode_set_keys', edits:{primary: v}}, '*'); } catch(e) {}
+  };
+  return (
+    <div style={{ display:'flex', gap: 8, alignItems:'center' }}>
+      {PRIMARY_OPTIONS.map(o => {
+        const active = norm(o.v) === norm(cur);
+        return (
+          <button key={o.v} title={o.l} onClick={()=>pick(o.v)}
+            style={{
+              width: 22, height: 22, borderRadius: 99,
+              background: o.v,
+              border: '2px solid '+(active ? 'var(--text)' : 'transparent'),
+              boxShadow: active ? '0 0 0 1px var(--bg-elev) inset' : 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+              cursor:'pointer', padding: 0,
+            }} />
+        );
+      })}
+    </div>
+  );
+};
+
 const PageGeneral = () => {
   const [autostart, setAutostart] = useStateC(true);
   const [check, setCheck] = useStateC(true);
   const [transparent, setTransparent] = useStateC(true);
-  const [dev, setDev] = useStateC(false);
   const [proxy, setProxy] = useStateC(false);
   return (
     <div className="stack gap-12">
       <Card title="应用">
-        <Row label="开机自启" sub="登录系统后在后台启动 omni_pot"><Switch on={autostart} onChange={setAutostart}/></Row>
+        <Row label="开机自启" sub="登录系统后在后台启动 Omni Pot"><Switch on={autostart} onChange={setAutostart}/></Row>
         <Row label="启动时检查更新"><Switch on={check} onChange={setCheck}/></Row>
         <Row label="本地 API 端口" sub="供外部脚本调用，修改后需重启">
-          <div className="field" style={{ width: 140 }}><input className="mono" defaultValue="60828" /></div>
+          <div className="field" style={{ width: 140 }}><input className="mono" defaultValue="20202" /></div>
         </Row>
       </Card>
 
@@ -56,8 +92,8 @@ const PageGeneral = () => {
             <Select value="size" options={[{value:'size',label:'字号 13px'}]} style={{width:110}}/>
           </div>
         </Row>
+        <Row label="主色调" sub="应用于按钮、链接与高亮等强调元素"><PrimaryPicker/></Row>
         <Row label="透明背景" sub="毛玻璃效果，部分平台可能影响性能"><Switch on={transparent} onChange={setTransparent}/></Row>
-        <Row label="开发者模式" sub="启用 F12 开发者工具"><Switch on={dev} onChange={setDev}/></Row>
       </Card>
 
       <Card title="网络代理">
@@ -66,9 +102,6 @@ const PageGeneral = () => {
           <div className="field"><input placeholder="http://127.0.0.1" defaultValue="http://127.0.0.1"/></div>
           <div className="field"><input className="mono" placeholder="端口" defaultValue="7890"/></div>
         </div>
-        <Row label="不代理的地址" sub="逗号分隔">
-          <div className="field" style={{minWidth:260, opacity: proxy ? 1 : 0.5}}><input className="mono" defaultValue="localhost,127.0.0.1,*.local"/></div>
-        </Row>
       </Card>
     </div>
   );
@@ -143,6 +176,7 @@ const PageHotkey = () => {
     <div className="stack gap-12">
       <Card title="全局快捷键" hint="按下组合键以录入 · Backspace 清除">
         <HK label="划词翻译" sub="选中文本后按下快捷键即翻译" value="Ctrl+Alt+T" valid />
+        <HK label="划词字典" sub="选中单词查询词典释义" value="Ctrl+Alt+D" valid />
         <HK label="输入翻译" sub="呼出翻译窗口并清空源文本" value="Ctrl+Alt+I" valid />
         <HK label="OCR 识别" sub="截图后将文字提取到识别窗口" value="Ctrl+Alt+S" valid />
         <HK label="OCR 翻译" sub="截图、识别并自动翻译" value="" />
@@ -151,7 +185,7 @@ const PageHotkey = () => {
         <div style={{ padding: 14, display:'flex', gap: 12, alignItems:'flex-start' }}>
           <Icons.Info size={16} style={{ color:'var(--brand-primary)', marginTop: 1 }}/>
           <div style={{ fontSize: 12.5, color:'var(--brand-primary)', lineHeight: 1.55 }}>
-            Wayland 用户：系统级快捷键可能不可用。你可以在桌面环境的快捷键设置中调用 <span className="mono">curl localhost:60828/selection_translate</span> 作为替代方案。
+            Wayland 用户：系统级快捷键可能不可用。你可以在桌面环境的快捷键设置中调用 <span className="mono">curl localhost:20202/selection_translate</span> 作为替代方案。
           </div>
         </div>
       </div>
@@ -191,7 +225,7 @@ const PageService = () => {
   return (
     <div className="stack gap-12">
       {/* Tabs */}
-      <div style={{ display:'flex', gap: 4, padding: 4, background:'var(--bg-sunk)', borderRadius: 8, border:'1px solid var(--line)', alignSelf:'flex-start' }}>
+      <div style={{ display:'flex', gap: 4, padding: 4, background:'var(--bg-card)', borderRadius: 8, border:'1px solid var(--line-soft)', alignSelf:'flex-start' }}>
         {tabs.map(t => (
           <button key={t.id} onClick={()=>setTab(t.id)} className="btn sm"
             style={{ background: tab===t.id ? 'var(--bg-elev)' : 'transparent', border:'1px solid '+(tab===t.id?'var(--line)':'transparent'), boxShadow: tab===t.id ? '0 1px 2px rgba(0,0,0,0.04)' : 'none', height: 26 }}>
@@ -211,7 +245,7 @@ const PageService = () => {
             const meta = window.SVC_META[s.name || s.key] || {};
             return (
               <div key={s.key} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 12px', borderRadius: 8, transition:'background .12s' }}
-                onMouseEnter={e=>e.currentTarget.style.background='var(--bg-sunk)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                onMouseEnter={e=>e.currentTarget.style.background='var(--bg-card)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                 <Icons.Drag size={14} style={{ color:'var(--text-mute)', cursor:'grab' }}/>
                 <SvcTile name={s.name || s.key} />
                 <div className="stack" style={{ flex:1, minWidth: 0 }}>
@@ -243,8 +277,8 @@ const PageHistory = () => {
     { svc:'deepl', src:'reconcile', from:'en', to:'zh_cn', dst:'调和；使一致', t:'2 分钟前' },
     { svc:'openai', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
     { svc:'google', src:'eventual consistency', from:'en', to:'zh_cn', dst:'最终一致性', t:'8 分钟前' },
-    { svc:'bing_dict', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
-    { svc:'yandex', src:'走り抜ける', from:'ja', to:'zh_cn', dst:'跑着穿过', t:'今天 11:08' },
+    { svc:'free_dictionary', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
+    { svc:'mymemory', src:'走り抜ける', from:'ja', to:'zh_cn', dst:'跑着穿过', t:'今天 11:08' },
     { svc:'geminipro', src:'お腹が空いた', from:'ja', to:'en', dst:"I'm hungry", t:'昨天 22:11' },
     { svc:'caiyun', src:'machen', from:'de', to:'zh_cn', dst:'制作；做', t:'昨天 16:45' },
   ];
@@ -260,12 +294,12 @@ const PageHistory = () => {
         <button className="btn sm danger"><Icons.Trash size={12}/>清空</button>
       </div>
       <div className="card" style={{ padding: 0 }}>
-        <div style={{ display:'grid', gridTemplateColumns:'32px 1fr 80px 1fr 100px', alignItems:'center', padding:'10px 14px', borderBottom:'1px solid var(--line)', background:'var(--bg-sunk)', fontSize: 11, color:'var(--text-mute)', fontFamily:'var(--font-mono)', textTransform:'uppercase', letterSpacing:'.05em' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'32px 1fr 80px 1fr 100px', alignItems:'center', padding:'10px 14px', borderBottom:'1px solid var(--line-soft)', background:'var(--bg-card)', fontSize: 11, color:'var(--text-mute)', fontFamily:'var(--font-mono)', textTransform:'uppercase', letterSpacing:'.05em' }}>
           <div></div><div>源文本</div><div>语言</div><div>译文</div><div>时间</div>
         </div>
         {rows.map((r, i) => (
-          <div key={i} style={{ display:'grid', gridTemplateColumns:'32px 1fr 80px 1fr 100px', alignItems:'center', padding:'10px 14px', borderBottom: i<rows.length-1?'1px solid var(--line)':'none', cursor:'pointer', transition:'background .12s', gap: 12 }}
-            onMouseEnter={e=>e.currentTarget.style.background='var(--bg-sunk)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+          <div key={i} style={{ display:'grid', gridTemplateColumns:'32px 1fr 80px 1fr 100px', alignItems:'center', padding:'10px 14px', borderBottom: i<rows.length-1?'1px solid var(--line-soft)':'none', cursor:'pointer', transition:'background .12s', gap: 12 }}
+            onMouseEnter={e=>e.currentTarget.style.background='var(--bg-card)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
             <SvcTile name={r.svc} />
             <div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize: 13 }}>{r.src}</div>
             <div style={{ display:'flex', alignItems:'center', gap: 4 }}><Flag code={r.from}/><Icons.ChevR size={10} style={{color:'var(--text-mute)'}}/><Flag code={r.to}/></div>
@@ -298,7 +332,6 @@ const PageBackup = () => {
         <div style={{ display:'flex', gap: 8 }}>
           {[
             { v:'webdav', l:'WebDAV', s:'同步到任意 WebDAV 服务器' },
-            { v:'aliyun', l:'阿里云盘', s:'扫码登录 · 国内推荐' },
             { v:'local', l:'本地文件', s:'导出 ZIP 到本地路径' },
           ].map(o => (
             <button key={o.v} onClick={()=>setType(o.v)} style={{ flex:1, padding: 12, borderRadius: 10, border: '1px solid '+(type===o.v?'var(--brand-primary)':'var(--line)'), background: type===o.v?'var(--brand-primary-soft)':'var(--bg-elev)', textAlign:'left', cursor:'pointer' }}>
@@ -318,6 +351,12 @@ const PageBackup = () => {
             <div style={{flex:1}}/>
             <button className="btn sm">测试连接</button>
           </div>
+        </Card>
+      )}
+
+      {type==='local' && (
+        <Card title="本地路径">
+          <Row label="备份目录"><div className="field" style={{minWidth: 320}}><input className="mono" defaultValue="~/Documents/OmniPotBackups" /></div></Row>
         </Card>
       )}
 
@@ -354,7 +393,7 @@ const PageAbout = () => (
   <div className="stack gap-12">
     <div style={{ padding: 28, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap: 8 }}>
       <div className="svc-tile" style={{ width: 64, height: 64, borderRadius: 16, background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', fontSize: 22, fontWeight: 700 }}>op</div>
-      <div style={{ fontSize: 22, fontWeight: 600, letterSpacing:'-0.01em' }}>omni_pot</div>
+      <div style={{ fontSize: 22, fontWeight: 600, letterSpacing:'-0.01em' }}>Omni Pot</div>
       <div className="hint mono">version 3.1.0 · darwin-arm64</div>
       <div className="hint" style={{ maxWidth: 360 }}>一个面向日常使用的桌面翻译与识别工具，支持 21 个翻译引擎、16 个 OCR 服务和自定义插件。</div>
       <div style={{ display:'flex', gap: 6, marginTop: 4 }}>
@@ -366,9 +405,9 @@ const PageAbout = () => (
     </div>
 
     <Card title="诊断">
-      <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/omni_pot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
-      <Row label="配置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/omni_pot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
-      <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:60828</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+      <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/OmniPot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+      <Row label="配置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/OmniPot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+      <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:20202</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
     </Card>
   </div>
 );
@@ -380,20 +419,20 @@ const ConfigWindow = ({ initial = 'translate' }) => {
   const Page = PAGES[page];
   const cur = NAV.find(n => n.id === page);
   return (
-    <div className="op-window" style={{ width: 880, height: 600 }}>
+    <div className="op-window" style={{ width: '100%', height: '100%' }}>
       <div style={{ display:'flex', flex:1, minHeight: 0 }}>
-        {/* Sidebar */}
-        <div style={{ width: 220, background: 'var(--bg-card)', borderRight: '1px solid var(--line-soft)', display:'flex', flexDirection:'column' }}>
+        {/* Sidebar — narrower */}
+        <div style={{ width: 184, background: 'var(--bg-card)', borderRight: '1px solid var(--line-soft)', display:'flex', flexDirection:'column' }}>
           <div style={{ height: 38, padding: '0 10px', display:'flex', alignItems:'center', gap: 6 }}>
-            <button className="ic-btn" title="置顶" style={{ color:'var(--text-mute)' }}><Icons.Pin size={12}/></button>
-            <div className="op-wordmark"><span className="dot" style={{ background:'var(--brand-primary)' }}/>omni_pot</div>
+            <button className="ic-btn" title="置顶" style={{ color:'var(--text-mute)' }}><Icons.Pin size={15}/></button>
+            <div className="op-wordmark">Omni Pot</div>
           </div>
-          <div style={{ padding: 8, display:'flex', flexDirection:'column', gap: 2, flex:1 }}>
+          <div style={{ padding: 6, display:'flex', flexDirection:'column', gap: 2, flex:1 }}>
             {NAV.map(n => (
               <button key={n.id} onClick={()=>setPage(n.id)}
-                style={{ height: 32, padding: '0 10px', borderRadius: 8, display:'flex', alignItems:'center', gap: 10,
+                style={{ height: 30, padding: '0 10px', borderRadius: 8, display:'flex', alignItems:'center', gap: 10,
                   background: page===n.id?'var(--bg-elev)':'transparent',
-                  border:'1px solid '+(page===n.id?'var(--line)':'transparent'),
+                  border:'1px solid '+(page===n.id?'var(--line-soft)':'transparent'),
                   color: page===n.id?'var(--text)':'var(--text-dim)',
                   fontSize: 13, fontWeight: page===n.id?500:400, cursor:'pointer', transition:'background .12s, color .12s' }}>
                 <span style={{ color: page===n.id?'var(--brand-primary)':'var(--text-mute)' }}>{n.icon}</span>
@@ -401,19 +440,18 @@ const ConfigWindow = ({ initial = 'translate' }) => {
               </button>
             ))}
           </div>
-          <div style={{ padding: 12, borderTop:'1px solid var(--line)' }}>
+          <div style={{ padding: '8px 12px', borderTop:'1px solid var(--line-soft)' }}>
             <div className="hint mono" style={{ fontSize: 10.5 }}>v3.1.0</div>
           </div>
         </div>
         {/* Content */}
         <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth: 0 }}>
-          <div style={{ height: 38, display:'flex', alignItems:'center', padding:'0 10px 0 14px', gap: 8 }}>
+          <div style={{ height: 38, display:'flex', alignItems:'center', padding:'0 10px 0 16px', gap: 8 }}>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
-            <span className="hint mono" style={{ marginLeft: 4 }}>/{page}</span>
             <div style={{flex:1}}/>
-            <button className="ic-btn" title="关闭"><Icons.Close size={13}/></button>
+            <button className="ic-btn" title="关闭"><Icons.Close size={14}/></button>
           </div>
-          <div style={{ flex:1, overflow:'auto', padding: 20 }}>
+          <div style={{ flex:1, overflow:'auto', padding: '4px 16px 16px' }}>
             <Page />
           </div>
         </div>

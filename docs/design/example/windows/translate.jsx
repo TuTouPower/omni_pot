@@ -2,34 +2,38 @@
 const { useState: useStateT } = React;
 
 // Plain titlebar — pin LEFT, then wordmark, then mode label, spacer, close
-const TitlebarLeft = ({ mode = '翻译', pinned = true }) => (
-  <div className="op-titlebar">
-    <button className="op-pin" title="置顶"
-      style={{
-        width: 24, height: 24, borderRadius: 6, display:'grid', placeItems:'center',
-        color: pinned ? 'var(--brand-primary)' : 'var(--text-mute)',
-        background: 'transparent',
-        WebkitAppRegion: 'no-drag',
-      }}>
-      <Icons.Pin size={14} fill={pinned} />
-    </button>
-    <div className="op-wordmark" style={{ marginLeft: 2 }}>
-      <span className="dot" style={{ background: 'var(--brand-primary)' }} />
-      omni_pot
+const TitlebarLeft = ({ mode = '翻译', pinned: pinnedProp = false }) => {
+  const [pinned, setPinned] = useStateT(!!pinnedProp);
+  return (
+    <div className="op-titlebar">
+      <button className="op-pin" title={pinned ? '取消置顶' : '置顶'}
+        onClick={() => setPinned(p => !p)}
+        style={{
+          width: 28, height: 28, borderRadius: 6, display:'grid', placeItems:'center',
+          color: pinned ? 'var(--brand-primary)' : 'var(--text-mute)',
+          background: 'transparent',
+          WebkitAppRegion: 'no-drag',
+          cursor: 'pointer',
+        }}>
+        <Icons.Pin size={18} fill={pinned} />
+      </button>
+      <div className="op-wordmark" style={{ marginLeft: 2 }}>
+        Omni Pot
+      </div>
+      <span className="op-mode">{mode}</span>
+      <div className="spacer" />
+      <button className="op-close" title="关闭"
+        style={{
+          width: 28, height: 28, borderRadius: 6, display:'grid', placeItems:'center',
+          color: 'var(--text-mute)',
+          background: 'transparent',
+          WebkitAppRegion: 'no-drag',
+        }}>
+        <Icons.Close size={18} />
+      </button>
     </div>
-    <span className="op-mode">· {mode}</span>
-    <div className="spacer" />
-    <button className="op-close" title="关闭"
-      style={{
-        width: 24, height: 24, borderRadius: 6, display:'grid', placeItems:'center',
-        color: 'var(--text-mute)',
-        background: 'transparent',
-        WebkitAppRegion: 'no-drag',
-      }}>
-      <Icons.Close size={14} />
-    </button>
-  </div>
-);
+  );
+};
 
 // Inline lang switch — bigger text, no flag prefix
 const LangPick = ({ label }) => (
@@ -93,20 +97,29 @@ const ResultCard = ({ s, r }) => {
   );
 };
 
-const TranslateWindow = ({ width = 400, height = 640, sourceText, services, results, pinned = true }) => {
+const TranslateWindow = ({ width = 400, height, sourceText, services, results, pinned = true }) => {
+  // Source textarea auto-grows up to ~8 lines (line-height 1.6 * 13.5px ≈ 21.6px)
+  // Action row + padding adds ≈64px; we cap the *card* total height accordingly.
+  const SOURCE_MAX_LINES = 8;
+  const LH = 22; // px per line
+  const sourceMaxBody = SOURCE_MAX_LINES * LH;     // body region max
   return (
-    <div className="op-window" style={{ width, height }}>
+    <div className="op-window" style={{ width, height: height || '100%' }}>
       <TitlebarLeft mode="翻译" pinned={pinned} />
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '4px 10px 12px', display:'flex', flexDirection:'column', gap: 8 }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '4px 10px 12px', display:'flex', flexDirection:'column', gap: 8, minHeight: 0 }}>
 
-        {/* Source card — fixed height, internal scroll, sticky action row */}
-        <div className="card" style={{ padding: 0, display:'flex', flexDirection:'column', flex:'0 0 auto', height: 200 }}>
-          <div style={{ flex: 1, overflow: 'auto', padding: '12px 14px 6px', minHeight: 0 }}>
+        {/* Source card — auto-grow up to 8 lines, then scroll internally */}
+        <div className="card" style={{ padding: 0, display:'flex', flexDirection:'column', flex:'0 0 auto' }}>
+          <div style={{
+            maxHeight: sourceMaxBody,
+            overflow: 'auto',
+            padding: '12px 14px 4px',
+          }}>
             <div
               contentEditable
               suppressContentEditableWarning
-              style={{ fontSize: 13.5, lineHeight: 1.6, color:'var(--text)', outline:'none', whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
+              style={{ fontSize: 13.5, lineHeight: '22px', color:'var(--text)', outline:'none', whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
               {sourceText}
             </div>
           </div>
@@ -143,9 +156,9 @@ const TranslateWindow = ({ width = 400, height = 640, sourceText, services, resu
 };
 
 // ====== Dictionary window — no search, no newline icon, favorite on the word ======
-const DictWindow = ({ width = 420, height = 660 }) => {
+const DictWindow = ({ width = 420, height }) => {
   return (
-    <div className="op-window" style={{ width, height }}>
+    <div className="op-window" style={{ width, height: height || '100%' }}>
       <TitlebarLeft mode="词典" pinned={false} />
       <div style={{ flex:1, overflow:'auto', padding: '4px 12px 14px', display:'flex', flexDirection:'column', gap: 10 }}>
 

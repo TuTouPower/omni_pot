@@ -266,7 +266,7 @@ const TrayMenu = () => {
   return (
     <div style={{ width: 260, background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 10, padding: 4, boxShadow:'0 12px 32px rgba(0,0,0,0.12)' }}>
       <div style={{ padding:'8px 12px', display:'flex', alignItems:'center', gap:8, borderBottom:'1px solid var(--line)', marginBottom: 4 }}>
-        <div className="op-wordmark"><span className="dot" style={{ background:'var(--brand-primary)' }} />omni_pot</div>
+        <div className="op-wordmark">Omni Pot</div>
         <div style={{flex:1}}/>
         <span className="hint mono">3.1.0</span>
       </div>
