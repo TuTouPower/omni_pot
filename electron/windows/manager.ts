@@ -3,6 +3,7 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
+import { getConfig } from '../config/store'
 
 function resolveIconPath(): string {
   const candidates = [
@@ -78,6 +79,12 @@ export class WindowManager {
     })
 
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+
+    win.on('blur', () => {
+      if (opts.label === WindowLabel.TRANSLATE && getConfig('translate_close_on_blur')) {
+        win.close()
+      }
+    })
 
     win.webContents.on('console-message', (_event, level, message) => {
       const tag = `[renderer:${opts.label}]`

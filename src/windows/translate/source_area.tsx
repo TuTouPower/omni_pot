@@ -69,7 +69,6 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
-    const [hideSource] = useConfig('hide_source')
     const [dynamicTranslate] = useConfig('dynamic_translate')
 
     const internalRef = useRef<HTMLTextAreaElement>(null)
@@ -125,8 +124,6 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         }, 1000)
         return () => clearTimeout(timer)
     }, [sourceText, dynamicTranslate, onTranslate])
-
-    if (hideSource) return null
 
     return (
         <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '0 0 auto', minHeight: 120 }}>
