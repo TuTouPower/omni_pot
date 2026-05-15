@@ -67,6 +67,40 @@ export class ConfigPage {
         return this.page.getByTestId('svc-item')
     }
 
+    serviceTab(category: string): Locator {
+        return this.page.getByTestId(`svc-tab-${category}`)
+    }
+
+    serviceItem(instanceKey: string): Locator {
+        return this.page.locator(`[data-testid="svc-item"][data-service-key="${instanceKey}"]`)
+    }
+
+    serviceItemKeys(): Promise<string[]> {
+        return this.serviceItems().evaluateAll((items) => items
+            .map((item) => item.getAttribute('data-service-key') ?? '')
+            .filter(Boolean))
+    }
+
+    serviceAddOption(serviceKey: string): Locator {
+        return this.page.locator(`[data-testid="svc-add-option"][data-service-template="${serviceKey}"]`)
+    }
+
+    serviceMoveUp(instanceKey: string): Locator {
+        return this.serviceItem(instanceKey).getByTestId('svc-move-up')
+    }
+
+    serviceMoveDown(instanceKey: string): Locator {
+        return this.serviceItem(instanceKey).getByTestId('svc-move-down')
+    }
+
+    serviceDelete(instanceKey: string): Locator {
+        return this.serviceItem(instanceKey).getByTestId('svc-delete')
+    }
+
+    serviceDragHandle(instanceKey: string): Locator {
+        return this.serviceItem(instanceKey).getByTestId('svc-drag-handle')
+    }
+
     addServiceButton(): Locator {
         return this.page.getByTestId('svc-add-btn')
     }
@@ -102,6 +136,23 @@ export class ConfigPage {
 
     async toggle(testId: string): Promise<void> {
         await this.setting(testId).click()
+    }
+
+    async openServiceCategory(category: string): Promise<void> {
+        await this.serviceTab(category).click()
+    }
+
+    async addService(serviceKey: string): Promise<void> {
+        await this.addServiceButton().click()
+        await this.serviceAddOption(serviceKey).click()
+    }
+
+    async moveServiceDown(instanceKey: string): Promise<void> {
+        await this.serviceMoveDown(instanceKey).click()
+    }
+
+    async deleteService(instanceKey: string): Promise<void> {
+        await this.serviceDelete(instanceKey).click()
     }
 
     async fillField(testId: string, value: string): Promise<void> {

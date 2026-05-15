@@ -243,7 +243,8 @@ class TranslatePage {
 - 截图：`shot-overlay`、`shot-selection`、`shot-size-label`、`shot-hint`
 - 配置：`config-wordmark`、`config-pin`、`config-version`、`config-route`、
   `config-nav-{page}`、`config-title`、`config-close`、各设置项
-  `cfg-{key}`、服务项 `svc-item`、`svc-add-btn`、`svc-delete`、`svc-drag-handle`
+  `cfg-{key}`、服务项 `svc-item`、服务 tab `svc-tab-{listKey}`、`svc-add-btn`、
+  `svc-add-option`、`svc-delete`、`svc-move-up`、`svc-move-down`、`svc-drag-handle`
 - 更新器：`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
 当前 UI 尚未实现的控件不预埋选择器：词典收藏 `dict-collect`、词典朗读 `dict-tts`、
@@ -426,13 +427,12 @@ class TranslatePage {
 
 ### 5.12 config_service_mgmt.spec.ts — 服务管理页
 
-- Tabs 切换翻译/识别/朗读/收藏四类
-- 服务实例列表项渲染：拖拽手柄、图标、实例名、key、启用开关、编辑、删除
+- Tabs 切换翻译/字典/识别/语音合成/收藏五类
+- 服务实例列表项渲染：拖拽手柄、图标、实例名、key、上移/下移、删除
 - **添加内置服务** → 创建新实例（key 形如 `bing@xxxx`），出现在列表与 `*_service_list`
-- **编辑实例**：打开配置表单，先测试后保存 —— 测试失败不保存、成功才持久化
-- **删除实例** → 从列表与 `*_service_list` 移除
-- **启用/禁用开关** → 切换 `service_instances` 中 `enable`
-- **拖拽排序** → `*_service_list` 顺序更新，翻译窗口结果卡片顺序随之变化
+- **删除实例** → 从列表与 `*_service_list` 移除，并同步删除 `service_instances` 项
+- **上下移动排序** → `*_service_list` 顺序更新，翻译窗口结果卡片顺序随之变化
+- 服务启停、编辑/测试保存、真实拖拽排序尚未在当前 UI 实现；后续实现这些用户功能时同步补对应 spec
 
 ### 5.13 config_history_backup.spec.ts — 历史页 + 备份页
 

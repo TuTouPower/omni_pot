@@ -88,10 +88,13 @@ export default function ServiceSettings(): React.ReactElement {
     return (
         <div className="stack gap-12">
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--bg-sunk)', borderRadius: 8, border: '1px solid var(--line)', alignSelf: 'flex-start' }}>
+            <div role="tablist" style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--bg-sunk)', borderRadius: 8, border: '1px solid var(--line)', alignSelf: 'flex-start' }}>
                 {CATEGORY_TABS.map((tab) => (
                     <button
                         key={tab.key}
+                        role="tab"
+                        data-testid={`svc-tab-${tab.key}`}
+                        aria-selected={activeTab === tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className="btn sm"
                         style={{
@@ -112,7 +115,7 @@ export default function ServiceSettings(): React.ReactElement {
             <div className="card">
                 <div className="card-head">
                     <span>已启用服务</span>
-                    <span className="hint mono" style={{ textTransform: 'none', letterSpacing: 0, marginLeft: 'auto', fontWeight: 400 }}>拖动排序 · 顶部优先</span>
+                    <span className="hint mono" style={{ textTransform: 'none', letterSpacing: 0, marginLeft: 'auto', fontWeight: 400 }}>排序 · 顶部优先</span>
                 </div>
                 <div style={{ padding: 4 }}>
                     {serviceList.map((instanceKey, index) => {
@@ -133,7 +136,9 @@ export default function ServiceSettings(): React.ReactElement {
                                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-sunk)'}
                                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                             >
-                                <Icons.Drag data-testid="svc-drag-handle" size={14} style={{ color: 'var(--text-mute)', cursor: 'grab' }} />
+                                <span data-testid="svc-drag-handle" style={{ color: 'var(--text-mute)', cursor: 'grab', display: 'inline-flex' }}>
+                                    <Icons.Drag size={14} />
+                                </span>
                                 <div
                                     className="svc-tile"
                                     style={{ color: 'var(--text-dim)' }}
@@ -145,6 +150,7 @@ export default function ServiceSettings(): React.ReactElement {
                                     <div className="hint mono" style={{ fontSize: 10.5 }}>{instanceKey}</div>
                                 </div>
                                 <button
+                                    data-testid="svc-move-up"
                                     className="btn ghost icon sm"
                                     disabled={index === 0}
                                     onClick={() => moveUp(index)}
@@ -152,6 +158,7 @@ export default function ServiceSettings(): React.ReactElement {
                                     <Icons.Chev size={12} style={{ transform: 'rotate(90deg)' }} />
                                 </button>
                                 <button
+                                    data-testid="svc-move-down"
                                     className="btn ghost icon sm"
                                     disabled={index === serviceList.length - 1}
                                     onClick={() => moveDown(index)}
@@ -209,6 +216,8 @@ export default function ServiceSettings(): React.ReactElement {
                             {availableServices.map((svc) => (
                                 <button
                                     key={svc.key}
+                                    data-testid="svc-add-option"
+                                    data-service-template={svc.key}
                                     onClick={() => addService(svc.key)}
                                     style={{
                                         display: 'flex',

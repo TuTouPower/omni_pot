@@ -56,8 +56,12 @@ export class WindowManager {
     const point = screen.getCursorScreenPoint()
     const display = screen.getDisplayNearestPoint(point)
     const { workArea } = display
+    const shouldPosition = opts.label !== WindowLabel.DAEMON
+    const x = shouldPosition ? Math.round(workArea.x + (workArea.width - opts.width) / 2) : undefined
+    const y = shouldPosition ? Math.round(workArea.y + (workArea.height - opts.height) / 2) : undefined
 
     const win = new BrowserWindow({
+      ...(shouldPosition ? { x, y } : {}),
       width: opts.width,
       height: opts.height,
       minWidth: opts.minWidth,
@@ -92,12 +96,6 @@ export class WindowManager {
       else if (level === 2) console.warn(tag, message)
       else console.log(tag, message)
     })
-
-    if (opts.label !== WindowLabel.DAEMON) {
-      const x = Math.round(workArea.x + (workArea.width - opts.width) / 2)
-      const y = Math.round(workArea.y + (workArea.height - opts.height) / 2)
-      win.setPosition(x, y)
-    }
 
     if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
       const url = `${process.env['ELECTRON_RENDERER_URL']}#${opts.label}`

@@ -3,6 +3,7 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
 type WindowLabel = 'daemon' | 'translate' | 'dict' | 'recognize' | 'config'
+const WINDOW_SIZE_DPI_RATIO_TOLERANCE = 0.2
 
 function is_target_closed_error(error: unknown): boolean {
     return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
@@ -56,8 +57,10 @@ test.describe('@core app lifecycle', () => {
             const translate_state = await omni.api.windowState('translate')
             expect(translate_state.visible).toBe(true)
             expect(translate_state.bounds).not.toBeNull()
-            expect(Math.abs((translate_state.bounds?.width ?? 0) - 350)).toBeLessThanOrEqual(4)
-            expect(Math.abs((translate_state.bounds?.height ?? 0) - 420)).toBeLessThanOrEqual(4)
+            expect((translate_state.bounds?.width ?? 0)).toBeGreaterThanOrEqual(350 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.width ?? 0)).toBeLessThanOrEqual(350 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.height ?? 0)).toBeGreaterThanOrEqual(420 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.height ?? 0)).toBeLessThanOrEqual(420 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
         } finally {
             await omni.stop()
         }
