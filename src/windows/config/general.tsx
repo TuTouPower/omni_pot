@@ -3,17 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect, ConfigField } from './config_components'
 
-const TRAY_CLICK_OPTIONS = [
-    { value: 'show_config', label: 'Show Config' },
-    { value: 'show_translate', label: 'Show Translate' },
-    { value: 'none', label: 'None' },
-]
 
 const THEME_VALUES = ['system', 'light', 'dark'] as const
 
 const LANGUAGE_VALUES = ['zh_cn', 'en'] as const
 
-const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${s}px` }))
+const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${String(s)}px` }))
 
 const IS_MAC = navigator.platform.toLowerCase().includes('mac')
 
@@ -62,15 +57,15 @@ export default function GeneralPage(): React.ReactElement {
         <div className="stack gap-12">
             <ConfigCard title={t('general.app_settings') || '应用'}>
                 <ConfigRow label={t('general.auto_start') || '开机自启'} sub={t('general.auto_start_sub')}>
-                    <ConfigSwitch on={autoStart as boolean} onChange={setAutoStart} testId="cfg-auto_start" />
+                    <ConfigSwitch on={autoStart} onChange={setAutoStart} testId="cfg-auto_start" />
                 </ConfigRow>
                 <ConfigRow label={t('general.check_update') || '启动时检查更新'}>
-                    <ConfigSwitch on={checkUpdate as boolean} onChange={setCheckUpdate} testId="cfg-check_update" />
+                    <ConfigSwitch on={checkUpdate} onChange={setCheckUpdate} testId="cfg-check_update" />
                 </ConfigRow>
                 <ConfigRow label={t('general.app_language') || '界面语言'}>
                     <ConfigSelect
                         value={appLanguage as 'zh_cn' | 'en'}
-                        onChange={setAppLanguage as (v: 'zh_cn' | 'en') => void}
+                        onChange={setAppLanguage}
                         options={languageOptions}
                         testId="cfg-app_language"
                         style={{ minWidth: 160 }}
@@ -80,7 +75,7 @@ export default function GeneralPage(): React.ReactElement {
                     <ConfigField
                         mono
                         defaultValue={String(serverPort)}
-                        onChange={(v) => setServerPort(Number(v))}
+                        onChange={(v) => { setServerPort(Number(v)); }}
                         testId="cfg-server_port"
                         style={{ width: 140 }}
                     />
@@ -90,8 +85,8 @@ export default function GeneralPage(): React.ReactElement {
             <ConfigCard title={t('general.appearance') || '外观'}>
                 <ConfigRow label={t('general.theme') || '主题'}>
                     <ConfigSelect
-                        value={appTheme as 'system' | 'light' | 'dark'}
-                        onChange={setAppTheme as (v: 'system' | 'light' | 'dark') => void}
+                        value={appTheme}
+                        onChange={setAppTheme}
                         options={themeOptions}
                         testId="cfg-app_theme"
                         style={{ minWidth: 160 }}
@@ -100,7 +95,7 @@ export default function GeneralPage(): React.ReactElement {
                 <ConfigRow label={t('general.font_family') || '字体'}>
                     <div style={{ display: 'flex', gap: 6 }}>
                         <ConfigSelect
-                            value={appFont as string}
+                            value={appFont}
                             onChange={setAppFont}
                             options={fontOptions}
                             testId="cfg-app_font"
@@ -108,7 +103,7 @@ export default function GeneralPage(): React.ReactElement {
                         />
                         <ConfigSelect
                             value={String(fontSize)}
-                            onChange={(v) => setFontSize(Number(v))}
+                            onChange={(v) => { setFontSize(Number(v)); }}
                             options={FONT_SIZE_OPTIONS}
                             testId="cfg-app_font_size"
                             style={{ width: 110 }}
@@ -119,8 +114,8 @@ export default function GeneralPage(): React.ReactElement {
                     className="card"
                     style={{
                         padding: 10,
-                        fontFamily: appFont === 'default' ? undefined : (appFont as string),
-                        fontSize: Number(fontSize),
+                        fontFamily: appFont === 'default' ? undefined : (appFont),
+                        fontSize,
                         color: 'var(--text-dim)',
                     }}
                 >
@@ -128,29 +123,29 @@ export default function GeneralPage(): React.ReactElement {
                 </div>
                 {IS_MAC && (
                     <ConfigRow label={t('general.transparent') || '透明背景'} sub={t('general.transparent_sub')}>
-                        <ConfigSwitch on={transparent as boolean} onChange={setTransparent} testId="cfg-transparent" />
+                        <ConfigSwitch on={transparent} onChange={setTransparent} testId="cfg-transparent" />
                     </ConfigRow>
                 )}
                 <ConfigRow label={t('general.dev_mode') || '开发者模式'} sub={t('general.dev_mode_sub')}>
-                    <ConfigSwitch on={devMode as boolean} onChange={setDevMode} testId="cfg-dev_mode" />
+                    <ConfigSwitch on={devMode} onChange={setDevMode} testId="cfg-dev_mode" />
                 </ConfigRow>
             </ConfigCard>
 
             <ConfigCard title={t('general.proxy') || '网络代理'}>
                 <ConfigRow label={t('general.proxy_enable') || '启用代理'}>
-                    <ConfigSwitch on={proxyEnable as boolean} onChange={setProxyEnable} testId="cfg-proxy_enable" />
+                    <ConfigSwitch on={proxyEnable} onChange={setProxyEnable} testId="cfg-proxy_enable" />
                 </ConfigRow>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 8, opacity: proxyEnable ? 1 : 0.5 }}>
                     <ConfigField
                         placeholder="http://127.0.0.1"
-                        defaultValue={proxyHost as string}
+                        defaultValue={proxyHost}
                         onChange={setProxyHost}
                         testId="cfg-proxy_host"
                     />
                     <ConfigField
                         mono
                         placeholder={t('general.proxy_port')}
-                        defaultValue={proxyPort as string}
+                        defaultValue={proxyPort}
                         onChange={setProxyPort}
                         testId="cfg-proxy_port"
                     />

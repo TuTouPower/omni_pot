@@ -1,4 +1,4 @@
-import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test'
+import { _electron as electron, type ElectronApplication } from '@playwright/test'
 import { resolve } from 'path'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
@@ -27,12 +27,11 @@ async function waitForHttpServer(port: number, timeoutMs = 25_000): Promise<void
     while (Date.now() - start < timeoutMs) {
         try {
             await new Promise<void>((resolve, reject) => {
-                http.get(`http://127.0.0.1:${port}/config`, (res) => {
-                    let data = ''
-                    res.on('data', (c: Buffer) => data += c)
+                http.get(`http://127.0.0.1:${String(port)}/config`, (res) => {
+                    res.on('data', () => {})
                     res.on('end', () => {
                         if (res.statusCode === 200) resolve()
-                        else reject(new Error(`status ${res.statusCode}`))
+                        else reject(new Error(`status ${String(res.statusCode)}`))
                     })
                 }).on('error', reject)
             })
@@ -41,7 +40,7 @@ async function waitForHttpServer(port: number, timeoutMs = 25_000): Promise<void
             await new Promise(r => setTimeout(r, 500))
         }
     }
-    throw new Error(`HTTP server not ready on port ${port} after ${timeoutMs}ms`)
+    throw new Error(`HTTP server not ready on port ${String(port)} after ${String(timeoutMs)}ms`)
 }
 
 export interface LaunchedApp {

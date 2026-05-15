@@ -75,7 +75,7 @@ export class AppFixture {
             }
             await new Promise(r => setTimeout(r, 200))
         }
-        throw new Error(`No window matching ${urlPattern} after ${timeout}ms`)
+        throw new Error(`No window matching ${String(urlPattern)} after ${String(timeout)}ms`)
     }
 
     async translate(): Promise<TranslatePage> {

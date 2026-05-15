@@ -65,7 +65,7 @@ describe('readSelectedText platform dispatch', () => {
     it('catches platform module error and returns error result', async () => {
         Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
         vi.doMock('../../../electron/selection/windows', () => ({
-            readSelectedTextWindows: async () => { throw new Error('koffi DLL explosion') },
+            readSelectedTextWindows: () => Promise.reject(new Error('koffi DLL explosion')),
         }))
 
         const { readSelectedText } = await import('../../../electron/selection/index')

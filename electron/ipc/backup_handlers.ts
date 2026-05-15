@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain } from 'electron'
 import {
     create_local_backup,
     list_local_backups,
@@ -6,7 +6,7 @@ import {
 } from '../backup'
 
 export function registerBackupHandlers(): void {
-    ipcMain.handle('backup:create', async () => {
+    ipcMain.handle('backup:create', () => {
         try {
             const path = create_local_backup()
             return { success: true, path }
@@ -19,7 +19,7 @@ export function registerBackupHandlers(): void {
         return list_local_backups()
     })
 
-    ipcMain.handle('backup:restore', async (_event, name: string) => {
+    ipcMain.handle('backup:restore', (_event, name: string) => {
         try {
             restore_local_backup(name)
             return { success: true }

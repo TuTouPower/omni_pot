@@ -53,7 +53,7 @@ export const geminiproService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Gemini API error: ${resp.status}`)
+            throw new Error(`Gemini API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {

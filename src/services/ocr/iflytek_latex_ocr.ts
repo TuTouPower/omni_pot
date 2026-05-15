@@ -7,6 +7,10 @@ const SERVICE_ID = 'hh_ocr_recognize_doc'
 
 const IFLYTEK_LATEX_LANGUAGES: LanguageCode[] = ['auto', 'zh_cn', 'zh_tw', 'en']
 
+interface IflytekLatexTextJson {
+    whole_text?: string
+}
+
 export const iflytekLatexOcrService: OcrService = {
     key: 'iflytek_latex_ocr',
     name: 'iFlytek LaTeX OCR',
@@ -51,7 +55,7 @@ export const iflytekLatexOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`iFlytek LaTeX OCR API error: ${resp.status}`)
+            throw new Error(`iFlytek LaTeX OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -60,14 +64,14 @@ export const iflytekLatexOcrService: OcrService = {
         }
 
         if (data.header?.code && data.header.code !== 0) {
-            throw new Error(`iFlytek LaTeX OCR error: ${data.header.message ?? data.header.code}`)
+            throw new Error(`iFlytek LaTeX OCR error: ${String(data.header.message ?? data.header.code)}`)
         }
 
         if (!data.payload?.recognizeDocumentRes?.text) {
             throw new Error('iFlytek LaTeX OCR: no result in response')
         }
 
-        const text_json = JSON.parse(atob(data.payload.recognizeDocumentRes.text))
+        const text_json = JSON.parse(atob(data.payload.recognizeDocumentRes.text)) as IflytekLatexTextJson
         return (text_json.whole_text ?? '').trim()
     },
 

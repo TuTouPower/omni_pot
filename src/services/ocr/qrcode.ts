@@ -1,7 +1,6 @@
 import jsQR from 'jsqr'
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
-import type { ServiceConfig } from '@shared/types/service'
 
 const QRCODE_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -24,7 +23,7 @@ function base64_to_image_data(base64: string): Promise<ImageData> {
             ctx.drawImage(img, 0, 0)
             resolve(ctx.getImageData(0, 0, canvas.width, canvas.height))
         }
-        img.onerror = () => reject(new Error('Failed to load image'))
+        img.onerror = () => { reject(new Error('Failed to load image')); }
         img.src = `data:image/png;base64,${base64}`
     })
 }
@@ -35,9 +34,7 @@ export const qrcodeOcrService: OcrService = {
     languages: QRCODE_LANGUAGES,
 
     async recognize(
-        base64Image: string,
-        _language: LanguageCode,
-        _config: ServiceConfig
+        base64Image: string
     ): Promise<string> {
         const image_data = await base64_to_image_data(base64Image)
         const code = jsQR(image_data.data, image_data.width, image_data.height)
@@ -47,7 +44,7 @@ export const qrcodeOcrService: OcrService = {
         return code.data
     },
 
-    async testConfig(_config: ServiceConfig): Promise<boolean> {
-        return true
+    testConfig(): Promise<boolean> {
+        return Promise.resolve(true)
     }
 }

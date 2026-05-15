@@ -8,13 +8,13 @@ import { getConfig } from '../config/store'
 function resolveIconPath(): string {
   const candidates = [
     join(__dirname, '../../resources/icon.ico'),
-    join(process.resourcesPath ?? '', 'icon.ico'),
+    join(process.resourcesPath, 'icon.ico'),
     join(app.getAppPath(), 'resources/icon.ico'),
     join(__dirname, '../../resources/icon.png'),
-    join(process.resourcesPath ?? '', 'icon.png'),
+    join(process.resourcesPath, 'icon.png'),
     join(app.getAppPath(), 'resources/icon.png')
   ]
-  return candidates.find((p) => p && existsSync(p)) ?? candidates[0]
+  return candidates.find((p) => existsSync(p)) ?? join(__dirname, '../../resources/icon.ico')
 }
 
 export class WindowManager {
@@ -43,7 +43,7 @@ export class WindowManager {
   }
 
   createWindow(opts: WindowOptions): BrowserWindow {
-    console.log('[wm] createWindow:', opts.label, `${opts.width}x${opts.height}`)
+    console.log('[wm] createWindow:', opts.label, `${String(opts.width)}x${String(opts.height)}`)
     const existing = this.byLabel.get(opts.label)
     if (existing && !existing.isDestroyed()) {
       existing.focus()
@@ -76,9 +76,10 @@ export class WindowManager {
       icon: resolveIconPath(),
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
-        sandbox: false,
+        sandbox: true,
         contextIsolation: true,
-        nodeIntegration: false
+        nodeIntegration: false,
+        disableBlinkFeatures: 'Auxclick'
       }
     })
 
@@ -87,6 +88,15 @@ export class WindowManager {
     }
 
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+
+    win.webContents.on('will-navigate', (event, url) => {
+      // Block all navigation to external URLs; app uses hash-based routing
+      const allowed = url.startsWith('file:') || url.startsWith('devtools:')
+      if (!allowed) {
+        console.warn('[wm] blocked navigation:', url)
+        event.preventDefault()
+      }
+    })
 
     win.on('blur', () => {
       if (opts.label === WindowLabel.TRANSLATE && getConfig('translate_close_on_blur')) {
@@ -104,12 +114,12 @@ export class WindowManager {
     if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
       const url = `${process.env['ELECTRON_RENDERER_URL']}#${opts.label}`
       console.log('[wm] loading URL:', url)
-      win.loadURL(url)
+      win.loadURL(url).catch(console.error)
       // win.webContents.openDevTools({ mode: 'detach' })
     } else {
       win.loadFile(join(__dirname, '../renderer/index.html'), {
         hash: opts.label
-      })
+      }).catch(console.error)
     }
 
     win.on('closed', () => {

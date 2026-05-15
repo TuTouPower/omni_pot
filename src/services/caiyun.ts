@@ -45,7 +45,7 @@ export const caiyunService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Caiyun translate API error: ${resp.status}`)
+            throw new Error(`Caiyun translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {

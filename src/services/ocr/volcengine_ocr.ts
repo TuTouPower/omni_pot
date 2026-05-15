@@ -35,7 +35,7 @@ export const volcengineOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Volcengine OCR API error: ${resp.status}`)
+            throw new Error(`Volcengine OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -47,7 +47,7 @@ export const volcengineOcrService: OcrService = {
         }
 
         if (data.ResponseMetadata?.Error) {
-            throw new Error(`Volcengine OCR error: ${data.ResponseMetadata.Error.Message ?? data.ResponseMetadata.Error.Code}`)
+            throw new Error(`Volcengine OCR error: ${String(data.ResponseMetadata.Error.Message ?? data.ResponseMetadata.Error.Code)}`)
         }
 
         if (data.resp?.text_list) {
@@ -59,7 +59,7 @@ export const volcengineOcrService: OcrService = {
 
     async testConfig(config: ServiceConfig): Promise<boolean> {
         try {
-            const result = await this.recognize(
+            await this.recognize(
                 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
                 'en',
                 config

@@ -1,3 +1,5 @@
+import type { ServiceConfig } from './service'
+
 export interface AppConfig {
   app_language: string
   app_theme: 'system' | 'light' | 'dark'
@@ -69,7 +71,7 @@ export interface AppConfig {
 
 // service_instances: instance key -> instance config; main process builds default instances on first launch
 export interface ServiceInstancesMap {
-  [instanceKey: string]: { serviceKey: string; config: import('./service').ServiceConfig }
+  [instanceKey: string]: { serviceKey: string; config: ServiceConfig }
 }
 
 export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {

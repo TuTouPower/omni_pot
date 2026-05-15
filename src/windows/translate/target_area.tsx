@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -10,7 +9,12 @@ import { translateServiceRegistry } from '../../services/registry'
 import { collectionServiceRegistry } from '../../services/index'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { getServiceKey } from '@shared/types/service'
-import type { DictResult } from '@shared/types/service'
+import type { DictResult, ServiceConfig } from '@shared/types/service'
+import type { ServiceInstancesMap } from '@shared/types/config'
+
+function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
+    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
+}
 
 interface TargetAreaProps {
     serviceList: string[]
@@ -19,7 +23,7 @@ interface TargetAreaProps {
 }
 
 // Service brand monograms
-const SVC_META: Record<string, { name: string; mono: string; tone: string }> = {
+const SVC_META: Partial<Record<string, { name: string; mono: string; tone: string }>> = {
     deepl: { name: 'DeepL', mono: 'DL', tone: 'oklch(70% 0.10 240)' },
     bing: { name: 'Bing', mono: 'BG', tone: 'oklch(65% 0.10 200)' },
     google: { name: 'Google', mono: 'GG', tone: 'oklch(68% 0.10 130)' },
@@ -59,7 +63,7 @@ const SVC_META: Record<string, { name: string; mono: string; tone: string }> = {
 }
 
 function SvcTile({ name, size = 24 }: { name: string; size?: number }): React.ReactElement {
-    const m = SVC_META[name] || { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }
+    const m = SVC_META[name] ?? { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }
     return (
         <div
             className={'svc-tile' + (size >= 32 ? ' lg' : '')}
@@ -74,7 +78,7 @@ function SvcTile({ name, size = 24 }: { name: string; size?: number }): React.Re
 }
 
 function svcLabel(name: string): string {
-    return (SVC_META[name] || {}).name || name
+    return SVC_META[name]?.name ?? name
 }
 
 function result_to_text(result: string | DictResult | null | undefined): string {
@@ -102,7 +106,7 @@ interface SortableCardProps {
 
 function SortableCard({
     instanceKey, results, collapsed, onToggleCollapse, onRetry,
-    onCopy, onTts, onCollect, onReverseTranslate,
+    onCopy, onTts, onCollect,
     playingKey, collectedKeys, ttsAvailable, collectionAvailable,
 }: SortableCardProps): React.ReactElement | null {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
@@ -162,7 +166,7 @@ function SortableCard({
                     >
                         <Icons.Heart size={16} fill={is_collected} />
                     </button>
-                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? '展开' : '收起'} aria-expanded={!collapsed} onClick={() => onToggleCollapse(instanceKey)}>
+                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? '展开' : '收起'} aria-expanded={!collapsed} onClick={() => { onToggleCollapse(instanceKey); }}>
                         <Icons.Chev size={17} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
                     </button>
                 </div>
@@ -173,7 +177,7 @@ function SortableCard({
                         <div data-testid="result-error" data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ color: 'var(--danger)', fontSize: 13 }}>翻译失败</span>
                             {onRetry && (
-                                <button data-testid="result-retry" className="ic-btn" title="重试" onClick={() => onRetry(instanceKey)} style={{ color: 'var(--danger)' }}>
+                                <button data-testid="result-retry" className="ic-btn" title="重试" onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
                                     <Icons.Cycle size={14} />
                                 </button>
                             )}
@@ -182,7 +186,7 @@ function SortableCard({
                         <div data-testid="result-body" data-result-content style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
                             {typeof result === 'string'
                                 ? (result || <span style={{ color: 'var(--text-mute)' }}>…</span>)
-                                : <DictResultInline result={result as DictResult} />
+                                : <DictResultInline result={result} />
                             }
                         </div>
                     )
@@ -222,7 +226,6 @@ function DictResultInline({ result }: { result: DictResult }): React.ReactElemen
 }
 
 export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaProps): React.ReactElement {
-    const { t } = useTranslation()
     const results = useTranslateStore((s) => s.results)
     const isTranslating = useTranslateStore((s) => s.isTranslating)
     const sourceText = useTranslateStore((s) => s.sourceText)
@@ -233,7 +236,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
     const enabledCollectionServiceList = useMemo(
-        () => collectionServiceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        () => collectionServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [collectionServiceList, serviceInstances]
     )
 
@@ -255,7 +258,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     }, [])
 
     const handleCopy = useCallback((text: string) => {
-        void navigator.clipboard.writeText(text).catch(() => undefined)
+        navigator.clipboard.writeText(text).catch(() => undefined)
     }, [])
 
     const handleReverseTranslate = useCallback((text: string) => {
@@ -284,9 +287,9 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         playingActiveRef.current = true
         setPlayingKey(key)
         try {
-            const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
+            const instanceConfig = get_service_config(serviceInstances, instanceKey)
             const audioBuffer = await ttsService.synthesize(text, targetLanguage, instanceConfig)
-            if (playingRequestRef.current !== request_id || !playingActiveRef.current) return
+            if (playingRequestRef.current !== request_id) return
 
             const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
             const url = URL.createObjectURL(blob)
@@ -311,7 +314,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
             playingCleanupRef.current = reset_audio
             audio.onended = reset_audio
             audio.onerror = reset_audio
-            await audio.play().catch(() => reset_audio())
+            await audio.play().catch(() => { reset_audio(); })
         } catch {
             if (playingRequestRef.current === request_id) {
                 playingActiveRef.current = false
@@ -349,14 +352,14 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
 
         const resultText = typeof result === 'string'
             ? result
-            : (result as DictResult).definitions.map((d) => d.meanings.join('; ')).join('\n')
+            : (result).definitions.map((d) => d.meanings.join('; ')).join('\n')
 
         let collected = false
         for (const collInstanceKey of enabledCollectionServiceList) {
             const collKey = getServiceKey(collInstanceKey)
             const svc = collectionServiceRegistry.get(collKey)
             if (!svc) continue
-            const cfg = serviceInstances[collInstanceKey]?.config ?? {}
+            const cfg = get_service_config(serviceInstances, collInstanceKey)
             try {
                 await svc.send(sourceText, sourceLanguage, targetLanguage, resultText, cfg)
                 collected = true
@@ -378,13 +381,13 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         if (oldIdx === -1 || newIdx === -1) return
 
         const enabledList = [...serviceList]
-        const [moved] = enabledList.splice(oldIdx, 1)
+        const [moved] = enabledList.splice(oldIdx, 1) as [string]
         enabledList.splice(newIdx, 0, moved)
         const enabledSet = new Set(serviceList)
         let enabledIdx = 0
         const updated = useConfigStore.getState().config.translate_service_list.map((instanceKey) => {
             if (!enabledSet.has(instanceKey)) return instanceKey
-            const reorderedKey = enabledList[enabledIdx]
+            const [reorderedKey] = enabledList.slice(enabledIdx, enabledIdx + 1) as [string]
             enabledIdx += 1
             return reorderedKey
         })
@@ -405,8 +408,8 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                             onToggleCollapse={toggleCollapse}
                             onRetry={onRetry}
                             onCopy={handleCopy}
-                            onTts={handleTts}
-                            onCollect={handleCollect}
+                            onTts={(text, key) => { handleTts(text, key).catch(console.error); }}
+                            onCollect={(key) => { handleCollect(key).catch(console.error); }}
                             onReverseTranslate={handleReverseTranslate}
                             playingKey={playingKey}
                             collectedKeys={collectedKeys}

@@ -46,11 +46,11 @@ i18n.use(initReactI18next).init({
     lng: 'en',
     fallbackLng: 'en',
     interpolation: { escapeValue: false }
-})
+}).catch(console.error)
 
 export function bindI18nToConfig(): void {
     const apply = (lang: string): void => {
-        if (i18n.language !== lang) void i18n.changeLanguage(lang)
+        if (i18n.language !== lang) i18n.changeLanguage(lang).catch(console.error)
     }
     apply(useConfigStore.getState().config.app_language)
     useConfigStore.subscribe((state, prev) => {

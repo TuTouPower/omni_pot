@@ -49,7 +49,7 @@ export const baiduImgOcrService: OcrService = {
         const binary = Uint8Array.from(atob(base64Image), (c) => c.charCodeAt(0))
         let binary_string = ''
         for (let i = 0; i < binary.length; i++) {
-            binary_string += String.fromCharCode(binary[i])
+            binary_string += String.fromCharCode(binary[i] ?? 0)
         }
         const file_md5 = md5(binary_string)
 
@@ -74,7 +74,7 @@ export const baiduImgOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Baidu Image OCR API error: ${resp.status}`)
+            throw new Error(`Baidu Image OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -84,7 +84,7 @@ export const baiduImgOcrService: OcrService = {
         }
 
         if (data.error_code) {
-            throw new Error(`Baidu Image OCR error: ${data.error_msg ?? data.error_code}`)
+            throw new Error(`Baidu Image OCR error: ${String(data.error_msg ?? data.error_code)}`)
         }
 
         if (language === 'auto') {

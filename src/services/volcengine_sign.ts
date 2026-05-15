@@ -19,7 +19,7 @@ export async function signVolcengineRequest(opts: VolcengineSignOpts): Promise<{
 
     const timestamp = Math.floor(Date.now() / 1000)
     const d = new Date(timestamp * 1000)
-    const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+    const date = `${String(d.getUTCFullYear())}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 
     const hashedPayload = await sha256(body)
     const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-content-sha256:${hashedPayload}\nx-date:${date}\n`

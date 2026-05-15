@@ -20,6 +20,45 @@ interface ReleaseInfo {
 const REPO_OWNER = 'TuTouPower'
 const REPO_NAME = 'omni_pot'
 
+interface GithubReleaseAsset {
+    name: string
+    browser_download_url: string
+}
+
+interface GithubRelease {
+    tag_name: string
+    name: string
+    body: string
+    html_url: string
+    published_at: string
+    assets: GithubReleaseAsset[]
+}
+
+function is_record(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null
+}
+
+function read_string(value: unknown): string | null {
+    return typeof value === 'string' ? value : null
+}
+
+function is_github_release_asset(value: unknown): value is GithubReleaseAsset {
+    if (!is_record(value)) return false
+    return typeof value.name === 'string' && typeof value.browser_download_url === 'string'
+}
+
+function parse_github_release(value: unknown): GithubRelease | null {
+    if (!is_record(value)) return null
+    const tag_name = read_string(value.tag_name)
+    const name = read_string(value.name)
+    const body = read_string(value.body)
+    const html_url = read_string(value.html_url)
+    const published_at = read_string(value.published_at)
+    if (tag_name === null || name === null || body === null || html_url === null || published_at === null) return null
+    const assets = Array.isArray(value.assets) ? value.assets.filter(is_github_release_asset) : []
+    return { tag_name, name, body, html_url, published_at, assets }
+}
+
 export default function UpdaterWindow(): React.ReactElement {
     const { t } = useTranslation()
     const [release, setRelease] = useState<ReleaseInfo | null>(null)
@@ -44,19 +83,21 @@ export default function UpdaterWindow(): React.ReactElement {
                 const resp = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`, {
                     headers: { 'User-Agent': 'omni_pot-updater' }
                 })
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-                const data = await resp.json()
+                if (!resp.ok) throw new Error(`HTTP ${String(resp.status)}`)
+                const data: unknown = await resp.json()
+                const latest_release = parse_github_release(data)
+                if (latest_release === null) throw new Error('Invalid GitHub release response')
                 if (main_release_received.current) return
                 setRelease({
-                    version: data.tag_name.replace(/^v/, ''),
+                    version: latest_release.tag_name.replace(/^v/, ''),
                     current_version: '0.1.0',
-                    name: data.name,
-                    body: data.body,
-                    html_url: data.html_url,
-                    published_at: data.published_at,
-                    assets: (data.assets ?? []).map((a: { name: string; browser_download_url: string }) => ({
-                        name: a.name,
-                        url: a.browser_download_url
+                    name: latest_release.name,
+                    body: latest_release.body,
+                    html_url: latest_release.html_url,
+                    published_at: latest_release.published_at,
+                    assets: latest_release.assets.map((asset) => ({
+                        name: asset.name,
+                        url: asset.browser_download_url
                     }))
                 })
             } catch (err) {
@@ -65,18 +106,14 @@ export default function UpdaterWindow(): React.ReactElement {
                 if (!main_release_received.current) setLoading(false)
             }
         }
-        fetch_latest()
+        fetch_latest().catch(console.error)
     }, [])
 
-    const handleClose = useCallback(() => window.electronAPI.window.close(), [])
+    const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
     const handleOpenRelease = useCallback(() => {
         if (release?.html_url) window.open(release.html_url, '_blank')
     }, [release])
 
-    const format_size = (assets: ReleaseAsset[]): string => {
-        // Approximate — we don't have size from the API without extra calls
-        return ''
-    }
 
     const format_date = (dateStr: string): string => {
         try {

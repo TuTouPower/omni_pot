@@ -1,4 +1,4 @@
-import type { TranslateService, ServiceConfig } from '@shared/types/service'
+import type { TranslateService } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 
 const BING_LANGUAGES: LanguageCode[] = [
@@ -68,9 +68,24 @@ async function getPageConfig(): Promise<BingPageConfig> {
     throw new Error('Failed to get Bing page config')
   }
   const baseUrl = new URL(resp.url).origin
-  cachedConfig = { baseUrl, pageUrl: resp.url, ig: ig_match[1], iid: iid_match[1], key: token_match[1], token: token_match[2] }
+  const ig = ig_match[1]
+  const iid = iid_match[1]
+  const key = token_match[1]
+  const token = token_match[2]
+  if (!ig || !iid || !key || !token) {
+    throw new Error('Failed to get Bing page config')
+  }
+  const next_config: BingPageConfig = {
+    baseUrl,
+    pageUrl: resp.url,
+    ig,
+    iid,
+    key,
+    token
+  }
+  cachedConfig = next_config
   configExpiresAt = Date.now() + 5 * 60 * 1000
-  return cachedConfig
+  return next_config
 }
 
 export const bingService: TranslateService = {
@@ -81,8 +96,7 @@ export const bingService: TranslateService = {
   async translate(
     text: string,
     from: LanguageCode,
-    to: LanguageCode,
-    _config: ServiceConfig
+    to: LanguageCode
   ): Promise<string> {
     const { baseUrl, pageUrl, ig, iid, key, token } = await getPageConfig()
     const fromLang = BING_LANG_MAP[from] ?? from

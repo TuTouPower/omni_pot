@@ -5,7 +5,7 @@ const appService = koffi.load(
     '/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices'
 )
 
-const AXIsProcessTrusted = appService.func('bool AXIsProcessTrusted()')
+const AXIsProcessTrusted = appService.func('bool AXIsProcessTrusted()') as unknown as () => boolean
 
 export interface PermissionStatus {
     trusted: boolean

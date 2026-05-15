@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { WindowManager } from '../../../electron/windows/manager'
 
 let mockClipboardText = 'initial'
 
 const mockFocusOrCreate = vi.fn()
 const mockSendWhenReady = vi.fn()
-const mockMgr = { focusOrCreate: mockFocusOrCreate, sendWhenReady: mockSendWhenReady } as any
+const mockMgr = { focusOrCreate: mockFocusOrCreate, sendWhenReady: mockSendWhenReady } as unknown as WindowManager
 
 vi.mock('electron', () => ({
     clipboard: {
@@ -45,8 +46,9 @@ describe('clipboard monitor suppression', () => {
     it('during suppression, changed text does NOT trigger translation', async () => {
         startClipboardMonitor(mockMgr)
         mockClipboardText = 'suppressed text'
-        await withClipboardMutationSuppressed(async () => {
+        await withClipboardMutationSuppressed(() => {
             pollClipboardMonitorOnce(mockMgr)
+            return Promise.resolve()
         })
 
         expect(mockFocusOrCreate).not.toHaveBeenCalled()
@@ -64,9 +66,7 @@ describe('clipboard monitor suppression', () => {
 
         startClipboardMonitor(mockMgr)
 
-        await withClipboardMutationSuppressed(async () => {
-            // suppressUntil = 0 + 1000 = 1000
-        })
+        await withClipboardMutationSuppressed(() => Promise.resolve())
         // finally block: suppressUntil = 0 + 200 = 200
 
         mockClipboardText = 'post suppression'
@@ -80,7 +80,7 @@ describe('clipboard monitor suppression', () => {
     })
 
     it('withClipboardMutationSuppressed returns inner result', async () => {
-        const result = await withClipboardMutationSuppressed(async () => 42)
+        const result = await withClipboardMutationSuppressed(() => Promise.resolve(42))
         expect(result).toBe(42)
     })
 
@@ -91,9 +91,7 @@ describe('clipboard monitor suppression', () => {
         startClipboardMonitor(mockMgr)
 
         await expect(
-            withClipboardMutationSuppressed(async () => {
-                throw new Error('boom')
-            }),
+            withClipboardMutationSuppressed(() => Promise.reject(new Error('boom'))),
         ).rejects.toThrow('boom')
 
         // finally block should have set suppressUntil = 5000 + 200 = 5200

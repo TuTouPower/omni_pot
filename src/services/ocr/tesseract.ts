@@ -1,7 +1,6 @@
 import Tesseract from 'tesseract.js'
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
-import type { ServiceConfig } from '@shared/types/service'
 
 const TESSERACT_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -43,8 +42,7 @@ export const tesseractOcrService: OcrService = {
 
     async recognize(
         base64Image: string,
-        language: LanguageCode,
-        _config: ServiceConfig
+        language: LanguageCode
     ): Promise<string> {
         const lang = TESSERACT_LANG_MAP[language] ?? 'eng'
         const data_url = `data:image/png;base64,${base64Image}`
@@ -52,7 +50,7 @@ export const tesseractOcrService: OcrService = {
         return result.data.text.trim()
     },
 
-    async testConfig(_config: ServiceConfig): Promise<boolean> {
-        return true
+    testConfig(): Promise<boolean> {
+        return Promise.resolve(true)
     }
 }

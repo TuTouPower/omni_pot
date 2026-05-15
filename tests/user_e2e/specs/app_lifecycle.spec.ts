@@ -22,7 +22,7 @@ function window_count(omni: AppFixture, label: WindowLabel): number {
 }
 
 async function expect_window_count(omni: AppFixture, label: WindowLabel, count: number): Promise<void> {
-    await expect.poll(async () => window_count(omni, label)).toBe(count)
+    await expect.poll(() => Promise.resolve(window_count(omni, label))).toBe(count)
 }
 
 async function expect_window_visible(omni: AppFixture, label: WindowLabel): Promise<void> {

@@ -1,4 +1,5 @@
-import { clipboard, NativeImage } from 'electron'
+import { clipboard } from 'electron'
+import type { NativeImage } from 'electron'
 import { randomUUID } from 'node:crypto'
 import type { SelectedTextResult } from './index'
 

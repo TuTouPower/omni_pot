@@ -73,7 +73,7 @@ export const baiduService: TranslateService = {
             `https://fanyi-api.baidu.com/api/trans/vip/translate?${params.toString()}`
         )
         if (!resp.ok) {
-            throw new Error(`Baidu translate API error: ${resp.status}`)
+            throw new Error(`Baidu translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -83,7 +83,7 @@ export const baiduService: TranslateService = {
         }
 
         if (data.error_code) {
-            throw new Error(`Baidu API error: ${data.error_msg ?? data.error_code}`)
+            throw new Error(`Baidu API error: ${data.error_msg ?? String(data.error_code)}`)
         }
 
         return data.trans_result?.map((r) => r.dst).join('\n') ?? ''

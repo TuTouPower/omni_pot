@@ -72,7 +72,7 @@ export const niutransService: TranslateService = {
             `${protocol}://api.niutrans.com/NiuTransServer/translation?${params.toString()}`
         )
         if (!resp.ok) {
-            throw new Error(`NiuTrans translate API error: ${resp.status}`)
+            throw new Error(`NiuTrans translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -82,7 +82,7 @@ export const niutransService: TranslateService = {
         }
 
         if (data.error_code) {
-            throw new Error(`NiuTrans API error: ${data.error_msg ?? data.error_code}`)
+            throw new Error(`NiuTrans API error: ${data.error_msg ?? String(data.error_code)}`)
         }
 
         return data.tgt_text ?? ''

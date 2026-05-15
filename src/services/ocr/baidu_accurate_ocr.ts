@@ -61,7 +61,7 @@ export const baiduAccurateOcrService: OcrService = {
         )
 
         if (!resp.ok) {
-            throw new Error(`Baidu Accurate OCR API error: ${resp.status}`)
+            throw new Error(`Baidu Accurate OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -71,7 +71,7 @@ export const baiduAccurateOcrService: OcrService = {
         }
 
         if (data.error_code) {
-            throw new Error(`Baidu Accurate OCR error: ${data.error_msg ?? data.error_code}`)
+            throw new Error(`Baidu Accurate OCR error: ${String(data.error_msg ?? data.error_code)}`)
         }
 
         return data.words_result?.map((r) => r.words).join('\n') ?? ''

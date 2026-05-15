@@ -8,6 +8,11 @@ import { getServiceKey } from '@shared/types/service'
 import { LANGUAGE_CODES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
+import type { ServiceInstancesMap } from '@shared/types/config'
+
+function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
+    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
+}
 
 // OCR engine metadata (subset of SVC_META for action bar)
 const OCR_META: Record<string, { name: string; mono: string; tone: string }> = {
@@ -27,7 +32,7 @@ function normalize_recognized_text(text: string): string {
 }
 
 function SvcTile({ name, size = 22 }: { name: string; size?: number }): React.ReactElement {
-    const m = OCR_META[name] || { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }
+    const m = OCR_META[name] ?? { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }
     return (
         <div
             className="svc-tile"
@@ -63,9 +68,9 @@ function PillSelect({
 
     useEffect(() => {
         if (!open) return
-        const close = () => setOpen(false)
+        const close = () => { setOpen(false); }
         document.addEventListener('click', close)
-        return () => document.removeEventListener('click', close)
+        return () => { document.removeEventListener('click', close); }
     }, [open])
 
     return (
@@ -112,7 +117,7 @@ function PillSelect({
                         padding: 4,
                         zIndex: 50,
                     }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); }}
                 >
                     {options.map((o) => (
                         <div
@@ -190,9 +195,9 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
 
     useEffect(() => {
         if (!open) return
-        const close = () => setOpen(false)
+        const close = () => { setOpen(false); }
         document.addEventListener('click', close)
-        return () => document.removeEventListener('click', close)
+        return () => { document.removeEventListener('click', close); }
     }, [open])
 
     const formats = [
@@ -233,7 +238,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
                         padding: 4,
                         zIndex: 50,
                     }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); }}
                 >
                     <div style={{ padding: '6px 10px', fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                         {t('recognize.export_format')}
@@ -242,7 +247,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
                         <div
                             key={f.value}
                             data-testid={`ocr-export-option-${f.value}`}
-                            onClick={() => handle_export(f.value)}
+                            onClick={() => { handle_export(f.value); }}
                             style={{
                                 padding: '6px 10px',
                                 borderRadius: 6,
@@ -282,7 +287,7 @@ export default function RecognizeWindow(): React.ReactElement {
             setImageBase64(base64)
             setRecognizedText(next_text)
             if (config.recognize_auto_copy && next_text) {
-                void navigator.clipboard.writeText(next_text).catch(() => undefined)
+                navigator.clipboard.writeText(next_text).catch(() => undefined)
             }
         })
         return unsub
@@ -294,14 +299,14 @@ export default function RecognizeWindow(): React.ReactElement {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') window.electronAPI.window.close()
+            if (e.key === 'Escape') window.electronAPI.window.close().catch(console.error)
         }
         window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
+        return () => { window.removeEventListener('keydown', handleKeyDown); }
     }, [])
 
     const service_instances = config.service_instances
-    const service_list = config.recognize_service_list.filter((instance_key) => service_instances[instance_key]?.config.enable !== false)
+    const service_list = config.recognize_service_list.filter((instance_key) => get_service_config(service_instances, instance_key).enable !== false)
 
     // Build OCR engine options from service list
     const ocr_engine_options = service_list.map((instanceKey) => {
@@ -322,7 +327,7 @@ export default function RecognizeWindow(): React.ReactElement {
 
     const effectiveService = selectedService && service_list.includes(selectedService) ? selectedService : service_list[0] || ''
     const effectiveServiceKey = effectiveService ? getServiceKey(effectiveService) : ''
-    const effectiveMeta = effectiveServiceKey ? (OCR_META[effectiveServiceKey] || null) : null
+    const effectiveMeta = effectiveServiceKey ? (OCR_META[effectiveServiceKey] ?? null) : null
 
     const handleRecognize = useCallback(async () => {
         if (!imageBase64) return
@@ -342,7 +347,7 @@ export default function RecognizeWindow(): React.ReactElement {
             return
         }
 
-        const instance_config: ServiceConfig = service_instances[instance_key]?.config ?? {}
+        const instance_config: ServiceConfig = get_service_config(service_instances, instance_key)
         try {
             const result = await service.recognize(imageBase64, lang, instance_config)
             const next_text = config.recognize_delete_newline ? normalize_recognized_text(result || '') : result || ''
@@ -377,13 +382,13 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [recognizedText])
 
     const handleClose = useCallback(() => {
-        window.electronAPI.window.close()
+        window.electronAPI.window.close().catch(console.error)
     }, [])
 
     const handleTogglePin = useCallback(() => {
         const next = !alwaysOnTop
         setAlwaysOnTop(next)
-        window.electronAPI.window.setAlwaysOnTop(next)
+        window.electronAPI.window.setAlwaysOnTop(next).catch(console.error)
     }, [alwaysOnTop])
 
     return (
@@ -448,7 +453,7 @@ export default function RecognizeWindow(): React.ReactElement {
                     <textarea
                         data-testid="ocr-text"
                         value={recognizedText}
-                        onChange={(e) => setRecognizedText(e.target.value)}
+                        onChange={(e) => { setRecognizedText(e.target.value); }}
                         placeholder={t('recognize.result_placeholder')}
                         style={{
                             flex: 1,
@@ -499,7 +504,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         <Icons.Cycle size={14} />
                     )}
                     label={isRecognizing ? t('recognize.recognizing') : t('recognize.re_recognize')}
-                    onClick={handleRecognize}
+                    onClick={() => { handleRecognize().catch(console.error); }}
                     testId="ocr-reocr-btn"
                 />
 
@@ -511,7 +516,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 <button className="ic-btn" title={t('recognize.delete_spaces')} data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
                     <Icons.Hash size={16} />
                 </button>
-                <button className="ic-btn" title={t('copy')} data-testid="ocr-copy-btn" onClick={handleCopy} disabled={!recognizedText}>
+                <button className="ic-btn" title={t('copy')} data-testid="ocr-copy-btn" onClick={() => { handleCopy().catch(console.error); }} disabled={!recognizedText}>
                     <Icons.Copy size={16} />
                 </button>
                 <ExportButton text={recognizedText} />
@@ -520,7 +525,7 @@ export default function RecognizeWindow(): React.ReactElement {
                     data-testid="ocr-translate-btn"
                     title={t('recognize.translate')}
                     style={{ color: recognizedText ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                    onClick={handleTranslate}
+                    onClick={() => { handleTranslate().catch(console.error); }}
                     disabled={!recognizedText}
                 >
                     <Icons.Translate size={18} />

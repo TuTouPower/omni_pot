@@ -13,7 +13,7 @@ async function run(): Promise<void> {
         })
         build.on('exit', (code) => {
             if (code === 0) resolve()
-            else reject(new Error(`Build failed with code ${code}`))
+            else reject(new Error(`Build failed with code ${String(code)}`))
         })
     })
 }

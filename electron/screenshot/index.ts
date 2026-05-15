@@ -2,7 +2,7 @@ import { desktopCapturer, screen } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 
-export async function capture_screenshot(manager: WindowManager): Promise<string> {
+export async function capture_screenshot(): Promise<string> {
     const primary_display = screen.getPrimaryDisplay()
     const { width, height } = primary_display.size
     const scale_factor = primary_display.scaleFactor
@@ -15,11 +15,12 @@ export async function capture_screenshot(manager: WindowManager): Promise<string
         }
     })
 
-    if (sources.length === 0) {
+    const first_source = sources.at(0)
+    if (!first_source) {
         throw new Error('No screen source available')
     }
 
-    const thumbnail = sources[0].thumbnail
+    const thumbnail = first_source.thumbnail
     return thumbnail.toPNG().toString('base64')
 }
 
@@ -28,7 +29,7 @@ export async function start_screenshot_capture(
     mode: 'recognize' | 'translate'
 ): Promise<boolean> {
     try {
-        const base64 = await capture_screenshot(manager)
+        const base64 = await capture_screenshot()
 
         const display = screen.getPrimaryDisplay()
         const { width, height } = display.size

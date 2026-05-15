@@ -10,6 +10,10 @@ const OPENAI_LANGUAGES: LanguageCode[] = [
 
 import { buildTranslationPrompt } from './llm_prompt'
 
+interface OpenAIStreamChunk {
+    choices?: Array<{ delta?: { content?: string } }>
+}
+
 function build_system_prompt(config: ServiceConfig, from: LanguageCode, to: LanguageCode): string {
     return buildTranslationPrompt(config, from, to)
 }
@@ -19,7 +23,6 @@ function build_url(config: ServiceConfig): string {
     const request_path = (config.requestPath as string) || 'https://api.openai.com/v1/chat/completions'
 
     if (service === 'azure') {
-        const api_key = config.apiKey as string
         const model = (config.model as string) || 'gpt-3.5-turbo'
         const base = request_path.replace(/\/+$/, '')
         return `${base}/openai/deployments/${model}/chat/completions?api-version=2024-02-15-preview`
@@ -57,7 +60,7 @@ async function translate_stream(resp: Response): Promise<string> {
         for (const line of chunk.split('\n')) {
             const trimmed = line.trim()
             if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
-                const json = JSON.parse(trimmed.slice(6))
+                const json = JSON.parse(trimmed.slice(6)) as OpenAIStreamChunk
                 const content = json.choices?.[0]?.delta?.content
                 if (content) result += content
             }
@@ -81,7 +84,7 @@ export const openaiService: TranslateService = {
         const model = (config.model as string) || 'gpt-3.5-turbo'
         const request_arguments_raw = (config.requestArguments as string) || '{"temperature":0.1}'
         let request_arguments: Record<string, unknown> = { temperature: 0.1 }
-        try { request_arguments = JSON.parse(request_arguments_raw) } catch { /* defaults */ }
+        try { request_arguments = JSON.parse(request_arguments_raw) as Record<string, unknown> } catch { /* defaults */ }
 
         const system_prompt = build_system_prompt(config, from, to)
         const url = build_url(config)
@@ -103,7 +106,7 @@ export const openaiService: TranslateService = {
             body: JSON.stringify(payload)
         })
 
-        if (!resp.ok) throw new Error(`OpenAI API error: ${resp.status}`)
+        if (!resp.ok) throw new Error(`OpenAI API error: ${String(resp.status)}`)
 
         const reader = resp.body?.getReader()
         const decoder = new TextDecoder()
@@ -118,7 +121,7 @@ export const openaiService: TranslateService = {
             for (const line of lines) {
                 const trimmed = line.trim()
                 if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
-                    const json = JSON.parse(trimmed.slice(6))
+                    const json = JSON.parse(trimmed.slice(6)) as OpenAIStreamChunk
                     const content = json.choices?.[0]?.delta?.content
                     if (content) yield content
                 }
@@ -137,7 +140,7 @@ export const openaiService: TranslateService = {
         const request_arguments_raw = (config.requestArguments as string) || '{"temperature":0.1}'
         let request_arguments: Record<string, unknown> = { temperature: 0.1 }
         try {
-            request_arguments = JSON.parse(request_arguments_raw)
+            request_arguments = JSON.parse(request_arguments_raw) as Record<string, unknown>
         } catch {
             request_arguments = { temperature: 0.1 }
         }
@@ -155,7 +158,7 @@ export const openaiService: TranslateService = {
             ...request_arguments,
             model,
             messages,
-            stream: !!stream
+            stream
         }
 
         const resp = await fetch(url, {
@@ -165,7 +168,7 @@ export const openaiService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`OpenAI API error: ${resp.status}`)
+            throw new Error(`OpenAI API error: ${String(resp.status)}`)
         }
 
         if (stream) {

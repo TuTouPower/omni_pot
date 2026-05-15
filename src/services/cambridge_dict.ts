@@ -1,4 +1,4 @@
-import type { TranslateService, ServiceConfig, DictResult } from '@shared/types/service'
+import type { TranslateService, DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 
 const CAMBRIDGE_LANGUAGES: LanguageCode[] = ['auto', 'en', 'zh_cn', 'zh_tw']
@@ -8,6 +8,10 @@ const CAMBRIDGE_LANG_MAP: Record<string, string> = {
     en: 'english',
     zh_cn: 'chinese-simplified',
     zh_tw: 'chinese-traditional'
+}
+
+function regex_capture(match: RegExpMatchArray | RegExpExecArray, index: number): string {
+    return match[index] ?? ''
 }
 
 function extract_text(html: string, start_idx: number): string {
@@ -26,43 +30,6 @@ function extract_text(html: string, start_idx: number): string {
     return result.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').trim()
 }
 
-function find_block(html: string, marker: string, start_from: number): { content: string; end: number } | null {
-    const idx = html.indexOf(marker, start_from)
-    if (idx === -1) return null
-    const tag_start = html.lastIndexOf('<', idx)
-    if (tag_start === -1) return null
-
-    const tag_match = html.substring(tag_start, idx).match(/^<(\w+)/)
-    if (!tag_match) return null
-
-    const tag_name = tag_match[1]
-    let depth = 1
-    let pos = tag_start + html.substring(tag_start).indexOf('>') + 1
-
-    while (depth > 0 && pos < html.length) {
-        const next_open = html.indexOf(`<${tag_name}`, pos)
-        const next_close = html.indexOf(`</${tag_name}`, pos)
-
-        if (next_close === -1) break
-
-        if (next_open !== -1 && next_open < next_close) {
-            depth++
-            pos = next_open + tag_name.length + 1
-        } else {
-            depth--
-            if (depth === 0) {
-                const close_tag_end = html.indexOf('>', next_close) + 1
-                return {
-                    content: html.substring(tag_start, close_tag_end),
-                    end: close_tag_end
-                }
-            }
-            pos = next_close + tag_name.length + 2
-        }
-    }
-    return null
-}
-
 export const cambridgeDictService: TranslateService = {
     key: 'cambridge_dict',
     name: 'Cambridge Dict',
@@ -71,8 +38,7 @@ export const cambridgeDictService: TranslateService = {
     async translate(
         text: string,
         from: LanguageCode,
-        to: LanguageCode,
-        _config: ServiceConfig
+        to: LanguageCode
     ): Promise<string | DictResult> {
         if (from === 'auto') {
             from = /^[A-Za-z]/.test(text) ? 'en' : from
@@ -100,7 +66,7 @@ export const cambridgeDictService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Cambridge Dict error: ${resp.status}`)
+            throw new Error(`Cambridge Dict error: ${String(resp.status)}`)
         }
 
         const html = await resp.text()
@@ -116,13 +82,13 @@ export const cambridgeDictService: TranslateService = {
         const pron_pattern = /class="dpron-i"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g
         let pron_match: RegExpExecArray | null
         while ((pron_match = pron_pattern.exec(html)) !== null) {
-            const block = pron_match[1]
+            const block = regex_capture(pron_match, 1)
             const region_match = block.match(/class="region"[^>]*>([^<]*)</)
             const symbol_match = block.match(/class="pron"[^>]*>([^<]*)</)
             if (region_match && symbol_match) {
                 pronunciations.push({
-                    region: region_match[1].trim(),
-                    phonetic: symbol_match[1].trim()
+                    region: regex_capture(region_match, 1).trim(),
+                    phonetic: regex_capture(symbol_match, 1).trim()
                 })
             }
         }
@@ -130,17 +96,17 @@ export const cambridgeDictService: TranslateService = {
         const entry_pattern = /class="pr entry-body__el[\s"'][^>]*>([\s\S]*?)(?=class="pr entry-body__el|$)/g
         let entry_match: RegExpExecArray | null
         while ((entry_match = entry_pattern.exec(html)) !== null) {
-            const entry_html = entry_match[1]
+            const entry_html = regex_capture(entry_match, 1)
 
             const pos_match = entry_html.match(/class="posgram"[^>]*>([\s\S]*?)<\/span>/)
             const part_of_speech = pos_match
-                ? extract_text(pos_match[1], 0).replace(/\s+/g, ' ').trim()
+                ? extract_text(regex_capture(pos_match, 1), 0).replace(/\s+/g, ' ').trim()
                 : ''
 
             const def_pattern = /class="def-block ddef_block"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/g
             let def_match: RegExpExecArray | null
             while ((def_match = def_pattern.exec(entry_html)) !== null) {
-                const def_html = def_match[1]
+                const def_html = regex_capture(def_match, 1)
 
                 if (def_html.includes('data-wl-senseid') && def_html.includes('panel')) {
                     continue
@@ -148,12 +114,12 @@ export const cambridgeDictService: TranslateService = {
 
                 const eng_def_match = def_html.match(/class="def ddef_d db"[^>]*>([\s\S]*?)<\/span>/)
                 const eng_def = eng_def_match
-                    ? extract_text(eng_def_match[1], 0).replace(/\s+/g, ' ').trim()
+                    ? extract_text(regex_capture(eng_def_match, 1), 0).replace(/\s+/g, ' ').trim()
                     : ''
 
                 const trans_match = def_html.match(/class="trans dtrans dtrans-se"[^>]*>([\s\S]*?)<\/span>/)
                 const trans_text = trans_match
-                    ? extract_text(trans_match[1], 0).replace(/\s+/g, ' ').trim()
+                    ? extract_text(regex_capture(trans_match, 1), 0).replace(/\s+/g, ' ').trim()
                     : ''
 
                 if (eng_def || trans_text) {
@@ -172,9 +138,9 @@ export const cambridgeDictService: TranslateService = {
                 const ex_pattern = /class="examp"[^>]*>([\s\S]*?)<\/div>/g
                 let ex_match: RegExpExecArray | null
                 while ((ex_match = ex_pattern.exec(def_html)) !== null) {
-                    const eg_match = ex_match[1].match(/class="eg"[^>]*>([\s\S]*?)<\/span>/)
+                    const eg_match = regex_capture(ex_match, 1).match(/class="eg"[^>]*>([\s\S]*?)<\/span>/)
                     if (eg_match) {
-                        const example_text = extract_text(eg_match[1], 0).replace(/\s+/g, ' ').trim()
+                        const example_text = extract_text(regex_capture(eg_match, 1), 0).replace(/\s+/g, ' ').trim()
                         if (example_text) {
                             examples.push({ source: example_text, target: '' })
                         }
@@ -191,7 +157,7 @@ export const cambridgeDictService: TranslateService = {
         }
     },
 
-    async testConfig(_config: ServiceConfig): Promise<boolean> {
+    async testConfig(): Promise<boolean> {
         try {
             const result = await this.translate('hello', 'en', 'zh_cn', {})
             return typeof result === 'object' && result.definitions.length > 0

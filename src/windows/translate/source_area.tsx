@@ -57,7 +57,7 @@ function apply_format(words: string[], format: CaseFormat): string {
 function cycle_variable_name(text: string): string {
     const current = detect_current_format(text)
     const idx = CASE_CYCLE.indexOf(current)
-    const next = CASE_CYCLE[(idx + 1) % CASE_CYCLE.length]
+    const next = CASE_CYCLE[(idx + 1) % CASE_CYCLE.length] ?? 'snake'
     const words = split_words(text)
     return apply_format(words, next)
 }
@@ -89,8 +89,8 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
-            const nativeEvent = e.nativeEvent as KeyboardEvent & { keyCode?: number; which?: number }
-            if (isComposingRef.current || nativeEvent.isComposing || nativeEvent.keyCode === 229 || nativeEvent.which === 229) return
+            const nativeEvent = e.nativeEvent
+            if (isComposingRef.current || nativeEvent.isComposing) return
             if (e.key === 'U' && e.altKey && e.shiftKey) {
                 e.preventDefault()
                 handleVariableCycle()
@@ -105,7 +105,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     )
 
     const handleCopy = useCallback(() => {
-        void navigator.clipboard.writeText(sourceText).catch(() => undefined)
+        navigator.clipboard.writeText(sourceText).catch(() => undefined)
     }, [sourceText])
 
     const handleDeleteNewline = useCallback(() => {
@@ -122,7 +122,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         const timer = setTimeout(() => {
             onTranslate()
         }, 1000)
-        return () => clearTimeout(timer)
+        return () => { clearTimeout(timer); }
     }, [sourceText, dynamicTranslate, onTranslate])
 
     return (
@@ -132,7 +132,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 <textarea
                     ref={textAreaRef}
                     value={sourceText}
-                    onChange={(e) => setSourceText(e.target.value)}
+                    onChange={(e) => { setSourceText(e.target.value); }}
                     onCompositionStart={() => { isComposingRef.current = true }}
                     onCompositionEnd={() => { isComposingRef.current = false }}
                     onKeyDown={handleKeyDown}
@@ -185,7 +185,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 <button className="ic-btn" title={t('clear') || '清空'} data-testid="source-clear-btn" onClick={handleClear} disabled={!sourceText.trim()}>
                     <Icons.Trash size={16} />
                 </button>
-                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={() => onTranslate()} style={{ color: 'var(--brand-primary)' }}>
+                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={() => { onTranslate(); }} style={{ color: 'var(--brand-primary)' }}>
                     <Icons.Translate size={18} />
                 </button>
             </div>

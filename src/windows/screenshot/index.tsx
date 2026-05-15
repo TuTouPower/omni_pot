@@ -1,4 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import type { LanguageCode } from '@shared/types/language'
+import type { ServiceConfig } from '@shared/types/service'
+import type { ServiceInstancesMap } from '@shared/types/config'
+
+function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
+    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
+}
 
 interface SelectionRect {
     x: number
@@ -23,7 +30,7 @@ function crop_image(base64: string, rect: SelectionRect): Promise<string> {
             const data_url = canvas.toDataURL('image/png')
             resolve(data_url.replace('data:image/png;base64,', ''))
         }
-        img.onerror = () => reject(new Error('Failed to load image'))
+        img.onerror = () => { reject(new Error('Failed to load image')); }
         img.src = `data:image/png;base64,${base64}`
     })
 }
@@ -55,7 +62,7 @@ export default function ScreenshotWindow(): React.ReactElement {
 
     const cancel_selection = useCallback(() => {
         reset_selection()
-        void close_window()
+        close_window().catch(console.error)
     }, [reset_selection, close_window])
 
     const confirm_selection = useCallback(async () => {
@@ -85,8 +92,8 @@ export default function ScreenshotWindow(): React.ReactElement {
 
             const config = useConfigStore.getState().config
             const service_instances = config.service_instances
-            const service_list = config.recognize_service_list.filter((instance_key) => service_instances[instance_key]?.config.enable !== false)
-            const language = config.recognize_language as import('@shared/types/language').LanguageCode
+            const service_list = config.recognize_service_list.filter((instance_key) => get_service_config(service_instances, instance_key).enable !== false)
+            const language = config.recognize_language as LanguageCode
 
             let full_text = ''
             for (const instance_key of service_list) {
@@ -94,7 +101,7 @@ export default function ScreenshotWindow(): React.ReactElement {
                 const service_key = getServiceKey(instance_key)
                 const service = ocrServiceRegistry.get(service_key)
                 if (!service) continue
-                const instance_config = service_instances[instance_key]?.config ?? {}
+                const instance_config = get_service_config(service_instances, instance_key)
                 try {
                     const result = await service.recognize(cropped, language, instance_config)
                     if (result) {
@@ -139,7 +146,7 @@ export default function ScreenshotWindow(): React.ReactElement {
 
     const handleMouseUp = useCallback(() => {
         if (!selecting) return
-        void confirm_selection()
+        confirm_selection().catch(console.error)
     }, [selecting, confirm_selection])
 
     useEffect(() => {
@@ -151,11 +158,11 @@ export default function ScreenshotWindow(): React.ReactElement {
             }
             if (event.key === 'Enter' && selecting) {
                 event.preventDefault()
-                void confirm_selection()
+                confirm_selection().catch(console.error)
             }
         }
         window.addEventListener('keydown', handle_key_down)
-        return () => window.removeEventListener('keydown', handle_key_down)
+        return () => { window.removeEventListener('keydown', handle_key_down); }
     }, [cancel_selection, confirm_selection, selecting])
 
     const selection_rect = start && end ? {
@@ -181,7 +188,7 @@ export default function ScreenshotWindow(): React.ReactElement {
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onContextMenu={(e) => e.preventDefault()}
+            onContextMenu={(e) => { e.preventDefault(); }}
         >
             {/* Dark translucent overlay */}
             <div data-testid="shot-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(10, 10, 15, 0.55)' }} />
@@ -201,7 +208,7 @@ export default function ScreenshotWindow(): React.ReactElement {
                     }}
                 >
                     {/* Corner handles */}
-                    {[[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y], i) => (
+                    {([[0, 0], [1, 0], [0, 1], [1, 1]] as Array<[number, number]>).map(([x, y], i) => (
                         <div
                             key={i}
                             data-testid="shot-corner-handle"

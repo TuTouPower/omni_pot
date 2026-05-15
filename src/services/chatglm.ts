@@ -50,7 +50,7 @@ export const chatglmService: TranslateService = {
         )
 
         if (!resp.ok) {
-            throw new Error(`ChatGLM API error: ${resp.status}`)
+            throw new Error(`ChatGLM API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {

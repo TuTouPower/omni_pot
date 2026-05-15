@@ -8,7 +8,7 @@ export function registerHotkeyHandlers(manager: WindowManager): void {
     (_event, name: string, shortcut: string): boolean => {
       if (!shortcut) return false
       const action = buildHotkeyAction(name, manager)
-      return registerHotkey(name, shortcut, action)
+      return registerHotkey(shortcut, action)
     }
   )
 

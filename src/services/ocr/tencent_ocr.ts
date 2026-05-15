@@ -35,7 +35,7 @@ export const tencentOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Tencent OCR API error: ${resp.status}`)
+            throw new Error(`Tencent OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -46,7 +46,7 @@ export const tencentOcrService: OcrService = {
         }
 
         if (data.Response?.Error) {
-            throw new Error(`Tencent OCR error: ${data.Response.Error.Message ?? data.Response.Error.Code}`)
+            throw new Error(`Tencent OCR error: ${String(data.Response.Error.Message ?? data.Response.Error.Code)}`)
         }
 
         return data.Response?.TextDetections?.map((d) => d.DetectedText).join('\n') ?? ''
@@ -54,7 +54,7 @@ export const tencentOcrService: OcrService = {
 
     async testConfig(config: ServiceConfig): Promise<boolean> {
         try {
-            const result = await this.recognize(
+            await this.recognize(
                 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
                 'en',
                 config

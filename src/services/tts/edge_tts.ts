@@ -64,7 +64,7 @@ function get_voice(language: LanguageCode, config_voice?: string): string {
 }
 
 function get_ssml_lang(language: LanguageCode): string {
-    return LANG_MAP[language] ?? `${language.replace('_', '-')}`
+    return LANG_MAP[language] ?? language.replace('_', '-')
 }
 
 function generate_uuid(): string {
@@ -95,8 +95,8 @@ function connect_ws(url: string): Promise<WebSocket> {
     return new Promise((resolve, reject) => {
         const ws = new WebSocket(url)
         ws.binaryType = 'arraybuffer'
-        ws.onopen = () => resolve(ws)
-        ws.onerror = (e) => reject(new Error(`WebSocket error: ${String(e)}`))
+        ws.onopen = () => { resolve(ws); }
+        ws.onerror = (e) => { reject(new Error(`WebSocket error: ${e.type}`)); }
     })
 }
 
@@ -116,7 +116,7 @@ function receive_messages(ws: WebSocket, done_predicate: (msg: WsMessage) => boo
                 resolve(messages)
             }
         }
-        ws.onerror = (e) => reject(new Error(`WebSocket error: ${String(e)}`))
+        ws.onerror = (e) => { reject(new Error(`WebSocket error: ${e.type}`)); }
     })
 }
 

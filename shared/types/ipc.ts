@@ -1,4 +1,5 @@
 import type { ConfigKey, AppConfig } from './config'
+import type { DictResult } from './service'
 
 export interface HistoryRecord {
     id: number
@@ -62,7 +63,7 @@ export interface ElectronAPI {
     restore(name: string): Promise<{ success: boolean; error?: string }>
   }
   dict: {
-    lookup(text: string, from: string, to: string): Promise<import('./service').DictResult | null>
+    lookup(text: string, from: string, to: string): Promise<DictResult | null>
     check(): Promise<{ ready: boolean; entry_count: number }>
     import(url?: string): Promise<{ success: boolean; entry_count?: number; error?: string }>
   }

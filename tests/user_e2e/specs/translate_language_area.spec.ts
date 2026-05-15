@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { TranslatePage } from '../pages/translate_page'
+import type { TranslatePage } from '../pages/translate_page'
 
 async function first_visible_result_text(translate: TranslatePage): Promise<string> {
     const bodies = translate.resultBodies()

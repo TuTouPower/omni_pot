@@ -6,7 +6,12 @@ import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
 import { collectionServiceRegistry } from '../../services/index'
 import { getServiceKey } from '@shared/types/service'
-import type { DictResult } from '@shared/types/service'
+import type { DictResult, ServiceConfig } from '@shared/types/service'
+import type { ServiceInstancesMap } from '@shared/types/config'
+
+function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
+    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
+}
 
 function dict_result_to_text(result: DictResult): string {
     return result.definitions
@@ -32,9 +37,9 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 
     const handleCopy = () => {
         const text = dict_result_to_text(result)
-        void navigator.clipboard.writeText(text).catch(() => undefined)
+        navigator.clipboard.writeText(text).catch(() => undefined)
         setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
+        setTimeout(() => { setCopied(false); }, 1500)
     }
 
     return (
@@ -117,11 +122,11 @@ export default function DictWindow(): React.ReactElement {
     const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
     const enabledServiceList = useMemo(
-        () => serviceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        () => serviceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [serviceList, serviceInstances]
     )
     const enabledCollectionServiceList = useMemo(
-        () => collectionServiceList.filter((instanceKey) => serviceInstances[instanceKey]?.config.enable !== false),
+        () => collectionServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [collectionServiceList, serviceInstances]
     )
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
@@ -131,7 +136,7 @@ export default function DictWindow(): React.ReactElement {
     const [collected, setCollected] = useState(false)
 
     useEffect(() => {
-        window.electronAPI.dict.check().then(({ ready }) => setDictReady(ready))
+        window.electronAPI.dict.check().then(({ ready }) => { setDictReady(ready); }).catch(console.error)
     }, [])
 
     const handleImport = useCallback(async () => {
@@ -152,7 +157,7 @@ export default function DictWindow(): React.ReactElement {
         setIsLoading(true)
         clearResults()
 
-        const lookupWord = trimmed.split(' ')[0]
+        const lookupWord = trimmed.split(' ')[0] ?? ''
         const source_language = /^[a-zA-Z]/.test(lookupWord) ? 'en' : 'zh_cn'
         const target_language = source_language === 'en' ? 'zh_cn' : 'en'
 
@@ -163,10 +168,10 @@ export default function DictWindow(): React.ReactElement {
                 setResult(instanceKey, null)
                 return
             }
-            const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
+            const instanceConfig = get_service_config(serviceInstances, instanceKey)
             try {
                 const result = await service.translate(lookupWord, source_language, target_language, instanceConfig)
-                if (typeof result === 'object' && result.type === 'dict') {
+                if (typeof result === 'object') {
                     setResult(instanceKey, result)
                 } else {
                     setResult(instanceKey, null)
@@ -183,7 +188,7 @@ export default function DictWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.text.onDictLookup((text: string) => {
             if (!text.trim()) return
-            handleLookup(text)
+            handleLookup(text).catch(console.error)
         })
         return unsub
     }, [handleLookup])
@@ -194,18 +199,18 @@ export default function DictWindow(): React.ReactElement {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') window.electronAPI.window.close()
+            if (e.key === 'Escape') window.electronAPI.window.close().catch(console.error)
         }
         window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
+        return () => { window.removeEventListener('keydown', handleKeyDown); }
     }, [])
 
-    const handleClose = useCallback(() => window.electronAPI.window.close(), [])
+    const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
     const handleTogglePin = useCallback(() => {
-        window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop)
+        window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop).catch(console.error)
     }, [alwaysOnTop])
 
-    const firstResult = enabledServiceList.map((ik) => results[ik]).find((r) => r !== undefined && r !== null) as DictResult | null | undefined
+    const firstResult = enabledServiceList.map((ik) => results[ik]).find((r): r is DictResult => !!r)
     const collection_available = enabledCollectionServiceList.length > 0
 
     const handleCollect = useCallback(async () => {
@@ -218,7 +223,7 @@ export default function DictWindow(): React.ReactElement {
             const collKey = getServiceKey(collInstanceKey)
             const service = collectionServiceRegistry.get(collKey)
             if (!service) continue
-            const instance_config = serviceInstances[collInstanceKey]?.config ?? {}
+            const instance_config = get_service_config(serviceInstances, collInstanceKey)
             try {
                 await service.send(trimmed_word, 'auto', 'zh_cn', result_text, instance_config)
                 collected_result = true
@@ -296,7 +301,7 @@ export default function DictWindow(): React.ReactElement {
                             title="收藏"
                             aria-pressed={collected}
                             disabled={!collection_available || !firstResult}
-                            onClick={handleCollect}
+                            onClick={() => { handleCollect().catch(console.error); }}
                             style={{ color: collected ? 'var(--brand-primary)' : undefined }}
                         >
                             <Icons.Heart size={16} fill={collected} />
@@ -308,7 +313,7 @@ export default function DictWindow(): React.ReactElement {
                 {dictReady === false && (
                     <div className="card" style={{ padding: '14px 16px', textAlign: 'center' }}>
                         <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 8 }}>CC-CEDICT dictionary not downloaded</p>
-                        <button className="btn primary" onClick={handleImport} disabled={importing}>
+                        <button className="btn primary" onClick={() => { handleImport().catch(console.error); }} disabled={importing}>
                             {importing ? 'Downloading...' : 'Download Dictionary (~6MB)'}
                         </button>
                     </div>
@@ -323,8 +328,7 @@ export default function DictWindow(): React.ReactElement {
 
                 {/* Results */}
                 {enabledServiceList.map((instanceKey) => {
-                    const result = results[instanceKey]
-                    if (result === undefined) return null
+                    const result = results[instanceKey] ?? null
                     return <DictResultCard key={instanceKey} instanceKey={instanceKey} result={result} />
                 })}
 

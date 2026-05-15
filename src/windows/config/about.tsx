@@ -10,9 +10,9 @@ const REPO_URL = 'https://github.com/TuTouPower/omni_pot'
 export default function AboutPage(): React.ReactElement {
     const { t } = useTranslation()
     const [serverPort] = useConfig('server_port')
-    const apiUrl = `http://127.0.0.1:${serverPort}`
+    const apiUrl = `http://127.0.0.1:${String(serverPort)}`
     const openExternal = (url: string): void => {
-        void window.electronAPI.shell.openExternal(url).catch(() => undefined)
+        window.electronAPI.shell.openExternal(url).catch(() => undefined)
     }
 
     return (
@@ -39,16 +39,16 @@ export default function AboutPage(): React.ReactElement {
                     一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和自定义插件。
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button className="btn sm" data-testid="about-home-link" onClick={() => openExternal(REPO_URL)}>
+                    <button className="btn sm" data-testid="about-home-link" onClick={() => { openExternal(REPO_URL); }}>
                         官网
                     </button>
-                    <button className="btn sm" data-testid="about-docs-link" onClick={() => openExternal(`${REPO_URL}/tree/master/docs`)}>
+                    <button className="btn sm" data-testid="about-docs-link" onClick={() => { openExternal(`${REPO_URL}/tree/master/docs`); }}>
                         文档
                     </button>
-                    <button className="btn sm" data-testid="about-feedback-link" onClick={() => openExternal(`${REPO_URL}/issues`)}>
+                    <button className="btn sm" data-testid="about-feedback-link" onClick={() => { openExternal(`${REPO_URL}/issues`); }}>
                         反馈
                     </button>
-                    <button className="btn primary sm" data-testid="about-check-update" onClick={() => openExternal(`${REPO_URL}/releases`)}>
+                    <button className="btn primary sm" data-testid="about-check-update" onClick={() => { openExternal(`${REPO_URL}/releases`); }}>
                         <Icons.Cloud size={12} />
                         {t('about.check_update') || '检查更新'}
                     </button>
@@ -67,7 +67,7 @@ export default function AboutPage(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label="本机 API">
                     <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>
-                    <button className="ic-btn" title="复制" data-testid="about-copy-api" onClick={() => navigator.clipboard.writeText(apiUrl)}>
+                    <button className="ic-btn" title="复制" data-testid="about-copy-api" onClick={() => { navigator.clipboard.writeText(apiUrl).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>

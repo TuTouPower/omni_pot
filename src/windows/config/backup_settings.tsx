@@ -33,17 +33,17 @@ export default function BackupSettings(): React.ReactElement {
         }
     }, [])
 
-    useEffect(() => { void load_backups() }, [load_backups])
+    useEffect(() => { load_backups().catch(console.error) }, [load_backups])
 
     const handle_backup = async (): Promise<void> => {
         setStatus('Creating backup...')
         try {
             const result = await window.electronAPI.backup.create()
             if (result.success) {
-                setStatus(`Backup created: ${result.path}`)
-                void load_backups()
+                setStatus(`Backup created: ${result.path ?? ''}`)
+                load_backups().catch(console.error)
             } else {
-                setStatus(`Error: ${result.error}`)
+                setStatus(`Error: ${result.error ?? ''}`)
             }
         } catch (error) {
             setStatus(`Error: ${error_message(error)}`)
@@ -58,7 +58,7 @@ export default function BackupSettings(): React.ReactElement {
                 setStatus('Restored successfully. Please restart the app.')
                 setRestoreModal(false)
             } else {
-                setStatus(`Error: ${result.error}`)
+                setStatus(`Error: ${result.error ?? ''}`)
             }
         } catch (error) {
             setStatus(`Error: ${error_message(error)}`)
@@ -70,7 +70,7 @@ export default function BackupSettings(): React.ReactElement {
             <ConfigCard title={t('backup.title') || '备份'}>
                 <ConfigRow label="备份类型">
                     <ConfigSelect
-                        value={backupType as string}
+                        value={backupType}
                         onChange={setBackupType}
                         options={BACKUP_TYPES}
                         testId="cfg-backup_type"
@@ -111,11 +111,11 @@ export default function BackupSettings(): React.ReactElement {
 
             <ConfigCard title="操作">
                 <div style={{ display: 'flex', gap: 8 }}>
-                    <button data-testid="backup-create" className="btn primary" onClick={handle_backup}>
+                    <button data-testid="backup-create" className="btn primary" onClick={() => { handle_backup().catch(console.error); }}>
                         <Icons.Cloud size={14} />
                         {t('backup.create') || '立即备份'}
                     </button>
-                    <button data-testid="backup-restore-open" className="btn" onClick={() => { void load_backups(); setRestoreModal(true) }}>
+                    <button data-testid="backup-restore-open" className="btn" onClick={() => { load_backups().catch(console.error); setRestoreModal(true) }}>
                         <Icons.Cycle size={14} />
                         {t('backup.restore') || '从备份恢复'}
                     </button>
@@ -152,16 +152,16 @@ export default function BackupSettings(): React.ReactElement {
                         justifyContent: 'center',
                         zIndex: 100,
                     }}
-                    onClick={() => setRestoreModal(false)}
+                    onClick={() => { setRestoreModal(false); }}
                 >
                     <div
                         className="card"
                         style={{ width: 400, maxHeight: 400, overflow: 'auto', padding: 0 }}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); }}
                     >
                         <div className="card-head">
                             <span>恢复备份</span>
-                            <button data-testid="backup-restore-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => setRestoreModal(false)}>
+                            <button data-testid="backup-restore-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => { setRestoreModal(false); }}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
@@ -186,7 +186,7 @@ export default function BackupSettings(): React.ReactElement {
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
                                     <span style={{ fontSize: 13 }}>{name}</span>
-                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => handle_restore(name)}>恢复</button>
+                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => { handle_restore(name).catch(console.error); }}>恢复</button>
                                 </div>
                             ))}
                         </div>

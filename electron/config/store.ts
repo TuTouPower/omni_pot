@@ -18,7 +18,7 @@ function to_persisted_shape(value: unknown): PersistedShape {
     if (Object.prototype.hasOwnProperty.call(config, '__proto__')
         || Object.prototype.hasOwnProperty.call(config, 'constructor')
         || Object.prototype.hasOwnProperty.call(config, 'prototype')) return {}
-    return config as PersistedShape
+    return config
 }
 
 function read_config_from_disk(): PersistedShape {
@@ -37,7 +37,7 @@ export function getUserDataDir(): string {
 
 /** Map Electron locale to our app language code and default target language. */
 function resolveSystemLanguage(): string {
-    const locale = (app.getLocale() ?? 'en').toLowerCase()
+    const locale = app.getLocale().toLowerCase()
     if (locale.startsWith('zh')) return 'zh_cn'
     return 'en'
 }
@@ -53,7 +53,7 @@ export function initConfigStore(): void {
     // E2E: inject preset config from environment variable
     if (process.env['OMNI_POT_PRESET_CONFIG']) {
         try {
-            const preset = JSON.parse(process.env['OMNI_POT_PRESET_CONFIG'])
+            const preset = to_persisted_shape(JSON.parse(process.env['OMNI_POT_PRESET_CONFIG']) as unknown)
             data = { ...data, ...preset }
         } catch { /* ignore bad JSON */ }
     }
@@ -79,8 +79,8 @@ export function initConfigStore(): void {
 
     // Migrate: clear stale DeepL config that pointed to official API with empty key
     const deeplInst = data.service_instances?.['deepl@default']
-    if (deeplInst && (deeplInst.config as Record<string, unknown>)?.type === 'free'
-        && !(deeplInst.config as Record<string, unknown>)?.authKey) {
+    if (deeplInst && (deeplInst.config as Record<string, unknown>).type === 'free'
+        && !(deeplInst.config as Record<string, unknown>).authKey) {
         deeplInst.config = {}
         saveToDisk()
     }
@@ -115,7 +115,7 @@ export function setConfig(key: ConfigKey, value: unknown): void {
 }
 
 export function getAllConfig(): AppConfig {
-    return { ...DEFAULT_CONFIG, ...data } as AppConfig
+    return { ...DEFAULT_CONFIG, ...data }
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null

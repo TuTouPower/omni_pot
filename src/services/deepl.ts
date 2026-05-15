@@ -73,7 +73,7 @@ function get_lang_code(lang: LanguageCode): string {
   const mapped = DEEPL_LANG_MAP[lang]
   if (mapped && mapped !== 'auto') return mapped
   const upper = lang.toUpperCase().replace('_', '-')
-  if (upper.includes('-')) return upper.split('-')[0]
+  if (upper.includes('-')) return upper.split('-')[0] ?? upper
   return upper
 }
 
@@ -126,7 +126,7 @@ async function translate_free(
   })
 
   if (!resp.ok) {
-    throw new Error(`DeepL free API error: ${resp.status}`)
+    throw new Error(`DeepL free API error: ${String(resp.status)}`)
   }
 
   const data = (await resp.json()) as {
@@ -208,7 +208,7 @@ export const deeplService: TranslateService = {
     })
 
     if (!resp.ok) {
-      throw new Error(`DeepL API error: ${resp.status}`)
+      throw new Error(`DeepL API error: ${String(resp.status)}`)
     }
 
     const data = (await resp.json()) as {
@@ -218,7 +218,7 @@ export const deeplService: TranslateService = {
 
     if (type === 'deeplx') {
       return (
-        data.data?.translations?.[0]?.text ??
+        data.data?.translations[0]?.text ??
         data.translations?.[0]?.text ??
         ''
       )

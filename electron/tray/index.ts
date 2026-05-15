@@ -53,10 +53,10 @@ export function setWindowManagerForTray(mgr: WindowManager): void {
 function resolveIconPath(): string {
   const candidates = [
     join(__dirname, '../../resources/icon.png'),
-    join(process.resourcesPath ?? '', 'icon.png'),
+    join(process.resourcesPath, 'icon.png'),
     join(app.getAppPath(), 'resources/icon.png')
   ]
-  return candidates.find((p) => p && existsSync(p)) ?? candidates[0]
+  return candidates.find((p) => existsSync(p)) ?? join(__dirname, '../../resources/icon.png')
 }
 
 function open_translate_window(): void {

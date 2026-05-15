@@ -72,7 +72,7 @@ export default function ConfigWindow(): React.ReactElement {
                             title="置顶"
                             data-testid="config-pin"
                             aria-pressed={alwaysOnTop}
-                            onClick={handlePin}
+                            onClick={() => { handlePin().catch(console.error); }}
                             style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                         >
                             <Icons.Pin size={13} />
@@ -88,7 +88,7 @@ export default function ConfigWindow(): React.ReactElement {
                                 key={n.key}
                                 data-testid={`config-nav-${n.key}`}
                                 aria-current={activePage === n.key ? 'page' : undefined}
-                                onClick={() => setActivePage(n.key)}
+                                onClick={() => { setActivePage(n.key); }}
                                 style={{
                                     height: 32,
                                     padding: '0 10px',
@@ -124,7 +124,7 @@ export default function ConfigWindow(): React.ReactElement {
                         <div data-testid="config-title" style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
                         <span className="hint mono" data-testid="config-route" style={{ marginLeft: 4 }}>/{activePage}</span>
                         <div style={{ flex: 1 }} />
-                        <button className="ic-btn" title="关闭" data-testid="config-close" onClick={handleClose}>
+                        <button className="ic-btn" title="关闭" data-testid="config-close" onClick={() => { handleClose().catch(console.error); }}>
                             <Icons.Close size={14} />
                         </button>
                     </div>

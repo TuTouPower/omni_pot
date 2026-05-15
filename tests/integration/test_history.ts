@@ -5,7 +5,7 @@ import { mkdirSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 
 describe('History Store - SQLite integration', () => {
-    const test_dir = join(tmpdir(), 'pot-test-history-' + Date.now())
+    const test_dir = join(tmpdir(), `pot-test-history-${String(Date.now())}`)
     let db: Database.Database
 
     beforeEach(() => {
@@ -46,7 +46,7 @@ describe('History Store - SQLite integration', () => {
             'INSERT INTO history (service_key, source_text, source_lang, target_text, target_lang) VALUES (?, ?, ?, ?, ?)'
         )
         for (let i = 0; i < 25; i++) {
-            insert.run('bing@default', `text ${i}`, 'en', `翻译 ${i}`, 'zh_cn')
+            insert.run('bing@default', `text ${String(i)}`, 'en', `翻译 ${String(i)}`, 'zh_cn')
         }
 
         const page1 = db.prepare('SELECT * FROM history ORDER BY id DESC LIMIT 10 OFFSET 0').all()

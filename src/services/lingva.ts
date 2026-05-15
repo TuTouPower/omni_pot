@@ -47,7 +47,7 @@ export const lingvaService: TranslateService = {
 
         const resp = await fetch(url)
         if (!resp.ok) {
-            throw new Error(`Lingva API error: ${resp.status}`)
+            throw new Error(`Lingva API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as { translation?: string; error?: string }

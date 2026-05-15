@@ -63,7 +63,7 @@ export const transmartService: TranslateService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`TranSmart translate API error: ${resp.status}`)
+            throw new Error(`TranSmart translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -73,7 +73,7 @@ export const transmartService: TranslateService = {
         }
 
         if (data.ResponseMetadata?.Error) {
-            throw new Error(`TranSmart API error: ${data.ResponseMetadata.Error.Message ?? data.ResponseMetadata.Error.Code}`)
+            throw new Error(`TranSmart API error: ${data.ResponseMetadata.Error.Message ?? String(data.ResponseMetadata.Error.Code)}`)
         }
 
         return data.autoTranslation ?? data.translation ?? ''

@@ -41,9 +41,9 @@ function to_dict_result(entries: DictLookupResult[], is_en_to_zh: boolean): Dict
                 if (meanings.length >= 10) break
             }
         }
-        // Use first entry's pinyin
-        if (entries[0].pinyin) {
-            pronunciations.push({ region: '', phonetic: entries[0].pinyin })
+        const first_entry = entries.at(0)
+        if (first_entry?.pinyin) {
+            pronunciations.push({ region: '', phonetic: first_entry.pinyin })
         }
     }
 
@@ -62,12 +62,12 @@ function download_text(url: string): Promise<string> {
         https.get(url, { headers: { 'User-Agent': 'omni_pot' } }, (resp) => {
             if (resp.statusCode === 301 || resp.statusCode === 302) {
                 const redirect_url = resp.headers.location
-                if (!redirect_url) return reject(new Error('Redirect without location'))
+                if (!redirect_url) { reject(new Error('Redirect without location')); return; }
                 download_text(redirect_url).then(resolve).catch(reject)
                 return
             }
             if (resp.statusCode !== 200) {
-                return reject(new Error(`HTTP ${resp.statusCode}`))
+                reject(new Error(`HTTP ${String(resp.statusCode)}`)); return;
             }
 
             const is_gzip = url.endsWith('.gz') || (resp.headers['content-encoding'] === 'gzip')
@@ -75,14 +75,14 @@ function download_text(url: string): Promise<string> {
             const chunks: Buffer[] = []
 
             stream.on('data', (chunk: Buffer) => chunks.push(chunk))
-            stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')))
+            stream.on('end', () => { resolve(Buffer.concat(chunks).toString('utf-8')); })
             stream.on('error', reject)
         }).on('error', reject)
     })
 }
 
 export function registerDictHandlers(): void {
-    ipcMain.handle('dict:lookup', async (_event, text: string, from: string, to: string) => {
+    ipcMain.handle('dict:lookup', (_event, text: string, from: string) => {
         if (!is_ready()) return null
 
         const word = text.trim().split(/\s+/)[0]
@@ -99,7 +99,7 @@ export function registerDictHandlers(): void {
         }
     })
 
-    ipcMain.handle('dict:check', async () => {
+    ipcMain.handle('dict:check', () => {
         const ready = is_ready()
         return { ready, entry_count: ready ? get_entry_count() : 0 }
     })

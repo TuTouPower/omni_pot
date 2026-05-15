@@ -95,7 +95,7 @@ function read_gzip_file(path: string): Promise<string> {
         const chunks: Buffer[] = []
         const stream = createReadStream(path).pipe(createGunzip())
         stream.on('data', (chunk: Buffer) => chunks.push(chunk))
-        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')))
+        stream.on('end', () => { resolve(Buffer.concat(chunks).toString('utf-8')); })
         stream.on('error', reject)
     })
 }
@@ -110,7 +110,7 @@ export async function auto_import_if_needed(): Promise<void> {
 
     const text = await read_gzip_file(bundled)
     const count = import_from_text(text)
-    console.log(`[dict] imported ${count} CC-CEDICT entries from bundled file`)
+    console.log(`[dict] imported ${String(count)} CC-CEDICT entries from bundled file`)
 }
 
 export function is_ready(): boolean {

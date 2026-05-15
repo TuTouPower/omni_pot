@@ -1,10 +1,10 @@
-import { app, Menu } from 'electron'
+import { app, Menu, session } from 'electron'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { attach_translate_resize_persistence, get_translate_window_options } from './windows/translate_options'
-import { initConfigStore, isFirstRun, commitFirstRun, getConfig } from './config/store'
+import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config } from './config/store'
 
-const debug = (...args: unknown[]) => console.log('[main]', ...args)
+const debug = (...args: unknown[]) => { console.log('[main]', ...args); }
 
 debug('starting...')
 import { createTray, setWindowManagerForTray } from './tray'
@@ -54,23 +54,48 @@ if (!gotLock) {
     // Remove native application menu (File/Edit/Window/Help)
     Menu.setApplicationMenu(null)
 
+    // Security: CSP headers
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      if (app.isPackaged) {
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            'Content-Security-Policy': ["default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"]
+          }
+        })
+      } else {
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            'Content-Security-Policy': ["default-src 'self' http://localhost:* ws://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:*; connect-src 'self' http://localhost:* ws://localhost:*"]
+          }
+        })
+      }
+    })
+
+    // Security: limit permission requests
+    session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+      callback(false)
+    })
+
     debug('initializing config store...')
     initConfigStore()
     debug('config store initialized, isFirstRun=%s', isFirstRun())
 
     debug('creating window manager...')
-    windowManager = new WindowManager()
+    const manager = new WindowManager()
+    windowManager = manager
 
-    setWindowManagerForTray(windowManager)
-    setWindowManagerForHotkey(windowManager)
+    setWindowManagerForTray(manager)
+    setWindowManagerForHotkey(manager)
 
     registerConfigHandlers()
     debug('IPC handlers: config registered')
-    registerWindowHandlers(windowManager)
-    registerHotkeyHandlers(windowManager)
+    registerWindowHandlers(manager)
+    registerHotkeyHandlers(manager)
     registerShellHandlers()
     registerTextHandlers()
-    registerOcrHandlers(windowManager)
+    registerOcrHandlers(manager)
     registerHistoryHandlers()
     registerBackupHandlers()
     registerDictHandlers()
@@ -87,7 +112,7 @@ if (!gotLock) {
     const startHttpServer = async (retries = 5): Promise<void> => {
       for (let i = 0; i < retries; i++) {
         try {
-          await startServer(windowManager!)
+          await startServer(manager)
           debug('HTTP server started')
           return
         } catch (err: unknown) {
@@ -101,17 +126,17 @@ if (!gotLock) {
         }
       }
     }
-    startHttpServer()
+    startHttpServer().catch(console.error)
 
     applyProxy()
     debug('proxy applied')
 
     if (getConfig('clipboard_monitor')) {
-      startClipboardMonitor(windowManager)
+      startClipboardMonitor(manager)
     }
 
     // Daemon window (hidden background worker)
-    windowManager.createWindow({
+    manager.createWindow({
       label: WindowLabel.DAEMON,
       width: 0,
       height: 0,
@@ -122,11 +147,11 @@ if (!gotLock) {
     })
 
     // Always open translate window for development
-    const tw = windowManager.createWindow(get_translate_window_options())
+    const tw = manager.createWindow(get_translate_window_options())
     attach_translate_resize_persistence(tw)
 
     if (isFirstRun()) {
-      windowManager.createWindow({
+      manager.createWindow({
         label: WindowLabel.CONFIG,
         width: 800,
         height: 600,
@@ -136,16 +161,16 @@ if (!gotLock) {
       commitFirstRun()
     }
 
-    checkForUpdate(windowManager)
+    checkForUpdate(manager).catch(console.error)
 
-    auto_import_if_needed().catch((err) => {
+    auto_import_if_needed().catch((err: unknown) => {
       debug('CC-CEDICT auto-import failed:', err)
     })
     } catch (err) {
       console.error('[main] Init error:', err)
     }
     debug('startup complete')
-  })
+  }).catch(console.error)
 
   // Don't quit - Pot is tray-resident; user quits via tray menu
   app.on('window-all-closed', () => {
@@ -157,6 +182,7 @@ if (!gotLock) {
     stopServer()
     close_history()
     close_dict()
+    flush_config()
     unregisterAll()
   })
 }

@@ -28,7 +28,7 @@ export const simpleLatexOcrService: OcrService = {
         })
 
         if (!resp.ok) {
-            throw new Error(`Simple LaTeX OCR API error: ${resp.status}`)
+            throw new Error(`Simple LaTeX OCR API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {

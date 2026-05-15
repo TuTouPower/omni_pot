@@ -75,7 +75,7 @@ export const baiduFieldService: TranslateService = {
             `https://fanyi-api.baidu.com/api/trans/vip/fieldtranslate?${params.toString()}`
         )
         if (!resp.ok) {
-            throw new Error(`Baidu Field translate API error: ${resp.status}`)
+            throw new Error(`Baidu Field translate API error: ${String(resp.status)}`)
         }
 
         const data = (await resp.json()) as {
@@ -85,7 +85,7 @@ export const baiduFieldService: TranslateService = {
         }
 
         if (data.error_code) {
-            throw new Error(`Baidu Field API error: ${data.error_msg ?? data.error_code}`)
+            throw new Error(`Baidu Field API error: ${data.error_msg ?? String(data.error_code)}`)
         }
 
         return data.trans_result?.map((r) => r.dst).join('\n') ?? ''

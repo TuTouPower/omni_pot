@@ -27,14 +27,14 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
+        return () => { document.removeEventListener('mousedown', handleClickOutside); }
     }, [])
 
     return (
         <div ref={ref} style={{ position: 'relative' }}>
             <button
                 data-testid={testId}
-                onClick={() => setOpen((o) => !o)}
+                onClick={() => { setOpen((o) => !o); }}
                 style={{
                     height: 28,
                     padding: '0 6px',

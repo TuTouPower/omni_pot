@@ -33,7 +33,7 @@ export async function checkForUpdate(manager: WindowManager, silent = true): Pro
             headers: { 'User-Agent': 'omni_pot-updater' }
         })
         if (!resp.ok) {
-            if (!silent) dialog.showErrorBox('Update Check Failed', `HTTP ${resp.status}`)
+            if (!silent) dialog.showErrorBox('Update Check Failed', `HTTP ${String(resp.status)}`)
             return
         }
 
@@ -47,7 +47,7 @@ export async function checkForUpdate(manager: WindowManager, silent = true): Pro
                     type: 'info',
                     title: 'No Updates',
                     message: `You are already on the latest version (${current_version}).`
-                })
+                }).catch(console.error)
             }
             return
         }

@@ -3,7 +3,7 @@ import { LANGUAGE_NAMES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
 
 export function language_name(t: TFunction, code: LanguageCode): string {
-    return t(`languages.${code}`, { defaultValue: LANGUAGE_NAMES[code] ?? code })
+    return t(`languages.${code}`, { defaultValue: LANGUAGE_NAMES[code] })
 }
 
 export function language_options(t: TFunction, codes: readonly LanguageCode[]): Array<{ value: LanguageCode; label: string }> {

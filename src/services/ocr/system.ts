@@ -1,6 +1,5 @@
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
-import type { ServiceConfig } from '@shared/types/service'
 
 const SYSTEM_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -40,15 +39,15 @@ export const systemOcrService: OcrService = {
     name: 'System OCR',
     languages: SYSTEM_LANGUAGES,
 
-    async recognize(base64Image: string, language: LanguageCode, _config: ServiceConfig): Promise<string> {
+    async recognize(base64Image: string, language: LanguageCode): Promise<string> {
         const lang = LANG_MAP[language] ?? ''
         const result = await window.electronAPI.ocr.systemRecognize(base64Image, lang)
         return result
     },
 
-    async testConfig(_config: ServiceConfig): Promise<boolean> {
+    async testConfig(): Promise<boolean> {
         try {
-            const result = await window.electronAPI.ocr.systemRecognize('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'en-US')
+            await window.electronAPI.ocr.systemRecognize('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'en-US')
             return true
         } catch {
             return false

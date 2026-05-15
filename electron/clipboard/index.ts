@@ -34,7 +34,7 @@ export function startClipboardMonitor(mgr: WindowManager): void {
     if (interval_id) return
     enabled = true
     last_text = clipboard.readText()
-    interval_id = setInterval(() => pollClipboardMonitorOnce(mgr), 500)
+    interval_id = setInterval(() => { pollClipboardMonitorOnce(mgr); }, 500)
 }
 
 export function stopClipboardMonitor(): void {

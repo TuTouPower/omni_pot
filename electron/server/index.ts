@@ -42,7 +42,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
-            const url = new URL(req.url ?? '/', `http://localhost:${port}`)
+            const url = new URL(req.url ?? '/', `http://localhost:${String(port)}`)
 
             if (req.method === 'POST' && (url.pathname === '/' || url.pathname === '/translate')) {
                 handleTranslate(mgr, req, res)
@@ -179,7 +179,7 @@ function handleTranslate(
             return
         }
 
-        const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+        mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
 
         res.writeHead(200)
@@ -195,7 +195,7 @@ function handleTriggerSelection(
     const chunks: Buffer[] = []
     req.on('data', (chunk: Buffer) => chunks.push(chunk))
     req.on('end', () => {
-        void (async () => {
+        ;(async () => {
             try {
                 const body = Buffer.concat(chunks).toString('utf-8').trim()
                 let textToUse: string | null = null
@@ -204,9 +204,10 @@ function handleTriggerSelection(
                 // E2E text injection: if JSON body has text field, use it
                 if (body) {
                     try {
-                        const json = JSON.parse(body)
-                        if (typeof json.text === 'string' && json.text.trim()) {
-                            textToUse = json.text
+                        const json = parse_json_body(chunks)
+                        const body_text = json.text
+                        if (typeof body_text === 'string' && body_text.trim()) {
+                            textToUse = body_text
                         }
                     } catch {
                         // not JSON, ignore
@@ -234,7 +235,7 @@ function handleTriggerSelection(
                 res.writeHead(500)
                 res.end(JSON.stringify({ success: false, error: String(error) }))
             }
-        })()
+        })().catch(console.error)
     })
 }
 
@@ -251,7 +252,7 @@ function handleTriggerDict(
             let text = ''
             if (body) {
                 try {
-                    const json = JSON.parse(body)
+                    const json = parse_json_body(chunks)
                     if (typeof json.text === 'string') text = json.text
                 } catch { /* ignore */ }
             }
@@ -283,7 +284,7 @@ function handleTriggerClipboard(
             let text = ''
             if (body) {
                 try {
-                    const json = JSON.parse(body)
+                    const json = parse_json_body(chunks)
                     if (typeof json.text === 'string') text = json.text
                 } catch { /* ignore */ }
             }
@@ -315,7 +316,7 @@ function handleTriggerClipboardTranslate(
             let text = ''
             if (body) {
                 try {
-                    const json = JSON.parse(body)
+                    const json = parse_json_body(chunks)
                     if (typeof json.text === 'string') text = json.text
                 } catch { /* ignore */ }
             }
@@ -336,7 +337,7 @@ function handleTriggerClipboardTranslate(
 }
 
 function handleCaptureClock(res: http.ServerResponse): void {
-    void (async () => {
+    ;(async () => {
         try {
             const primaryDisplay = screen.getPrimaryDisplay()
             const { width, height } = primaryDisplay.bounds
@@ -350,13 +351,14 @@ function handleCaptureClock(res: http.ServerResponse): void {
                 }
             })
 
-            if (sources.length === 0) {
+            const first_source = sources.at(0)
+            if (!first_source) {
                 res.writeHead(500)
                 res.end(JSON.stringify({ success: false, error: 'no screen source' }))
                 return
             }
 
-            const thumb = sources[0].thumbnail
+            const thumb = first_source.thumbnail
             const thumbSize = thumb.getSize()
 
             // Crop bottom-right where the Windows taskbar clock is
@@ -374,7 +376,7 @@ function handleCaptureClock(res: http.ServerResponse): void {
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(error) }))
         }
-    })()
+    })().catch(console.error)
 }
 
 function handleOpenWindow(
@@ -386,15 +388,15 @@ function handleOpenWindow(
     req.on('data', (chunk: Buffer) => chunks.push(chunk))
     req.on('end', () => {
         try {
-            const body = JSON.parse(Buffer.concat(chunks).toString('utf-8'))
-            const label = body.label as string
+            const body = parse_json_body(chunks)
+            const label = typeof body.label === 'string' ? body.label : ''
             if (!label) {
                 res.writeHead(400)
                 res.end(JSON.stringify({ success: false, error: 'missing label' }))
                 return
             }
 
-            const windowOpts: Record<string, { label: typeof WindowLabel[keyof typeof WindowLabel]; width: number; height: number }> = {
+            const windowOpts: Partial<Record<string, { label: typeof WindowLabel[keyof typeof WindowLabel]; width: number; height: number }>> = {
                 dict: { label: WindowLabel.DICT, width: 350, height: 420 },
                 config: { label: WindowLabel.CONFIG, width: 800, height: 600 },
                 recognize: { label: WindowLabel.RECOGNIZE, width: 600, height: 500 },
@@ -488,7 +490,7 @@ function handle_trigger_screenshot(
     const chunks: Buffer[] = []
     req.on('data', (chunk: Buffer) => chunks.push(chunk))
     req.on('end', () => {
-        void (async () => {
+        ;(async () => {
             try {
                 const body = parse_json_body(chunks)
                 const mode = body.mode === 'translate' ? 'translate' : 'recognize'
@@ -499,7 +501,7 @@ function handle_trigger_screenshot(
                 res.writeHead(500)
                 res.end(JSON.stringify({ success: false, error: String(error) }))
             }
-        })()
+        })().catch(console.error)
     })
 }
 

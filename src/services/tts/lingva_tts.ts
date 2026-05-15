@@ -47,7 +47,7 @@ export const lingvaTtsService: TtsService = {
 
         const resp = await fetch(url)
         if (!resp.ok) {
-            throw new Error(`Lingva TTS API error: ${resp.status}`)
+            throw new Error(`Lingva TTS API error: ${String(resp.status)}`)
         }
 
         const content_type = resp.headers.get('content-type') ?? ''
