@@ -7,6 +7,10 @@ export class TranslatePage {
         return this.page.getByTestId('titlebar-wordmark')
     }
 
+    titlebar(): Locator {
+        return this.page.getByTestId('titlebar')
+    }
+
     modeLabel(): Locator {
         return this.page.getByTestId('titlebar-mode')
     }
@@ -27,6 +31,14 @@ export class TranslatePage {
         return this.page.getByTestId('source-translate-btn')
     }
 
+    sourceTtsButton(): Locator {
+        return this.page.getByTestId('source-tts-btn')
+    }
+
+    clearSourceButton(): Locator {
+        return this.page.getByTestId('source-clear-btn')
+    }
+
     detectedLanguage(): Locator {
         return this.page.getByTestId('detected-lang')
     }
@@ -35,8 +47,16 @@ export class TranslatePage {
         return this.page.getByTestId('lang-source')
     }
 
+    sourceLanguageButton(): Locator {
+        return this.page.getByTestId('lang-source-button')
+    }
+
     targetLanguage(): Locator {
         return this.page.getByTestId('lang-target')
+    }
+
+    targetLanguageButton(): Locator {
+        return this.page.getByTestId('lang-target-button')
     }
 
     resultBodies(): Locator {
@@ -72,6 +92,45 @@ export class TranslatePage {
         return !color.includes('var(--text-mute)')
     }
 
+    async titlebarOrder(): Promise<string[]> {
+        const items = [
+            { name: 'pin', locator: this.pinButton() },
+            { name: 'wordmark', locator: this.wordmark() },
+            { name: 'mode', locator: this.modeLabel() },
+            { name: 'close', locator: this.closeButton() },
+        ]
+        const positions = await Promise.all(items.map(async (item) => {
+            const box = await item.locator.boundingBox()
+            return { name: item.name, x: box?.x ?? Number.POSITIVE_INFINITY }
+        }))
+        return positions.sort((a, b) => a.x - b.x).map((item) => item.name)
+    }
+
+    titlebarAppRegion(): Promise<string> {
+        return this.titlebar().evaluate((el) => {
+            return (getComputedStyle(el) as CSSStyleDeclaration & { webkitAppRegion?: string }).webkitAppRegion ?? ''
+        })
+    }
+
+    pinButtonAppRegion(): Promise<string> {
+        return this.pinButton().evaluate((el) => {
+            return (getComputedStyle(el) as CSSStyleDeclaration & { webkitAppRegion?: string }).webkitAppRegion ?? ''
+        })
+    }
+
+    closeButtonAppRegion(): Promise<string> {
+        return this.closeButton().evaluate((el) => {
+            return (getComputedStyle(el) as CSSStyleDeclaration & { webkitAppRegion?: string }).webkitAppRegion ?? ''
+        })
+    }
+
+    async modeLabelHasPillBackground(): Promise<boolean> {
+        return this.modeLabel().evaluate((el) => {
+            const style = getComputedStyle(el)
+            return style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.borderTopWidth !== '0px'
+        })
+    }
+
     // Source area
     typeSource(text: string): Promise<void> {
         return this.page.getByTestId('source-input').fill(text)
@@ -91,6 +150,68 @@ export class TranslatePage {
 
     clickDeleteNewline(): Promise<void> {
         return this.page.getByTestId('source-newline-btn').click()
+    }
+
+    clickSourceTts(): Promise<void> {
+        return this.page.getByTestId('source-tts-btn').click()
+    }
+
+    async click_source_tts_and_wait_for_audio_path(): Promise<string> {
+        const request_promise = this.page.waitForRequest(
+            (request) => request.url().includes('/api/v1/audio/'),
+            { timeout: 10_000 }
+        )
+        await this.clickSourceTts()
+        const request = await request_promise
+        return new URL(request.url()).pathname
+    }
+
+    async hold_lingva_translation_once(translation: string): Promise<{ wait_for_request: () => Promise<void>; release_response: () => void }> {
+        let release_response = (): void => {}
+        const release_promise = new Promise<void>((resolve) => {
+            release_response = resolve
+        })
+        let resolve_request = (): void => {}
+        let reject_request = (_error: Error): void => {}
+        const request_promise = new Promise<void>((resolve, reject) => {
+            resolve_request = resolve
+            reject_request = reject
+        })
+        const timeout = setTimeout(() => reject_request(new Error('Timed out waiting for Lingva translation request')), 10_000)
+
+        await this.page.route('https://lingva.lunar.icu/api/v1/*/zh/**', async (route) => {
+            clearTimeout(timeout)
+            resolve_request()
+            await release_promise
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ translation }),
+            })
+        }, { times: 1 })
+
+        return {
+            wait_for_request: () => request_promise,
+            release_response,
+        }
+    }
+
+    pressSource(key: string): Promise<void> {
+        return this.page.getByTestId('source-input').press(key)
+    }
+
+    async dispatchComposingEnter(): Promise<void> {
+        await this.sourceInput().evaluate((el) => {
+            const event = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                bubbles: true,
+                cancelable: true,
+            })
+            Object.defineProperty(event, 'isComposing', { get: () => true })
+            Object.defineProperty(event, 'keyCode', { get: () => 229 })
+            Object.defineProperty(event, 'which', { get: () => 229 })
+            el.dispatchEvent(event)
+        })
     }
 
     getSourceText(): Promise<string> {
@@ -118,6 +239,16 @@ export class TranslatePage {
         return this.page.getByTestId('detected-lang').click()
     }
 
+    async selectSourceLanguage(language: string): Promise<void> {
+        await this.sourceLanguageButton().click()
+        await this.page.getByTestId(`lang-source-option-${language}`).click()
+    }
+
+    async selectTargetLanguage(language: string): Promise<void> {
+        await this.targetLanguageButton().click()
+        await this.page.getByTestId(`lang-target-option-${language}`).click()
+    }
+
     // Result cards
     resultCard(instanceKey: string): Locator {
         return this.page.locator(`[data-result-key="${instanceKey}"]`)
@@ -125,6 +256,17 @@ export class TranslatePage {
 
     resultCards(): Locator {
         return this.page.locator('[data-result-key]')
+    }
+
+    async waitForNoDetectedLanguage(duration = 2_000): Promise<void> {
+        const end = Date.now() + duration
+        while (Date.now() < end) {
+            const count = await this.detectedLanguage().count()
+            if (count > 0) {
+                throw new Error(`Expected no detected language label, found ${count}`)
+            }
+            await this.page.waitForTimeout(Math.min(100, end - Date.now()))
+        }
     }
 
     async waitAllResults(timeout = 30_000): Promise<void> {

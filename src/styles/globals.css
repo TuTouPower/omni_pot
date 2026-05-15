@@ -76,11 +76,19 @@ select {
     -webkit-app-region: drag;
 }
 
+.op-titlebar .ic-btn {
+    -webkit-app-region: no-drag;
+}
+
 .op-mode {
     font-family: var(--font-sans);
     font-size: 12px;
-    color: var(--text-mute);
+    color: var(--text-dim);
     letter-spacing: 0;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--bg-sunk);
+    border: 1px solid var(--line);
 }
 
 .op-titlebar .spacer {
@@ -226,6 +234,16 @@ select {
 .ic-btn:hover {
     background: var(--bg-sunk);
     color: var(--text);
+}
+
+.ic-btn:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
+.ic-btn:disabled:hover {
+    background: transparent;
+    color: var(--text-mute);
 }
 
 .ic-btn.brand {

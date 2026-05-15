@@ -1,7 +1,20 @@
 import { BrowserWindow, screen, app, ipcMain } from 'electron'
 import { join } from 'path'
+import { existsSync } from 'fs'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
+
+function resolveIconPath(): string {
+  const candidates = [
+    join(__dirname, '../../resources/icon.ico'),
+    join(process.resourcesPath ?? '', 'icon.ico'),
+    join(app.getAppPath(), 'resources/icon.ico'),
+    join(__dirname, '../../resources/icon.png'),
+    join(process.resourcesPath ?? '', 'icon.png'),
+    join(app.getAppPath(), 'resources/icon.png')
+  ]
+  return candidates.find((p) => p && existsSync(p)) ?? candidates[0]
+}
 
 export class WindowManager {
   private byLabel = new Map<WindowLabel, BrowserWindow>()
@@ -55,6 +68,7 @@ export class WindowManager {
       transparent: opts.transparent ?? false,
       frame: opts.frame ?? false,
       focusable: opts.focusable ?? true,
+      icon: resolveIconPath(),
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
         sandbox: false,

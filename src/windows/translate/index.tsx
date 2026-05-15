@@ -6,6 +6,7 @@ import { TargetArea } from './target_area'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
+import { ttsServiceRegistry } from '../../services/tts_registry'
 import { detectLanguage } from '../../services/detect'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult } from '@shared/types/service'
@@ -49,7 +50,17 @@ export default function TranslateWindow(): React.ReactElement {
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const [forceShowSource, setForceShowSource] = useState(false)
+    const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
+    const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
+    const sourceAudioRef = useRef<HTMLAudioElement | null>(null)
+    const sourceAudioCleanupRef = useRef<(() => void) | null>(null)
+    const sourceTtsBusyRef = useRef(false)
+    const sourceTtsMountedRef = useRef(true)
+    const sourceTtsRequestRef = useRef(0)
+    const sourceTtsTextRef = useRef('')
+    const sourceTtsLanguageRef = useRef<LanguageCode | null>(null)
+    const retryRequestRef = useRef<Record<string, number>>({})
 
     const handleTranslate = useCallback(async (textOverride?: string) => {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
@@ -115,10 +126,17 @@ export default function TranslateWindow(): React.ReactElement {
             }
         })
 
-        await Promise.allSettled(promises)
-        if (useTranslateStore.getState().requestId === id) {
-            setIsTranslating(false)
+        const isActiveRequest = () => {
+            const state = useTranslateStore.getState()
+            return state.requestId === id
+                && state.sourceText === textToTranslate
+                && state.sourceLanguage === sourceLanguage
+                && state.targetLanguage === targetLanguage
         }
+
+        await Promise.allSettled(promises)
+        if (!isActiveRequest()) return
+        setIsTranslating(false)
 
         if (!historyDisable) {
             const successKeys = Object.entries(resultsMap).filter(([, r]) => r !== null)
@@ -134,18 +152,20 @@ export default function TranslateWindow(): React.ReactElement {
                     target_lang: effectiveTarget
                 }).catch(() => {})
             }))
+            if (!isActiveRequest()) return
         }
 
         if (autoCopy !== 'disable') {
+            if (!isActiveRequest()) return
             if (autoCopy === 'source' || autoCopy === 'source_target') {
-                navigator.clipboard.writeText(textToTranslate)
+                void navigator.clipboard.writeText(textToTranslate).catch(() => undefined)
             }
             if (autoCopy === 'target' || autoCopy === 'source_target') {
                 const targetTexts = Object.values(resultsMap)
                     .filter((r): r is string | DictResult => r !== null)
                     .map((r) => typeof r === 'string' ? r : r.definitions.map((d) => d.meanings.join('; ')).join('\n'))
                     .join('\n')
-                if (targetTexts) navigator.clipboard.writeText(targetTexts)
+                if (targetTexts) void navigator.clipboard.writeText(targetTexts).catch(() => undefined)
             }
         }
     }, [sourceLanguage, targetLanguage, serviceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy])
@@ -228,30 +248,174 @@ export default function TranslateWindow(): React.ReactElement {
         swapLanguages(secondLanguage as LanguageCode)
     }, [secondLanguage, swapLanguages])
 
+    const cancelSourceTts = useCallback(() => {
+        sourceTtsRequestRef.current += 1
+        sourceAudioRef.current?.pause()
+        sourceAudioCleanupRef.current?.()
+        sourceAudioRef.current = null
+        sourceAudioCleanupRef.current = null
+        sourceTtsTextRef.current = ''
+        sourceTtsLanguageRef.current = null
+        sourceTtsBusyRef.current = false
+        setSourceTtsBusy(false)
+        setSourceTtsPlaying(false)
+    }, [])
+
+    const handleSourceTts = useCallback(async () => {
+        const text = useTranslateStore.getState().sourceText.trim()
+        if (!text) return
+
+        if (sourceTtsPlaying || sourceTtsBusyRef.current || sourceAudioRef.current) {
+            cancelSourceTts()
+            return
+        }
+
+        const instanceKey = ttsServiceList[0]
+        if (!instanceKey || sourceTtsBusyRef.current) return
+
+        const serviceKey = getServiceKey(instanceKey)
+        const ttsService = ttsServiceRegistry.get(serviceKey)
+        if (!ttsService) return
+
+        const requestId = sourceTtsRequestRef.current + 1
+        sourceTtsRequestRef.current = requestId
+        sourceTtsTextRef.current = text
+        sourceTtsBusyRef.current = true
+        setSourceTtsBusy(true)
+
+        try {
+            const { sourceLanguage: currentSourceLanguage, sourceText: currentSourceText } = useTranslateStore.getState()
+            const isCurrentSourceTtsRequest = () => {
+                const state = useTranslateStore.getState()
+                return sourceTtsMountedRef.current
+                    && sourceTtsRequestRef.current === requestId
+                    && state.sourceText.trim() === text
+                    && state.sourceLanguage === currentSourceLanguage
+            }
+            if (currentSourceText.trim() !== text) return
+            sourceTtsLanguageRef.current = currentSourceLanguage
+
+            const config = useConfigStore.getState().config
+            const language = currentSourceLanguage === 'auto'
+                ? await detectLanguage(text, config.translate_detect_engine)
+                : currentSourceLanguage
+            if (!isCurrentSourceTtsRequest()) return
+            const instanceConfig = config.service_instances[instanceKey]?.config ?? {}
+
+            const audioBuffer = await ttsService.synthesize(text, language, instanceConfig)
+            if (!isCurrentSourceTtsRequest()) return
+
+            const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
+            const url = URL.createObjectURL(blob)
+            const audio = new Audio(url)
+            const cleanup = () => {
+                if (sourceAudioRef.current === audio) {
+                    sourceAudioRef.current = null
+                }
+                if (sourceAudioCleanupRef.current === cleanup) {
+                    sourceAudioCleanupRef.current = null
+                }
+                if (sourceTtsTextRef.current === text) {
+                    sourceTtsTextRef.current = ''
+                }
+                if (sourceTtsLanguageRef.current === currentSourceLanguage) {
+                    sourceTtsLanguageRef.current = null
+                }
+                if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
+                    setSourceTtsPlaying(false)
+                }
+                URL.revokeObjectURL(url)
+            }
+            sourceAudioRef.current = audio
+            sourceAudioCleanupRef.current = cleanup
+            audio.onended = cleanup
+            audio.onerror = cleanup
+            setSourceTtsBusy(false)
+            setSourceTtsPlaying(true)
+            void audio.play().catch(cleanup)
+        } catch {
+            if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
+                sourceAudioRef.current = null
+                sourceTtsTextRef.current = ''
+                sourceTtsLanguageRef.current = null
+                setSourceTtsPlaying(false)
+            }
+        } finally {
+            if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
+                sourceTtsBusyRef.current = false
+                setSourceTtsBusy(false)
+            }
+        }
+    }, [sourceTtsPlaying, ttsServiceList, cancelSourceTts])
+
+    useEffect(() => {
+        const spokenText = sourceTtsTextRef.current
+        const spokenLanguage = sourceTtsLanguageRef.current
+        if (!spokenText) return
+        if (spokenText === sourceText.trim() && spokenLanguage === sourceLanguage) return
+        cancelSourceTts()
+    }, [sourceText, sourceLanguage, cancelSourceTts])
+
+    useEffect(() => {
+        return () => {
+            sourceTtsMountedRef.current = false
+            sourceTtsRequestRef.current += 1
+            sourceTtsBusyRef.current = false
+            sourceTtsTextRef.current = ''
+            sourceTtsLanguageRef.current = null
+            sourceAudioRef.current?.pause()
+            sourceAudioCleanupRef.current?.()
+        }
+    }, [])
+
     const handleRetry = useCallback(async (instanceKey: string) => {
-        const textToTranslate = useTranslateStore.getState().sourceText
+        const {
+            requestId: retryRequestId,
+            sourceText: textToTranslate,
+            sourceLanguage: retrySourceLanguage,
+            targetLanguage: retryTargetLanguage
+        } = useTranslateStore.getState()
         if (!textToTranslate.trim()) return
+
+        const retryAttempt = (retryRequestRef.current[instanceKey] ?? 0) + 1
+        retryRequestRef.current[instanceKey] = retryAttempt
+
+        const isCurrentRetry = () => {
+            const state = useTranslateStore.getState()
+            return retryRequestRef.current[instanceKey] === retryAttempt
+                && state.requestId === retryRequestId
+                && state.sourceText === textToTranslate
+                && state.sourceLanguage === retrySourceLanguage
+                && state.targetLanguage === retryTargetLanguage
+        }
 
         const serviceKey = getServiceKey(instanceKey)
         const service = translateServiceRegistry.get(serviceKey)
         if (!service) return
 
         const instanceConfig = serviceInstances[instanceKey]?.config ?? {}
-        const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
+        const detected = retrySourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
+        if (!isCurrentRetry()) return
 
-        let effectiveTarget = targetLanguage
-        if (sourceLanguage === 'auto' && detected && detected === targetLanguage) {
+        let effectiveTarget = retryTargetLanguage
+        if (retrySourceLanguage === 'auto' && detected && detected === retryTargetLanguage) {
             effectiveTarget = secondLanguage as LanguageCode
         }
 
         try {
-            const result = await service.translate(textToTranslate, sourceLanguage, effectiveTarget, instanceConfig)
-            setResult(instanceKey, result)
+            const result = await service.translate(textToTranslate, retrySourceLanguage, effectiveTarget, instanceConfig)
+            if (isCurrentRetry()) {
+                setResult(instanceKey, result)
+            }
         } catch {
-            setResult(instanceKey, null)
+            if (isCurrentRetry()) {
+                setResult(instanceKey, null)
+            }
         }
-    }, [sourceLanguage, targetLanguage, secondLanguage, serviceInstances, setResult])
+    }, [secondLanguage, serviceInstances, setResult])
 
+    const sourceTtsInstanceKey = ttsServiceList[0]
+    const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
     const showSource = forceShowSource || !hideSource
 
     return (
@@ -260,7 +424,7 @@ export default function TranslateWindow(): React.ReactElement {
             style={{ fontSize: appFontSize, fontFamily: appFont === 'default' ? undefined : appFont }}
         >
             {/* Titlebar — Pin left, wordmark, mode, spacer, close */}
-            <div className="op-titlebar">
+            <div className="op-titlebar" data-testid="titlebar">
                 <button
                     className="ic-btn"
                     title="置顶"
@@ -284,7 +448,17 @@ export default function TranslateWindow(): React.ReactElement {
 
             {/* Content */}
             <div style={{ flex: 1, overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {showSource && <SourceArea onTranslate={handleTranslate} onDetectedLanguageClick={handleSwapLanguages} inputRef={inputRef} />}
+                {showSource && (
+                    <SourceArea
+                        onTranslate={handleTranslate}
+                        onTts={handleSourceTts}
+                        ttsAvailable={sourceTtsAvailable}
+                        ttsBusy={sourceTtsBusy}
+                        ttsPlaying={sourceTtsPlaying}
+                        onDetectedLanguageClick={handleSwapLanguages}
+                        inputRef={inputRef}
+                    />
+                )}
                 <LanguageArea onSwap={handleSwapLanguages} />
                 <TargetArea serviceList={serviceList} ttsServiceList={ttsServiceList} onRetry={handleRetry} />
             </div>

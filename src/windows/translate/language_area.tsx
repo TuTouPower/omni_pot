@@ -7,10 +7,12 @@ import type { LanguageCode } from '@shared/types/language'
 const SOURCE_LANGUAGES = ['auto', ...LANGUAGE_CODES.filter((c) => c !== 'auto')]
 const TARGET_LANGUAGES = LANGUAGE_CODES.filter((c) => c !== 'auto')
 
-function LangPick({ value, onChange, options }: {
+function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
     value: LanguageCode
     onChange: (v: LanguageCode) => void
     options: string[]
+    testId: string
+    optionTestIdPrefix: string
 }): React.ReactElement {
     const [open, setOpen] = React.useState(false)
     const ref = React.useRef<HTMLDivElement>(null)
@@ -28,6 +30,7 @@ function LangPick({ value, onChange, options }: {
     return (
         <div ref={ref} style={{ position: 'relative' }}>
             <button
+                data-testid={testId}
                 onClick={() => setOpen((o) => !o)}
                 style={{
                     height: 28,
@@ -65,6 +68,7 @@ function LangPick({ value, onChange, options }: {
                     {options.map((code) => (
                         <div
                             key={code}
+                            data-testid={`${optionTestIdPrefix}-${code}`}
                             onClick={() => {
                                 onChange(code as LanguageCode)
                                 setOpen(false)
@@ -109,13 +113,13 @@ export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement 
     return (
         <div className="card" style={{ padding: '4px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flex: '0 0 auto' }}>
             <div data-testid="lang-source">
-                <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} />
+                <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} testId="lang-source-button" optionTestIdPrefix="lang-source-option" />
             </div>
             <button className="ic-btn" style={{ color: 'var(--text)' }} title="交换语言" data-testid="lang-swap" onClick={onSwap}>
                 <Icons.Swap size={18} />
             </button>
             <div data-testid="lang-target">
-                <LangPick value={targetLanguage} onChange={setTargetLanguage} options={TARGET_LANGUAGES} />
+                <LangPick value={targetLanguage} onChange={setTargetLanguage} options={TARGET_LANGUAGES} testId="lang-target-button" optionTestIdPrefix="lang-target-option" />
             </div>
         </div>
     )

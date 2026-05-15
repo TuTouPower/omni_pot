@@ -13,7 +13,7 @@
 |------|----------|------|------|
 | **Google** | `google.ts` | 调用 `translate.googleapis.com/translate_a/single?client=gtx`（Google 网页翻译内部接口） | 非官方，可能被限流/封禁 |
 | **Bing** | `bing.ts` | 从 `bing.com/translator` 抓 token，调用 `ttranslatev3` | 非官方，token 格式可能变 |
-| **Lingva** | `lingva.ts` | 调用 Lingva Translate 公开实例（可自建） | 依赖第三方实例可用性 |
+| **Lingva** | `lingva.ts` | 调用 Lingva Translate 公开实例（默认 `lingva.lunar.icu`，可自建） | 依赖第三方实例可用性 |
 | **MyMemory** | `mymemory.ts` | 调用 `api.mymemory.translated.net`，匿名 5000 字符/天 | 免费额度有限 |
 | **Ollama** | `ollama.ts` | 调用本地 Ollama LLM 服务 | 需要本地安装 Ollama 且有模型 |
 
@@ -86,7 +86,7 @@
 | 服务 | 实现文件 | 需要什么 | 费用 |
 |------|----------|----------|------|
 | **Edge TTS** | `tts/edge_tts.ts` | 无（调用微软 Edge 浏览器 TTS 接口） | 免费，非官方 |
-| **Lingva TTS** | `tts/lingva_tts.ts` | 无（调用 Lingva 实例） | 免费 |
+| **Lingva TTS** | `tts/lingva_tts.ts` | 无（默认调用 `lingva.lunar.icu` 实例，可自建） | 免费 |
 
 ---
 

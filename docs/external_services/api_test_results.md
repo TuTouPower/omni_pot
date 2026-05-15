@@ -11,7 +11,7 @@
 | # | 名称 | 状态 | 说明 |
 |---|------|------|------|
 | T1 | Google Translate (gtx) | ✅ 可用 | `client=gtx` 非官方端点，无需 key。英→中→英双向均正常。已有实现 `src/services/google.ts` |
-| T2 | Lingva Translate | ✅ 可用 | `GET https://lingva.ml/api/v1/{from}/{to}/{text}`，Google Translate 代理。注意 `lingva.thedaviddelta.com` 已下线。已有实现 `src/services/lingva.ts` |
+| T2 | Lingva Translate | ✅ 可用 | `GET https://lingva.lunar.icu/api/v1/{from}/{to}/{text}`，Google Translate 代理。`lingva.ml` 当前会返回 Cloudflare/403，不再作为默认实例。已有实现 `src/services/lingva.ts` |
 | T3 | MyMemory Translation | ✅ 可用 | `GET https://api.mymemory.translated.net/get?q={text}&langpair={from}|{to}`，无需 key，匿名 5000 字符/天。双向翻译正常 |
 | T4 | LibreTranslate (公共实例) | ❌ 不可用 | 官方 `libretranslate.com` 需要 API key。自托管可免费但需服务器 |
 | T5 | SimplyTranslate AI | ❌ 不可用 | 返回 403 "访问被拒绝：无效的来源" |
@@ -44,12 +44,12 @@
 
 | # | 名称 | 实现文件 | 测试结果 | 说明 |
 |---|------|----------|----------|------|
-| E1 | Bing Translate | `src/services/bing.ts` | ✅ 已修复 | **问题**: token 正则匹配错误 + token/key 分开发送。**修复**: 正则改为 `\[(\d+),\s*"([^"]+)"`，`key` 字段传时间戳 |
+| E1 | Bing Translate | `src/services/bing.ts` | ✅ 已修复 | **问题**: token 正则匹配错误 + token/key 分开发送；后续又发现 `bing.com/translator` 会跳转到区域域名。**修复**: 正则改为 `\[(\d+),\s*"([^"]+)"`，`key` 字段传时间戳，并使用最终页面 origin 调用 `ttranslatev3` |
 | E2 | Yandex Translate | `src/services/yandex.ts` | ❌ 已移除 | 403 "Session is invalid"，免费端点已关闭，代码已删除 |
 | E3 | Bing Dictionary | `src/services/bing_dict.ts` | ❌ 已移除 | API 返回 403 "Access disabled"，服务已停用，代码已删除 |
 | E4 | ECDICT | `src/services/ecdict.ts` | ✅ 已替换 | 已替换为 CC-CEDICT 离线方案（better-sqlite3 + FTS5） |
 | E5 | Cambridge Dictionary | `src/services/cambridge_dict.ts` | ✅ 可用 | HTML 抓取验证通过，所有 CSS 选择器匹配正常 |
-| E6 | Lingva | `src/services/lingva.ts` | ✅ 可用 | 已确认可用 |
+| E6 | Lingva | `src/services/lingva.ts` | ✅ 可用 | 默认实例切换为 `https://lingva.lunar.icu`，使用 `/api/v1` JSON 端点 |
 | E7 | Google Translate | `src/services/google.ts` | ✅ 可用 | 已确认可用 |
 
 ---

@@ -1,7 +1,19 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { TranslatePage } from '../pages/translate_page'
+
+async function first_visible_result_text(translate: TranslatePage): Promise<string> {
+    const bodies = translate.resultBodies()
+    for (let i = 0; i < await bodies.count(); i += 1) {
+        const text = await bodies.nth(i).textContent()
+        if (text?.trim()) return text.trim()
+    }
+    return ''
+}
 
 test.describe('@ui translate language area', () => {
+    test.describe.configure({ retries: 2 })
+
     test('user sees localized language labels and reverses detected direction', async ({ omni }) => {
         const translate = await omni.translate()
         const result = await omni.api.triggerSelection('hello world')
@@ -51,5 +63,24 @@ test.describe('@ui translate language area', () => {
         } finally {
             await omni.stop()
         }
+    })
+
+    test('user changes languages and retranslates with the new direction', async ({ omni }) => {
+        const translate = await omni.translate()
+
+        await translate.selectSourceLanguage('en')
+        await expect(translate.sourceLanguage()).toContainText('英文')
+        await translate.typeSource('hello world')
+        await translate.clickTranslate()
+        await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).not.toBe('')
+        const chinese_result = await first_visible_result_text(translate)
+
+        await translate.selectTargetLanguage('ja')
+        await expect(translate.targetLanguage()).toContainText('日本語')
+        await translate.clickTranslate()
+        await expect.poll(async () => {
+            const text = await first_visible_result_text(translate)
+            return text && text !== chinese_result ? text : ''
+        }, { timeout: 45_000 }).not.toBe('')
     })
 })

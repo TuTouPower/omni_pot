@@ -40,6 +40,8 @@ const BING_LANG_MAP: Record<string, string> = {
 }
 
 interface BingPageConfig {
+  baseUrl: string
+  pageUrl: string
   ig: string
   iid: string
   key: string
@@ -49,9 +51,13 @@ interface BingPageConfig {
 let cachedConfig: BingPageConfig | null = null
 let configExpiresAt = 0
 
+const BING_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0'
+}
+
 async function getPageConfig(): Promise<BingPageConfig> {
   if (cachedConfig && Date.now() < configExpiresAt) return cachedConfig
-  const resp = await fetch('https://www.bing.com/translator')
+  const resp = await fetch('https://www.bing.com/translator', { headers: BING_HEADERS })
   const html = await resp.text()
   const ig_match = html.match(/IG:"([^"]+)"/)
   const iid_match = html.match(/data-iid="([^"]+)"/)
@@ -61,7 +67,8 @@ async function getPageConfig(): Promise<BingPageConfig> {
   if (!ig_match || !iid_match || !token_match) {
     throw new Error('Failed to get Bing page config')
   }
-  cachedConfig = { ig: ig_match[1], iid: iid_match[1], key: token_match[1], token: token_match[2] }
+  const baseUrl = new URL(resp.url).origin
+  cachedConfig = { baseUrl, pageUrl: resp.url, ig: ig_match[1], iid: iid_match[1], key: token_match[1], token: token_match[2] }
   configExpiresAt = Date.now() + 5 * 60 * 1000
   return cachedConfig
 }
@@ -77,18 +84,18 @@ export const bingService: TranslateService = {
     to: LanguageCode,
     _config: ServiceConfig
   ): Promise<string> {
-    const { ig, iid, key, token } = await getPageConfig()
+    const { baseUrl, pageUrl, ig, iid, key, token } = await getPageConfig()
     const fromLang = BING_LANG_MAP[from] ?? from
     const toLang = BING_LANG_MAP[to] ?? to
 
-    const url = `https://www.bing.com/ttranslatev3?isVertical=1&IG=${ig}&IID=${iid}`
+    const url = `${baseUrl}/ttranslatev3?isVertical=1&IG=${ig}&IID=${iid}`
     const resp = await fetch(url, {
       method: 'POST',
       headers: {
+        ...BING_HEADERS,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Referer': 'https://www.bing.com/translator',
-        'Origin': 'https://www.bing.com',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0'
+        'Referer': pageUrl,
+        'Origin': baseUrl
       },
       body: new URLSearchParams({
         fromLang,

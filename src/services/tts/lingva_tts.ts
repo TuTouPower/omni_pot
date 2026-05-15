@@ -33,21 +33,41 @@ export const lingvaTtsService: TtsService = {
         language: LanguageCode,
         config: Record<string, unknown>
     ): Promise<ArrayBuffer> {
-        let request_path = (config.requestPath as string) || 'https://lingva.pot-app.com'
+        const configured_request_path = config.requestPath
+        let request_path = typeof configured_request_path === 'string' && configured_request_path
+            ? configured_request_path
+            : 'https://lingva.lunar.icu'
         if (request_path.endsWith('/')) {
             request_path = request_path.slice(0, -1)
         }
 
         const lang = map_lang(language)
         const encoded_text = encodeURIComponent(text)
-        const url = `${request_path}/api/v2/audio/${lang}/${encoded_text}`
+        const url = `${request_path}/api/v1/audio/${lang}/${encoded_text}`
 
         const resp = await fetch(url)
         if (!resp.ok) {
             throw new Error(`Lingva TTS API error: ${resp.status}`)
         }
 
-        return resp.arrayBuffer()
+        const content_type = resp.headers.get('content-type') ?? ''
+        if (content_type.includes('application/json')) {
+            const data = await resp.json() as unknown
+            if (typeof data === 'object' && data !== null && 'error' in data) {
+                throw new Error(`Lingva TTS error: ${String(data.error)}`)
+            }
+            const audio = typeof data === 'object' && data !== null && 'audio' in data ? data.audio : undefined
+            if (!Array.isArray(audio) || audio.length === 0 || !audio.every((value) => Number.isInteger(value) && value >= 0 && value <= 255)) {
+                throw new Error('Lingva TTS returned invalid audio')
+            }
+            return new Uint8Array(audio).buffer
+        }
+
+        const audio_buffer = await resp.arrayBuffer()
+        if (audio_buffer.byteLength === 0) {
+            throw new Error('Lingva TTS returned empty audio')
+        }
+        return audio_buffer
     },
 
     async testConfig(config: Record<string, unknown>): Promise<boolean> {

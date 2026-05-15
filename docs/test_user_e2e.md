@@ -229,8 +229,10 @@ class TranslatePage {
 已落地的基础选择器：
 
 - 翻译：`titlebar-pin`、`titlebar-close`、`titlebar-mode`、`titlebar-wordmark`、
-  `source-input`、`source-translate-btn`、`source-clear-btn`、`source-newline-btn`、
-  `source-copy-btn`、`detected-lang`、`lang-source`、`lang-target`、`lang-swap`、
+  `titlebar`、`source-input`、`source-translate-btn`、`source-clear-btn`、
+  `source-newline-btn`、`source-copy-btn`、`source-tts-btn`、`detected-lang`、
+  `lang-source`、`lang-source-button`、`lang-source-option-{code}`、`lang-target`、
+  `lang-target-button`、`lang-target-option-{code}`、`lang-swap`、
   结果卡片 `result-card` / `result-tts` / `result-copy` / `result-collect` /
   `result-collapse` / `result-retry` / `result-body` / `result-error`，以及
   `data-result-key` / `data-result-content` / `data-result-error`
@@ -243,9 +245,9 @@ class TranslatePage {
   `cfg-{key}`、服务项 `svc-item`、`svc-add-btn`、`svc-delete`、`svc-drag-handle`
 - 更新器：`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
-当前 UI 尚未实现的控件不预埋选择器：翻译源文本朗读 `source-tts-btn`、词典收藏
-`dict-collect`、词典朗读 `dict-tts`、服务启停 `svc-toggle`、服务编辑 `svc-edit`。
-后续实现这些用户功能时，同步补选择器与对应用户路径 spec。
+当前 UI 尚未实现的控件不预埋选择器：词典收藏 `dict-collect`、词典朗读 `dict-tts`、
+服务启停 `svc-toggle`、服务编辑 `svc-edit`。后续实现这些用户功能时，同步补选择器
+与对应用户路径 spec。
 
 **(b) E2E HTTP 端点扩充**（`electron/server/index.ts`，仅 `OMNI_POT_E2E` +
 `OMNI_POT_E2E_TOKEN` 匹配时启用）：
@@ -316,7 +318,7 @@ class TranslatePage {
 - **点击翻译按钮** → 触发翻译、产出结果卡片（issue #5）
 - 翻译按钮只有翻译符号、无“翻译”文字、无独立背景，颜色为主色
 - 点击去除换行 → 源文本换行被规范化
-- 点击朗读 → 触发 TTS，无异常
+- 点击朗读 → 配置真实 Lingva TTS 服务后触发合成，按钮进入播放态；再次点击停止播放；清空原文会停止朗读
 - 点击复制原文 → `readClipboard()` 等于源文本
 - 点击清空 → 源文本清空；源文本为空时清空按钮禁用
 - 键盘：`Enter` 翻译、`Shift+Enter` 换行、`Escape` 关闭
@@ -486,7 +488,7 @@ class TranslatePage {
 
 - 禁止裸 `setTimeout` 当“等渲染”。一律用 `waitForSelector` / `waitForText` /
   `waitFor(condition)` 显式等待条件。
-- 超时分级：UI 渲染 5s；本地操作 8s；网络翻译 45s；OCR 60s。
+- 超时分级：UI 渲染 5s；本地操作 8s；网络翻译 45s；TTS 合成 60s；OCR 60s。
 - flaky 来源（截图、OCR、网络服务）用 `retry(fn, 3)` 包装，并打印每次失败原因。
 
 ### 6.3 隔离

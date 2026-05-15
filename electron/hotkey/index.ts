@@ -5,6 +5,7 @@ import { getConfig, setConfig } from '../config/store'
 import type { ConfigKey } from '@shared/types/config'
 import { start_screenshot_capture } from '../screenshot'
 import { get_translate_window_options } from '../windows/translate_options'
+import { readSelectedText } from '../selection'
 
 let windowManager: WindowManager | null = null
 
@@ -54,7 +55,6 @@ async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
         return
     }
 
-    const { readSelectedText } = await import('../selection')
     const result = await readSelectedText()
 
     if (!result.text.trim()) {
@@ -73,7 +73,6 @@ async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
         return
     }
 
-    const { readSelectedText } = await import('../selection')
     const result = await readSelectedText()
 
     if (!result.text.trim()) {
