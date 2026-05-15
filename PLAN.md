@@ -28,10 +28,10 @@
 
 ### P1: P0 守护已知 bug 的 spec
 
-- [ ] `translate_titlebar.spec.ts` — issues #4 #8（已建初版，仍需补齐布局/拖拽断言）
-- [ ] `translate_source_area.spec.ts` — issue #5（已建初版，仍需补齐键盘/IME/朗读断言）
-- [ ] `translate_language_area.spec.ts` — issues #6 #7（已建初版，仍需补齐语言选择与重译断言）
-- [ ] `translate_core.spec.ts` — issue #3（已建初版，仍需补齐全部免费翻译服务用例）
+- [X] `translate_titlebar.spec.ts` — issues #4 #8（补齐布局顺序、模式标签样式、拖拽/按钮 no-drag 断言）
+- [X] `translate_source_area.spec.ts` — issue #5（补齐键盘、IME、朗读、复制/清空、真实翻译断言）
+- [X] `translate_language_area.spec.ts` — issues #6 #7（补齐语言选择、检测语言反转与重译断言）
+- [X] `translate_core.spec.ts` — issue #3（补齐全部免费翻译服务真实结果用例）
 
 ### P1: 核心窗口 spec
 

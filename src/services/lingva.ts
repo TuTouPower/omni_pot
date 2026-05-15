@@ -34,13 +34,16 @@ export const lingvaService: TranslateService = {
         to: LanguageCode,
         config: ServiceConfig
     ): Promise<string> {
-        let request_path = (config.requestPath as string) || 'https://lingva.ml'
+        const configured_request_path = config.requestPath
+        let request_path = typeof configured_request_path === 'string' && configured_request_path
+            ? configured_request_path
+            : 'https://lingva.lunar.icu'
         if (request_path.endsWith('/')) {
             request_path = request_path.slice(0, -1)
         }
 
         const encoded_text = encodeURIComponent(text)
-        const url = `${request_path}/api/v2/${map_lang(from)}/${map_lang(to)}/${encoded_text}`
+        const url = `${request_path}/api/v1/${map_lang(from)}/${map_lang(to)}/${encoded_text}`
 
         const resp = await fetch(url)
         if (!resp.ok) {

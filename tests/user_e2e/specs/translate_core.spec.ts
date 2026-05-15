@@ -1,6 +1,25 @@
 import { test, expect } from '../fixtures/test'
+import { AppFixture } from '../fixtures/app_fixture'
+
+const free_service_list = [
+    'bing@default',
+    'google@default',
+    'deepl@default',
+    'mymemory@default',
+    'lingva@default',
+]
+
+const free_service_instances = {
+    'bing@default': { serviceKey: 'bing', config: {} },
+    'google@default': { serviceKey: 'google', config: {} },
+    'deepl@default': { serviceKey: 'deepl', config: { type: 'deeplx_free' } },
+    'mymemory@default': { serviceKey: 'mymemory', config: {} },
+    'lingva@default': { serviceKey: 'lingva', config: {} },
+}
 
 test.describe('@core translate core', () => {
+    test.describe.configure({ retries: 2 })
+
     test('selection translate action fills source text and shows a real result body', async ({ omni }) => {
         const translate = await omni.translate()
         const result = await omni.api.triggerSelection('hello world')
@@ -33,5 +52,34 @@ test.describe('@core translate core', () => {
             }
             return false
         }, { timeout: 45_000 }).toBe(true)
+    })
+
+    test('all free translation services return visible user results', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                translate_service_list: free_service_list,
+                service_instances: free_service_instances,
+            },
+        })
+
+        try {
+            const translate = await omni.translate()
+            await translate.typeSource('hello world')
+            await translate.clickTranslate()
+
+            await translate.waitForResultCount(free_service_list.length, 60_000)
+            await translate.waitAllResults(60_000)
+
+            for (const instanceKey of free_service_list) {
+                await expect(translate.resultCard(instanceKey)).toBeVisible()
+                await expect(translate.resultCard(instanceKey).getByTestId('result-error')).toHaveCount(0)
+                await expect.poll(async () => {
+                    const text = await translate.getResultText(instanceKey)
+                    return text?.trim() ?? ''
+                }, { timeout: 60_000 }).not.toBe('')
+            }
+        } finally {
+            await omni.stop()
+        }
     })
 })

@@ -7,6 +7,10 @@ import { LANGUAGE_NAMES } from '@shared/types/language'
 
 interface SourceAreaProps {
     onTranslate: () => void
+    onTts?: () => void
+    ttsAvailable?: boolean
+    ttsBusy?: boolean
+    ttsPlaying?: boolean
     onDetectedLanguageClick?: () => void
     inputRef?: React.RefObject<HTMLTextAreaElement | null>
 }
@@ -58,7 +62,7 @@ function cycle_variable_name(text: string): string {
     return apply_format(words, next)
 }
 
-export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: SourceAreaProps): React.ReactElement | null {
+export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy = false, ttsPlaying = false, onDetectedLanguageClick, inputRef }: SourceAreaProps): React.ReactElement | null {
     const { t } = useTranslation()
     const sourceText = useTranslateStore((s) => s.sourceText)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
@@ -70,6 +74,7 @@ export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: S
 
     const internalRef = useRef<HTMLTextAreaElement>(null)
     const textAreaRef = inputRef ?? internalRef
+    const isComposingRef = useRef(false)
 
     const handleVariableCycle = useCallback(() => {
         const textarea = textAreaRef.current
@@ -85,7 +90,8 @@ export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: S
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
-            if (e.nativeEvent.isComposing) return
+            const nativeEvent = e.nativeEvent as KeyboardEvent & { keyCode?: number; which?: number }
+            if (isComposingRef.current || nativeEvent.isComposing || nativeEvent.keyCode === 229 || nativeEvent.which === 229) return
             if (e.key === 'U' && e.altKey && e.shiftKey) {
                 e.preventDefault()
                 handleVariableCycle()
@@ -100,7 +106,7 @@ export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: S
     )
 
     const handleCopy = useCallback(() => {
-        navigator.clipboard.writeText(sourceText)
+        void navigator.clipboard.writeText(sourceText).catch(() => undefined)
     }, [sourceText])
 
     const handleDeleteNewline = useCallback(() => {
@@ -130,6 +136,8 @@ export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: S
                     ref={textAreaRef}
                     value={sourceText}
                     onChange={(e) => setSourceText(e.target.value)}
+                    onCompositionStart={() => { isComposingRef.current = true }}
+                    onCompositionEnd={() => { isComposingRef.current = false }}
                     onKeyDown={handleKeyDown}
                     placeholder={t('source_placeholder')}
                     data-testid="source-input"
@@ -144,7 +152,7 @@ export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: S
                         resize: 'none',
                         fontFamily: 'inherit',
                     }}
-                    rows={3}
+                    rows={8}
                 />
             </div>
             {/* Action bar */}
@@ -163,10 +171,21 @@ export function SourceArea({ onTranslate, onDetectedLanguageClick, inputRef }: S
                 <button className="ic-btn" title={t('delete_newline') || '去除换行'} data-testid="source-newline-btn" onClick={handleDeleteNewline}>
                     <Icons.Newline size={16} />
                 </button>
+                <button
+                    className="ic-btn"
+                    title={ttsBusy ? '取消朗读' : (ttsPlaying ? '停止朗读' : '朗读')}
+                    data-testid="source-tts-btn"
+                    aria-pressed={ttsPlaying}
+                    onClick={onTts}
+                    disabled={!ttsAvailable || (!sourceText.trim() && !ttsBusy && !ttsPlaying)}
+                    style={{ color: ttsPlaying ? 'var(--brand-primary)' : undefined }}
+                >
+                    <Icons.Volume size={16} />
+                </button>
                 <button className="ic-btn" title={t('copy') || '复制原文'} data-testid="source-copy-btn" onClick={handleCopy}>
                     <Icons.Copy size={16} />
                 </button>
-                <button className="ic-btn" title={t('clear') || '清空'} data-testid="source-clear-btn" onClick={handleClear}>
+                <button className="ic-btn" title={t('clear') || '清空'} data-testid="source-clear-btn" onClick={handleClear} disabled={!sourceText.trim()}>
                     <Icons.Trash size={16} />
                 </button>
                 <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={() => onTranslate()} style={{ color: 'var(--brand-primary)' }}>

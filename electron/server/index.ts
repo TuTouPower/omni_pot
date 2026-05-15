@@ -7,6 +7,7 @@ import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action } from '../tray'
+import { readSelectedText } from '../selection'
 
 const DICT_OPTS = {
     label: WindowLabel.DICT,
@@ -209,7 +210,6 @@ function handleTriggerSelection(
 
                 // If no injected text, read from OS
                 if (textToUse === null) {
-                    const { readSelectedText } = await import('../selection')
                     const result = await readSelectedText()
                     if (!result.text.trim()) {
                         res.writeHead(200)

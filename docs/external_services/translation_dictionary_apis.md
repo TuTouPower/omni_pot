@@ -139,8 +139,8 @@ curl "https://api.datamuse.com/words?ml=ringing+in+the+ears&max=5"
 *   **请求方式**：`GET`
 *   **接口格式**：`/api/v1/:source/:target/:query`
 *   **测试示例**：
-    `GET [https://lingva.ml/api/v1/auto/zh/hello](https://lingva.ml/api/v1/auto/zh/hello)`
-    *(将自动识别的语言翻译为中文 zh)*
+    `GET https://lingva.lunar.icu/api/v1/auto/zh/hello`
+    *(将自动识别的语言翻译为中文 zh；`lingva.ml` 当前可能返回 Cloudflare/403，不作为默认实例)*
 *   **项目地址**：[GitHub - lingva-translate](https://github.com/thedaviddelta/lingva-translate)
 
 #### 2. LibreTranslate (公共实例节点)
