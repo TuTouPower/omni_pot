@@ -2,11 +2,12 @@ import { app, Menu, session } from 'electron'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { attach_translate_resize_persistence, get_translate_window_options } from './windows/translate_options'
-import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config } from './config/store'
+import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config, getUserDataDir } from './config/store'
+import { initLog, log } from './log'
 
-const debug = (...args: unknown[]) => { console.log('[main]', ...args); }
+const log_main = log.scope('main')
 
-debug('starting...')
+log_main.info('starting...')
 import { createTray, setWindowManagerForTray } from './tray'
 import {
   setWindowManagerForHotkey,
@@ -78,11 +79,12 @@ if (!gotLock) {
       callback(false)
     })
 
-    debug('initializing config store...')
+    log_main.info('initializing config store...')
     initConfigStore()
-    debug('config store initialized, isFirstRun=%s', isFirstRun())
+    initLog(getUserDataDir())
+    log_main.info('config store initialized, isFirstRun=%s', isFirstRun())
 
-    debug('creating window manager...')
+    log_main.info('creating window manager...')
     const manager = new WindowManager()
     windowManager = manager
 
@@ -90,7 +92,7 @@ if (!gotLock) {
     setWindowManagerForHotkey(manager)
 
     registerConfigHandlers()
-    debug('IPC handlers: config registered')
+    log_main.info('IPC handlers: config registered')
     registerWindowHandlers(manager)
     registerHotkeyHandlers(manager)
     registerShellHandlers()
@@ -99,37 +101,37 @@ if (!gotLock) {
     registerHistoryHandlers()
     registerBackupHandlers()
     registerDictHandlers()
-    debug('IPC handlers: all registered')
+    log_main.info('IPC handlers: all registered')
 
-    debug('creating tray...')
+    log_main.info('creating tray...')
     createTray()
-    debug('tray created')
+    log_main.info('tray created')
 
     registerGlobalShortcutsFromConfig()
-    debug('global shortcuts registered')
+    log_main.info('global shortcuts registered')
 
-    debug('starting HTTP server...')
+    log_main.info('starting HTTP server...')
     const startHttpServer = async (retries = 5): Promise<void> => {
       for (let i = 0; i < retries; i++) {
         try {
           await startServer(manager)
-          debug('HTTP server started')
+          log_main.info('HTTP server started')
           return
         } catch (err: unknown) {
           const code = (err as NodeJS.ErrnoException).code
           if (code === 'EADDRINUSE' && i < retries - 1) {
-            debug('HTTP server port in use, retrying in 3s (%d/%d)...', i + 1, retries)
+            log_main.info('HTTP server port in use, retrying in 3s (%d/%d)...', i + 1, retries)
             await new Promise(r => setTimeout(r, 3000))
           } else {
-            debug('HTTP server failed:', err)
+            log_main.info('HTTP server failed:', err)
           }
         }
       }
     }
-    startHttpServer().catch(console.error)
+    startHttpServer().catch((err: unknown) => { log_main.error(err) })
 
     applyProxy()
-    debug('proxy applied')
+    log_main.info('proxy applied')
 
     if (getConfig('clipboard_monitor')) {
       startClipboardMonitor(manager)
@@ -161,16 +163,16 @@ if (!gotLock) {
       commitFirstRun()
     }
 
-    checkForUpdate(manager).catch(console.error)
+    checkForUpdate(manager).catch((err: unknown) => { log_main.error(err) })
 
     auto_import_if_needed().catch((err: unknown) => {
-      debug('CC-CEDICT auto-import failed:', err)
+      log_main.info('CC-CEDICT auto-import failed:', err)
     })
     } catch (err) {
-      console.error('[main] Init error:', err)
+      log_main.error('Init error:', err)
     }
-    debug('startup complete')
-  }).catch(console.error)
+    log_main.info('startup complete')
+  }).catch((err: unknown) => { log_main.error(err) })
 
   // Don't quit - Pot is tray-resident; user quits via tray menu
   app.on('window-all-closed', () => {

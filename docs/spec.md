@@ -496,6 +496,23 @@ renderer: useConfigStore
         → renderer: config.onChange() → zustand store 更新
 ```
 
+### 9.12 日志系统
+
+**文件**: `electron/log.ts`
+
+基于 `electron-log` v5，所有主进程日志写入文件，打包后无需终端即可排查问题。
+
+| 项目 | 说明 |
+|---|---|
+| 日志文件 | `userData/logs/main.log`（Windows: `%APPDATA%/omni_pot/logs/main.log`） |
+| 轮转策略 | 单文件最大 5MB，超限自动归档为 `main.old.log` |
+| 全局异常 | `uncaughtException`、`unhandledRejection`、`render-process-gone` 自动捕获 |
+| Renderer 日志 | 通过 `webContents.on('console-message')` 间接写入主进程日志 |
+| 关于页面 | 显示真实日志目录路径（通过 `log:getDir` IPC 获取） |
+| 隐私策略 | 翻译原文/OCR 图片可记录；API key 仅记录前 4 + 后 4 字符 |
+
+各模块通过 `log.scope('模块名')` 创建带前缀的 logger（如 `[main]`、`[wm]`、`[server]`）。
+
 ---
 
 ## 10. 窗口: 更新器

@@ -13,6 +13,9 @@ const api: Omit<ElectronAPI, 'ready'> = {
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
   },
+  log: {
+    getDir: () => ipcRenderer.invoke('log:getDir')
+  },
   config: {
     get: (key) => ipcRenderer.invoke('config:get', key),
     set: (key, value) => ipcRenderer.invoke('config:set', key, value),

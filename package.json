@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "dist": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder -c.win.signAndEditExecutable=false",
     "dist:dir": "npm run build && electron-builder --dir -c.win.signAndEditExecutable=false",
     "postinstall": "electron-builder install-app-deps",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
@@ -29,6 +29,7 @@
     "@heroui/theme": "^2.4.26",
     "@rollup/rollup-win32-x64-msvc": "^4.60.3",
     "better-sqlite3": "^12.9.0",
+    "electron-log": "^5.4.4",
     "framer-motion": "^12.38.0",
     "i18next": "^26.0.8",
     "jsqr": "^1.4.0",
@@ -76,7 +77,8 @@
     "npmRebuild": true,
     "win": {
       "target": [
-        "nsis"
+        "nsis",
+        "portable"
       ]
     },
     "nsis": {

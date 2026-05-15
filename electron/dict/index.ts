@@ -4,6 +4,9 @@ import { existsSync, createReadStream } from 'fs'
 import { createGunzip } from 'zlib'
 import Database from 'better-sqlite3'
 import { getUserDataDir } from '../config/store'
+import { log } from '../log'
+
+const log_dict = log.scope('dict')
 
 let db: Database.Database | undefined
 
@@ -110,7 +113,7 @@ export async function auto_import_if_needed(): Promise<void> {
 
     const text = await read_gzip_file(bundled)
     const count = import_from_text(text)
-    console.log(`[dict] imported ${String(count)} CC-CEDICT entries from bundled file`)
+    log_dict.info('imported %d CC-CEDICT entries from bundled file', count)
 }
 
 export function is_ready(): boolean {

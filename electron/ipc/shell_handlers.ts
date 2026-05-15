@@ -1,4 +1,6 @@
 import { ipcMain, shell } from 'electron'
+import { getUserDataDir } from '../config/store'
+import { getLogDir } from '../log'
 
 function is_allowed_external_url(value: string): boolean {
     try {
@@ -16,5 +18,9 @@ export function registerShellHandlers(): void {
         if (!is_allowed_external_url(url)) return false
         await shell.openExternal(url)
         return true
+    })
+
+    ipcMain.handle('log:getDir', (): string => {
+        return getLogDir(getUserDataDir())
     })
 }

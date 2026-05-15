@@ -2,6 +2,9 @@ import { app, dialog } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { getConfig } from '../config/store'
+import { log } from '../log'
+
+const log_updater = log.scope('updater')
 
 const REPO_OWNER = 'TuTouPower'
 const REPO_NAME = 'omni_pot'
@@ -47,7 +50,7 @@ export async function checkForUpdate(manager: WindowManager, silent = true): Pro
                     type: 'info',
                     title: 'No Updates',
                     message: `You are already on the latest version (${current_version}).`
-                }).catch(console.error)
+                }).catch((err: unknown) => { log_updater.error(err) })
             }
             return
         }

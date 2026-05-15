@@ -4,6 +4,9 @@ import { existsSync } from 'fs'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
 import { getConfig } from '../config/store'
+import { log } from '../log'
+
+const log_wm = log.scope('wm')
 
 function resolveIconPath(): string {
   const candidates = [
@@ -26,7 +29,7 @@ export class WindowManager {
   constructor() {
     // Listen for renderer-ready signals
     ipcMain.on('renderer:ready', (_event, label: WindowLabel) => {
-      console.log('[wm] renderer ready:', label)
+      log_wm.info('renderer ready:', label)
       this.readyLabels.add(label)
       // Flush any queued messages
       const queue = this.pendingQueue.get(label)
@@ -43,7 +46,7 @@ export class WindowManager {
   }
 
   createWindow(opts: WindowOptions): BrowserWindow {
-    console.log('[wm] createWindow:', opts.label, `${String(opts.width)}x${String(opts.height)}`)
+    log_wm.info('createWindow:', opts.label, `${String(opts.width)}x${String(opts.height)}`)
     const existing = this.byLabel.get(opts.label)
     if (existing && !existing.isDestroyed()) {
       existing.focus()
@@ -93,7 +96,7 @@ export class WindowManager {
       // Block all navigation to external URLs; app uses hash-based routing
       const allowed = url.startsWith('file:') || url.startsWith('devtools:')
       if (!allowed) {
-        console.warn('[wm] blocked navigation:', url)
+        log_wm.warn('blocked navigation:', url)
         event.preventDefault()
       }
     })
@@ -106,24 +109,24 @@ export class WindowManager {
 
     win.webContents.on('console-message', (_event, level, message) => {
       const tag = `[renderer:${opts.label}]`
-      if (level === 3) console.error(tag, message)
-      else if (level === 2) console.warn(tag, message)
-      else console.log(tag, message)
+      if (level === 3) log_wm.error(tag, message)
+      else if (level === 2) log_wm.warn(tag, message)
+      else log_wm.info(tag, message)
     })
 
     if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
       const url = `${process.env['ELECTRON_RENDERER_URL']}#${opts.label}`
-      console.log('[wm] loading URL:', url)
-      win.loadURL(url).catch(console.error)
+      log_wm.info('loading URL:', url)
+      win.loadURL(url).catch((err: unknown) => { log_wm.error(err) })
       // win.webContents.openDevTools({ mode: 'detach' })
     } else {
       win.loadFile(join(__dirname, '../renderer/index.html'), {
         hash: opts.label
-      }).catch(console.error)
+      }).catch((err: unknown) => { log_wm.error(err) })
     }
 
     win.on('closed', () => {
-      console.log('[wm] window closed:', opts.label)
+      log_wm.info('window closed:', opts.label)
       this.byLabel.delete(opts.label)
       this.labelById.delete(win.id)
       this.readyLabels.delete(opts.label)
@@ -184,7 +187,7 @@ export class WindowManager {
       win.webContents.send(channel, ...args)
     } else {
       // Page loaded but renderer not ready — queue
-      console.log('[wm] sendWhenReady: queuing %s for %s (renderer not ready)', channel, label)
+      log_wm.info('sendWhenReady: queuing %s for %s (renderer not ready)', channel, label)
       const queue = this.pendingQueue.get(label) ?? []
       queue.push({ channel, args })
       this.pendingQueue.set(label, queue)
