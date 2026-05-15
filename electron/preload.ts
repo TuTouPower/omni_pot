@@ -10,6 +10,9 @@ const api: Omit<ElectronAPI, 'ready'> = {
     setAlwaysOnTop: (flag) => ipcRenderer.invoke('window:setAlwaysOnTop', flag),
     getLabel: () => ipcRenderer.invoke('window:getLabel')
   },
+  shell: {
+    openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
+  },
   config: {
     get: (key) => ipcRenderer.invoke('config:get', key),
     set: (key, value) => ipcRenderer.invoke('config:set', key, value),

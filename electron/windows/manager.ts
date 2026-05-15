@@ -77,6 +77,8 @@ export class WindowManager {
       }
     })
 
+    win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+
     win.webContents.on('console-message', (_event, level, message) => {
       const tag = `[renderer:${opts.label}]`
       if (level === 3) console.error(tag, message)

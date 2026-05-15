@@ -77,6 +77,12 @@ function svcLabel(name: string): string {
     return (SVC_META[name] || {}).name || name
 }
 
+function result_to_text(result: string | DictResult | null | undefined): string {
+    if (typeof result === 'string') return result
+    if (!result) return ''
+    return result.definitions.map((d) => `${d.partOfSpeech} ${d.meanings.join('; ')}`).join('\n')
+}
+
 interface SortableCardProps {
     instanceKey: string
     results: Record<string, string | DictResult | null | undefined>
@@ -111,14 +117,16 @@ function SortableCard({
     }
 
     const result = results[instanceKey]
+    const result_text = result_to_text(result)
     const isStreaming = results[instanceKey] !== undefined && results[instanceKey] !== null && typeof results[instanceKey] === 'string'
+    const is_collected = collectedKeys.has(instanceKey)
 
     return (
         <div ref={setNodeRef} style={style}>
             <div className="card" data-testid="result-card" data-result-key={instanceKey} style={{ padding: '10px 12px' }}>
                 {/* Header row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--text-mute)' }}>
+                    <span data-testid="result-drag" {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--text-mute)' }}>
                         <Icons.Drag size={14} />
                     </span>
                     <SvcTile name={serviceKey} />
@@ -130,22 +138,27 @@ function SortableCard({
                         </span>
                     )}
                     <div style={{ flex: 1 }} />
-                    <button data-testid="result-tts" className="ic-btn" title="朗读" onClick={() => {
-                        const r = results[instanceKey]
-                        if (typeof r === 'string') onTts(r, instanceKey)
+                    <button data-testid="result-tts" className="ic-btn" title="朗读" disabled={!ttsAvailable || !result_text} onClick={() => {
+                        if (result_text) onTts(result_text, instanceKey)
                     }}>
                         <Icons.Volume size={16} />
                     </button>
-                    <button data-testid="result-copy" className="ic-btn" title="复制" onClick={() => {
-                        const r = results[instanceKey]
-                        if (typeof r === 'string') onCopy(r)
+                    <button data-testid="result-copy" className="ic-btn" title="复制" disabled={!result_text} onClick={() => {
+                        if (result_text) onCopy(result_text)
                     }}>
                         <Icons.Copy size={16} />
                     </button>
-                    <button data-testid="result-collect" className="ic-btn" title="收藏" onClick={() => onCollect(instanceKey)}>
-                        <Icons.Heart size={16} />
+                    <button
+                        data-testid="result-collect"
+                        className="ic-btn"
+                        title="收藏"
+                        aria-pressed={is_collected}
+                        onClick={() => onCollect(instanceKey)}
+                        style={{ color: is_collected ? 'var(--brand-primary)' : undefined }}
+                    >
+                        <Icons.Heart size={16} fill={is_collected} />
                     </button>
-                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? '展开' : '收起'} onClick={() => onToggleCollapse(instanceKey)}>
+                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? '展开' : '收起'} aria-expanded={!collapsed} onClick={() => onToggleCollapse(instanceKey)}>
                         <Icons.Chev size={17} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
                     </button>
                 </div>
@@ -231,7 +244,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     }, [])
 
     const handleCopy = useCallback((text: string) => {
-        navigator.clipboard.writeText(text)
+        void navigator.clipboard.writeText(text).catch(() => undefined)
     }, [])
 
     const handleReverseTranslate = useCallback((text: string) => {

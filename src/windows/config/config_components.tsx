@@ -47,8 +47,17 @@ export function ConfigSwitch({ on, onChange, testId }: {
     return (
         <div
             data-testid={testId}
+            role="switch"
+            aria-checked={on}
+            tabIndex={0}
             className={'switch' + (on ? ' on' : '')}
             onClick={() => onChange && onChange(!on)}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onChange && onChange(!on)
+                }
+            }}
         />
     )
 }
@@ -108,6 +117,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
                     {options.map((o) => (
                         <div
                             key={o.value}
+                            data-testid={testId ? `${testId}-option-${o.value}` : undefined}
                             onClick={(e) => {
                                 e.stopPropagation()
                                 onChange && onChange(o.value)

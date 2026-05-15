@@ -35,10 +35,10 @@
 
 ### P1: 核心窗口 spec
 
-- [ ] `translate_result_cards.spec.ts`
-- [ ] `dict_window.spec.ts`
-- [ ] `recognize_window.spec.ts`
-- [ ] `config_settings.spec.ts`
+- [X] `translate_result_cards.spec.ts`
+- [X] `dict_window.spec.ts`
+- [X] `recognize_window.spec.ts`
+- [X] `config_settings.spec.ts`
 
 ### P2: 行为与管理类 spec
 

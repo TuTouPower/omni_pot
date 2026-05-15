@@ -3,17 +3,90 @@ import type { Page, Locator } from '@playwright/test'
 export class DictPage {
     constructor(private page: Page) {}
 
+    wordmark(): Locator {
+        return this.page.getByTestId('titlebar-wordmark')
+    }
+
+    modeLabel(): Locator {
+        return this.page.getByTestId('titlebar-mode')
+    }
+
+    pinButton(): Locator {
+        return this.page.getByTestId('titlebar-pin')
+    }
+
+    closeButton(): Locator {
+        return this.page.getByTestId('titlebar-close')
+    }
+
+    word(): Locator {
+        return this.page.getByTestId('dict-word')
+    }
+
+    searchInputs(): Locator {
+        return this.page.locator('input, textarea')
+    }
+
+    newlineButtons(): Locator {
+        return this.page.getByTestId('dict-newline-btn')
+    }
+
+    collectButton(): Locator {
+        return this.page.getByTestId('dict-collect-btn')
+    }
+
+    copyButtons(): Locator {
+        return this.page.getByTestId('dict-copy-btn')
+    }
+
+    definitions(): Locator {
+        return this.page.getByTestId('dict-definition')
+    }
+
+    pronunciations(): Locator {
+        return this.page.getByTestId('dict-pronunciation')
+    }
+
+    examples(): Locator {
+        return this.page.getByTestId('dict-example')
+    }
+
+    sourceTags(): Locator {
+        return this.page.getByTestId('dict-source-tag')
+    }
+
     // Titlebar
     clickPin(): Promise<void> {
-        return this.page.getByTestId('titlebar-pin').click()
+        return this.pinButton().click()
     }
 
     clickClose(): Promise<void> {
-        return this.page.getByTestId('titlebar-close').click()
+        return this.closeButton().click()
     }
 
     getModeLabel(): Promise<string | null> {
-        return this.page.getByTestId('titlebar-mode').textContent()
+        return this.modeLabel().textContent()
+    }
+
+    clickCollect(): Promise<void> {
+        return this.collectButton().click()
+    }
+
+    clickFirstCopy(): Promise<void> {
+        return this.copyButtons().first().click()
+    }
+
+    titlebarOrder(): Promise<string[]> {
+        const items = [
+            { name: 'pin', locator: this.pinButton() },
+            { name: 'wordmark', locator: this.wordmark() },
+            { name: 'mode', locator: this.modeLabel() },
+            { name: 'close', locator: this.closeButton() },
+        ]
+        return Promise.all(items.map(async (item) => {
+            const box = await item.locator.boundingBox()
+            return { name: item.name, x: box?.x ?? Number.POSITIVE_INFINITY }
+        })).then((positions) => positions.sort((a, b) => a.x - b.x).map((item) => item.name))
     }
 
     // Dict cards

@@ -21,7 +21,13 @@ interface NavItem {
 export default function ConfigWindow(): React.ReactElement {
     const { t } = useTranslation()
     const [activePage, setActivePage] = useState<ConfigPage>('general')
+    const [alwaysOnTop, setAlwaysOnTop] = useState(false)
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
+    const handlePin = useCallback(async () => {
+        const next = !alwaysOnTop
+        await window.electronAPI.window.setAlwaysOnTop(next)
+        setAlwaysOnTop(next)
+    }, [alwaysOnTop])
 
     const pages: NavItem[] = [
         { key: 'general', label: t('general.title') || '通用', icon: <Icons.Grid size={15} /> },
@@ -61,7 +67,17 @@ export default function ConfigWindow(): React.ReactElement {
                     flexDirection: 'column',
                 }}>
                     <div style={{ height: 38, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div className="op-wordmark">
+                        <button
+                            className="ic-btn"
+                            title="置顶"
+                            data-testid="config-pin"
+                            aria-pressed={alwaysOnTop}
+                            onClick={handlePin}
+                            style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
+                        >
+                            <Icons.Pin size={13} />
+                        </button>
+                        <div className="op-wordmark" data-testid="config-wordmark">
                             <span className="dot" style={{ background: 'var(--brand-primary)' }} />
                             omni_pot
                         </div>
@@ -71,6 +87,7 @@ export default function ConfigWindow(): React.ReactElement {
                             <button
                                 key={n.key}
                                 data-testid={`config-nav-${n.key}`}
+                                aria-current={activePage === n.key ? 'page' : undefined}
                                 onClick={() => setActivePage(n.key)}
                                 style={{
                                     height: 32,
@@ -97,7 +114,7 @@ export default function ConfigWindow(): React.ReactElement {
                         ))}
                     </div>
                     <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
-                        <div className="hint mono" style={{ fontSize: 10.5 }}>v0.1.0</div>
+                        <div className="hint mono" data-testid="config-version" style={{ fontSize: 10.5 }}>v0.1.0</div>
                     </div>
                 </div>
 
@@ -105,7 +122,7 @@ export default function ConfigWindow(): React.ReactElement {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <div style={{ height: 38, display: 'flex', alignItems: 'center', padding: '0 10px 0 14px', gap: 8 }}>
                         <div data-testid="config-title" style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
-                        <span className="hint mono" style={{ marginLeft: 4 }}>/{activePage}</span>
+                        <span className="hint mono" data-testid="config-route" style={{ marginLeft: 4 }}>/{activePage}</span>
                         <div style={{ flex: 1 }} />
                         <button className="ic-btn" title="关闭" data-testid="config-close" onClick={handleClose}>
                             <Icons.Close size={14} />

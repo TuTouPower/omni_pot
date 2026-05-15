@@ -21,6 +21,10 @@ const OCR_META: Record<string, { name: string; mono: string; tone: string }> = {
     qrcode: { name: '二维码', mono: 'QR', tone: 'oklch(50% 0.01 70)' },
 }
 
+function normalize_recognized_text(text: string): string {
+    return text.replace(/-\s+/g, '').replace(/\s+/g, ' ')
+}
+
 function SvcTile({ name, size = 22 }: { name: string; size?: number }): React.ReactElement {
     const m = OCR_META[name] || { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }
     return (
@@ -98,6 +102,8 @@ function PillSelect({
                         bottom: 'calc(100% + 4px)',
                         left: 0,
                         minWidth: '100%',
+                        maxHeight: 240,
+                        overflowY: 'auto',
                         background: 'var(--bg-elev)',
                         border: '1px solid var(--line)',
                         borderRadius: 8,
@@ -110,6 +116,7 @@ function PillSelect({
                     {options.map((o) => (
                         <div
                             key={o.value}
+                            data-testid={testId ? `${testId}-option-${o.value}` : undefined}
                             onClick={() => {
                                 onChange?.(o.value)
                                 setOpen(false)
@@ -187,12 +194,14 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
     }, [open])
 
     const formats = [
-        { value: 'txt', label: '纯文本', ext: '.txt' },
         { value: 'md', label: 'Markdown', ext: '.md' },
+        { value: 'txt', label: '纯文本', ext: '.txt' },
+        { value: 'docx', label: 'Word 文档', ext: '.docx' },
+        { value: 'doc', label: 'Word 97-2003', ext: '.doc' },
     ]
 
     const handle_export = (fmt: string): void => {
-        const ext = fmt === 'md' ? '.md' : '.txt'
+        const ext = formats.find((format) => format.value === fmt)?.ext ?? '.txt'
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
@@ -230,6 +239,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
                     {formats.map((f) => (
                         <div
                             key={f.value}
+                            data-testid={`ocr-export-option-${f.value}`}
                             onClick={() => handle_export(f.value)}
                             style={{
                                 padding: '6px 10px',
@@ -266,11 +276,15 @@ export default function RecognizeWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.ocr.onRecognizeShow((base64, text) => {
+            const next_text = config.recognize_delete_newline ? normalize_recognized_text(text) : text
             setImageBase64(base64)
-            setRecognizedText(text)
+            setRecognizedText(next_text)
+            if (config.recognize_auto_copy && next_text) {
+                void navigator.clipboard.writeText(next_text).catch(() => undefined)
+            }
         })
         return unsub
-    }, [])
+    }, [config.recognize_auto_copy, config.recognize_delete_newline])
 
     useEffect(() => {
         window.electronAPI.ready('recognize')
@@ -329,16 +343,20 @@ export default function RecognizeWindow(): React.ReactElement {
         const instance_config: ServiceConfig = service_instances[instance_key]?.config ?? {}
         try {
             const result = await service.recognize(imageBase64, lang, instance_config)
-            setRecognizedText(result || '')
+            const next_text = config.recognize_delete_newline ? normalize_recognized_text(result || '') : result || ''
+            setRecognizedText(next_text)
+            if (config.recognize_auto_copy && next_text) {
+                await navigator.clipboard.writeText(next_text).catch(() => undefined)
+            }
         } catch {
             // keep existing text on failure
         }
         setIsRecognizing(false)
-    }, [imageBase64, selectedService, selectedLanguage, service_list, service_instances, config.recognize_language])
+    }, [imageBase64, selectedService, selectedLanguage, service_list, service_instances, config.recognize_language, config.recognize_auto_copy, config.recognize_delete_newline])
 
     const handleCopy = useCallback(async () => {
         if (recognizedText) {
-            await navigator.clipboard.writeText(recognizedText)
+            await navigator.clipboard.writeText(recognizedText).catch(() => undefined)
         }
     }, [recognizedText])
 
@@ -349,7 +367,7 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [recognizedText])
 
     const handleDeleteNewline = useCallback(() => {
-        setRecognizedText(recognizedText.replace(/-\s+/g, '').replace(/\s+/g, ' '))
+        setRecognizedText(normalize_recognized_text(recognizedText))
     }, [recognizedText])
 
     const handleDeleteAllSpaces = useCallback(() => {

@@ -14,14 +14,14 @@ export function registerConfigHandlers(): void {
   ipcMain.handle('config:get', (_event, key: ConfigKey) => getConfig(key))
   ipcMain.handle('config:set', (_event, key: ConfigKey, value: unknown) => {
     setConfig(key, value)
-    if (key === 'auto_start') {
+    if (key === 'auto_start' && !process.env['OMNI_POT_E2E']) {
       apply_auto_start(value as boolean)
     }
   })
   ipcMain.handle('config:getAll', () => getAllConfig())
 
   // Apply auto_start on startup
-  if (getConfig('auto_start')) {
+  if (getConfig('auto_start') && !process.env['OMNI_POT_E2E']) {
     apply_auto_start(true)
   }
 }

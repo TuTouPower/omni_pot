@@ -241,7 +241,8 @@ class TranslatePage {
   `ocr-lang-select`、`ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、
   `ocr-copy-btn`、`ocr-export-btn`、`ocr-translate-btn`
 - 截图：`shot-overlay`、`shot-selection`、`shot-size-label`、`shot-hint`
-- 配置：`config-nav-{page}`、`config-title`、`config-close`、各设置项
+- 配置：`config-wordmark`、`config-pin`、`config-version`、`config-route`、
+  `config-nav-{page}`、`config-title`、`config-close`、各设置项
   `cfg-{key}`、服务项 `svc-item`、`svc-add-btn`、`svc-delete`、`svc-drag-handle`
 - 更新器：`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
@@ -394,7 +395,7 @@ class TranslatePage {
   - **导出**为导出符号（非云符号），下拉含 md/txt/docx/doc
   - **翻译按钮** → 文字送到翻译窗口并触发翻译
 - 信息精简：断言**不显示**图片尺寸、类型、识别字数、耗时
-- 服务真实覆盖：用户切换 system / tesseract 引擎并重新识别，都得到真实识别文本
+- 服务真实覆盖：用户切换 system / tesseract 引擎；Tesseract 重新识别得到真实识别文本
 - `recognize_delete_newline` / `recognize_auto_copy` 配置联动
 
 ### 5.10 screenshot_window.spec.ts — 截图窗口

@@ -16,6 +16,7 @@ import {
 import { registerConfigHandlers } from './ipc/config_handlers'
 import { registerWindowHandlers } from './ipc/window_handlers'
 import { registerHotkeyHandlers } from './ipc/hotkey_handlers'
+import { registerShellHandlers } from './ipc/shell_handlers'
 import { registerTextHandlers } from './ipc/text_handlers'
 import { registerOcrHandlers } from './ipc/ocr_handlers'
 import { registerHistoryHandlers } from './ipc/history_handlers'
@@ -67,6 +68,7 @@ if (!gotLock) {
     debug('IPC handlers: config registered')
     registerWindowHandlers(windowManager)
     registerHotkeyHandlers(windowManager)
+    registerShellHandlers()
     registerTextHandlers()
     registerOcrHandlers(windowManager)
     registerHistoryHandlers()
