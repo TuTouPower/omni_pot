@@ -93,7 +93,7 @@ export default function UpdaterWindow(): React.ReactElement {
             <div className="op-titlebar">
                 <button
                     className="ic-btn"
-                    title="置顶"
+                    title={t('pin')}
                     style={{ color: 'var(--text-mute)' }}
                 >
                     <Icons.Pin size={14} />
@@ -102,9 +102,9 @@ export default function UpdaterWindow(): React.ReactElement {
                     <span className="dot" style={{ background: 'var(--brand-primary)' }} />
                     omni_pot
                 </div>
-                <span className="op-mode">· 更新</span>
+                <span className="op-mode">· {t('updater.title')}</span>
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" onClick={handleClose}>
+                <button className="ic-btn" title={t('close')} onClick={handleClose}>
                     <Icons.Close size={14} />
                 </button>
             </div>
@@ -168,7 +168,7 @@ export default function UpdaterWindow(): React.ReactElement {
                         {release.body && (
                             <div className="card" data-testid="updater-changelog" style={{ flex: 1, overflow: 'auto', padding: 14 }}>
                                 <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
-                                    更新日志
+                                    {t('changelog')}
                                 </div>
                                 <div style={{ fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text-dim)' }}>
                                     {release.body}
@@ -180,7 +180,7 @@ export default function UpdaterWindow(): React.ReactElement {
                         {release.assets.length > 0 && (
                             <div className="card" style={{ padding: 10 }}>
                                 <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8, padding: '0 4px' }}>
-                                    下载链接
+                                    {t('downloads') || '下载'}
                                 </div>
                                 {release.assets.map((asset) => (
                                     <a

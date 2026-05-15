@@ -13,6 +13,38 @@ import { get_translate_window_options } from '../windows/translate_options'
 
 let tray: Tray | null = null
 let windowManager: WindowManager | null = null
+let last_tray_menu_labels: string[] = []
+
+type TrayLabelKey = 'input_translate' | 'clipboard_monitor' | 'config' | 'restart' | 'quit'
+
+const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
+  en: {
+    input_translate: 'Input Translate',
+    clipboard_monitor: 'Clipboard Monitor',
+    config: 'Config',
+    restart: 'Restart',
+    quit: 'Quit'
+  },
+  zh_cn: {
+    input_translate: '输入翻译',
+    clipboard_monitor: '剪贴板监听',
+    config: '配置',
+    restart: '重启',
+    quit: '退出'
+  }
+}
+
+function get_tray_labels(): Record<TrayLabelKey, string> {
+  return TRAY_LABELS[getConfig('app_language') === 'zh_cn' ? 'zh_cn' : 'en']
+}
+
+function tray_labels_to_array(labels: Record<TrayLabelKey, string>): string[] {
+  return [labels.input_translate, labels.clipboard_monitor, labels.config, labels.restart, labels.quit]
+}
+
+export function get_tray_menu_labels(): string[] {
+  return last_tray_menu_labels.length > 0 ? last_tray_menu_labels : tray_labels_to_array(get_tray_labels())
+}
 
 export function setWindowManagerForTray(mgr: WindowManager): void {
   windowManager = mgr
@@ -96,19 +128,20 @@ export function createTray(): void {
   rebuildMenu()
 }
 
-function rebuildMenu(): void {
+export function rebuildMenu(): void {
   if (!tray) return
+  const labels = get_tray_labels()
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Input Translate',
+      label: labels.input_translate,
       click: () => {
         trigger_tray_action('input_translate')
       }
     },
     { type: 'separator' },
     {
-      label: 'Clipboard Monitor',
+      label: labels.clipboard_monitor,
       type: 'checkbox',
       checked: isClipboardMonitoring(),
       click: () => {
@@ -117,21 +150,21 @@ function rebuildMenu(): void {
     },
     { type: 'separator' },
     {
-      label: 'Config',
+      label: labels.config,
       click: () => {
         trigger_tray_action('config')
       }
     },
     { type: 'separator' },
     {
-      label: 'Restart',
+      label: labels.restart,
       click: () => {
         app.relaunch()
         app.exit(0)
       }
     },
     {
-      label: 'Quit',
+      label: labels.quit,
       click: () => {
         app.quit()
       }
@@ -139,6 +172,7 @@ function rebuildMenu(): void {
   ])
 
   tray.setContextMenu(contextMenu)
+  last_tray_menu_labels = tray_labels_to_array(labels)
 }
 
 export function destroyTray(): void {

@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
 import { ocrServiceRegistry } from '../../services/registry'
+import { language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
-import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@shared/types/language'
+import { LANGUAGE_CODES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 
@@ -184,6 +185,7 @@ function PillButton({
 
 // Export button with dropdown
 function ExportButton({ text }: { text: string }): React.ReactElement {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
 
     useEffect(() => {
@@ -195,8 +197,8 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
 
     const formats = [
         { value: 'md', label: 'Markdown', ext: '.md' },
-        { value: 'txt', label: '纯文本', ext: '.txt' },
-        { value: 'docx', label: 'Word 文档', ext: '.docx' },
+        { value: 'txt', label: t('recognize.format_text'), ext: '.txt' },
+        { value: 'docx', label: t('recognize.format_word_document'), ext: '.docx' },
         { value: 'doc', label: 'Word 97-2003', ext: '.doc' },
     ]
 
@@ -214,7 +216,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
 
     return (
         <div style={{ position: 'relative' }}>
-            <button className="ic-btn" title="导出" data-testid="ocr-export-btn" onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}>
+            <button className="ic-btn" title={t('recognize.export')} data-testid="ocr-export-btn" onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}>
                 <Icons.Export size={16} />
             </button>
             {open && (
@@ -234,7 +236,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div style={{ padding: '6px 10px', fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                        导出格式
+                        {t('recognize.export_format')}
                     </div>
                     {formats.map((f) => (
                         <div
@@ -315,7 +317,7 @@ export default function RecognizeWindow(): React.ReactElement {
     // Build language options
     const lang_options = LANGUAGE_CODES.map((code) => ({
         value: code,
-        label: LANGUAGE_NAMES[code],
+        label: language_name(t, code),
     }))
 
     const effectiveService = selectedService || service_list[0] || ''
@@ -390,7 +392,7 @@ export default function RecognizeWindow(): React.ReactElement {
             <div className="op-titlebar">
                 <button
                     className="ic-btn"
-                    title="置顶"
+                    title={t('pin')}
                     data-testid="titlebar-pin"
                     onClick={handleTogglePin}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
@@ -401,9 +403,9 @@ export default function RecognizeWindow(): React.ReactElement {
                     <span className="dot" style={{ background: 'var(--brand-primary)' }} />
                     omni_pot
                 </div>
-                <span className="op-mode" data-testid="titlebar-mode">· 识别</span>
+                <span className="op-mode" data-testid="titlebar-mode">· {t('recognize.title')}</span>
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
+                <button className="ic-btn" title={t('close')} data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={14} />
                 </button>
             </div>
@@ -435,7 +437,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         ) : (
                             <div style={{ textAlign: 'center', color: 'var(--text-mute)', fontSize: 13 }}>
                                 <Icons.Image size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
-                                <div>{t('recognize.no_result') || '等待截图…'}</div>
+                                <div>{t('recognize.waiting_screenshot')}</div>
                             </div>
                         )}
                     </div>
@@ -447,7 +449,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         data-testid="ocr-text"
                         value={recognizedText}
                         onChange={(e) => setRecognizedText(e.target.value)}
-                        placeholder={t('recognize.no_result') || '识别结果将显示在此…'}
+                        placeholder={t('recognize.result_placeholder')}
                         style={{
                             flex: 1,
                             padding: '12px 14px',
@@ -496,27 +498,27 @@ export default function RecognizeWindow(): React.ReactElement {
                     ) : (
                         <Icons.Cycle size={14} />
                     )}
-                    label={isRecognizing ? '识别中…' : '重新识别'}
+                    label={isRecognizing ? t('recognize.recognizing') : t('recognize.re_recognize')}
                     onClick={handleRecognize}
                     testId="ocr-reocr-btn"
                 />
 
                 <div style={{ flex: 1 }} />
 
-                <button className="ic-btn" title="去除换行" data-testid="ocr-newline-btn" onClick={handleDeleteNewline} disabled={!recognizedText}>
+                <button className="ic-btn" title={t('recognize.delete_newline')} data-testid="ocr-newline-btn" onClick={handleDeleteNewline} disabled={!recognizedText}>
                     <Icons.Newline size={16} />
                 </button>
-                <button className="ic-btn" title="去除空格" data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
+                <button className="ic-btn" title={t('recognize.delete_spaces')} data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
                     <Icons.Hash size={16} />
                 </button>
-                <button className="ic-btn" title="复制文本" data-testid="ocr-copy-btn" onClick={handleCopy} disabled={!recognizedText}>
+                <button className="ic-btn" title={t('copy')} data-testid="ocr-copy-btn" onClick={handleCopy} disabled={!recognizedText}>
                     <Icons.Copy size={16} />
                 </button>
                 <ExportButton text={recognizedText} />
                 <button
                     className="ic-btn"
                     data-testid="ocr-translate-btn"
-                    title="翻译"
+                    title={t('recognize.translate')}
                     style={{ color: recognizedText ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                     onClick={handleTranslate}
                     disabled={!recognizedText}

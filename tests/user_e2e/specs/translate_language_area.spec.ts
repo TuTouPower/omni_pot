@@ -83,22 +83,35 @@ test.describe('@ui translate language area', () => {
         }
     })
 
-    test('user changes languages and retranslates with the new direction', async ({ omni }) => {
-        const translate = await omni.translate()
+    test('user changes languages and retranslates with the new direction', async () => {
+        const omni = await AppFixture.start({
+            config: language_area_config({
+                translate_service_list: ['lingva@default'],
+                service_instances: {
+                    'lingva@default': { serviceKey: 'lingva', config: { requestPath: 'https://lingva.lunar.icu' } },
+                },
+            }),
+        })
 
-        await translate.selectSourceLanguage('en')
-        await expect(translate.sourceLanguage()).toContainText('英文')
-        await translate.typeSource('hello world')
-        await translate.clickTranslate()
-        await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).not.toBe('')
-        const chinese_result = await first_visible_result_text(translate)
+        try {
+            const translate = await omni.translate()
 
-        await translate.selectTargetLanguage('ja')
-        await expect(translate.targetLanguage()).toContainText('日本語')
-        await translate.clickTranslate()
-        await expect.poll(async () => {
-            const text = await first_visible_result_text(translate)
-            return text && text !== chinese_result ? text : ''
-        }, { timeout: 45_000 }).not.toBe('')
+            await translate.selectSourceLanguage('en')
+            await expect(translate.sourceLanguage()).toContainText('英文')
+            await translate.typeSource('hello world')
+            await translate.clickTranslate()
+            await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).not.toBe('')
+            const chinese_result = await first_visible_result_text(translate)
+
+            await translate.selectTargetLanguage('ja')
+            await expect(translate.targetLanguage()).toContainText('日语')
+            await translate.clickTranslate()
+            await expect.poll(async () => {
+                const text = await first_visible_result_text(translate)
+                return text && text !== chinese_result ? text : ''
+            }, { timeout: 45_000 }).not.toBe('')
+        } finally {
+            await omni.stop()
+        }
     })
 })

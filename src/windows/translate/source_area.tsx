@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfig } from '../../hooks/use_config'
-import { LANGUAGE_NAMES } from '@shared/types/language'
+import { language_name } from '../../i18n/language_names'
 
 interface SourceAreaProps {
     onTranslate: () => void
@@ -161,7 +161,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                         onClick={onDetectedLanguageClick}
                         style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4, background: 'transparent', border: 0, cursor: onDetectedLanguageClick ? 'pointer' : 'default' }}
                     >
-                        检测为 <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{LANGUAGE_NAMES[detectedLanguage] || detectedLanguage}</span>
+                        {t('detected_language_prefix')} <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{language_name(t, detectedLanguage)}</span>
                     </button>
                 )}
                 <div style={{ flex: 1 }} />
@@ -170,7 +170,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 </button>
                 <button
                     className="ic-btn"
-                    title={ttsBusy ? '取消朗读' : (ttsPlaying ? '停止朗读' : '朗读')}
+                    title={ttsBusy ? t('tts_cancel') : (ttsPlaying ? t('tts_stop') : t('tts_read'))}
                     data-testid="source-tts-btn"
                     aria-pressed={ttsPlaying}
                     onClick={onTts}

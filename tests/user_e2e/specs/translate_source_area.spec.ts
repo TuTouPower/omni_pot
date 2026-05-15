@@ -92,6 +92,7 @@ test.describe('@ui translate source area', () => {
 
             const omni = await AppFixture.start({
                 config: {
+                    app_language: 'zh_cn',
                     tts_service_list: ['lingva_tts@default'],
                     service_instances: {
                         'lingva_tts@default': { serviceKey: 'lingva_tts', config: { requestPath: 'https://lingva.lunar.icu' } },

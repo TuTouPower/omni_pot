@@ -48,7 +48,7 @@
 - [X] `config_service_mgmt.spec.ts`
 - [X] `config_history_backup.spec.ts`
 - [X] `updater_and_tray.spec.ts`
-- [ ] `i18n.spec.ts`
+- [X] `i18n.spec.ts`
 
 ### P2: 其他
 

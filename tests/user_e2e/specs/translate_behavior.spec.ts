@@ -272,7 +272,7 @@ test.describe('@ui translate behavior settings', () => {
             const reopened = await omni.translate()
 
             await expect(reopened.sourceLanguage()).toContainText('英文')
-            await expect(reopened.targetLanguage()).toContainText('日本語')
+            await expect(reopened.targetLanguage()).toContainText('日语')
             await expect.poll(async () => {
                 const bounds = (await omni.api.windowState('translate')).bounds
                 return !!bounds

@@ -6,7 +6,7 @@ import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
-import { trigger_tray_action } from '../tray'
+import { trigger_tray_action, get_tray_menu_labels } from '../tray'
 import { readSelectedText } from '../selection'
 
 const DICT_OPTS = {
@@ -124,6 +124,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/tray-action') {
                 handle_tray_action(req, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/tray-menu') {
+                handle_tray_menu(res)
                 return
             }
 
@@ -540,6 +545,16 @@ function handle_tray_action(
             res.end(JSON.stringify({ success: false, error: String(error) }))
         }
     })
+}
+
+function handle_tray_menu(res: http.ServerResponse): void {
+    try {
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true, labels: get_tray_menu_labels() }))
+    } catch (error: unknown) {
+        res.writeHead(500)
+        res.end(JSON.stringify({ success: false, error: String(error) }))
+    }
 }
 
 function parse_mock_update_assets(value: unknown): Array<{ name: string; url: string }> {
