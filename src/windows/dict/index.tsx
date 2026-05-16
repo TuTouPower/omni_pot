@@ -37,7 +37,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 
     const handleCopy = () => {
         const text = dict_result_to_text(result)
-        navigator.clipboard.writeText(text).catch(() => undefined)
+        window.electronAPI.text.writeClipboard(text).catch(() => undefined)
         setCopied(true)
         setTimeout(() => { setCopied(false); }, 1500)
     }
@@ -249,10 +249,9 @@ export default function DictWindow(): React.ReactElement {
                     <Icons.Pin size={14} fill={alwaysOnTop} />
                 </button>
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
-                    <span className="dot" style={{ background: 'var(--brand-primary)' }} />
-                    omni_pot
+                    Omni Pot
                 </div>
-                <span className="op-mode" data-testid="titlebar-mode">· 词典</span>
+                <span className="op-mode" data-testid="titlebar-mode">词典</span>
                 <div style={{ flex: 1 }} />
                 <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={14} />

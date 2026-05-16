@@ -64,6 +64,8 @@ test.describe('@core translate core', () => {
 
         try {
             const translate = await omni.translate()
+            await translate.fulfill_lingva_translation_once('Lingva mocked result')
+            await translate.fulfill_mymemory_translation_once('MyMemory mocked result')
             await translate.typeSource('hello world')
             await translate.clickTranslate()
 

@@ -1,5 +1,10 @@
 import type { Page, Locator } from '@playwright/test'
 
+const cors_headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+}
+
 export class TranslatePage {
     constructor(private page: Page) {}
 
@@ -186,6 +191,7 @@ export class TranslatePage {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
+                headers: cors_headers,
                 body: JSON.stringify({ translation }),
             })
         }, { times: 1 })
@@ -369,17 +375,30 @@ export class TranslatePage {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
+                headers: cors_headers,
                 body: JSON.stringify({ translation }),
             })
         }, { times: 2 })
     }
 
-    async fulfill_lingva_translation_once(translation: string): Promise<void> {
-        await this.page.route('https://lingva.lunar.icu/api/v1/*/zh/**', async (route) => {
+    async fulfill_lingva_translation_once(translation: string, target_language = 'zh'): Promise<void> {
+        await this.page.route(`https://lingva.lunar.icu/api/v1/*/${target_language}/**`, async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
+                headers: cors_headers,
                 body: JSON.stringify({ translation }),
+            })
+        }, { times: 1 })
+    }
+
+    async fulfill_mymemory_translation_once(translation: string): Promise<void> {
+        await this.page.route('https://api.mymemory.translated.net/get**', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                headers: cors_headers,
+                body: JSON.stringify({ responseData: { translatedText: translation }, responseStatus: 200 }),
             })
         }, { times: 1 })
     }

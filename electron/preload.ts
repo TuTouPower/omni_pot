@@ -35,6 +35,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
   },
   text: {
     getSelection: () => ipcRenderer.invoke('text:getSelection'),
+    writeClipboard: (text) => ipcRenderer.invoke('text:writeClipboard', text),
     onTranslateFromSelection: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('translate:from-selection', handler)

@@ -26,7 +26,7 @@ test.describe('@ui dict window', () => {
             expect(result.success).toBe(true)
             const dict = await omni.dict()
 
-            await expect(dict.wordmark()).toContainText('omni_pot')
+            await expect(dict.wordmark()).toContainText('Omni Pot')
             await expect(dict.modeLabel()).toContainText('词典')
             expect(await dict.titlebarOrder()).toEqual(['pin', 'wordmark', 'mode', 'close'])
             await expect(dict.word()).toContainText('hello')

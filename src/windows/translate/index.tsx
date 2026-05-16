@@ -62,6 +62,8 @@ export default function TranslateWindow(): React.ReactElement {
     const swapLanguages = useTranslateStore((s) => s.swapLanguages)
 
     const languageConfigReadyRef = useRef(false)
+    const configSourceLangRef = useRef(configSourceLang)
+    const configTargetLangRef = useRef(configTargetLang)
 
     useEffect(() => {
         setStoreTargetLang(configTargetLang as LanguageCode)
@@ -71,11 +73,29 @@ export default function TranslateWindow(): React.ReactElement {
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
+        if (configSourceLangRef.current === configSourceLang) return
+        configSourceLangRef.current = configSourceLang
+        if (sourceLanguage !== configSourceLang) {
+            setStoreSourceLang(configSourceLang as LanguageCode)
+        }
+    }, [configSourceLang, sourceLanguage, setStoreSourceLang])
+
+    useEffect(() => {
+        if (configTargetLangRef.current === configTargetLang) return
+        configTargetLangRef.current = configTargetLang
+        if (targetLanguage !== configTargetLang) {
+            setStoreTargetLang(configTargetLang as LanguageCode)
+        }
+    }, [configTargetLang, targetLanguage, setStoreTargetLang])
+
+    useEffect(() => {
         if (!rememberLanguage || !languageConfigReadyRef.current) return
         if (configSourceLang !== sourceLanguage) {
+            configSourceLangRef.current = sourceLanguage
             setConfig('translate_source_language', sourceLanguage)
         }
         if (configTargetLang !== targetLanguage) {
+            configTargetLangRef.current = targetLanguage
             setConfig('translate_target_language', targetLanguage)
         }
     }, [rememberLanguage, sourceLanguage, targetLanguage, configSourceLang, configTargetLang, setConfig])
@@ -200,7 +220,7 @@ export default function TranslateWindow(): React.ReactElement {
             } else {
                 clipboardText = targetTexts ? `${textToTranslate}\n\n${targetTexts}` : textToTranslate
             }
-            if (clipboardText) navigator.clipboard.writeText(clipboardText).catch(() => undefined)
+            if (clipboardText) window.electronAPI.text.writeClipboard(clipboardText).catch(() => undefined)
         }
     }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy, historyDisable])
 
@@ -470,10 +490,9 @@ export default function TranslateWindow(): React.ReactElement {
                     <Icons.Pin size={14} fill={alwaysOnTop} />
                 </button>
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
-                    <span className="dot" style={{ background: 'var(--brand-primary)' }} />
-                    omni_pot
+                    Omni Pot
                 </div>
-                <span className="op-mode" data-testid="titlebar-mode">· 翻译</span>
+                <span className="op-mode" data-testid="titlebar-mode">翻译</span>
                 <div style={{ flex: 1 }} />
                 <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={() => { handleClose().catch(console.error); }}>
                     <Icons.Close size={14} />

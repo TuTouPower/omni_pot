@@ -52,12 +52,13 @@
 
 ### P2: 其他
 
-- [ ] 对齐新版 `docs/design/example/` UI 设计 — 以 example 主体原型为最高优先级，核对当前实现、`docs/spec.md` 与 Playwright E2E；已知 example 偏差只记录到 `docs/design/example_todo.md`，不修改 example 文件
-- [ ] CSP `connect-src` 放开 — 当前 `'self'` 阻止了所有外部翻译 API 请求，需改为允许外部连接
-- [ ] 命名统一 — 给用户看的显示名用 **Omni Pot**，代码/文件名/package name 一律用 **omni_pot**
+- [X] 对齐新版 `docs/design/example/` UI 设计 — 以 example 主体原型为最高优先级，核对当前实现、`docs/spec.md` 与 Playwright E2E；已知 example 偏差只记录到 `docs/design/example_todo.md`，不修改 example 文件
+- [X] CSP `connect-src` 放开 — 当前 `'self'` 阻止了所有外部翻译 API 请求，需改为允许外部连接
+- [X] 命名统一 — 给用户看的显示名用 **Omni Pot**，代码/文件名/package name 一律用 **omni_pot**
 - [X] 服务管理未实现功能：服务启停、编辑/测试保存、真实拖拽排序，并同步补规格与用户 E2E
 - [X] 修复已知 bug — 见 `docs/issues/issues.md`
-- [ ] 代码质量检查体系 — 见 `docs/code_quality_checks_plan.md`
+- [X] 插件系统（`.potext` 格式）当前明确延期：本阶段不实现外部插件加载，仅保留内置服务接口
+- [X] 代码质量检查体系 — 见 `docs/code_quality_checks_plan.md`
 
 ---
 

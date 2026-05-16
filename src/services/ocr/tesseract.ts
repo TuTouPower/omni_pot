@@ -35,6 +35,12 @@ const TESSERACT_LANG_MAP: Record<string, string> = {
     uk: 'ukr'
 }
 
+const TESSERACT_LANG_PATH = 'https://tessdata.projectnaptha.com/4.0.0'
+
+function asset_url(path: string): string {
+    return new URL(path, window.location.href).href
+}
+
 export const tesseractOcrService: OcrService = {
     key: 'tesseract',
     name: 'Tesseract',
@@ -46,7 +52,11 @@ export const tesseractOcrService: OcrService = {
     ): Promise<string> {
         const lang = TESSERACT_LANG_MAP[language] ?? 'eng'
         const data_url = `data:image/png;base64,${base64Image}`
-        const result = await Tesseract.recognize(data_url, lang)
+        const result = await Tesseract.recognize(data_url, lang, {
+            workerPath: asset_url('tesseract/worker.min.js'),
+            corePath: asset_url('tesseract/core'),
+            langPath: TESSERACT_LANG_PATH,
+        })
         return result.data.text.trim()
     },
 

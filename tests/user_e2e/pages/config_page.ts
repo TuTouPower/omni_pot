@@ -1,6 +1,11 @@
 import type { Locator, Page } from '@playwright/test'
 import type { HistoryRecord } from '@shared/types/ipc'
 
+const cors_headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+}
+
 function exact_text(text: string): RegExp {
     return new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
 }
@@ -316,6 +321,7 @@ export class ConfigPage {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
+                headers: cors_headers,
                 body: JSON.stringify({ translation }),
             })
         }, { times: 1 })

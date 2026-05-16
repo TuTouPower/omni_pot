@@ -62,7 +62,7 @@ test.describe('@ui recognize window', () => {
         try {
             const recognize = await open_recognize_with_sample(omni, 'Line one\nLine two with spaces')
 
-            await expect(recognize.wordmark()).toContainText('omni_pot')
+            await expect(recognize.wordmark()).toContainText('Omni Pot')
             await expect(recognize.modeLabel()).toContainText('识别')
             expect(await recognize.titlebarOrder()).toEqual(['pin', 'wordmark', 'mode', 'close'])
             await expect(recognize.image().locator('img')).toBeVisible()

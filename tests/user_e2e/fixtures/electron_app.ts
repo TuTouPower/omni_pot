@@ -58,7 +58,7 @@ export async function launchApp(opts: {
     cleanupUserDataDir?: boolean
 } = {}): Promise<LaunchedApp> {
     const httpPort = await getFreePort()
-    const userDataDir = opts.userDataDir ?? mkdtempSync(join(tmpdir(), 'omni-pot-e2e-'))
+    const userDataDir = opts.userDataDir ?? mkdtempSync(join(tmpdir(), 'omni_pot-e2e-'))
     const cleanupUserDataDir = opts.cleanupUserDataDir ?? !opts.userDataDir
     const e2eToken = randomUUID()
 
