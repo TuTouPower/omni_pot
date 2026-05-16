@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "Перевести",
-    "recognize": "Распознать",
+    "recognize": {
+        "title": "Распознавание",
+        "service": "Сервис",
+        "language": "Язык",
+        "re_recognize": "Распознать повторно",
+        "translate": "Перевести",
+        "delete_newline": "Удалить переносы строк",
+        "delete_spaces": "Удалить пробелы"
+    },
     "close": "Закрыть",
     "copy": "Копировать",
     "retry": "Повторить",
@@ -35,7 +43,6 @@
         "font_family": "Шрифт",
         "font_default": "Системный",
         "transparent": "Прозрачный фон",
-        "dev_mode": "Режим разработчика (F12)",
         "proxy": "Прокси",
         "proxy_enable": "Включить прокси (требуется перезапуск)",
         "proxy_host": "Хост",
@@ -95,15 +102,6 @@
         "title": "О программе",
         "version": "Версия",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "Распознавание",
-        "service": "Сервис",
-        "language": "Язык",
-        "re_recognize": "Распознать повторно",
-        "translate": "Перевести",
-        "delete_newline": "Удалить переносы строк",
-        "delete_spaces": "Удалить пробелы"
     },
     "dict": {
         "title": "Словарь",

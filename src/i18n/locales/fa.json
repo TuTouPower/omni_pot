@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "ترجمه",
-    "recognize": "شناسایی",
+    "recognize": {
+        "title": "شناسایی",
+        "service": "سرویس",
+        "language": "زبان",
+        "re_recognize": "شناسایی مجدد",
+        "translate": "ترجمه",
+        "delete_newline": "حذف سطرهای جدید",
+        "delete_spaces": "حذف فاصله‌ها"
+    },
     "close": "بستن",
     "copy": "کپی",
     "retry": "تلاش مجدد",
@@ -35,7 +43,6 @@
         "font_family": "نوع قلم",
         "font_default": "پیش‌فرض سیستم",
         "transparent": "پس‌زمینه شفاف",
-        "dev_mode": "حالت توسعه‌دهنده (F12)",
         "proxy": "پروکسی",
         "proxy_enable": "فعال‌سازی پروکسی (نیازمند بازاغرادی)",
         "proxy_host": "میزبان",
@@ -95,15 +102,6 @@
         "title": "درباره",
         "version": "نسخه",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "شناسایی",
-        "service": "سرویس",
-        "language": "زبان",
-        "re_recognize": "شناسایی مجدد",
-        "translate": "ترجمه",
-        "delete_newline": "حذف سطرهای جدید",
-        "delete_spaces": "حذف فاصله‌ها"
     },
     "dict": {
         "title": "دیکشنری",

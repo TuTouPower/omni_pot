@@ -6,7 +6,6 @@ export interface AppConfig {
   app_font: string
   app_fallback_font: string
   app_font_size: number
-  dev_mode: boolean
   transparent: boolean
   check_update: boolean
   server_port: number
@@ -90,7 +89,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   app_font: 'default',
   app_fallback_font: 'default',
   app_font_size: 16,
-  dev_mode: false,
   transparent: true,
   check_update: true,
   server_port: 20202,

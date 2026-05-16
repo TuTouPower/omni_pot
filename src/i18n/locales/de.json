@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "Übersetzen",
-    "recognize": "Erkennen",
+    "recognize": {
+        "title": "Erkennung",
+        "service": "Dienst",
+        "language": "Sprache",
+        "re_recognize": "Erneut erkennen",
+        "translate": "Übersetzen",
+        "delete_newline": "Zeilenumbrüche entfernen",
+        "delete_spaces": "Leerzeichen entfernen"
+    },
     "close": "Schließen",
     "copy": "Kopieren",
     "retry": "Erneut versuchen",
@@ -35,7 +43,6 @@
         "font_family": "Schriftart",
         "font_default": "Systemstandard",
         "transparent": "Transparenter Hintergrund",
-        "dev_mode": "Entwicklermodus (F12)",
         "proxy": "Proxy",
         "proxy_enable": "Proxy aktivieren (Neustart erforderlich)",
         "proxy_host": "Host",
@@ -95,15 +102,6 @@
         "title": "Über",
         "version": "Version",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "Erkennung",
-        "service": "Dienst",
-        "language": "Sprache",
-        "re_recognize": "Erneut erkennen",
-        "translate": "Übersetzen",
-        "delete_newline": "Zeilenumbrüche entfernen",
-        "delete_spaces": "Leerzeichen entfernen"
     },
     "dict": {
         "title": "Wörterbuch",

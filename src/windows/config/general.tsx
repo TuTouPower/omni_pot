@@ -40,7 +40,6 @@ export default function GeneralPage(): React.ReactElement {
     const [appFont, setAppFont] = useConfig('app_font')
     const [fontSize, setFontSize] = useConfig('app_font_size')
     const [transparent, setTransparent] = useConfig('transparent')
-    const [devMode, setDevMode] = useConfig('dev_mode')
     const [checkUpdate, setCheckUpdate] = useConfig('check_update')
     const [serverPort, setServerPort] = useConfig('server_port')
     const [proxyEnable, setProxyEnable] = useConfig('proxy_enable')
@@ -126,9 +125,6 @@ export default function GeneralPage(): React.ReactElement {
                         <ConfigSwitch on={transparent} onChange={setTransparent} testId="cfg-transparent" />
                     </ConfigRow>
                 )}
-                <ConfigRow label={t('general.dev_mode') || '开发者模式'} sub={t('general.dev_mode_sub')}>
-                    <ConfigSwitch on={devMode} onChange={setDevMode} testId="cfg-dev_mode" />
-                </ConfigRow>
             </ConfigCard>
 
             <ConfigCard title={t('general.proxy') || '网络代理'}>

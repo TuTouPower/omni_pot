@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "Oversett",
-    "recognize": "Gjenkjenn",
+    "recognize": {
+        "title": "Gjenkjenning",
+        "service": "Tjeneste",
+        "language": "Språk",
+        "re_recognize": "Gjenkjenn på nytt",
+        "translate": "Oversett",
+        "delete_newline": "Fjern linjeskift",
+        "delete_spaces": "Fjern mellomrom"
+    },
     "close": "Lukk",
     "copy": "Kopier",
     "retry": "Prøv igjen",
@@ -35,7 +43,6 @@
         "font_family": "Skrifttype",
         "font_default": "Systemstandard",
         "transparent": "Gjennomsiktig bakgrunn",
-        "dev_mode": "Utviklermodus (F12)",
         "proxy": "Proxy",
         "proxy_enable": "Aktiver proxy (krever omstart)",
         "proxy_host": "Vert",
@@ -95,15 +102,6 @@
         "title": "Om",
         "version": "Versjon",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "Gjenkjenning",
-        "service": "Tjeneste",
-        "language": "Språk",
-        "re_recognize": "Gjenkjenn på nytt",
-        "translate": "Oversett",
-        "delete_newline": "Fjern linjeskift",
-        "delete_spaces": "Fjern mellomrom"
     },
     "dict": {
         "title": "Ordbok",

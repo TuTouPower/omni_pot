@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "翻譯",
-    "recognize": "辨識",
+    "recognize": {
+        "title": "辨識",
+        "service": "服務",
+        "language": "語言",
+        "re_recognize": "重新辨識",
+        "translate": "翻譯",
+        "delete_newline": "刪除換行",
+        "delete_spaces": "刪除空格"
+    },
     "close": "關閉",
     "copy": "複製",
     "retry": "重試",
@@ -35,7 +43,6 @@
         "font_family": "字型",
         "font_default": "系統預設",
         "transparent": "透明背景",
-        "dev_mode": "開發者模式 (F12)",
         "proxy": "代理",
         "proxy_enable": "啟用代理（需重啟）",
         "proxy_host": "主機",
@@ -95,15 +102,6 @@
         "title": "關於",
         "version": "版本",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "辨識",
-        "service": "服務",
-        "language": "語言",
-        "re_recognize": "重新辨識",
-        "translate": "翻譯",
-        "delete_newline": "刪除換行",
-        "delete_spaces": "刪除空格"
     },
     "dict": {
         "title": "字典",
