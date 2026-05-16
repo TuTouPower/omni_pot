@@ -276,6 +276,18 @@ export class ConfigPage {
         ))
     }
 
+    async optionReceivesPointer(testId: string, value: string): Promise<boolean> {
+        return this.selectOption(testId, value).evaluate((element) => {
+            const rect = element.getBoundingClientRect()
+            const target = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+            return target === element || element.contains(target)
+        })
+    }
+
+    async clickOutsideSelects(): Promise<void> {
+        await this.titlebar().click()
+    }
+
     async openSection(pageKey: string): Promise<void> {
         await this.nav(pageKey).click()
     }

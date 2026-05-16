@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 
 // Shared Card + Row components for config pages (matches design spec)
 
@@ -70,18 +71,92 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     testId?: string
 }): React.ReactElement {
     const [open, setOpen] = React.useState(false)
+    const [menuStyle, setMenuStyle] = React.useState<React.CSSProperties>({})
     const ref = React.useRef<HTMLDivElement>(null)
+    const menuRef = React.useRef<HTMLDivElement>(null)
     const cur = options.find((o) => o.value === value)
+
+    const updateMenuPosition = React.useCallback(() => {
+        const rect = ref.current?.getBoundingClientRect()
+        if (!rect) return
+        const menuHeight = Math.min(280, options.length * 31 + 8)
+        const opensDown = rect.bottom + 4 + menuHeight <= window.innerHeight
+        setMenuStyle({
+            position: 'fixed',
+            top: opensDown ? rect.bottom + 4 : Math.max(4, rect.top - menuHeight - 4),
+            left: rect.left,
+            minWidth: rect.width,
+            background: 'var(--bg-elev)',
+            border: '1px solid var(--line)',
+            borderRadius: 'var(--r-md)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
+            padding: 4,
+            zIndex: 2000,
+            maxHeight: 280,
+            overflowY: 'auto',
+        })
+    }, [options.length])
+
+    React.useLayoutEffect(() => {
+        if (open) updateMenuPosition()
+    }, [open, updateMenuPosition])
 
     React.useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
+            const target = e.target as Node
+            if (!ref.current?.contains(target) && !menuRef.current?.contains(target)) {
                 setOpen(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => { document.removeEventListener('mousedown', handleClickOutside); }
     }, [])
+
+    React.useEffect(() => {
+        if (!open) return
+        window.addEventListener('resize', updateMenuPosition)
+        document.addEventListener('scroll', updateMenuPosition, true)
+        return () => {
+            window.removeEventListener('resize', updateMenuPosition)
+            document.removeEventListener('scroll', updateMenuPosition, true)
+        }
+    }, [open, updateMenuPosition])
+
+    const menu = open ? createPortal(
+        <div ref={menuRef} style={menuStyle}>
+            {options.map((o) => (
+                <div
+                    key={o.value}
+                    data-testid={testId ? `${testId}-option-${o.value}` : undefined}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        onChange?.(o.value)
+                        setOpen(false)
+                    }}
+                    style={{
+                        padding: '6px 10px',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent',
+                        color: o.value === value ? 'var(--brand-primary)' : 'var(--text)',
+                        fontSize: 13,
+                    }}
+                    onMouseEnter={(e) => {
+                        if (o.value !== value) e.currentTarget.style.background = 'var(--bg-sunk)'
+                    }}
+                    onMouseLeave={(e) => {
+                        if (o.value !== value) e.currentTarget.style.background = 'transparent'
+                    }}
+                >
+                    {o.label}
+                </div>
+            ))}
+        </div>,
+        document.body
+    ) : null
 
     return (
         <div ref={ref} className="select" data-testid={testId} style={style} onClick={() => { setOpen((o) => !o); }}>
@@ -99,53 +174,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
             >
                 <path d="M6 9l6 6 6-6" />
             </svg>
-            {open && (
-                <div style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 4px)',
-                    left: 0,
-                    minWidth: '100%',
-                    background: 'var(--bg-elev)',
-                    border: '1px solid var(--line)',
-                    borderRadius: 'var(--r-md)',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
-                    padding: 4,
-                    zIndex: 50,
-                    maxHeight: 280,
-                    overflowY: 'auto',
-                }}>
-                    {options.map((o) => (
-                        <div
-                            key={o.value}
-                            data-testid={testId ? `${testId}-option-${o.value}` : undefined}
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onChange?.(o.value)
-                                setOpen(false)
-                            }}
-                            style={{
-                                padding: '6px 10px',
-                                borderRadius: 6,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8,
-                                background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent',
-                                color: o.value === value ? 'var(--brand-primary)' : 'var(--text)',
-                                fontSize: 13,
-                            }}
-                            onMouseEnter={(e) => {
-                                if (o.value !== value) e.currentTarget.style.background = 'var(--bg-sunk)'
-                            }}
-                            onMouseLeave={(e) => {
-                                if (o.value !== value) e.currentTarget.style.background = 'transparent'
-                            }}
-                        >
-                            {o.label}
-                        </div>
-                    ))}
-                </div>
-            )}
+            {menu}
         </div>
     )
 }
