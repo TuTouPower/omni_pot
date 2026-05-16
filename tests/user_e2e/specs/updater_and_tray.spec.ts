@@ -9,7 +9,7 @@ const TEST_CONFIG = {
     translate_service_list: [],
 }
 
-type WindowLabel = 'translate' | 'config' | 'updater'
+type WindowLabel = 'translate' | 'config' | 'updater' | 'screenshot'
 
 async function expect_window_visible(omni: AppFixture, label: WindowLabel): Promise<void> {
     await expect.poll(async () => (await omni.api.windowState(label)).visible).toBe(true)
@@ -65,6 +65,22 @@ test.describe('@ui updater and tray', () => {
             expect(translate_result.success).toBe(true)
             const translate = await omni.translate()
             await expect_window_visible(omni, 'translate')
+
+            const recognize_result = await omni.api.trayAction('ocr_recognize')
+            expect(recognize_result.success).toBe(true)
+            let screenshot = await omni.screenshot()
+            await expect_window_visible(omni, 'screenshot')
+            await expect(screenshot.overlay()).toBeVisible()
+            await screenshot.press_escape()
+            await expect_window_not_exists(omni, 'screenshot')
+
+            const screenshot_translate_result = await omni.api.trayAction('screenshot_translate')
+            expect(screenshot_translate_result.success).toBe(true)
+            screenshot = await omni.screenshot()
+            await expect_window_visible(omni, 'screenshot')
+            await expect(screenshot.overlay()).toBeVisible()
+            await screenshot.press_escape()
+            await expect_window_not_exists(omni, 'screenshot')
 
             const config_result = await omni.api.trayAction('config')
             expect(config_result.success).toBe(true)

@@ -10,16 +10,22 @@ import {
 } from '../clipboard'
 import { getConfig, setConfig } from '../config/store'
 import { get_translate_window_options } from '../windows/translate_options'
+import { start_screenshot_capture } from '../screenshot'
+import { log } from '../log'
 
 let tray: Tray | null = null
 let windowManager: WindowManager | null = null
 let last_tray_menu_labels: string[] = []
 
-type TrayLabelKey = 'input_translate' | 'clipboard_monitor' | 'config' | 'restart' | 'quit'
+const log_tray = log.scope('tray')
+
+type TrayLabelKey = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'restart' | 'quit'
 
 const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   en: {
     input_translate: 'Input Translate',
+    ocr_recognize: 'OCR Recognize',
+    screenshot_translate: 'Screenshot Translate',
     clipboard_monitor: 'Clipboard Monitor',
     config: 'Config',
     restart: 'Restart',
@@ -27,6 +33,8 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   },
   zh_cn: {
     input_translate: '输入翻译',
+    ocr_recognize: 'OCR 识别',
+    screenshot_translate: '截图翻译',
     clipboard_monitor: '剪贴板监听',
     config: '配置',
     restart: '重启',
@@ -39,7 +47,7 @@ function get_tray_labels(): Record<TrayLabelKey, string> {
 }
 
 function tray_labels_to_array(labels: Record<TrayLabelKey, string>): string[] {
-  return [labels.input_translate, labels.clipboard_monitor, labels.config, labels.restart, labels.quit]
+  return [labels.input_translate, labels.ocr_recognize, labels.screenshot_translate, labels.clipboard_monitor, labels.config, labels.restart, labels.quit]
 }
 
 export function get_tray_menu_labels(): string[] {
@@ -94,6 +102,14 @@ export function trigger_tray_action(action: string): boolean {
     case 'input_translate':
       open_translate_window()
       return true
+    case 'ocr_recognize':
+      if (!windowManager) return false
+      start_screenshot_capture(windowManager, 'recognize').catch((err: unknown) => { log_tray.error(err) })
+      return true
+    case 'screenshot_translate':
+      if (!windowManager) return false
+      start_screenshot_capture(windowManager, 'translate').catch((err: unknown) => { log_tray.error(err) })
+      return true
     case 'clipboard_monitor':
       if (isClipboardMonitoring()) {
         stopClipboardMonitor()
@@ -137,6 +153,18 @@ export function rebuildMenu(): void {
       label: labels.input_translate,
       click: () => {
         trigger_tray_action('input_translate')
+      }
+    },
+    {
+      label: labels.ocr_recognize,
+      click: () => {
+        trigger_tray_action('ocr_recognize')
+      }
+    },
+    {
+      label: labels.screenshot_translate,
+      click: () => {
+        trigger_tray_action('screenshot_translate')
       }
     },
     { type: 'separator' },

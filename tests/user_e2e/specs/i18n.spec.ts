@@ -56,7 +56,7 @@ test.describe('@ui i18n', () => {
             await expect(updater.body()).toContainText('更新日志')
             await expect(updater.body()).toContainText('下载链接')
             await expect(updater.laterButton()).toContainText('稍后提醒')
-            await expect_tray_labels(omni, ['输入翻译', '剪贴板监听', '配置', '重启', '退出'])
+            await expect_tray_labels(omni, ['输入翻译', 'OCR 识别', '截图翻译', '剪贴板监听', '配置', '重启', '退出'])
 
             await translate.typeSource('hello world')
             await translate.clickTranslate()
@@ -90,7 +90,7 @@ test.describe('@ui i18n', () => {
             await expect(updater.body()).toContainText('Changelog')
             await expect(updater.body()).toContainText('Downloads')
             await expect(updater.laterButton()).toContainText('Later')
-            await expect_tray_labels(omni, ['Input Translate', 'Clipboard Monitor', 'Config', 'Restart', 'Quit'])
+            await expect_tray_labels(omni, ['Input Translate', 'OCR Recognize', 'Screenshot Translate', 'Clipboard Monitor', 'Config', 'Restart', 'Quit'])
 
             await config.select('cfg-app_language', 'zh_cn')
             await expect_config(omni, 'app_language', 'zh_cn')
@@ -111,7 +111,7 @@ test.describe('@ui i18n', () => {
             await expect(updater.body()).toContainText('更新日志')
             await expect(updater.body()).toContainText('下载链接')
             await expect(updater.laterButton()).toContainText('稍后提醒')
-            await expect_tray_labels(omni, ['输入翻译', '剪贴板监听', '配置', '重启', '退出'])
+            await expect_tray_labels(omni, ['输入翻译', 'OCR 识别', '截图翻译', '剪贴板监听', '配置', '重启', '退出'])
         } finally {
             await omni.stop()
         }
