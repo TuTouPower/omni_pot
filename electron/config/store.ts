@@ -84,6 +84,11 @@ export function initConfigStore(): void {
         deeplInst.config = {}
         saveToDisk()
     }
+
+    if ((data as Record<string, unknown>)['dev_mode'] !== undefined) {
+        delete (data as Record<string, unknown>)['dev_mode']
+        saveToDisk()
+    }
 }
 
 export function isFirstRun(): boolean {

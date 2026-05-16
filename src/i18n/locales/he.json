@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "תרגום",
-    "recognize": "זיהוי",
+    "recognize": {
+        "title": "זיהוי",
+        "service": "שירות",
+        "language": "שפה",
+        "re_recognize": "זהה שוב",
+        "translate": "תרגום",
+        "delete_newline": "מחק שורות חדשות",
+        "delete_spaces": "מחק רווחים"
+    },
     "close": "סגור",
     "copy": "העתק",
     "retry": "נסה שוב",
@@ -35,7 +43,6 @@
         "font_family": "סוג גופן",
         "font_default": "ברירת מחדל של המערכת",
         "transparent": "רקע שקוף",
-        "dev_mode": "מצב מפתח (F12)",
         "proxy": "פרוקסי",
         "proxy_enable": "הפעל פרוקסי (דורש הפעלה מחדש)",
         "proxy_host": "מארח",
@@ -95,15 +102,6 @@
         "title": "אודות",
         "version": "גרסה",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "זיהוי",
-        "service": "שירות",
-        "language": "שפה",
-        "re_recognize": "זהה שוב",
-        "translate": "תרגום",
-        "delete_newline": "מחק שורות חדשות",
-        "delete_spaces": "מחק רווחים"
     },
     "dict": {
         "title": "מילון",

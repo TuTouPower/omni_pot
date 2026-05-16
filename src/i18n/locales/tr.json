@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "Çevir",
-    "recognize": "Tanı",
+    "recognize": {
+        "title": "Tanıma",
+        "service": "Hizmet",
+        "language": "Dil",
+        "re_recognize": "Yeniden tanı",
+        "translate": "Çevir",
+        "delete_newline": "Satır sonlarını sil",
+        "delete_spaces": "Boşlukları sil"
+    },
     "close": "Kapat",
     "copy": "Kopyala",
     "retry": "Tekrar dene",
@@ -35,7 +43,6 @@
         "font_family": "Yazı tipi ailesi",
         "font_default": "Sistem varsayılanı",
         "transparent": "Şeffaf arka plan",
-        "dev_mode": "Geliştirici modu (F12)",
         "proxy": "Proxy",
         "proxy_enable": "Proxy'yi etkinleştir (yeniden başlatma gerekir)",
         "proxy_host": "Ana bilgisayar",
@@ -95,15 +102,6 @@
         "title": "Hakkında",
         "version": "Sürüm",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "Tanıma",
-        "service": "Hizmet",
-        "language": "Dil",
-        "re_recognize": "Yeniden tanı",
-        "translate": "Çevir",
-        "delete_newline": "Satır sonlarını sil",
-        "delete_spaces": "Boşlukları sil"
     },
     "dict": {
         "title": "Sözlük",

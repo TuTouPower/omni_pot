@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "Переклад",
-    "recognize": "Розпізнавання",
+    "recognize": {
+        "title": "Розпізнавання",
+        "service": "Сервіс",
+        "language": "Мова",
+        "re_recognize": "Розпізнати ще раз",
+        "translate": "Переклад",
+        "delete_newline": "Видалити розриви рядків",
+        "delete_spaces": "Видалити пропуски"
+    },
     "close": "Закрити",
     "copy": "Копіювати",
     "retry": "Повторити",
@@ -35,7 +43,6 @@
         "font_family": "Шрифт",
         "font_default": "Системний замовчування",
         "transparent": "Прозоре тло",
-        "dev_mode": "Режим розробника (F12)",
         "proxy": "Проксі",
         "proxy_enable": "Увімкнути проксі (потрібний перезапуск)",
         "proxy_host": "Хост",
@@ -95,15 +102,6 @@
         "title": "Про програму",
         "version": "Версія",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "Розпізнавання",
-        "service": "Сервіс",
-        "language": "Мова",
-        "re_recognize": "Розпізнати ще раз",
-        "translate": "Переклад",
-        "delete_newline": "Видалити розриви рядків",
-        "delete_spaces": "Видалити пропуски"
     },
     "dict": {
         "title": "Словник",

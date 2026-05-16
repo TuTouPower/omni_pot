@@ -55,7 +55,7 @@ test.describe('@ui config settings window', () => {
     })
 
     test('user changes general settings and the theme broadcasts to open windows', async () => {
-        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light' } })
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', dev_mode: true } })
 
         try {
             const translate = await omni.translate()
@@ -72,16 +72,16 @@ test.describe('@ui config settings window', () => {
             await config.select('cfg-app_language', 'en')
             await expect_config(omni, 'app_language', 'en')
             await expect(config.title()).toContainText('General')
+            await expect(config.window()).not.toContainText('Developer mode')
+            await expect.poll(async () => 'dev_mode' in (await omni.api.getConfig())).toBe(false)
 
             await config.toggle('cfg-check_update')
-            await config.toggle('cfg-dev_mode')
             await config.toggle('cfg-auto_start')
             await config.select('cfg-app_font', 'Consolas')
             await config.select('cfg-app_font_size', '18')
             await config.fillField('cfg-server_port', '20444')
 
             await expect_config(omni, 'check_update', false)
-            await expect_config(omni, 'dev_mode', true)
             await expect_config(omni, 'auto_start', true)
             await expect_config(omni, 'app_font', 'Consolas')
             await expect_config(omni, 'app_font_size', 18)

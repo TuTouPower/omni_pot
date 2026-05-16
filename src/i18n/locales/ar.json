@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "ترجمة",
-    "recognize": "تعريف",
+    "recognize": {
+        "title": "التعريف",
+        "service": "الخدمة",
+        "language": "اللغة",
+        "re_recognize": "إعادة التعريف",
+        "translate": "ترجمة",
+        "delete_newline": "حذف فواصل الأسطر",
+        "delete_spaces": "حذف المسافات"
+    },
     "close": "إغلاق",
     "copy": "نسخ",
     "retry": "إعادة المحاولة",
@@ -35,7 +43,6 @@
         "font_family": "نوع الخط",
         "font_default": "الافتراضي للنظام",
         "transparent": "خلفية شفافة",
-        "dev_mode": "وضع المطور (F12)",
         "proxy": "الوكيل",
         "proxy_enable": "تفعيل الوكيل (يتطلب إعادة التشغيل)",
         "proxy_host": "المضيف",
@@ -95,15 +102,6 @@
         "title": "حول",
         "version": "الإصدار",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "التعريف",
-        "service": "الخدمة",
-        "language": "اللغة",
-        "re_recognize": "إعادة التعريف",
-        "translate": "ترجمة",
-        "delete_newline": "حذف فواصل الأسطر",
-        "delete_spaces": "حذف المسافات"
     },
     "dict": {
         "title": "القاموس",

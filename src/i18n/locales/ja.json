@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "翻訳",
-    "recognize": "認識",
+    "recognize": {
+        "title": "認識",
+        "service": "サービス",
+        "language": "言語",
+        "re_recognize": "再認識",
+        "translate": "翻訳",
+        "delete_newline": "改行を削除",
+        "delete_spaces": "スペースを削除"
+    },
     "close": "閉じる",
     "copy": "コピー",
     "retry": "再試行",
@@ -35,7 +43,6 @@
         "font_family": "フォント",
         "font_default": "システムデフォルト",
         "transparent": "背景を透明にする",
-        "dev_mode": "開発者モード (F12)",
         "proxy": "プロキシ",
         "proxy_enable": "プロキシを有効にする（再起動が必要）",
         "proxy_host": "ホスト",
@@ -95,15 +102,6 @@
         "title": "バージョン情報",
         "version": "バージョン",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "認識",
-        "service": "サービス",
-        "language": "言語",
-        "re_recognize": "再認識",
-        "translate": "翻訳",
-        "delete_newline": "改行を削除",
-        "delete_spaces": "スペースを削除"
     },
     "dict": {
         "title": "辞書",

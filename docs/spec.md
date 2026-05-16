@@ -447,7 +447,7 @@ OCR 识别结果窗口。三段式布局。
 ### 9.3 配置页: 通用
 
 - **应用卡片**：开机自启（`auto_start`）、启动时检查更新（`check_update`）、本地 API 端口（`server_port`，修改后需重启）
-- **外观卡片**：主题（`app_theme`：跟随系统 / 浅色 / 深色）、界面语言（`app_language`）、字体（`app_font` / `app_fallback_font`，与字号 `app_font_size` 同行展示，左侧字体下拉、右侧字号下拉）、主色调（`app_primary_color`，5 个圆形选色按钮）、透明背景（`transparent`）、开发者模式（`dev_mode`）、托盘点击行为（`tray_click_event`）
+- **外观卡片**：主题（`app_theme`：跟随系统 / 浅色 / 深色）、界面语言（`app_language`）、字体（`app_font` / `app_fallback_font`，与字号 `app_font_size` 同行展示，左侧字体下拉、右侧字号下拉）、主色调（`app_primary_color`，5 个圆形选色按钮）、透明背景（`transparent`）、托盘点击行为（`tray_click_event`）
 - **网络代理卡片**：启用代理（`proxy_enable`）、代理地址（`proxy_host`）、代理端口（`proxy_port`）
 
 ### 9.4 配置页: 翻译
@@ -750,7 +750,6 @@ interface DictResult {
 | `app_font` | string | `'default'` | 主字体族 |
 | `app_fallback_font` | string | `'default'` | 回退字体族 |
 | `app_font_size` | number | `16` | 基础字号 px |
-| `dev_mode` | boolean | `false` | 开发者模式 |
 | `transparent` | boolean | `true` | 窗口透明 |
 | `check_update` | boolean | `true` | 启动时检查更新 |
 | `server_port` | number | `20202` | HTTP API 端口，修改后需重启 |

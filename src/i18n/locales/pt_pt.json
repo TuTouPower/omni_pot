@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "Traduzir",
-    "recognize": "Reconhecer",
+    "recognize": {
+        "title": "Reconhecimento",
+        "service": "Serviço",
+        "language": "Idioma",
+        "re_recognize": "Reconhecer novamente",
+        "translate": "Traduzir",
+        "delete_newline": "Remover quebras de linha",
+        "delete_spaces": "Remover espaços"
+    },
     "close": "Fechar",
     "copy": "Copiar",
     "retry": "Tentar novamente",
@@ -35,7 +43,6 @@
         "font_family": "Família da letra",
         "font_default": "Predefinição do sistema",
         "transparent": "Fundo transparente",
-        "dev_mode": "Modo de programador (F12)",
         "proxy": "Proxy",
         "proxy_enable": "Ativar proxy (requer reinício)",
         "proxy_host": "Anfitrião",
@@ -95,15 +102,6 @@
         "title": "Acerca de",
         "version": "Versão",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "Reconhecimento",
-        "service": "Serviço",
-        "language": "Idioma",
-        "re_recognize": "Reconhecer novamente",
-        "translate": "Traduzir",
-        "delete_newline": "Remover quebras de linha",
-        "delete_spaces": "Remover espaços"
     },
     "dict": {
         "title": "Dicionário",

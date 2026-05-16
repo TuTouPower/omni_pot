@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "Omset",
-    "recognize": "Attkjenn",
+    "recognize": {
+        "title": "Attkjenning",
+        "service": "Teneste",
+        "language": "Språk",
+        "re_recognize": "Attkjenn på nytt",
+        "translate": "Omset",
+        "delete_newline": "Fjern linjeskift",
+        "delete_spaces": "Fjern mellomrom"
+    },
     "close": "Lukk",
     "copy": "Kopier",
     "retry": "Prøv på nytt",
@@ -35,7 +43,6 @@
         "font_family": "Skrifttype",
         "font_default": "Systemstandard",
         "transparent": "Gjennomsiktig bakgrunn",
-        "dev_mode": "Utviklarmodus (F12)",
         "proxy": "Proxy",
         "proxy_enable": "Aktiver proxy (krev omstart)",
         "proxy_host": "Vert",
@@ -95,15 +102,6 @@
         "title": "Om",
         "version": "Versjon",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "Attkjenning",
-        "service": "Teneste",
-        "language": "Språk",
-        "re_recognize": "Attkjenn på nytt",
-        "translate": "Omset",
-        "delete_newline": "Fjern linjeskift",
-        "delete_spaces": "Fjern mellomrom"
     },
     "dict": {
         "title": "Ordbok",

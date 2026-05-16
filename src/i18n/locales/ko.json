@@ -1,7 +1,15 @@
 {
     "app_name": "Pot",
     "translate": "번역",
-    "recognize": "인식",
+    "recognize": {
+        "title": "인식",
+        "service": "서비스",
+        "language": "언어",
+        "re_recognize": "다시 인식",
+        "translate": "번역",
+        "delete_newline": "줄바꿈 삭제",
+        "delete_spaces": "공백 삭제"
+    },
     "close": "닫기",
     "copy": "복사",
     "retry": "재시도",
@@ -35,7 +43,6 @@
         "font_family": "글꼴",
         "font_default": "시스템 기본",
         "transparent": "투명 배경",
-        "dev_mode": "개발자 모드 (F12)",
         "proxy": "프록시",
         "proxy_enable": "프록시 활성화 (재시작 필요)",
         "proxy_host": "호스트",
@@ -95,15 +102,6 @@
         "title": "정보",
         "version": "버전",
         "github": "GitHub"
-    },
-    "recognize": {
-        "title": "인식",
-        "service": "서비스",
-        "language": "언어",
-        "re_recognize": "다시 인식",
-        "translate": "번역",
-        "delete_newline": "줄바꿈 삭제",
-        "delete_spaces": "공백 삭제"
     },
     "dict": {
         "title": "사전",
