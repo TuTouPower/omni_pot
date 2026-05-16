@@ -409,14 +409,19 @@ export class TranslatePage {
     }
 
     async fulfill_mymemory_translation_once(translation: string): Promise<void> {
-        await this.page.route('https://api.mymemory.translated.net/get**', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                headers: cors_headers,
-                body: JSON.stringify({ responseData: { translatedText: translation }, responseStatus: 200 }),
-            })
-        }, { times: 1 })
+        await this.page.evaluate((translation_text: string) => {
+            const original_fetch = window.fetch.bind(window)
+            let consumed = false
+            const mock_body = JSON.stringify({ responseData: { translatedText: translation_text }, responseStatus: 200 })
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (!consumed && url.startsWith('https://api.mymemory.translated.net/get')) {
+                    consumed = true
+                    return new Response(mock_body, { status: 200, headers: { 'content-type': 'application/json' } })
+                }
+                return original_fetch(input, init)
+            }
+        }, translation)
     }
 
     async fulfill_anki_collection_once(): Promise<void> {
