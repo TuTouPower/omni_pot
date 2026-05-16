@@ -65,11 +65,11 @@
         ]
       },
       {
-        "from": "resources",
+        "from": "public/logos",
         "to": ".",
         "filter": [
-          "icon.png",
-          "icon.ico"
+          "logo.png",
+          "logo.ico"
         ]
       }
     ],
@@ -79,6 +79,7 @@
     ],
     "npmRebuild": true,
     "win": {
+      "icon": "public/logos/logo.ico",
       "target": [
         "nsis",
         "portable"

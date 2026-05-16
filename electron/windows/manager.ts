@@ -10,14 +10,14 @@ const log_wm = log.scope('wm')
 
 function resolveIconPath(): string {
   const candidates = [
-    join(__dirname, '../../resources/icon.ico'),
-    join(process.resourcesPath, 'icon.ico'),
-    join(app.getAppPath(), 'resources/icon.ico'),
-    join(__dirname, '../../resources/icon.png'),
-    join(process.resourcesPath, 'icon.png'),
-    join(app.getAppPath(), 'resources/icon.png')
+    join(__dirname, '../../public/logos/logo.ico'),
+    join(process.resourcesPath, 'logo.ico'),
+    join(app.getAppPath(), 'public/logos/logo.ico'),
+    join(__dirname, '../../public/logos/logo.png'),
+    join(process.resourcesPath, 'logo.png'),
+    join(app.getAppPath(), 'public/logos/logo.png')
   ]
-  return candidates.find((p) => existsSync(p)) ?? join(__dirname, '../../resources/icon.ico')
+  return candidates.find((p) => existsSync(p)) ?? join(__dirname, '../../public/logos/logo.ico')
 }
 
 export class WindowManager {
