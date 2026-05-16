@@ -1,175 +1,477 @@
 # omni_pot 代码质量检查体系落地方案
 
-> 本文档说明 omni_pot 项目应该补哪些"编译前/运行前"检查、具体怎么配、有哪些坑。
-> 执行人按本文档操作即可,不需要重新调研。
+> 本文档说明 omni_pot 项目要把哪些“编译前 / 运行前”检查纳入本地、Git hook、CI 和发布门禁。
+> 通用严格版参考：`D:\Kar\file_need\obsidian_repo\my_note\Tech\strict_code_quality_checks.md`。
+> 本文是针对 omni_pot（Electron + React + TypeScript）的裁剪版，只保留本项目需要落地的部分。
 
 ---
 
-## 0. 先读什么
+## 1. 总原则
 
-- **总纲(外部参考)**:`D:\Kar\file_need\obsidian_repo\my_note\Tech\strict_code_quality_checks.md`
-  这是一份通用的严格检查体系总纲,覆盖 TS/React/Electron/扩展/Python。本文档是它**针对 omni_pot 的裁剪版**,只保留本项目用得上的部分。需要查某个工具的完整理由或配置范例时回去翻它,重点看:
-  - 第 2 节(TypeScript / ESLint 严格配置)
-  - 第 3 节(Electron 专项)
-  - 第 6 节(死代码 / 依赖 / 架构)
-  - 第 10 节(落地顺序)、第 12 节(注意事项)
-- **项目约定**:仓库根 `CLAUDE.md` + 用户全局 `CLAUDE.md`
-  关键约束:**所有命名(含文件名、目录名)一律 `snake_case`**;缩进 4 空格;日志用 logging 库不用 `console.log`。
-  这条命名约定会和某些 lint 规则的默认值冲突,见第 4 节。
+### 1.1 warning 视为 error
 
----
+最终目标不是承诺“永远没有 bug”，而是做到所有已知问题在提交、合并、发布前失败拦截：
 
-## 1. 项目现状
+- TypeScript type error 不能提交；
+- ESLint warning 不能合并；
+- 格式化 diff 不能进入主分支；
+- high / critical 依赖漏洞不能发布；
+- secret 泄漏、循环依赖、未使用依赖不能长期存在；
+- `master` / release 分支必须由 CI 强制门禁保护。
 
-omni_pot = Electron 35 + React 19 + TypeScript 6 + electron-vite,目前检查非常薄:
+### 1.2 分层拦截
 
-| 已有 | 缺失 |
-| --- | --- |
-| `tsconfig` 裸 `strict: true` | ESLint(完全没有) |
-| `typecheck` 脚本(tsc --noEmit) | 格式化检查(Prettier/Biome) |
-| vitest 单测 + e2e | 死代码检查(Knip) |
-| | 密钥泄漏扫描(Gitleaks) |
-| | 依赖漏洞扫描(npm audit / osv-scanner) |
-| | git hooks / CI 门禁 |
+不要只依赖 CI。检查分 5 层逐步拦截：
 
----
+| 阶段 | 目标 | omni_pot 适用工具 |
+|---|---|---|
+| 编辑器保存时 | 立即发现低级问题 | TypeScript、ESLint、格式化插件 |
+| pre-commit | 阻止明显坏代码进入 Git | lint-staged、Gitleaks、格式化检查 |
+| pre-push | 阻止本地未通过代码推送 | typecheck、lint、unit tests |
+| CI 合并门禁 | 全量检查，保护 `master` | GitHub Actions：check、build、E2E 分组 |
+| 发布前 | 供应链、安全、构建产物检查 | npm audit、OSV-Scanner、Semgrep、CodeQL、electron-builder smoke |
 
-## 2. 落地顺序(分三档,按档推进,不要一次全开)
+### 1.3 存量项目渐进收紧
 
-> **重要**:本项目已有上万行存量代码。一次性全开严格检查会爆出几百上千个错误把人淹没。
-> 必须**一档一档来,每档消化完再下一档**。
+本项目已有存量代码，不能一次全开所有规则。策略：
 
-### 第一档 — 必须加(缺口最大)
-
-#### 2.1 收紧 tsconfig
-
-`tsconfig.node.json` 和 `tsconfig.web.json` 两个文件的 `compilerOptions` 都加上:
-
-```jsonc
-"noUncheckedIndexedAccess": true,   // 数组/对象索引结果变 T | undefined,能抓 services 解析 API 响应时的隐藏空值
-"noUnusedLocals": true,
-"noUnusedParameters": true,
-"noImplicitReturns": true,
-"noFallthroughCasesInSwitch": true
-```
-
-- `skipLibCheck: true` 保留不动。
-- 改完跑 `npm run typecheck`,先把这批错误清干净再往下走。
-
-#### 2.2 接入 ESLint(type-aware)
-
-项目目前一行 lint 都没有,这是最大的洞。安装:
-
-```
-typescript-eslint            # TS 类型感知 lint
-eslint-plugin-react-hooks    # React 19 + 大量 useEffect,必开
-eslint-plugin-react
-```
-
-`eslint.config.js`(flat config)核心:
-- 启用 `typescript-eslint` 的 `strictTypeChecked`(配 `parserOptions.project` 指向两个 tsconfig)
-- `react-hooks/rules-of-hooks: error`、`react-hooks/exhaustive-deps: error`
-- 关键规则:`@typescript-eslint/no-floating-promises`、`no-explicit-any`、`switch-exhaustiveness-check`、`consistent-type-imports`
-- 跑 `eslint . --max-warnings=0`
-
-新增 package.json 脚本:`"lint": "eslint . --max-warnings=0"`
-
-### 第二档 — 强烈建议
-
-#### 2.4 Knip(死代码 / 未用依赖)
-
-最近的 commit 就是 "fix leaks, deduplicate services",死代码是真实痛点。`src/services/*` 十几个文件,Knip 能找出没人用的导出和依赖。
-
-```
-npx knip
-```
-
-#### 2.5 Gitleaks(密钥泄漏)
-
-项目接了一堆带 API key 的服务(alibaba/baidu/tencent/openai/volcengine...),必须扫:
-
-```
-gitleaks detect --source .
-```
-
-#### 2.6 格式化检查
-
-Biome(推荐,快、能兼做部分 lint)或 Prettier,以 `--check` 模式进门禁。
-**注意缩进必须配成 4 空格**(CLAUDE.md 要求)。
-
-### 第三档 — 锦上添花
-
-- `npm audit --audit-level=high` + `osv-scanner -r .`(依赖漏洞)
-- Semgrep `--config=auto`(SAST)
-- `lint-staged` + git pre-commit hook(拦明显坏代码)
-- GitHub Actions:把 `typecheck + lint + test + build` 设为 master 必过门禁
+1. 已接入的规则保持零 warning；
+2. 新增工具先以“报告 + baseline”方式接入；
+3. 新代码零容忍，旧问题按模块清理；
+4. baseline 每轮减少；
+5. 最后把所有检查设为 CI 必过。
 
 ---
 
-## 3. 推荐的最终 package.json 脚本
+## 2. 当前状态
+
+技术栈以仓库当前配置为准：Electron 39 + React 19 + TypeScript 6 + electron-vite。
+
+| 已有 | 状态 |
+|---|---|
+| TypeScript strict | 已启用 |
+| `noUncheckedIndexedAccess` | 已启用 |
+| `noUnusedLocals` / `noUnusedParameters` | 已启用 |
+| `noImplicitReturns` / `noFallthroughCasesInSwitch` | 已启用 |
+| type-aware ESLint | 已接入 `eslint_config.mjs` |
+| `typescript-eslint strictTypeChecked` | 已启用 |
+| React Hooks 规则 | 已启用 |
+| `eslint --max-warnings=0` | 已启用 |
+| unit tests | 已有 Vitest |
+| user E2E | 已迁移 Playwright |
+
+仍缺：
+
+| 缺失 | 作用 |
+|---|---|
+| format check | 防止格式化 diff 混入功能变更 |
+| Knip | 检查未使用文件、导出、依赖、devDependencies |
+| dependency-cruiser | 检查循环依赖和架构边界 |
+| Gitleaks | 防止 API key / token 泄漏 |
+| npm audit + OSV-Scanner | 依赖漏洞扫描 |
+| Semgrep | Electron / Node / Web 安全 SAST |
+| CodeQL | GitHub 侧深度静态分析 |
+| lint-staged / hooks | 提交前快速拦截 |
+| CI required checks | 保护 `master` |
+
+---
+
+## 3. 推荐落地顺序
+
+### P0 — 保持现有门禁稳定
+
+现有脚本：
 
 ```jsonc
 {
-  "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "lint": "eslint . --max-warnings=0",
-    "format:check": "biome ci .",
-    "deadcode": "knip",
-    "security": "gitleaks detect --source . && npm audit --audit-level=high",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run deadcode"
-  }
+    "scripts": {
+        "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+        "lint": "eslint --config eslint_config.mjs . --max-warnings=0",
+        "check": "npm run typecheck && npm run lint && npm test"
+    }
+}
+```
+
+要求：
+
+- `npm run typecheck` 必须零错误；
+- `npm run lint` 必须零 warning；
+- `npm test` 必须通过；
+- 新增 TS / TSX 文件必须纳入 `tsconfig.eslint.json` 覆盖，避免 type-aware lint 漏扫。
+
+### P1 — 格式化与死代码
+
+#### 3.1 format check
+
+推荐 Biome 或 Prettier 二选一，先只上 `check`，不要自动格式化全仓。
+
+必须配置：
+
+```txt
+indentWidth = 4
+useTabs = false
+```
+
+原因：项目 CLAUDE.md 要求 4 空格缩进，默认 2 空格会制造大规模无意义 diff。
+
+建议脚本：
+
+```jsonc
+{
+    "scripts": {
+        "format:check": "biome ci ."
+    }
+}
+```
+
+如果选择 Prettier：
+
+```jsonc
+{
+    "scripts": {
+        "format:check": "prettier --check ."
+    }
+}
+```
+
+#### 3.2 Knip
+
+用于检查未使用文件、导出、依赖和 devDependencies。
+
+建议脚本：
+
+```jsonc
+{
+    "scripts": {
+        "deadcode": "knip"
+    }
+}
+```
+
+落地方式：
+
+1. 先运行 `npx knip` 生成现状；
+2. 对测试夹具、Electron preload、动态注册服务、Playwright 文件配置必要 ignore；
+3. 只删除确认无引用且不属于动态入口的项目；
+4. CI 初期允许 baseline，后续逐步收紧。
+
+### P2 — 安全与依赖漏洞
+
+#### 3.3 Gitleaks
+
+项目包含大量外部服务配置入口，必须防止密钥进入仓库。
+
+建议脚本：
+
+```jsonc
+{
+    "scripts": {
+        "secrets": "gitleaks detect --source ."
+    }
+}
+```
+
+建议同时加入 pre-commit 和 CI。
+
+#### 3.4 npm audit + OSV-Scanner
+
+建议脚本：
+
+```jsonc
+{
+    "scripts": {
+        "security:deps": "npm audit --audit-level=high && osv-scanner -r ."
+    }
+}
+```
+
+规则：
+
+- high / critical 必须阻断发布；
+- devDependency 漏洞如果只影响本地工具，可以记录风险后延后，但不能静默忽略；
+- Electron / better-sqlite3 / 构建链漏洞优先处理。
+
+#### 3.5 Semgrep
+
+用于扫描 Electron、Node、Web 安全风险。
+
+建议脚本：
+
+```jsonc
+{
+    "scripts": {
+        "security:sast": "semgrep scan --config=auto"
+    }
+}
+```
+
+重点规则：
+
+- 禁止 `eval` / `new Function`；
+- `shell.openExternal` 必须校验 URL；
+- IPC 必须校验 sender / origin / payload；
+- renderer 禁止直接暴露 `fs` / `path` / `child_process`；
+- 禁止加载不可信远程内容；
+- CSP 必须严格。
+
+### P3 — 架构边界与 CI 门禁
+
+#### 3.6 dependency-cruiser
+
+用于检查循环依赖和层级边界。
+
+建议脚本：
+
+```jsonc
+{
+    "scripts": {
+        "arch": "depcruise electron src shared tests --validate .dependency-cruiser.cjs"
+    }
+}
+```
+
+建议规则：
+
+```txt
+禁止循环依赖
+禁止生产代码依赖 test 文件
+禁止 renderer 直接 import electron/main-only 模块
+禁止 src/ 直接访问 better-sqlite3 或 Node fs/path/child_process
+shared/ 只能放纯类型和跨进程安全常量
+Electron preload 只能暴露经过白名单封装的 API
+```
+
+#### 3.7 CI required checks
+
+CI 合并门禁至少包含：
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run test:e2e:core
+```
+
+建议分层：
+
+| CI job | 命令 | 触发 |
+|---|---|---|
+| fast-check | `npm run check` | 每个 PR |
+| build | `npm run build` | 每个 PR |
+| e2e-core | `npm run test:e2e:core` | 每个 PR |
+| e2e-ui | `npm run test:e2e:ui` | UI / window / config 相关 PR |
+| security | `npm run secrets && npm run security:deps && npm run security:sast` | PR + nightly |
+| package-smoke | `npm run dist:dir` 后启动产物 smoke | release / nightly |
+
+---
+
+## 4. TypeScript / ESLint 继续收紧项
+
+现有配置已经启用 `strictTypeChecked` 和关键规则。后续可按批次追加：
+
+| 规则 / 插件 | 作用 | 注意 |
+|---|---|---|
+| `eslint-plugin-react` | React JSX 规则 | React 19 配置需确认兼容 |
+| `eslint-plugin-jsx-a11y` | UI 可访问性 | 前端窗口控件逐步修，不要一次性全开失败 |
+| `eslint-plugin-security` | JS 安全模式 | Electron 项目建议加入 |
+| `eslint-plugin-promise` | Promise 误用 | 与 `no-floating-promises` 互补 |
+| `eslint-plugin-regexp` | 正则风险 | 适合服务解析与文本处理代码 |
+| `eslint-plugin-unicorn` | 现代 JS 规则 | 文件名规则必须适配 snake_case |
+| `eslint-plugin-sonarjs` | 复杂度 / 重复逻辑 | 初期建议 warning + baseline |
+
+推荐保持或追加的关键规则：
+
+```js
+{
+    rules: {
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unsafe-assignment": "error",
+        "@typescript-eslint/no-unsafe-member-access": "error",
+        "@typescript-eslint/no-unsafe-call": "error",
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/await-thenable": "error",
+        "@typescript-eslint/switch-exhaustiveness-check": "error",
+        "@typescript-eslint/consistent-type-imports": "error",
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "error"
+    }
 }
 ```
 
 ---
 
-## 4. 必须注意的坑
+## 5. Electron 专项安全检查
 
-### 4.1 文件名命名规则冲突(最重要)
+Electron 的风险是 renderer 漏洞可能升级成本机权限问题，因此需要单独门禁。
 
-本项目 CLAUDE.md 要求**文件名一律 `snake_case`**,项目现状也确实是(`source_area.tsx`、`config_components.tsx`、`icons.tsx`)。但**大多数 ESLint 文件名规则的默认值是为 React 社区惯例 `PascalCase` 设计的**,直接开会每个文件都报错。
+### 5.1 BrowserWindow 安全基线
 
-| 规则 | 会不会冲突 | 怎么办 |
-| --- | --- | --- |
-| `unicorn/filename-case` | **会**。默认只认 `kebabCase`/`camelCase`,不认 `snake_case` | 显式配 `{ "case": "snakeCase" }`(推荐,还能拦住手滑写 `PascalCase.tsx`),或直接关掉 |
-| `react/jsx-pascal-case` | **不冲突**。它管 JSX 标签名(`<SourceArea />`),与文件名无关 | 正常开 |
-| `@typescript-eslint/naming-convention` | 不冲突(除非额外强制"导入名=文件名") | 正常开,管变量/函数/类型命名 |
-| `eslint-config-next` | 不适用 | 本项目是 electron-vite 不是 Next,无视 |
+所有窗口默认必须满足：
 
-**核心认知:"文件名风格"和"组件名风格"是两件事**:
-- 文件名 → `snake_case`(CLAUDE.md 要求,项目已统一)
-- 组件名/Hook 名 → `PascalCase` / `camelCase`(React 硬规则,靠大小写区分组件和 DOM 元素,**必须遵守,不能改**)
+```txt
+nodeIntegration: false
+contextIsolation: true
+sandbox: true
+webSecurity: true
+```
 
-所以 `source_area.tsx` 里导出 `function SourceArea()`、`import SourceArea from './source_area'` 是**完全正常**的,不是冲突。
+如某窗口确实不能 `sandbox: true`，必须在代码旁说明约束，并由安全 review 接受。
 
-→ 落地动作:加 lint 时,`unicorn/filename-case` 显式设成 `snakeCase`;组件/Hook 命名规则照常全开。
+### 5.2 禁止或严控项
 
-### 4.2 存量项目不要一次性全开
+- 禁止 Electron `remote` module；
+- 禁止 `eval` / `new Function`；
+- renderer 不直接暴露 `fs` / `path` / `child_process`；
+- IPC 必须校验 sender / origin / payload schema；
+- `shell.openExternal` 必须校验 URL allowlist；
+- 禁止加载不可信远程内容；
+- 必须设置严格 CSP；
+- E2E-only HTTP 端点必须只在 `OMNI_POT_E2E=1` 且 token 匹配时启用。
 
-参考总纲第 12 节。正确做法:
-1. 先接入工具,允许 baseline(存量问题先挂账)
-2. 新代码零 warning、零 type error
-3. 旧问题按模块逐步清理
-4. 最后把所有 warning 升级为 error
+### 5.3 建议工具
 
-### 4.3 type-aware lint 要配 `parserOptions.project`
+| 工具 | 作用 |
+|---|---|
+| `eslint-plugin-security` | JS / Node 安全规则 |
+| Semgrep | 自定义 Electron 安全规则 |
+| CodeQL | 深度静态分析 |
+| Electron Fuses 检查 | 减少运行时攻击面 |
 
-`typescript-eslint` 的 `strictTypeChecked` 依赖类型信息,必须在 ESLint config 里把 `parserOptions.project` 指向 `tsconfig.node.json` 和 `tsconfig.web.json` 两个,否则规则不生效或报错。
-
-### 4.4 缩进 4 空格
-
-CLAUDE.md 要求 4 空格、禁 tab。配 Biome/Prettier 时显式设 `indentWidth: 4`,否则默认值(Prettier 2、Biome 2)会和约定冲突,格式化一跑全项目 diff。
-
-### 4.5 日志规范
-
-CLAUDE.md 要求用 logging 库、禁 `console.log`。可以加 `no-console` 规则(electron 主进程除外按需放开),但这属于第三档,不急。
+不建议使用 Electronegativity 作为主检查工具：维护滞后，新版 Electron 容易误报 / 漏报。Electron 安全扫描以 `eslint-plugin-security + Semgrep + CodeQL + 人工 review` 为主。
 
 ---
 
-## 5. 验证标准
+## 6. 项目约定相关坑
 
-每一档做完,对应检查应满足:
+### 6.1 文件名必须 snake_case
 
-- 第一档:`npm run typecheck` 零错误;`npm run lint` 零 warning。
-- 第二档:`npx knip` 无未用依赖;`gitleaks` 无泄漏;`format:check` 无 diff。
-- 第三档:`npm audit` 无 high/critical;CI 上 `check` 全绿并设为 master 门禁。
+用户全局 CLAUDE.md 要求所有命名使用 `snake_case`，包括文件名、目录名、变量、函数。
+
+但 React 组件名仍必须遵守 React 规则：
+
+```txt
+文件名：source_area.tsx
+组件名：SourceArea
+Hook 名：useTranslateStore
+```
+
+这不是冲突：文件名风格和 JSX 组件名风格是两件事。
+
+如果启用 `eslint-plugin-unicorn`：
+
+```js
+{
+    "unicorn/filename-case": ["error", { "case": "snakeCase" }]
+}
+```
+
+不要启用默认只接受 kebab/camel 的文件名规则。
+
+### 6.2 缩进必须 4 空格
+
+Biome / Prettier 必须显式配置 4 空格，否则格式化工具默认 2 空格会造成全仓 diff。
+
+### 6.3 日志规范
+
+禁止为了调试新增 `console.log`。
+
+建议规则：
+
+```js
+{
+    "no-console": "error"
+}
+```
+
+例外：构建配置、测试辅助脚本如确实需要 stdout，可用 per-file override。
+
+### 6.4 动态入口不要被误删
+
+Knip / dependency-cruiser 配置时要注意这些动态入口：
+
+- Electron main / preload / renderer 多入口；
+- 服务注册表；
+- Playwright fixture 和 Page Object；
+- electron-builder 打包资源；
+- i18n locale 文件；
+- data 目录中的词典和 OCR 资源。
+
+误报必须写入工具配置，不要为了通过检查删除真实入口。
+
+---
+
+## 7. 推荐最终脚本
+
+逐步落地到最终状态：
+
+```jsonc
+{
+    "scripts": {
+        "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+        "lint": "eslint --config eslint_config.mjs . --max-warnings=0",
+        "format:check": "biome ci .",
+        "deadcode": "knip",
+        "arch": "depcruise electron src shared tests --validate .dependency-cruiser.cjs",
+        "secrets": "gitleaks detect --source .",
+        "security:deps": "npm audit --audit-level=high && osv-scanner -r .",
+        "security:sast": "semgrep scan --config=auto",
+        "check": "npm run typecheck && npm run lint && npm test",
+        "check:full": "npm run check && npm run format:check && npm run deadcode && npm run arch && npm run secrets && npm run security:deps && npm run build"
+    }
+}
+```
+
+注意：`check:full` 初期不一定作为 PR 必过，应先解决 baseline，再逐项升级为必过。
+
+---
+
+## 8. 验收标准
+
+### P0 验收
+
+- `npm run typecheck` 零错误；
+- `npm run lint` 零 warning；
+- `npm test` 通过；
+- `npm run check` 通过。
+
+### P1 验收
+
+- format check 无 diff；
+- Knip 无未解释的未使用文件 / 导出 / 依赖；
+- 动态入口的 ignore 有明确配置理由。
+
+### P2 验收
+
+- Gitleaks 无 secret 泄漏；
+- npm audit / OSV 无 high / critical；
+- Semgrep 无高危 Electron / Node / Web 问题；
+- `shell.openExternal`、IPC、E2E-only HTTP 端点有安全约束。
+
+### P3 验收
+
+- dependency-cruiser 无循环依赖；
+- renderer / main / shared 分层边界被工具约束；
+- CI required checks 保护 `master`；
+- release 前跑 `npm run build`、`npm run dist:dir` 和打包产物 smoke。
+
+---
+
+## 9. 最终门禁定义
+
+最终状态下，以下任一问题都必须失败：
+
+```txt
+任何 TypeScript type error
+任何 ESLint warning
+任何 format diff
+任何 unit / E2E 测试失败
+任何构建失败
+任何 high / critical security issue
+任何 secret 泄漏
+任何未解释的循环依赖
+任何未解释的未使用依赖
+任何 Electron 安全基线破坏
+```
+
+一句话目标：**类型检查 + 类型感知 lint + 格式检查 + 死代码检查 + 架构约束 + 安全扫描 + 依赖漏洞扫描 + Git hooks + CI 强制门禁**。只要任何一层发现问题，就不允许提交、合并或发布。
