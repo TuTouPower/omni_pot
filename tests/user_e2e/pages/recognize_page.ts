@@ -126,27 +126,26 @@ export class RecognizePage {
     }
 
     async fulfill_baidu_ocr_services(enabled_text: string, disabled_text: string): Promise<void> {
-        await this.page.route('https://aip.baidubce.com/oauth/2.0/token**', async (route) => {
-            await route.fulfill({
+        await this.page.evaluate(({ enabled_text, disabled_text }: { enabled_text: string; disabled_text: string }) => {
+            const original_fetch = window.fetch.bind(window)
+            const mock_response = (data: unknown): Response => new Response(JSON.stringify(data), {
                 status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({ access_token: 'e2e-token', expires_in: 3600 }),
+                headers: { 'content-type': 'application/json' },
             })
-        })
-        await this.page.route('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic**', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({ words_result: [{ words: disabled_text }] }),
-            })
-        })
-        await this.page.route('https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic**', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({ words_result: [{ words: enabled_text }] }),
-            })
-        })
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (url.startsWith('https://aip.baidubce.com/oauth/2.0/token')) {
+                    return mock_response({ access_token: 'e2e-token', expires_in: 3600 })
+                }
+                if (url.startsWith('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic')) {
+                    return mock_response({ words_result: [{ words: disabled_text }] })
+                }
+                if (url.startsWith('https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic')) {
+                    return mock_response({ words_result: [{ words: enabled_text }] })
+                }
+                return original_fetch(input, init)
+            }
+        }, { enabled_text, disabled_text })
     }
 
     titlebarOrder(): Promise<string[]> {
