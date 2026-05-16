@@ -7,6 +7,7 @@ import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { start_screenshot_capture } from '../screenshot'
 import { get_translate_window_options, attach_translate_resize_persistence } from '../windows/translate_options'
+import { get_recognize_window_options } from '../windows/recognize_options'
 
 async function windows_ocr(image_path: string, lang: string): Promise<string> {
     const bcp47 = lang || 'en-US'
@@ -77,13 +78,7 @@ export function registerOcrHandlers(manager: WindowManager): void {
     })
 
     ipcMain.handle('ocr:open-recognize', (_event, base64Image: string, text: string) => {
-        manager.focusOrCreate(WindowLabel.RECOGNIZE, {
-            label: WindowLabel.RECOGNIZE,
-            width: 400,
-            height: 350,
-            minWidth: 300,
-            minHeight: 200
-        })
+        manager.focusOrCreate(WindowLabel.RECOGNIZE, get_recognize_window_options())
 
         manager.sendWhenReady(WindowLabel.RECOGNIZE, 'recognize:show', base64Image, text)
     })
