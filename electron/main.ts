@@ -43,9 +43,9 @@ if (!gotLock) {
   app.on('second-instance', () => {
     windowManager?.focusOrCreate(WindowLabel.CONFIG, {
       label: WindowLabel.CONFIG,
-      width: 800,
+      width: 880,
       height: 600,
-      minWidth: 800,
+      minWidth: 880,
       minHeight: 400
     })
   })

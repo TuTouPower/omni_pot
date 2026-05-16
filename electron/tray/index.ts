@@ -66,9 +66,9 @@ function open_translate_window(): void {
 function open_config_window(): void {
   windowManager?.focusOrCreate(WindowLabel.CONFIG, {
     label: WindowLabel.CONFIG,
-    width: 800,
+    width: 880,
     height: 600,
-    minWidth: 800,
+    minWidth: 880,
     minHeight: 400
   })
 }

@@ -24,6 +24,10 @@ test.describe('@ui config settings window', () => {
             const config = await omni.openConfig()
 
             await expect(config.wordmark()).toContainText('Omni Pot')
+            await expect.poll(async () => await config.hasHorizontalOverflow()).toBe(false)
+            await expect.poll(async () => await config.appRegion('config-titlebar')).toBe('drag')
+            await expect.poll(async () => await config.appRegion('config-pin')).toBe('no-drag')
+            await expect.poll(async () => await config.appRegion('config-close')).toBe('no-drag')
             await expect(config.pinButton()).toBeVisible()
             await expect(config.version()).toContainText(/^v\d+\.\d+\.\d+$/)
             await expect(config.navItems()).toHaveCount(8)

@@ -17,8 +17,16 @@ function css_attribute_value(value: string): string {
 export class ConfigPage {
     constructor(private page: Page) {}
 
+    window(): Locator {
+        return this.page.getByTestId('config-window')
+    }
+
     wordmark(): Locator {
         return this.page.getByTestId('config-wordmark')
+    }
+
+    titlebar(): Locator {
+        return this.page.getByTestId('config-titlebar')
     }
 
     pinButton(): Locator {
@@ -255,6 +263,17 @@ export class ConfigPage {
 
     aboutDiagnostic(testId: 'about-config-dir' | 'about-log-dir' | 'about-api-url'): Locator {
         return this.page.getByTestId(testId)
+    }
+
+    async appRegion(testId: string): Promise<string> {
+        return this.page.getByTestId(testId).evaluate((element) => getComputedStyle(element).getPropertyValue('-webkit-app-region'))
+    }
+
+    async hasHorizontalOverflow(): Promise<boolean> {
+        return this.page.evaluate(() => (
+            document.documentElement.scrollWidth > document.documentElement.clientWidth
+            || document.body.scrollWidth > document.body.clientWidth
+        ))
     }
 
     async openSection(pageKey: string): Promise<void> {
