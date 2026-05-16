@@ -35,6 +35,10 @@ export class ScreenshotPage {
         return this.page.evaluate(() => ({ width: window.screen.width, height: window.screen.height }))
     }
 
+    device_scale_factor(): Promise<number> {
+        return this.page.evaluate(() => window.devicePixelRatio)
+    }
+
     root_background_image(): Promise<string> {
         return this.root().evaluate((el) => getComputedStyle(el).backgroundImage)
     }
@@ -77,12 +81,15 @@ export class ScreenshotPage {
         await this.release_selection()
     }
 
-    press_enter(): Promise<void> {
-        return this.page.keyboard.press('Enter')
+    async press_enter(): Promise<void> {
+        await this.page.bringToFront()
+        await this.page.keyboard.press('Enter')
     }
 
     async press_escape(): Promise<void> {
         try {
+            await this.page.bringToFront()
+            await this.overlay().click({ position: { x: 1, y: 1 } })
             await this.page.keyboard.press('Escape')
         } catch (error) {
             if (!is_target_closed_error(error)) throw error

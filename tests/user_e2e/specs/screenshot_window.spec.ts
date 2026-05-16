@@ -47,6 +47,14 @@ async function expect_recognize_image_size(
     }))).toEqual({ width: expected_width, height: expected_height })
 }
 
+async function expected_image_size(screenshot: { device_scale_factor: () => Promise<number> }, width: number, height: number): Promise<{ width: number; height: number }> {
+    const scale = await screenshot.device_scale_factor()
+    return {
+        width: Math.round(width * scale),
+        height: Math.round(height * scale),
+    }
+}
+
 test.describe('@ui screenshot window', () => {
     test('user opens screenshot overlay and sees drag selection affordances', async () => {
         const omni = await AppFixture.start({ config: screenshot_config })
@@ -81,11 +89,12 @@ test.describe('@ui screenshot window', () => {
             expect(Math.round(box?.width ?? 0)).toBe(180)
             expect(Math.round(box?.height ?? 0)).toBe(120)
 
+            const expected_size = await expected_image_size(screenshot, 180, 120)
             await screenshot.release_selection()
             await expect_screenshot_closed(omni)
             const recognize = await omni.recognize()
             await expect(recognize.image().locator('img')).toBeVisible()
-            await expect_recognize_image_size(recognize, 180, 120)
+            await expect_recognize_image_size(recognize, expected_size.width, expected_size.height)
         } finally {
             await omni.stop()
         }
@@ -114,12 +123,13 @@ test.describe('@ui screenshot window', () => {
             const screenshot = await omni.triggerScreenshot('recognize')
             await expect.poll(async () => await screenshot.root_background_image()).toContain('data:image/png;base64')
 
+            const expected_size = await expected_image_size(screenshot, 220, 160)
             await screenshot.drag_and_release(100, 100, 320, 260)
 
             await expect_screenshot_closed(omni)
             const recognize = await omni.recognize()
             await expect(recognize.image().locator('img')).toBeVisible()
-            await expect_recognize_image_size(recognize, 220, 160)
+            await expect_recognize_image_size(recognize, expected_size.width, expected_size.height)
             await expect(recognize.text()).toHaveValue('')
         } finally {
             await omni.stop()
@@ -170,6 +180,7 @@ test.describe('@ui screenshot window', () => {
 
             await screenshot.begin_selection(140, 130, 360, 290)
             await expect(screenshot.selection()).toBeVisible()
+            const expected_size = await expected_image_size(screenshot, 220, 160)
             await screenshot.press_enter()
             await expect_screenshot_closed(omni)
 
@@ -177,7 +188,7 @@ test.describe('@ui screenshot window', () => {
             await recognize_window.mouse.up().catch(() => undefined)
             const recognize = await omni.recognize()
             await expect(recognize.image().locator('img')).toBeVisible()
-            await expect_recognize_image_size(recognize, 220, 160)
+            await expect_recognize_image_size(recognize, expected_size.width, expected_size.height)
         } finally {
             await omni.stop()
         }
