@@ -153,7 +153,7 @@ Add to `devDependencies`:
 "tsx": "^4.0.0"
 ```
 
-Do NOT add `cld3-asm` here — it goes in Task 7 after spike verification.
+`cld3-asm` was already added in Task 0 Step 4.
 
 - [ ] **Step 2: Add extraResources for chinese dict db**
 
@@ -181,7 +181,7 @@ resources/data/dict/chinese_dict.db
 *.db-wal
 ```
 
-Note: `chinese-dictionary-LICENSE` is NOT ignored — it must be committed or validated at release time.
+Note: `chinese-dictionary-LICENSE` is NOT ignored — it is committed directly to the repo (one-time copy of the mapull MIT license text). The build script also copies it from the source data, but only if missing.
 
 - [ ] **Step 4: Write the build script**
 
@@ -352,7 +352,11 @@ function build(): void {
                     }
                     if (speech) speech_set.add(speech)
                     if (!first_words && e['words'] && Array.isArray(e['words'])) {
-                        first_words = JSON.stringify(e['words'].slice(0, 5))
+                        const normalized = (e['words'] as Array<Record<string, unknown>>).map(w => ({
+                            word: String(w['word'] ?? ''),
+                            text: String(w['text'] ?? ''),
+                        }))
+                        first_words = JSON.stringify(normalized.slice(0, 5))
                     }
                 }
             }
@@ -416,8 +420,11 @@ function build(): void {
 
     db.close()
 
-    // 12. Copy LICENSE
-    copyFileSync(license_src, join(OUTPUT_DIR, 'chinese-dictionary-LICENSE'))
+    // 12. Copy LICENSE (skip if already committed to repo)
+    const license_dest = join(OUTPUT_DIR, 'chinese-dictionary-LICENSE')
+    if (!existsSync(license_dest)) {
+        copyFileSync(license_src, license_dest)
+    }
 
     // 13. Check size
     const size_mb = statSync(OUTPUT_DB).size / (1024 * 1024)
@@ -470,6 +477,7 @@ let db: Database.Database | undefined
 let db_state: DbState = 'idle'
 let cached_path: string | undefined
 let service_state: ServiceState = 'missing'
+const stmt_cache = new Map<string, Database.Statement>()
 
 interface ExplanationEntry {
     pinyin: string
@@ -513,7 +521,7 @@ function find_db_path(): string | null {
         return existsSync(prod_path) ? prod_path : null
     }
     // dev: project root
-    const dev_path = join(__dirname, '..', '..', '..', 'resources', 'data', 'dict', 'chinese_dict.db')
+    const dev_path = join(app.getAppPath(), 'resources', 'data', 'dict', 'chinese_dict.db')
     return existsSync(dev_path) ? dev_path : null
 }
 
@@ -530,11 +538,10 @@ function open_db(): Database.Database | null {
 
     try {
         db = new Database(path, { readonly: true })
-        db.pragma('journal_mode = WAL')
 
         // Validate schema version
         const meta = db.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get() as { value: string } | undefined
-        if (!meta || parseInt(meta.value) !== 1) {
+        if (!meta || meta.value !== '1') {
             log_dict.error('schema version mismatch: expected 1, got %s', meta?.value ?? 'missing')
             db.close()
             db = undefined
@@ -544,6 +551,15 @@ function open_db(): Database.Database | null {
 
         cached_path = path
         db_state = 'ready'
+
+        // Prepare and cache frequently used statements
+        stmt_cache.clear()
+        stmt_cache.set('count_words', db.prepare('SELECT COUNT(*) as count FROM words'))
+        stmt_cache.set('lookup_word', db.prepare('SELECT word, pinyin, explanation FROM words WHERE word = ?'))
+        stmt_cache.set('lookup_idiom', db.prepare('SELECT word, pinyin, explanation, source, example, similar, opposite FROM idioms WHERE word = ?'))
+        stmt_cache.set('lookup_char', db.prepare('SELECT char, pinyin, explanation, speech, words FROM characters WHERE char = ?'))
+        stmt_cache.set('fts_search', db.prepare('SELECT word, pinyin, explanation FROM words_fts WHERE word MATCH ? LIMIT ?'))
+
         log_dict.info('db opened: %s', path)
         return db
     } catch (e) {
@@ -575,38 +591,40 @@ export function set_service_state(state: ServiceState): void {
 export function get_entry_count(): number {
     const database = open_db()
     if (!database) return 0
-    const row = database.prepare('SELECT COUNT(*) as count FROM words').get() as { count: number }
+    const stmt = stmt_cache.get('count_words') ?? database.prepare('SELECT COUNT(*) as count FROM words')
+    const row = stmt.get() as { count: number }
     return row.count
 }
 
 export function lookup_word(text: string): WordRow | null {
     const database = open_db()
     if (!database) return null
-    return database.prepare('SELECT word, pinyin, explanation FROM words WHERE word = ?').get(text) as WordRow | null
+    const stmt = stmt_cache.get('lookup_word') ?? database.prepare('SELECT word, pinyin, explanation FROM words WHERE word = ?')
+    return stmt.get(text) as WordRow | null
 }
 
 export function lookup_idiom(text: string): IdiomRow | null {
     const database = open_db()
     if (!database) return null
-    return database.prepare('SELECT * FROM idioms WHERE word = ?').get(text) as IdiomRow | null
+    const stmt = stmt_cache.get('lookup_idiom') ?? database.prepare('SELECT word, pinyin, explanation, source, example, similar, opposite FROM idioms WHERE word = ?')
+    return stmt.get(text) as IdiomRow | null
 }
 
 export function lookup_character(text: string): CharRow | null {
     const database = open_db()
     if (!database) return null
-    return database.prepare('SELECT * FROM characters WHERE char = ?').get(text) as CharRow | null
+    const stmt = stmt_cache.get('lookup_char') ?? database.prepare('SELECT char, pinyin, explanation, speech, words FROM characters WHERE char = ?')
+    return stmt.get(text) as CharRow | null
 }
 
 export function fts_search(prefix: string, limit = 5): WordRow[] {
     const database = open_db()
     if (!database) return []
-    // Whitelist: only keep CJK (including Ext B-F), letters, digits, whitespace
-    const cleaned = prefix.replace(/[^\p{Script=Han}a-zA-Z0-9\s]/gu, '')
+    const cleaned = prefix.replace(/[^\p{Script=Han}a-zA-Z0-9]/gu, '')
     if (!cleaned) return []
     const query = `${cleaned}*`
-    return database.prepare(
-        'SELECT word, pinyin, explanation FROM words_fts WHERE word MATCH ? LIMIT ?'
-    ).all(query, limit) as WordRow[]
+    const stmt = stmt_cache.get('fts_search') ?? database.prepare('SELECT word, pinyin, explanation FROM words_fts WHERE word MATCH ? LIMIT ?')
+    return stmt.all(query, limit) as WordRow[]
 }
 
 export function reload_db(): boolean {
@@ -617,8 +635,10 @@ export function reload_db(): boolean {
     }
     db_state = 'idle'
     cached_path = undefined
-    // NOTE: if prepared statements are cached in future, clear them here too
-    return is_ready()
+    stmt_cache.clear()
+    const success = is_ready()
+    service_state = success ? 'ready' : 'failed'
+    return success
 }
 
 export function close_chinese_dict(): void {
@@ -745,6 +765,7 @@ function to_dict_result_idiom(row: {
         pronunciations: [{ region: '普通话', phonetic: row.pinyin }],
         definitions: [{ partOfSpeech: '成语', meanings: [row.explanation] }],
         examples,
+        // FUTURE: extend DictResult with idiom_meta?: { source, similar, opposite }
     }
 }
 
@@ -753,11 +774,12 @@ function clean_for_fts(text: string): string {
     return text.replace(/[^\p{Script=Han}a-zA-Z0-9\s]/gu, '').trim()
 }
 
-// Exact query: only trim + length check (no character stripping)
+// Exact query: strip punctuation, trim, length check
 function clean_for_exact(text: string): string {
-    const trimmed = text.trim()
-    if (trimmed.length > 100) return ''
-    return trimmed
+    // Strip non-CJK, non-alphanumeric characters (punctuation, symbols)
+    const stripped = text.replace(/[^\p{Script=Han}a-zA-Z0-9\s]/gu, '').trim()
+    if (stripped.length === 0 || stripped.length > 100) return ''
+    return stripped
 }
 
 function is_chinese(text: string): boolean {
@@ -824,6 +846,11 @@ chineseDict: {
     lookup: (text: string) => ipcRenderer.invoke('chineseDict:lookup', text),
     check: () => ipcRenderer.invoke('chineseDict:check'),
     reload: () => ipcRenderer.invoke('chineseDict:reload'),
+    onStateChanged: (callback: (state: string) => void) => {
+        const handler = (_event: Electron.IpcRendererEvent, state: string) => { callback(state); }
+        ipcRenderer.on('chineseDict:state-changed', handler)
+        return () => { ipcRenderer.off('chineseDict:state-changed', handler) }
+    },
 },
 ```
 
@@ -836,6 +863,7 @@ chineseDict: {
     lookup(text: string): Promise<DictResult | null>
     check(): Promise<{ ready: boolean; status: string; entry_count: number }>
     reload(): Promise<{ success: boolean }>
+    onStateChanged(callback: (state: string) => void): () => void
 }
 ```
 
@@ -868,18 +896,37 @@ Expected: No errors.
 
 This task wires up the service state machine and dev-mode auto-build that Task 2 exports but never connects.
 
-- [ ] **Step 1: Add dev auto-build logic in main.ts**
+- [ ] **Step 1: Add imports at the top of main.ts**
 
-In `electron/main.ts`, after `registerChineseDictHandlers()`, add:
+Add these imports at the top of `electron/main.ts` (with the other imports):
 
 ```typescript
 import { get_db_path, get_service_state, set_service_state, reload_db, close_chinese_dict } from './chinese_dict'
 import { existsSync, watch } from 'fs'
 import { join } from 'path'
 import { spawn } from 'child_process'
+```
 
+- [ ] **Step 2: Add dev auto-build logic + fs.watch in main.ts**
+
+After `registerChineseDictHandlers()`, add:
+
+```typescript
 // Chinese dict: dev auto-build + state machine
 const dict_db_path = get_db_path()
+
+function register_db_watch(db_path: string): void {
+    let debounce: ReturnType<typeof setTimeout> | null = null
+    try {
+        watch(db_path, () => {
+            if (debounce) clearTimeout(debounce)
+            debounce = setTimeout(() => { reload_db() }, 500)
+        })
+    } catch {
+        // watch failed — non-critical
+    }
+}
+
 if (!dict_db_path || !existsSync(dict_db_path)) {
     if (app.isPackaged) {
         // prod: db should be bundled; missing = failed
@@ -887,12 +934,21 @@ if (!dict_db_path || !existsSync(dict_db_path)) {
     } else {
         // dev: auto-trigger build
         set_service_state('building')
-        const build = spawn('npm', ['run', 'build:chinese-dict'], { cwd: join(__dirname, '..', '..'), shell: true })
+        const npm_cmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+        const build = spawn(npm_cmd, ['run', 'build:chinese-dict'], { cwd: app.getAppPath(), shell: true })
         build.stderr?.on('data', (data: Buffer) => { log.error('build:chinese-dict stderr: %s', data.toString()) })
         build.on('close', (code) => {
             if (code === 0) {
-                set_service_state('missing') // reset so is_ready() re-opens
+                set_service_state('ready')
                 reload_db()
+                // Notify renderer that dictionary state changed
+                const { BrowserWindow } = require('electron')
+                for (const win of BrowserWindow.getAllWindows()) {
+                    win.webContents.send('chineseDict:state-changed', 'ready')
+                }
+                // Register fs.watch AFTER build succeeds (file now exists)
+                const new_path = get_db_path()
+                if (new_path) register_db_watch(new_path)
             } else {
                 set_service_state('failed')
                 log.error('auto build:chinese-dict failed with code %d', code)
@@ -900,30 +956,9 @@ if (!dict_db_path || !existsSync(dict_db_path)) {
         })
     }
 } else {
-    set_service_state('missing') // will resolve to 'ready' on first is_ready()
-}
-```
-
-- [ ] **Step 2: Add fs.watch for dev mode db hot-reload**
-
-After the auto-build block, add:
-
-```typescript
-// Dev mode: watch db file for changes and hot-reload
-// Note: init_cld3() runs async — IPC registration does not depend on it
-if (!app.isPackaged) {
-    const db_watch_path = get_db_path() ?? join(__dirname, '..', '..', 'resources', 'data', 'dict', 'chinese_dict.db')
-    let debounce: ReturnType<typeof setTimeout> | null = null
-    try {
-        watch(db_watch_path, () => {
-            if (debounce) clearTimeout(debounce)
-            debounce = setTimeout(() => {
-                reload_db()
-            }, 500)
-        })
-    } catch {
-        // File doesn't exist yet — watcher will fail silently, auto-build will create it
-    }
+    set_service_state('ready')
+    // db already exists — register watch immediately
+    register_db_watch(dict_db_path)
 }
 ```
 
@@ -1099,8 +1134,15 @@ describe('chinese_dict build', () => {
         expect(size_mb).toBeLessThan(150)
     })
 
-    it.skipIf(!existsSync(LICENSE_PATH))('LICENSE file exists', () => {
+    it('LICENSE file exists when db is built', () => {
+        if (!db_exists) return
         expect(existsSync(LICENSE_PATH)).toBe(true)
+    })
+
+    it('db exists (CI requirement)', () => {
+        if (process.env.CI) {
+            expect(existsSync(DB_PATH)).toBe(true)
+        }
     })
 })
 ```
@@ -1113,7 +1155,7 @@ Expected: All tests pass (or skip if db not built).
 
 ---
 
-## Task 8: Main Process — Language Detection Module
+## Task 7: Main Process — Language Detection Module
 
 **Files:**
 - Create: `electron/detect/index.ts`
@@ -1134,6 +1176,7 @@ let wasm_state: WasmState = 'loading'
 let cld3_factory: { create(n: number): Cld3Instance } | undefined
 let cld3_instance: Cld3Instance | undefined // cached at module level
 let load_failed_logged = false
+let init_promise: Promise<void> | undefined // for idempotency
 
 interface Cld3Instance {
     findLanguage(text: string): { language: string; is_reliable: boolean; proportion: number }
@@ -1160,6 +1203,7 @@ const CLD3_LANG_MAP: Record<string, LanguageCode> = {
     'th': 'th',
     'sv': 'sv',
     'pl': 'pl',
+    'vi': 'vi',
 }
 
 // Regex-based fallback (current logic)
@@ -1183,19 +1227,35 @@ export function detect_regex(text: string): LanguageCode {
 }
 
 export async function init_cld3(): Promise<void> {
+    // Idempotent: if already loading, await the same promise
+    if (wasm_state === 'ready') return
+    if (init_promise) return init_promise
+    init_promise = do_init_cld3()
+    return init_promise
+}
+
+async function do_init_cld3(): Promise<void> {
+    const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('cld3-asm WASM load timeout')), 10000)
+    )
     try {
-        const { loadModule } = await import('cld3-asm')
-        cld3_factory = await loadModule()
-        cld3_instance = cld3_factory.create(0) // create once, cache at module level
-        wasm_state = 'ready'
-        log_detect.info('cld3-asm WASM loaded successfully')
+        await Promise.race([load_cld3_internal(), timeout])
     } catch (e) {
         wasm_state = 'failed'
+        init_promise = undefined // allow retry on next call
         if (!load_failed_logged) {
             log_detect.error('cld3-asm WASM load failed, falling back to regex: %s', e)
             load_failed_logged = true
         }
     }
+}
+
+async function load_cld3_internal(): Promise<void> {
+    const { loadModule } = await import('cld3-asm')
+    cld3_factory = await loadModule()
+    cld3_instance = cld3_factory.create(0)
+    wasm_state = 'ready'
+    log_detect.info('cld3-asm WASM loaded successfully')
 }
 
 export function detect_local_cld3(text: string): { lang: LanguageCode; source: 'cld3' | 'regex' } {
@@ -1243,7 +1303,7 @@ Expected: No errors.
 
 ---
 
-## Task 9: IPC Handlers — Language Detection
+## Task 8: IPC Handlers — Language Detection
 
 **Files:**
 - Create: `electron/ipc/detect_handlers.ts`
@@ -1329,7 +1389,7 @@ Expected: No errors.
 
 ---
 
-## Task 10: Renderer Service — Language Detection
+## Task 9: Renderer Service — Language Detection
 
 **Files:**
 - Modify: `src/services/detect.ts`
@@ -1366,7 +1426,7 @@ Expected: No errors.
 
 ---
 
-## Task 11: Detection Tests
+## Task 10: Detection Tests
 
 **Files:**
 - Create: `tests/detect/cld3.test.ts`
@@ -1377,26 +1437,7 @@ Create `tests/detect/cld3.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
-
-// Test the regex fallback logic (duplicated here for unit testing without IPC)
-function detect_regex(text: string): string {
-    if (/[一-鿿]/.test(text)) return 'zh_cn'
-    if (/[぀-ゟ゠-ヿ]/.test(text)) return 'ja'
-    if (/[가-힯]/.test(text)) return 'ko'
-    if (/[Ѐ-ӿ]/.test(text)) {
-        if (/[іїєґ]/.test(text)) return 'uk'
-        return 'ru'
-    }
-    if (/[฀-๿]/.test(text)) return 'th'
-    if (/[؀-ۿ]/.test(text)) {
-        if (/[گچپژ]/.test(text)) return 'fa'
-        return 'ar'
-    }
-    if (/[֐-׿]/.test(text)) return 'he'
-    if (/[ऀ-ॿ]/.test(text)) return 'hi'
-    if (/[ăằẳẵặâầẩẫậđêềểễệôồổỗộơờởỡợùừửữựýỳỷỹỵ]/i.test(text)) return 'vi'
-    return 'en'
-}
+import { detect_regex } from '../../electron/detect'
 
 describe('regex fallback detection', () => {
     it('detects Chinese', () => {
@@ -1471,11 +1512,14 @@ describe('BCP-47 mapping (spec compliance)', () => {
         ['ar', 'ar'],
         ['hi', 'hi'],
         ['th', 'th'],
+        ['sv', 'sv'],
+        ['pl', 'pl'],
+        ['vi', 'vi'],
     ]
 
     it.each(SPEC_MAPPINGS)('BCP-47 "%s" maps to LanguageCode "%s"', (_bcp47, expected) => {
         // This test validates the mapping table is correct at the type level
-        // Actual cld3 integration is tested in spike (Task 7)
+        // Actual cld3 integration is tested in spike (Task 0)
         expect(typeof expected).toBe('string')
     })
 })
@@ -1489,7 +1533,7 @@ Expected: All pass.
 
 ---
 
-## Task 12: Final Integration — Verify Full Build
+## Task 11: Final Integration — Verify Full Build
 
 **Files:**
 - None (verification only)
