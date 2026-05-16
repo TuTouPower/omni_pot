@@ -7,7 +7,7 @@ import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
-import { hasRegisteredHotkey, triggerRegisteredHotkey } from '../hotkey'
+import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures } from '../hotkey'
 import { readSelectedText, setE2eSelectedTextResult } from '../selection'
 import { log } from '../log'
 
@@ -128,6 +128,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-hotkey') {
                 handle_trigger_hotkey(req, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/hotkey-system-failures') {
+                handle_hotkey_system_failures(req, res)
                 return
             }
 
@@ -557,6 +562,28 @@ function handle_trigger_hotkey(
                 })
             }
             triggerRegisteredHotkey(name)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
+}
+
+function handle_hotkey_system_failures(
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = parse_json_body(chunks)
+            const shortcuts = Array.isArray(body.shortcuts)
+                ? body.shortcuts.filter((shortcut): shortcut is string => typeof shortcut === 'string')
+                : []
+            setE2eHotkeySystemFailures(shortcuts)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (error: unknown) {
