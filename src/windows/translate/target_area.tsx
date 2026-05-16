@@ -106,7 +106,7 @@ interface SortableCardProps {
 }
 
 function SortableCard({
-    instanceKey, results, collapsed, onToggleCollapse, onRetry,
+    instanceKey, results, isTranslating, collapsed, onToggleCollapse, onRetry,
     onCopy, onTts, onCollect,
     playingKey, collectedKeys, ttsAvailable, collectionAvailable,
 }: SortableCardProps): React.ReactElement | null {
@@ -124,7 +124,7 @@ function SortableCard({
 
     const result = results[instanceKey]
     const result_text = result_to_text(result)
-    const isStreaming = results[instanceKey] !== undefined && results[instanceKey] !== null && typeof results[instanceKey] === 'string'
+    const is_loading = isTranslating && result === undefined
     const is_collected = collectedKeys.has(instanceKey)
     const is_playing = playingKey === instanceKey
 
@@ -138,12 +138,6 @@ function SortableCard({
                     </span>
                     <SvcTile name={serviceKey} />
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{svcLabel(serviceKey)}</div>
-                    {isStreaming && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontFamily: 'var(--font-mono)', color: 'var(--text-mute)' }}>
-                            <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: 99, background: 'var(--brand-primary)' }} />
-                            stream
-                        </span>
-                    )}
                     <div style={{ flex: 1 }} />
                     <button data-testid="result-tts" className="ic-btn" title={t('result.tts') || '朗读'} aria-pressed={is_playing} disabled={!ttsAvailable || !result_text} style={{ color: is_playing ? 'var(--brand-primary)' : undefined }} onClick={() => {
                         if (result_text) onTts(result_text, instanceKey)
@@ -183,6 +177,15 @@ function SortableCard({
                                     <Icons.Cycle size={14} />
                                 </button>
                             )}
+                        </div>
+                    ) : is_loading ? (
+                        <div data-testid="result-loading" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-mute)', fontSize: 13 }}>
+                            <span data-testid="result-loading-dots" aria-hidden="true" style={{ display: 'inline-flex', gap: 3 }}>
+                                <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.45 }} />
+                                <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.7 }} />
+                                <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor' }} />
+                            </span>
+                            <span>{t('result.translating', { defaultValue: '翻译中…' })}</span>
                         </div>
                     ) : result === undefined ? null : (
                         <div data-testid="result-body" data-result-content style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
@@ -233,6 +236,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     const sourceText = useTranslateStore((s) => s.sourceText)
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
+    const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
 
     const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
@@ -290,7 +294,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         setPlayingKey(key)
         try {
             const instanceConfig = get_service_config(serviceInstances, instanceKey)
-            const audioBuffer = await ttsService.synthesize(text, targetLanguage, instanceConfig)
+            const audioBuffer = await ttsService.synthesize(text, effectiveTargetLanguage ?? targetLanguage, instanceConfig)
             if (playingRequestRef.current !== request_id) return
 
             const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
@@ -323,7 +327,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                 setPlayingKey(null)
             }
         }
-    }, [targetLanguage, ttsServiceList, serviceInstances])
+    }, [targetLanguage, effectiveTargetLanguage, ttsServiceList, serviceInstances])
 
     useEffect(() => {
         return () => {
@@ -363,7 +367,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
             if (!svc) continue
             const cfg = get_service_config(serviceInstances, collInstanceKey)
             try {
-                await svc.send(sourceText, sourceLanguage, targetLanguage, resultText, cfg)
+                await svc.send(sourceText, sourceLanguage, effectiveTargetLanguage ?? targetLanguage, resultText, cfg)
                 collected = true
             } catch { /* skip failed services */ }
         }
@@ -371,7 +375,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         if (collected) {
             setCollectedKeys((prev) => new Set(prev).add(instanceKey))
         }
-    }, [results, sourceText, sourceLanguage, targetLanguage, enabledCollectionServiceList, serviceInstances])
+    }, [results, sourceText, sourceLanguage, targetLanguage, effectiveTargetLanguage, enabledCollectionServiceList, serviceInstances])
 
     const sensors = useMemo<SensorDescriptor<SensorOptions>[]>(() => [{
         sensor: PointerSensor,

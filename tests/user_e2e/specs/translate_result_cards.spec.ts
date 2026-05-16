@@ -54,6 +54,27 @@ test.describe('@ui translate result cards', () => {
         }
     })
 
+    test('user sees translating animation without implementation stream label while waiting', async () => {
+        const omni = await AppFixture.start({ config: lingva_config })
+
+        try {
+            const translate = await omni.translate()
+            const pending_translation = await translate.hold_lingva_translation_once('你好世界')
+
+            await translate.typeSource('hello world')
+            await translate.clickTranslate()
+            await pending_translation.wait_for_request()
+
+            await expect(translate.resultCard('lingva@default').getByTestId('result-loading')).toContainText('翻译中')
+            await expect(translate.resultCard('lingva@default')).not.toContainText('stream')
+
+            pending_translation.release_response()
+            await expect(translate.resultBody('lingva@default')).toContainText('你好世界')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user stops result TTS while audio is still loading', async () => {
         const omni = await AppFixture.start({ config: lingva_config })
 
@@ -89,6 +110,7 @@ test.describe('@ui translate result cards', () => {
 
         try {
             const translate = await omni.translate()
+            await translate.typeSource('hello')
 
             await expect(translate.resultCards()).toHaveCount(2)
             await expect(translate.resultCards().nth(0)).toContainText('Bing')
@@ -122,6 +144,7 @@ test.describe('@ui translate result cards', () => {
 
         try {
             const translate = await omni.translate()
+            await translate.typeSource('hello')
 
             await expect(translate.resultCards()).toHaveCount(2)
             await expect(translate.resultCards().nth(0)).toContainText('Bing')

@@ -33,6 +33,7 @@ export default function TranslateWindow(): React.ReactElement {
     const clearResults = useTranslateStore((s) => s.clearResults)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
     const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
+    const setEffectiveTargetLanguage = useTranslateStore((s) => s.setEffectiveTargetLanguage)
     const nextRequestId = useTranslateStore((s) => s.nextRequestId)
 
     const serviceList = useConfigStore((s) => s.config.translate_service_list)
@@ -127,6 +128,7 @@ export default function TranslateWindow(): React.ReactElement {
         setIsTranslating(true)
         clearResults()
         setDetectedLanguage(null)
+        setEffectiveTargetLanguage(null)
 
         const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
         if (useTranslateStore.getState().requestId !== id) return
@@ -136,6 +138,7 @@ export default function TranslateWindow(): React.ReactElement {
         if (sourceLanguage === 'auto' && detected && detected === targetLanguage) {
             effectiveTarget = secondLanguage as LanguageCode
         }
+        setEffectiveTargetLanguage(effectiveTarget === targetLanguage ? null : effectiveTarget)
 
         const resultsMap: Record<string, string | DictResult | null> = {}
 
@@ -155,7 +158,6 @@ export default function TranslateWindow(): React.ReactElement {
                 if (service.translateStream) {
                     let accumulated = ''
                     let lastUpdateTime = 0
-                    setResult(instanceKey, '')
                     for await (const chunk of service.translateStream(textToTranslate, sourceLanguage, effectiveTarget, instanceConfig)) {
                         accumulated += chunk
                         const now = Date.now()
@@ -189,6 +191,7 @@ export default function TranslateWindow(): React.ReactElement {
                 && state.sourceText === textToTranslate
                 && state.sourceLanguage === sourceLanguage
                 && state.targetLanguage === targetLanguage
+                && state.effectiveTargetLanguage === (effectiveTarget === targetLanguage ? null : effectiveTarget)
         }
 
         await Promise.allSettled(promises)
@@ -228,7 +231,7 @@ export default function TranslateWindow(): React.ReactElement {
             }
             if (clipboardText) window.electronAPI.text.writeClipboard(clipboardText).catch(() => undefined)
         }
-    }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy, historyDisable])
+    }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, setEffectiveTargetLanguage, secondLanguage, autoCopy, historyDisable])
 
     const cancel_scheduled_translate = useCallback(() => {
         if (translate_timer_ref.current === null) return
@@ -464,7 +467,8 @@ export default function TranslateWindow(): React.ReactElement {
             requestId: retryRequestId,
             sourceText: textToTranslate,
             sourceLanguage: retrySourceLanguage,
-            targetLanguage: retryTargetLanguage
+            targetLanguage: retryTargetLanguage,
+            effectiveTargetLanguage: retryEffectiveTargetLanguage
         } = useTranslateStore.getState()
         if (!textToTranslate.trim()) return
 
@@ -478,6 +482,7 @@ export default function TranslateWindow(): React.ReactElement {
                 && state.sourceText === textToTranslate
                 && state.sourceLanguage === retrySourceLanguage
                 && state.targetLanguage === retryTargetLanguage
+                && state.effectiveTargetLanguage === retryEffectiveTargetLanguage
         }
 
         const serviceKey = getServiceKey(instanceKey)
@@ -488,8 +493,8 @@ export default function TranslateWindow(): React.ReactElement {
         const detected = retrySourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
         if (!isCurrentRetry()) return
 
-        let effectiveTarget = retryTargetLanguage
-        if (retrySourceLanguage === 'auto' && detected && detected === retryTargetLanguage) {
+        let effectiveTarget = retryEffectiveTargetLanguage ?? retryTargetLanguage
+        if (!retryEffectiveTargetLanguage && retrySourceLanguage === 'auto' && detected && detected === retryTargetLanguage) {
             effectiveTarget = secondLanguage as LanguageCode
         }
 

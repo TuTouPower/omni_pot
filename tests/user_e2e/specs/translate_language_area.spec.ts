@@ -71,13 +71,40 @@ test.describe('@ui translate language area', () => {
             const result = await omni.api.triggerSelection('hello world')
 
             expect(result.success).toBe(true)
-            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect(translate.targetLanguage()).toContainText('简体中文')
             await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
 
             await translate.clickDetectedLanguage()
             await expect(translate.sourceLanguage()).toContainText('简体中文')
             await expect(translate.targetLanguage()).toContainText('英文')
             await expect(translate.detectedLanguage()).toHaveCount(0)
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user translates detected Chinese text to English fallback with matching UI direction', async () => {
+        const omni = await AppFixture.start({
+            config: language_area_config({
+                translate_target_language: 'zh_cn',
+                translate_second_language: 'en',
+                translate_service_list: ['lingva@default'],
+                service_instances: {
+                    'lingva@default': { serviceKey: 'lingva', config: { requestPath: 'https://lingva.lunar.icu' } },
+                },
+            }),
+        })
+
+        try {
+            const translate = await omni.translate()
+            await translate.fulfill_lingva_translation_once('hello', 'en')
+            const result = await omni.api.triggerSelection('你好')
+
+            expect(result.success).toBe(true)
+            await expect(translate.sourceInput()).toHaveValue('你好', { timeout: 10_000 })
+            await expect(translate.detectedLanguage()).toContainText('检测为 简体中文', { timeout: 15_000 })
+            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).toBe('hello')
         } finally {
             await omni.stop()
         }
