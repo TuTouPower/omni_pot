@@ -5,7 +5,7 @@ import type { AppConfig } from '@shared/types/config'
 describe('Config defaults', () => {
     it('has all required keys', () => {
         const required_keys: (keyof AppConfig)[] = [
-            'app_language', 'app_theme', 'server_port',
+            'app_language', 'app_theme', 'app_primary_color', 'server_port',
             'proxy_enable', 'proxy_host', 'proxy_port',
             'translate_source_language', 'translate_target_language',
             'hotkey_selection_translate', 'hotkey_input_translate',

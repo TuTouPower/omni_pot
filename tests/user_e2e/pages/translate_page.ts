@@ -526,6 +526,14 @@ export class TranslatePage {
         return card.locator('[data-result-error]').count().then(c => c > 0)
     }
 
+    async documentPrimaryColor(): Promise<string> {
+        return this.page.evaluate(() => document.documentElement.dataset.primaryColor ?? '')
+    }
+
+    async documentTransparent(): Promise<string | undefined> {
+        return this.page.evaluate(() => document.documentElement.dataset.transparent)
+    }
+
     async documentTheme(): Promise<string | undefined> {
         return this.page.evaluate(() => document.documentElement.dataset.theme)
     }

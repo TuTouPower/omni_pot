@@ -380,6 +380,18 @@ export class ConfigPage {
         await this.field(testId).fill(value)
     }
 
+    primaryColorButtons(): Locator {
+        return this.page.locator('[data-testid^="cfg-app_primary_color-"]')
+    }
+
+    async documentPrimaryColor(): Promise<string> {
+        return this.page.evaluate(() => document.documentElement.dataset.primaryColor ?? '')
+    }
+
+    async documentTransparent(): Promise<string | undefined> {
+        return this.page.evaluate(() => document.documentElement.dataset.transparent)
+    }
+
     async documentTheme(): Promise<string | undefined> {
         return this.page.evaluate(() => document.documentElement.dataset.theme)
     }

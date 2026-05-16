@@ -1,8 +1,12 @@
 import type { ServiceConfig } from './service'
 
+export const APP_PRIMARY_COLORS = ['#c4623a', '#3a6ea5', '#5c8a4f', '#b8902f', '#5a9bbf'] as const
+export type AppPrimaryColor = typeof APP_PRIMARY_COLORS[number]
+
 export interface AppConfig {
   app_language: string
   app_theme: 'system' | 'light' | 'dark'
+  app_primary_color: AppPrimaryColor
   app_font: string
   app_fallback_font: string
   app_font_size: number
@@ -86,6 +90,7 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
 export const DEFAULT_CONFIG: AppConfig = {
   app_language: 'en',
   app_theme: 'system',
+  app_primary_color: '#c4623a',
   app_font: 'default',
   app_fallback_font: 'default',
   app_font_size: 16,

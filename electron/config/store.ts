@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
-import { DEFAULT_CONFIG, DEFAULT_SERVICE_INSTANCES } from '@shared/types/config'
+import { DEFAULT_CONFIG, DEFAULT_SERVICE_INSTANCES, APP_PRIMARY_COLORS } from '@shared/types/config'
 import type { AppConfig, ConfigKey } from '@shared/types/config'
 
 interface PersistedShape extends Partial<AppConfig> {
@@ -87,6 +87,12 @@ export function initConfigStore(): void {
 
     if ((data as Record<string, unknown>)['dev_mode'] !== undefined) {
         delete (data as Record<string, unknown>)['dev_mode']
+        saveToDisk()
+    }
+
+    if (typeof data.app_primary_color !== 'string'
+        || !(APP_PRIMARY_COLORS as readonly string[]).includes(data.app_primary_color)) {
+        data.app_primary_color = DEFAULT_CONFIG.app_primary_color
         saveToDisk()
     }
 }

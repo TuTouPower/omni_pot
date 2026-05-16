@@ -23,6 +23,7 @@ function resolveIconPath(): string {
 export class WindowManager {
   private byLabel = new Map<WindowLabel, BrowserWindow>()
   private labelById = new Map<number, WindowLabel>()
+  private transparentById = new Map<number, boolean>()
   private readyLabels = new Set<WindowLabel>()
   private pendingQueue = new Map<WindowLabel, Array<{ channel: string; args: unknown[] }>>()
 
@@ -63,6 +64,9 @@ export class WindowManager {
     const x = shouldPosition ? Math.round(workArea.x + (workArea.width - opts.width) / 2) : undefined
     const y = shouldPosition ? Math.round(workArea.y + (workArea.height - opts.height) / 2) : undefined
 
+    const use_configured_transparency = opts.label !== WindowLabel.DAEMON && opts.label !== WindowLabel.SCREENSHOT
+    const transparent = opts.transparent ?? (use_configured_transparency && Boolean(getConfig('transparent')))
+
     const win = new BrowserWindow({
       ...(shouldPosition ? { x, y } : {}),
       width: opts.width,
@@ -73,7 +77,7 @@ export class WindowManager {
       alwaysOnTop: opts.alwaysOnTop ?? false,
       skipTaskbar: opts.skipTaskbar ?? false,
       show: opts.show ?? true,
-      transparent: opts.transparent ?? false,
+      transparent,
       frame: opts.frame ?? false,
       focusable: opts.focusable ?? true,
       icon: resolveIconPath(),
@@ -129,12 +133,14 @@ export class WindowManager {
       log_wm.info('window closed:', opts.label)
       this.byLabel.delete(opts.label)
       this.labelById.delete(win.id)
+      this.transparentById.delete(win.id)
       this.readyLabels.delete(opts.label)
       this.pendingQueue.delete(opts.label)
     })
 
     this.byLabel.set(opts.label, win)
     this.labelById.set(win.id, opts.label)
+    this.transparentById.set(win.id, transparent)
     return win
   }
 
@@ -142,6 +148,11 @@ export class WindowManager {
     const win = this.byLabel.get(label)
     if (win && !win.isDestroyed()) return win
     return undefined
+  }
+
+  isTransparent(label: WindowLabel): boolean {
+    const win = this.getWindow(label)
+    return win ? this.transparentById.get(win.id) ?? false : false
   }
 
   getLabelById(id: number): WindowLabel | undefined {

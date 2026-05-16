@@ -1,16 +1,24 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import type { AppPrimaryColor } from '@shared/types/config'
+import { APP_PRIMARY_COLORS } from '@shared/types/config'
 import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect, ConfigField } from './config_components'
 
 
 const THEME_VALUES = ['system', 'light', 'dark'] as const
 
+const PRIMARY_COLOR_VALUES: Array<{ key: string; value: AppPrimaryColor; fallback_label: string }> = [
+    { key: 'terracotta', value: APP_PRIMARY_COLORS[0], fallback_label: 'Terracotta' },
+    { key: 'ultramarine', value: APP_PRIMARY_COLORS[1], fallback_label: 'Ultramarine' },
+    { key: 'pine', value: APP_PRIMARY_COLORS[2], fallback_label: 'Pine green' },
+    { key: 'mustard', value: APP_PRIMARY_COLORS[3], fallback_label: 'Mustard' },
+    { key: 'sky', value: APP_PRIMARY_COLORS[4], fallback_label: 'Sky blue' },
+]
+
 const LANGUAGE_VALUES = ['zh_cn', 'en'] as const
 
 const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${String(s)}px` }))
-
-const IS_MAC = navigator.platform.toLowerCase().includes('mac')
 
 const FONT_OPTIONS = [
     { value: 'default', label: '系统默认' },
@@ -37,6 +45,7 @@ export default function GeneralPage(): React.ReactElement {
     const { t } = useTranslation()
     const [appLanguage, setAppLanguage] = useConfig('app_language')
     const [appTheme, setAppTheme] = useConfig('app_theme')
+    const [appPrimaryColor, setAppPrimaryColor] = useConfig('app_primary_color')
     const [appFont, setAppFont] = useConfig('app_font')
     const [fontSize, setFontSize] = useConfig('app_font_size')
     const [transparent, setTransparent] = useConfig('transparent')
@@ -91,6 +100,28 @@ export default function GeneralPage(): React.ReactElement {
                         style={{ minWidth: 160 }}
                     />
                 </ConfigRow>
+                <ConfigRow label={t('general.primary_color') || '主色'}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        {PRIMARY_COLOR_VALUES.map((color) => (
+                            <button
+                                key={color.key}
+                                type="button"
+                                data-testid={`cfg-app_primary_color-${color.key}`}
+                                aria-label={t(`general.primary_color_${color.key}`, { defaultValue: color.fallback_label })}
+                                aria-pressed={appPrimaryColor === color.value}
+                                onClick={() => { setAppPrimaryColor(color.value); }}
+                                style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 999,
+                                    background: color.value,
+                                    border: appPrimaryColor === color.value ? '2px solid var(--text)' : '1px solid var(--line-strong)',
+                                    boxShadow: appPrimaryColor === color.value ? `0 0 0 3px color-mix(in oklab, ${color.value} 18%, transparent)` : 'none',
+                                }}
+                            />
+                        ))}
+                    </div>
+                </ConfigRow>
                 <ConfigRow label={t('general.font_family') || '字体'}>
                     <div style={{ display: 'flex', gap: 6 }}>
                         <ConfigSelect
@@ -120,11 +151,9 @@ export default function GeneralPage(): React.ReactElement {
                 >
                     {t('preview')}: Hello World 你好世界 こんにちは 안녕하세요
                 </div>
-                {IS_MAC && (
-                    <ConfigRow label={t('general.transparent') || '透明背景'} sub={t('general.transparent_sub')}>
-                        <ConfigSwitch on={transparent} onChange={setTransparent} testId="cfg-transparent" />
-                    </ConfigRow>
-                )}
+                <ConfigRow label={t('general.transparent') || '透明背景'} sub={t('general.transparent_sub')}>
+                    <ConfigSwitch on={transparent} onChange={setTransparent} testId="cfg-transparent" />
+                </ConfigRow>
             </ConfigCard>
 
             <ConfigCard title={t('general.proxy') || '网络代理'}>
