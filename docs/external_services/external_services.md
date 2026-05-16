@@ -40,7 +40,7 @@
 | 服务 | 实现文件 | 说明 |
 |------|----------|------|
 | **Cambridge Dictionary** | `cambridge_dict.ts` | 抓取 Cambridge 词典网页，英文释义，输出 `DictResult` |
-| **中文词典** | `chinese_dictionary.ts` | 内置中文单字/词语释义，输出 `DictResult` |
+| **中文词典** | `chinese_dictionary.ts` | 内置中文单字/词语释义（当前仅 3 个样例词条，需要接入完整数据源，见 `chinese_dictionary_data_source.md`） |
 | **Free Dictionary** | `free_dictionary.ts` | 调用 dictionaryapi.dev，英文词典，输出 `DictResult` |
 | **ECDict（CC-CEDICT）** | `ecdict.ts` | 离线中英词典（CC-CEDICT SQLite），通过 IPC 调用主进程，输出 `DictResult` |
 
