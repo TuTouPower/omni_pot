@@ -8,7 +8,13 @@ const api: Omit<ElectronAPI, 'ready'> = {
     minimize: () => ipcRenderer.invoke('window:minimize'),
     maximize: () => ipcRenderer.invoke('window:maximize'),
     setAlwaysOnTop: (flag) => ipcRenderer.invoke('window:setAlwaysOnTop', flag),
-    getLabel: () => ipcRenderer.invoke('window:getLabel')
+    getLabel: () => ipcRenderer.invoke('window:getLabel'),
+    openConfig: (section) => ipcRenderer.invoke('window:openConfig', section),
+    onConfigNavigate: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, section: string) => { callback(section); }
+      ipcRenderer.on('config:navigate', handler)
+      return () => { ipcRenderer.off('config:navigate', handler) }
+    }
   },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)

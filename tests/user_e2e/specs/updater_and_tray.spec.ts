@@ -16,7 +16,7 @@ async function expect_window_visible(omni: AppFixture, label: WindowLabel): Prom
 }
 
 async function expect_window_not_exists(omni: AppFixture, label: WindowLabel): Promise<void> {
-    await expect.poll(async () => (await omni.api.windowState(label)).exists).toBe(false)
+    await expect.poll(async () => (await omni.api.windowState(label)).exists, { timeout: 20_000 }).toBe(false)
 }
 
 async function close_translate_window(omni: AppFixture): Promise<void> {

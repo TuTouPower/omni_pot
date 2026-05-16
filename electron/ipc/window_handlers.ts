@@ -1,5 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
 
 export function registerWindowHandlers(manager: WindowManager): void {
   ipcMain.handle('window:close', (event) => {
@@ -21,5 +22,17 @@ export function registerWindowHandlers(manager: WindowManager): void {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return ''
     return manager.getLabelById(win.id) ?? ''
+  })
+  ipcMain.handle('window:openConfig', (_event, section?: string) => {
+    manager.focusOrCreate(WindowLabel.CONFIG, {
+      label: WindowLabel.CONFIG,
+      width: 880,
+      height: 600,
+      minWidth: 880,
+      minHeight: 400
+    })
+    if (section) {
+      manager.sendWhenReady(WindowLabel.CONFIG, 'config:navigate', section)
+    }
   })
 }

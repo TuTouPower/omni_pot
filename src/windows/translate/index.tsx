@@ -4,6 +4,7 @@ import { Icons } from '../../components/icons'
 import { SourceArea } from './source_area'
 import { LanguageArea } from './language_area'
 import { TargetArea } from './target_area'
+import WelcomeEmpty from './welcome_empty'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
@@ -104,6 +105,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     const [forceShowSource, setForceShowSource] = useState(false)
     const [selection_notice, setSelectionNotice] = useState(false)
+    const [welcome_dismissed, setWelcomeDismissed] = useState(false)
     const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
     const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -553,6 +555,9 @@ export default function TranslateWindow(): React.ReactElement {
                     </div>
                 )}
                 {!hideLanguage && <LanguageArea onSwap={handleSwapLanguages} />}
+                {sourceText.trim() === '' && !welcome_dismissed && !selection_notice && (
+                    <WelcomeEmpty onSkip={() => { setWelcomeDismissed(true); }} />
+                )}
                 <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />
             </div>
         </div>

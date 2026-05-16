@@ -1060,7 +1060,7 @@ export async function getSelectedText(): Promise<string>
 
 - **加载中**：翻译结果卡片显示加载占位（骨架或"翻译中…"）
 - **错误**：结果卡片显示红色错误信息与重试入口；对可定位到配置的错误可提供"打开设置"入口
-- **空状态**：翻译窗口首次启动时显示引导（快捷键提示 + 配置入口）
+- **空状态**：翻译窗口源文本为空且未被用户跳过时显示欢迎引导：标题"欢迎使用 Omni Pot"、副标题、4 个快捷键提示卡（划词翻译 / 输入翻译 / OCR 识别 / OCR 翻译，分别读取 `hotkey_selection_translate` / `hotkey_input_translate` / `hotkey_ocr_recognize` / `hotkey_ocr_translate`；未设置则显示"未设置"占位）、"配置快捷键"按钮（打开配置窗口并跳到快捷键页）、"跳过"按钮（仅在本会话内隐藏，下次启动仍显示）。源文本一旦有内容欢迎区即消失，清空后若未跳过会再次出现。
 - **桌面通知**：`translate_hide_window` 等场景下，后台完成操作后以桌面通知告知
 
 ---

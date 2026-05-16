@@ -110,6 +110,12 @@ export default function UpdaterWindow(): React.ReactElement {
     }, [])
 
     const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
+    const [alwaysOnTop, setAlwaysOnTop] = useState(false)
+    const handlePin = useCallback(async () => {
+        const next = !alwaysOnTop
+        await window.electronAPI.window.setAlwaysOnTop(next)
+        setAlwaysOnTop(next)
+    }, [alwaysOnTop])
     const handleOpenRelease = useCallback(() => {
         if (release?.html_url) window.open(release.html_url, '_blank')
     }, [release])
@@ -131,9 +137,12 @@ export default function UpdaterWindow(): React.ReactElement {
                 <button
                     className="ic-btn"
                     title={t('pin')}
-                    style={{ color: 'var(--text-mute)' }}
+                    data-testid="updater-pin"
+                    aria-pressed={alwaysOnTop}
+                    onClick={() => { handlePin().catch(console.error); }}
+                    style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
-                    <Icons.Pin size={14} />
+                    <Icons.Pin size={14} fill={alwaysOnTop} />
                 </button>
                 <div className="op-wordmark" style={{ marginLeft: 2 }}>
                     Omni Pot

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { DndContext, closestCenter, PointerSensor, type DragEndEvent, type SensorDescriptor, type SensorOptions } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -109,6 +110,7 @@ function SortableCard({
     onCopy, onTts, onCollect,
     playingKey, collectedKeys, ttsAvailable, collectionAvailable,
 }: SortableCardProps): React.ReactElement | null {
+    const { t } = useTranslation()
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
     const serviceKey = getServiceKey(instanceKey)
     const service = translateServiceRegistry.get(serviceKey)
@@ -143,12 +145,12 @@ function SortableCard({
                         </span>
                     )}
                     <div style={{ flex: 1 }} />
-                    <button data-testid="result-tts" className="ic-btn" title="朗读" aria-pressed={is_playing} disabled={!ttsAvailable || !result_text} style={{ color: is_playing ? 'var(--brand-primary)' : undefined }} onClick={() => {
+                    <button data-testid="result-tts" className="ic-btn" title={t('result.tts') || '朗读'} aria-pressed={is_playing} disabled={!ttsAvailable || !result_text} style={{ color: is_playing ? 'var(--brand-primary)' : undefined }} onClick={() => {
                         if (result_text) onTts(result_text, instanceKey)
                     }}>
                         <Icons.Volume size={16} />
                     </button>
-                    <button data-testid="result-copy" className="ic-btn" title="复制" disabled={!result_text} onClick={() => {
+                    <button data-testid="result-copy" className="ic-btn" title={t('result.copy') || '复制'} disabled={!result_text} onClick={() => {
                         if (result_text) onCopy(result_text)
                     }}>
                         <Icons.Copy size={16} />
@@ -156,7 +158,7 @@ function SortableCard({
                     <button
                         data-testid="result-collect"
                         className="ic-btn"
-                        title="收藏"
+                        title={t('result.collect') || '收藏'}
                         aria-pressed={is_collected}
                         disabled={!collectionAvailable || !result_text}
                         onClick={() => {
@@ -166,7 +168,7 @@ function SortableCard({
                     >
                         <Icons.Heart size={16} fill={is_collected} />
                     </button>
-                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? '展开' : '收起'} aria-expanded={!collapsed} onClick={() => { onToggleCollapse(instanceKey); }}>
+                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? (t('result.expand') || '展开') : (t('result.collapse') || '收起')} aria-expanded={!collapsed} onClick={() => { onToggleCollapse(instanceKey); }}>
                         <Icons.Chev size={17} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
                     </button>
                 </div>
@@ -175,9 +177,9 @@ function SortableCard({
                 {!collapsed && (
                     result === null ? (
                         <div data-testid="result-error" data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ color: 'var(--danger)', fontSize: 13 }}>翻译失败</span>
+                            <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed') || '翻译失败'}</span>
                             {onRetry && (
-                                <button data-testid="result-retry" className="ic-btn" title="重试" onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
+                                <button data-testid="result-retry" className="ic-btn" title={t('result.retry') || '重试'} onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
                                     <Icons.Cycle size={14} />
                                 </button>
                             )}
