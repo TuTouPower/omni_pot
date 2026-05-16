@@ -43,7 +43,7 @@ export const mymemoryService: TranslateService = {
         }
 
         const resp = await fetch(url.toString())
-        if (!resp.ok && resp.status !== 0) {
+        if (!resp.ok) {
             throw new Error(`MyMemory API ${String(resp.status)}`)
         }
 
