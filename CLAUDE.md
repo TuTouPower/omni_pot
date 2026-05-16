@@ -16,7 +16,7 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 |---|---|
 | `npm run dev` | 启动开发模式（热重载） |
 | `npm run build` | 构建（不打包） |
-| `npm run dist` | 构建 + 打包（NSIS 安装版 + 便携版） |
+| `npm run dist` | 构建 + 打包（NSIS 安装版 + 便携版；若既有 release 产物被 Omni Pot 或其他进程占用，会在打包前直接报错） |
 | `npm run typecheck` | TypeScript 类型检查 |
 | `npm run lint` | ESLint 检查 |
 | `npm test` | 运行单元测试 |
