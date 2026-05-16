@@ -416,7 +416,7 @@
    - 已增加启动迁移，清理旧 `config.json` 中残留的 `dev_mode`。
    - 已由 `config_settings.spec.ts` 断言通用设置页不显示 Developer mode，且旧配置不继续暴露 `dev_mode`。
 24. **主题/主色设置入口缺失，透明背景入口仅 Mac 可见且未接入窗口行为**: 通用设置页曾只有 `app_theme` 下拉框，没有 `app_primary_color` 的 5 个主色按钮；透明背景入口只在 Mac 显示，且新建窗口没有读取 `transparent` 配置。
-   - 已增加 `app_primary_color` 配置键和 5 个主色按钮，主色会广播到已打开窗口并更新 design token；非法持久化主色会回退到默认陶土橙。
+   - 已增加 `app_primary_color` 配置键和 5 个主色按钮，主色会广播到已打开窗口并更新 design token；非法持久化主色会回退到默认主色。
    - 已让透明背景开关在 Windows 等平台也显示，并给透明模式增加 renderer 样式状态。
    - 新建非 daemon / 非截图窗口会读取 `transparent` 配置创建透明 BrowserWindow；E2E window-state 暴露该状态供验收。
    - 已由 `config_settings.spec.ts` 断言主色按钮数量/选中状态、配置持久化、已打开窗口主色广播、透明开关可见、透明状态广播以及新建翻译窗口透明选项。

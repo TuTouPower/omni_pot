@@ -192,11 +192,11 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 
 - **两种主题**：日间 / 夜间
 - **五种主色**：
-    - 陶土橙 `#c4623a`（默认）
+    - 陶土橙 `#c4623a`
     - 群青 `#3a6ea5`
     - 松绿 `#5c8a4f`
     - 芥末 `#b8902f`
-    - 天蓝 `#5a9bbf`
+    - 天蓝 `#5a9bbf`（默认）
 - 主题与主色独立选择，共 2 × 5 = 10 种组合
 - 主色**克制使用**，仅用于少数关键位置：置顶按钮（激活态）、检测到的语言名、翻译符号、其他需强调的关键状态
 
@@ -755,7 +755,7 @@ interface DictResult {
 |---|---|---|---|
 | `app_language` | string | `'en'` | UI 语言 |
 | `app_theme` | `'system'\|'light'\|'dark'` | `'system'` | 主题 |
-| `app_primary_color` | string | `'#c4623a'` | 主色调，可选 5 种（见 §4.2） |
+| `app_primary_color` | string | `'#5a9bbf'` | 主色调，可选 5 种（见 §4.2） |
 | `app_font` | string | `'default'` | 主字体族 |
 | `app_fallback_font` | string | `'default'` | 回退字体族 |
 | `app_font_size` | number | `16` | 基础字号 px |
