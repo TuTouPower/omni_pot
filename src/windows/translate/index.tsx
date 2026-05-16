@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { SourceArea } from './source_area'
 import { LanguageArea } from './language_area'
@@ -22,6 +23,7 @@ function normalize_source_text(text: string): string {
 }
 
 export default function TranslateWindow(): React.ReactElement {
+    const { t } = useTranslation()
     const sourceText = useTranslateStore((s) => s.sourceText)
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
@@ -101,6 +103,7 @@ export default function TranslateWindow(): React.ReactElement {
     }, [rememberLanguage, sourceLanguage, targetLanguage, configSourceLang, configTargetLang, setConfig])
 
     const [forceShowSource, setForceShowSource] = useState(false)
+    const [selection_notice, setSelectionNotice] = useState(false)
     const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
     const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -112,6 +115,7 @@ export default function TranslateWindow(): React.ReactElement {
     const sourceTtsTextRef = useRef('')
     const sourceTtsLanguageRef = useRef<LanguageCode | null>(null)
     const retryRequestRef = useRef<Record<string, number>>({})
+    const translate_timer_ref = useRef<number | null>(null)
 
     const handleTranslate = useCallback(async (textOverride?: string) => {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
@@ -224,6 +228,20 @@ export default function TranslateWindow(): React.ReactElement {
         }
     }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, secondLanguage, autoCopy, historyDisable])
 
+    const cancel_scheduled_translate = useCallback(() => {
+        if (translate_timer_ref.current === null) return
+        window.clearTimeout(translate_timer_ref.current)
+        translate_timer_ref.current = null
+    }, [])
+
+    const schedule_translate = useCallback((text: string) => {
+        cancel_scheduled_translate()
+        translate_timer_ref.current = window.setTimeout(() => {
+            translate_timer_ref.current = null
+            handleTranslate(text).catch(console.error)
+        }, 0)
+    }, [cancel_scheduled_translate, handleTranslate])
+
     const prepareIncomingText = useCallback((text: string) => {
         const trimmed = text.trim()
         const processed = deleteNewline ? normalize_source_text(trimmed) : trimmed
@@ -237,37 +255,53 @@ export default function TranslateWindow(): React.ReactElement {
 
             const nextText = prepareIncomingText(text)
 
+            setSelectionNotice(false)
             setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => { handleTranslate(nextText).catch(console.error) }, 0)
+            schedule_translate(nextText)
         })
         return unsub
-    }, [prepareIncomingText, setSourceText, handleTranslate])
+    }, [prepareIncomingText, setSourceText, schedule_translate])
+
+    useEffect(() => {
+        const unsub = window.electronAPI.text.onTranslateSelectionEmpty(() => {
+            cancel_scheduled_translate()
+            setSelectionNotice(true)
+            setSourceText('')
+            setDetectedLanguage(null)
+            clearResults()
+        })
+        return unsub
+    }, [cancel_scheduled_translate, setSourceText, setDetectedLanguage, clearResults])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
+            setSelectionNotice(false)
             setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => { handleTranslate(nextText).catch(console.error) }, 0)
+            schedule_translate(nextText)
         })
         return unsub
-    }, [prepareIncomingText, setSourceText, handleTranslate])
+    }, [prepareIncomingText, setSourceText, schedule_translate])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
+            setSelectionNotice(false)
             setSourceText(nextText)
             setForceShowSource(false)
-            setTimeout(() => { handleTranslate(nextText).catch(console.error) }, 0)
+            schedule_translate(nextText)
         })
         return unsub
-    }, [prepareIncomingText, setSourceText, handleTranslate])
+    }, [prepareIncomingText, setSourceText, schedule_translate])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onInputTranslate(() => {
+            cancel_scheduled_translate()
+            setSelectionNotice(false)
             setSourceText('')
             setForceShowSource(true)
             setDetectedLanguage(null)
@@ -275,7 +309,7 @@ export default function TranslateWindow(): React.ReactElement {
             setTimeout(() => inputRef.current?.focus(), 50)
         })
         return unsub
-    }, [setSourceText, setDetectedLanguage, clearResults])
+    }, [cancel_scheduled_translate, setSourceText, setDetectedLanguage, clearResults])
 
     useEffect(() => {
         window.electronAPI.ready('translate')
@@ -417,10 +451,11 @@ export default function TranslateWindow(): React.ReactElement {
             sourceTtsBusyRef.current = false
             sourceTtsTextRef.current = ''
             sourceTtsLanguageRef.current = null
+            cancel_scheduled_translate()
             sourceAudioRef.current?.pause()
             sourceAudioCleanupRef.current?.()
         }
-    }, [])
+    }, [cancel_scheduled_translate])
 
     const handleRetry = useCallback(async (instanceKey: string) => {
         const {
@@ -511,6 +546,11 @@ export default function TranslateWindow(): React.ReactElement {
                         onDetectedLanguageClick={handleSwapLanguages}
                         inputRef={inputRef}
                     />
+                )}
+                {selection_notice && (
+                    <div className="card" data-testid="selection-empty-notice" style={{ padding: '12px 14px', color: 'var(--text-dim)', fontSize: 13 }}>
+                        {t('selection.no_text')}
+                    </div>
                 )}
                 {!hideLanguage && <LanguageArea onSwap={handleSwapLanguages} />}
                 <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />

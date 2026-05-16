@@ -14,7 +14,20 @@ export interface SelectedTextResult {
     error?: unknown
 }
 
+let e2e_selected_text_result: SelectedTextResult | null = null
+
+export function setE2eSelectedTextResult(result: SelectedTextResult | null): void {
+    if (!process.env['OMNI_POT_E2E']) return
+    e2e_selected_text_result = result
+}
+
 export async function readSelectedText(): Promise<SelectedTextResult> {
+    const e2e_result = e2e_selected_text_result
+    if (e2e_result) {
+        e2e_selected_text_result = null
+        return e2e_result
+    }
+
     try {
         if (process.platform === 'win32') {
             const { readSelectedTextWindows } = await import('./windows')

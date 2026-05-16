@@ -1,5 +1,9 @@
 import type { Page, Locator } from '@playwright/test'
 
+function is_target_closed_error(error: unknown): boolean {
+    return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
+}
+
 const cors_headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -76,13 +80,21 @@ export class TranslatePage {
         return this.page.getByTestId('result-error')
     }
 
+    selectionEmptyNotice(): Locator {
+        return this.page.getByTestId('selection-empty-notice')
+    }
+
     // Titlebar
     clickPin(): Promise<void> {
         return this.page.getByTestId('titlebar-pin').click()
     }
 
-    clickClose(): Promise<void> {
-        return this.page.getByTestId('titlebar-close').click()
+    async clickClose(): Promise<void> {
+        try {
+            await this.page.getByTestId('titlebar-close').click()
+        } catch (error) {
+            if (!is_target_closed_error(error)) throw error
+        }
     }
 
     getModeLabel(): Promise<string | null> {
