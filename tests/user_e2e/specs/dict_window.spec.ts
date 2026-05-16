@@ -58,8 +58,9 @@ test.describe('@ui dict window', () => {
     test('user gets real English and Chinese dictionary results from multiple services', async () => {
         const omni = await AppFixture.start({
             config: {
-                dictionary_service_list: ['free_dictionary@default', 'ecdict@default', 'cambridge_dict@default'],
+                dictionary_service_list: ['chinese_dictionary@default', 'free_dictionary@default', 'ecdict@default', 'cambridge_dict@default'],
                 service_instances: {
+                    'chinese_dictionary@default': { serviceKey: 'chinese_dictionary', config: {} },
                     'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
                     'ecdict@default': { serviceKey: 'ecdict', config: {} },
                     'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
@@ -81,10 +82,12 @@ test.describe('@ui dict window', () => {
             const chinese_result = await omni.api.triggerDict('你好')
             expect(chinese_result.success).toBe(true)
             await expect(dict.word()).toContainText('你好')
-            await expect.poll(async () => {
-                const text = await dict.dictCards().filter({ hasText: 'en' }).first().textContent()
-                return text?.trim() ?? ''
-            }, { timeout: 60_000 }).not.toBe('')
+            await dict.waitForCards(1, 10_000)
+            await expect(dict.sourceTags()).toHaveCount(1)
+            await expect(dict.sourceTags().first()).toContainText('中文词典')
+            await expect(dict.definitions().first()).toContainText('用于见面')
+            await expect(dict.dictCards()).not.toContainText('hello')
+            await expect(dict.dictCards()).not.toContainText('en')
         } finally {
             await omni.stop()
         }

@@ -85,6 +85,7 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
   'mymemory@default': { serviceKey: 'mymemory', config: {} },
   'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
   'ecdict@default': { serviceKey: 'ecdict', config: {} },
+  'chinese_dictionary@default': { serviceKey: 'chinese_dictionary', config: {} },
   'edge_tts@default': { serviceKey: 'edge_tts', config: {} }
 }
 
@@ -141,7 +142,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   hotkey_selection_dictionary: '',
 
   translate_service_list: ['bing@default', 'google@default', 'deepl@default'],
-  dictionary_service_list: ['free_dictionary@default', 'ecdict@default'],
+  dictionary_service_list: ['chinese_dictionary@default', 'free_dictionary@default', 'ecdict@default'],
   recognize_service_list: ['tesseract@default'],
   tts_service_list: ['edge_tts@default'],
   collection_service_list: [],

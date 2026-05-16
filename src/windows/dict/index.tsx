@@ -6,6 +6,7 @@ import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
 import { collectionServiceRegistry } from '../../services/index'
 import { getServiceKey } from '@shared/types/service'
+import type { LanguageCode } from '@shared/types/language'
 import type { DictResult, ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 
@@ -94,6 +95,13 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
     )
 }
 
+function service_supports_dictionary_query(service_key: string, source_language: LanguageCode): boolean {
+    if (source_language === 'en') {
+        return ['free_dictionary', 'ecdict', 'cambridge_dict'].includes(service_key)
+    }
+    return service_key === 'chinese_dictionary'
+}
+
 export default function DictWindow(): React.ReactElement {
     const { t } = useTranslation()
     const word = useDictStore((s) => s.word)
@@ -154,6 +162,7 @@ export default function DictWindow(): React.ReactElement {
 
         const promises = enabledServiceList.map(async (instanceKey) => {
             const serviceKey = getServiceKey(instanceKey)
+            if (!service_supports_dictionary_query(serviceKey, source_language)) return
             const service = translateServiceRegistry.get(serviceKey)
             if (!service) {
                 if (lookup_request_ref.current === request_id) {
@@ -343,15 +352,15 @@ export default function DictWindow(): React.ReactElement {
 
                 {/* Results */}
                 {enabledServiceList.map((instanceKey) => {
-                    const result = results[instanceKey] ?? null
-                    return <DictResultCard key={instanceKey} instanceKey={instanceKey} result={result} />
+                    if (!Object.prototype.hasOwnProperty.call(results, instanceKey)) return null
+                    return <DictResultCard key={instanceKey} instanceKey={instanceKey} result={results[instanceKey] ?? null} />
                 })}
 
                 {/* Source attribution */}
-                {enabledServiceList.length > 0 && Object.keys(results).length > 0 && (
+                {Object.keys(results).length > 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 4px 0' }}>
                         <span className="hint mono">来源</span>
-                        {enabledServiceList.map((ik) => {
+                        {Object.keys(results).map((ik) => {
                             const sk = getServiceKey(ik)
                             const svc = translateServiceRegistry.get(sk)
                             return svc ? <span key={ik} className="chip plain mono" style={{ fontSize: 10 }}>{svc.name}</span> : null

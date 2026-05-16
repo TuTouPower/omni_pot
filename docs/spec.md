@@ -309,7 +309,7 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 
 **文件**: `src/windows/dict/index.tsx`
 
-划词字典窗口。选中单词后按字典快捷键弹出，并行查询多个词典服务。
+划词字典窗口。选中文本后按字典快捷键弹出，并按输入文字类型查询对应词典服务：英文输入走英文词典，中文单字走中文字典，中文词语/短语走中文词典。
 
 ### 6.1 顶部栏
 
@@ -323,9 +323,9 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 - 每个词的右上角放置**收藏按钮**，支持收藏单个词汇
 - 词头处显示词性标签（如 `v.`）与 CEFR 等级标签（如 `CEFR · C1`）
 - 释义、例句之外，独立一张"**词形变化**"卡片，列出该词的形变（如 `reconciled` / `reconciles` / `reconciling` / `reconciliation` / `reconcilable`）
-- 卡片底部展示"**来源**" chips，按当前实际渲染的服务名（cambridge_dict / ecdict / free_dictionary 等）顺序列出
-- 遍历 `dictionary_service_list` 中启用的实例，并行调用各词典服务的 `translate()`；
-  返回 `DictResult`（`type='dict'`）的服务渲染为词典卡片
+- 卡片底部展示"**来源**" chips，按当前实际渲染的服务名（中文词典 / free_dictionary / ecdict / cambridge_dict 等）顺序列出
+- 遍历 `dictionary_service_list` 中启用且支持当前输入语言的实例，并行调用各词典服务的 `translate()`；
+  英文输入只查询英文词典服务，中文输入只查询中文词典/中文字典服务，返回 `DictResult`（`type='dict'`）的服务渲染为词典卡片
 
 ### 6.3 数据流
 
@@ -336,7 +336,15 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
     → focusOrCreate(DICT)
     → sendWhenReady('dict:lookup', text)
       → src/windows/dict/index.tsx: handleLookup()
-        → 遍历 dictionary_service_list 并行查询
+        → 按输入语言筛选 dictionary_service_list 并行查询
+```
+
+中文词典/中文字典查询：
+
+```
+renderer: chinese_dictionary.translate()
+  → 内置中文单字/词语释义
+  → 返回中文读音、词性、中文释义和例句
 ```
 
 CC-CEDICT 离线词典查询：
@@ -628,7 +636,7 @@ interface DictResult {
 
 ## 13. 翻译服务清单
 
-`src/services/` 注册 21 个翻译服务（`registerAllServices()`，**以代码为准**）：
+`src/services/` 注册 22 个翻译服务（`registerAllServices()`，**以代码为准**）：
 
 | # | 服务 | Key | 认证 / 说明 |
 |---|---|---|---|
@@ -651,8 +659,9 @@ interface DictResult {
 | 17 | Gemini Pro | `geminipro` | API Key，流式 |
 | 18 | Ollama | `ollama` | 本地，流式 |
 | 19 | MyMemory | `mymemory` | 免费 |
-| 20 | Free Dictionary | `free_dictionary` | 免费（dictionaryapi.dev），英文词典，输出词典结果 |
-| 21 | ECDict | `ecdict` | 离线（CC-CEDICT SQLite），输出词典结果 |
+| 20 | 中文词典 | `chinese_dictionary` | 内置中文单字/词语释义，输出词典结果 |
+| 21 | Free Dictionary | `free_dictionary` | 免费（dictionaryapi.dev），英文词典，输出词典结果 |
+| 22 | ECDict | `ecdict` | 离线（CC-CEDICT SQLite），输出中英词典结果 |
 
 > 与原 Pot Desktop 3.0.7 的差异：本项目用 `mymemory`、`free_dictionary` 替代了原版的
 > `yandex`、`bing_dict`。
@@ -821,7 +830,7 @@ interface DictResult {
 | 键 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
 | `translate_service_list` | string[] | `['bing@default','baidu@default','google@default']` | 翻译实例顺序 |
-| `dictionary_service_list` | string[] | `['free_dictionary@default','ecdict@default']` | 词典实例顺序 |
+| `dictionary_service_list` | string[] | `['chinese_dictionary@default','free_dictionary@default','ecdict@default']` | 词典实例顺序 |
 | `recognize_service_list` | string[] | `['tesseract@default']` | OCR 实例顺序 |
 | `tts_service_list` | string[] | `['edge_tts@default']` | TTS 实例顺序 |
 | `collection_service_list` | string[] | `[]` | 收藏实例顺序 |
