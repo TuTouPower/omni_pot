@@ -40,7 +40,7 @@
 
 - `docs/issues/issues.md` — 当前已知问题记录
 - `docs/issues/closed/` — 已关闭/历史问题记录
-- `docs/issues/documentation_review.md` — 当前文档审阅记录
+- `docs/issues/closed/documentation_review.md` — 本归档文档审阅记录
 
 不再追踪 `docs/issues/issues/` 目录本身。
 
