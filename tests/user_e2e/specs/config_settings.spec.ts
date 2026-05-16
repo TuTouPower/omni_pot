@@ -97,6 +97,10 @@ test.describe('@ui config settings window', () => {
             const config = await omni.openConfig()
 
             await config.openSection('translate')
+            await config.setting('cfg-translate_source_language').click()
+            await expect.poll(async () => await config.optionReceivesPointer('cfg-translate_source_language', 'ja')).toBe(true)
+            await config.clickOutsideSelects()
+            await expect(config.selectOption('cfg-translate_source_language', 'ja')).toHaveCount(0)
             await config.select('cfg-translate_source_language', 'en')
             await config.select('cfg-translate_target_language', 'ja')
             await config.select('cfg-translate_second_language', 'en')
