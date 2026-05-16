@@ -19,6 +19,7 @@ test.describe('@ui translate welcome empty state', () => {
 
             const welcome = page.getByTestId('welcome-empty')
             await expect(welcome).toBeVisible()
+            await expect(translate.resultCards()).toHaveCount(0)
             await expect(page.getByTestId('welcome-title')).toContainText('欢迎使用 Omni Pot')
             await expect(page.getByTestId('welcome-selection-translate')).toContainText('划词翻译')
             await expect(page.getByTestId('welcome-input-translate')).toContainText('输入翻译')
