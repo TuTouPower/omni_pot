@@ -116,7 +116,7 @@ CREATE TABLE metadata (
 --   build_time = ISO8601
 ```
 
-`schema_version` 以 TEXT 存储（metadata.value 列为 TEXT），消费侧 `parseInt` 比较。
+`schema_version` 以 TEXT 存储（metadata.value 列为 TEXT），消费侧直接字符串比较（`=== '1'`）。
 表结构变更时递增（如 `"1"` → `"2"`）。`data_version` 为语义化字符串。
 
 ### words 表（word.json，32万+条）
@@ -222,7 +222,6 @@ INSERT INTO characters_fts(characters_fts) VALUES('rebuild');
 | `src/services/chinese_dictionary.ts` | 重写 | 从硬编码改为走 IPC |
 | `electron/main.ts` | 修改 | 注册 IPC handlers |
 | `package.json` | 修改 | 增加 `build:chinese-dict` 脚本、`build.extraResources` 添加 dict db 路径 |
-| `package.json` | 修改 | 增加 `build:chinese-dict` 脚本 |
 | `.gitignore` | 修改 | 忽略 `resources/data/dict/chinese_dict.db`、`*.db-shm`、`*.db-wal` |
 
 ### extraResources 配置
@@ -248,8 +247,9 @@ INSERT INTO characters_fts(characters_fts) VALUES('rebuild');
 ```typescript
 chineseDict: {
     lookup: (text: string) => Promise<DictResult | null>
-    check: () => Promise<{ ready: boolean; entry_count: number }>
+    check: () => Promise<{ ready: boolean; status: string; entry_count: number }>
     reload: () => Promise<{ success: boolean }>
+    onStateChanged: (callback: (state: string) => void) => () => void
 }
 ```
 
@@ -273,6 +273,10 @@ chineseDict: {
 ```
 输入文本 → 判断是否中文 → 非中文返回空
 
+"是否中文"判定：文本中含任意一个 CJK 统一汉字（Unicode Block: CJK Unified Ideographs，
+包括 Ext A/B/C/D/E/F，即 `/\p{Script=Han}/u`）即视为中文。混合文本（如"Hello你好"）
+也视为中文。纯非中文文本返回空。
+
 单字（1个字符）:
   1. 查 characters 表精确匹配
   2. 未找到 → 查 words 表精确匹配
@@ -288,11 +292,11 @@ chineseDict: {
 
 **FTS 查询转义**：用户输入直接拼接到 FTS MATCH 可能被特殊字符破坏语法。
 清洗规则：
-1. strip 所有非白名单字符（只保留中文、字母、数字、空白）
+1. strip 所有非白名单字符（只保留中文、字母、数字）
 2. 主进程在末尾追加 `*` 形成前缀查询
 3. 用户输入不含 `*`（已 strip），前缀 `*` 由主进程统一追加
 4. 空输入、超长输入（>100 字符）直接返回空
-5. exact 查询用普通参数绑定，不做 FTS 拼接
+5. exact 查询用普通参数绑定，不做 FTS 拼接；exact 前先 strip 标点符号（保留汉字/字母/数字/空白）
 
 ### idiom 二次查询说明
 
@@ -395,7 +399,7 @@ IPC 返回的已经是完整 `DictResult`，渲染层直接使用，不做 JSON.
 | 未命中 | "䶮䶮䶮" | 中文但不在数据库，返回空 |
 | 模糊匹配 | "莫名其" | words_fts MATCH 返回"莫名其妙" |
 | 边界：超长输入 | "学" × 200 | 截断或返回空（>100 字符不做查询） |
-| 边界：含标点 | "你好，世界" | 正常查询"你好"（去除标点） |
+| 边界：含标点 | "你好，世界" | strip 标点后查询"你好世界"（去除标点，保留汉字） |
 | 边界：空字符串 | "" | 返回空 |
 | 边界：纯空白 | "   " | 返回空 |
 
@@ -514,17 +518,17 @@ cld3 返回 `is_reliable`（布尔）和 `proportion`（0-1）。
 | de | de | 德语 |
 | es | es | 西班牙语 |
 | it | it | 意大利语 |
-| pt | pt | 葡萄牙语 |
+| pt | pt_pt | 葡萄牙语 |
 | nl | nl | 荷兰语 |
 | tr | tr | 土耳其语 |
 | ru | ru | 俄语 |
 | ar | ar | 阿拉伯语 |
 | hi | hi | 印地语 |
 | th | th | 泰语 |
-| sv | en | 瑞典语（项目不支持，fallback en） |
-| da | en | 丹麦语（同上） |
+| sv | sv | 瑞典语 |
+| pl | pl | 波兰语 |
+| da | en | 丹麦语（项目不支持，fallback en） |
 | fi | en | 芬兰语（同上） |
-| pl | en | 波兰语（同上） |
 | cs | en | 捷克语（同上） |
 
 未映射的 BCP-47 代码：log.warn 记录，**与 regex 结果比对取更优者**。
