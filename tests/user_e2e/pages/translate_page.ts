@@ -40,6 +40,27 @@ export class TranslatePage {
         return this.page.getByTestId('source-input')
     }
 
+    welcomeEmpty(): Locator {
+        return this.page.getByTestId('welcome-empty')
+    }
+
+    async dismissWelcome(): Promise<void> {
+        await this.ensureSourceVisible()
+    }
+
+    async ensureSourceVisible(): Promise<void> {
+        await this.page.waitForFunction(() => {
+            const source_input = document.querySelector('[data-testid="source-input"]')
+            const welcome_empty = document.querySelector('[data-testid="welcome-empty"]')
+            return source_input !== null || welcome_empty !== null
+        })
+
+        if (await this.sourceInput().isVisible().catch(() => false)) return
+
+        await this.page.getByTestId('welcome-skip').click()
+        await this.sourceInput().waitFor({ state: 'visible' })
+    }
+
     translateButton(): Locator {
         return this.page.getByTestId('source-translate-btn')
     }
@@ -153,8 +174,9 @@ export class TranslatePage {
     }
 
     // Source area
-    typeSource(text: string): Promise<void> {
-        return this.page.getByTestId('source-input').fill(text)
+    async typeSource(text: string): Promise<void> {
+        await this.ensureSourceVisible()
+        await this.page.getByTestId('source-input').fill(text)
     }
 
     clickTranslate(): Promise<void> {
@@ -218,8 +240,9 @@ export class TranslatePage {
         }
     }
 
-    pressSource(key: string): Promise<void> {
-        return this.page.getByTestId('source-input').press(key)
+    async pressSource(key: string): Promise<void> {
+        await this.ensureSourceVisible()
+        await this.page.getByTestId('source-input').press(key)
     }
 
     async dispatchComposingEnter(): Promise<void> {
@@ -236,7 +259,8 @@ export class TranslatePage {
         })
     }
 
-    getSourceText(): Promise<string> {
+    async getSourceText(): Promise<string> {
+        await this.ensureSourceVisible()
         return this.page.getByTestId('source-input').inputValue()
     }
 
@@ -262,11 +286,13 @@ export class TranslatePage {
     }
 
     async selectSourceLanguage(language: string): Promise<void> {
+        await this.ensureSourceVisible()
         await this.sourceLanguageButton().click()
         await this.page.getByTestId(`lang-source-option-${language}`).click()
     }
 
     async selectTargetLanguage(language: string): Promise<void> {
+        await this.ensureSourceVisible()
         await this.targetLanguageButton().click()
         await this.page.getByTestId(`lang-target-option-${language}`).click()
     }

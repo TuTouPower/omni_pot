@@ -92,7 +92,7 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
 export const DEFAULT_CONFIG: AppConfig = {
   app_language: 'en',
   app_theme: 'system',
-  app_primary_color: '#c4623a',
+  app_primary_color: '#5a9bbf',
   app_font: 'default',
   app_fallback_font: 'default',
   app_font_size: 16,

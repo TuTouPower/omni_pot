@@ -4,6 +4,7 @@ import { AppFixture } from '../fixtures/app_fixture'
 test.describe('@ui translate source area', () => {
     test('user can edit, normalize, copy, and clear source text', async ({ omni }) => {
         const translate = await omni.translate()
+        await translate.dismissWelcome()
 
         await expect(translate.sourceInput()).toHaveAttribute('rows', '1')
         await expect(translate.clearSourceButton()).toBeDisabled()

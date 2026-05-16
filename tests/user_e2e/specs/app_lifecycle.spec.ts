@@ -46,7 +46,7 @@ test.describe('@core app lifecycle', () => {
         try {
             const translate = await omni.translate()
             await expect(translate.wordmark()).toContainText('Omni Pot')
-            await expect(translate.sourceInput()).toBeVisible()
+            await expect(translate.welcomeEmpty()).toBeVisible()
 
             const config_state = await omni.api.windowState('config')
             expect(config_state.exists).toBe(false)
@@ -54,10 +54,10 @@ test.describe('@core app lifecycle', () => {
             const translate_state = await omni.api.windowState('translate')
             expect(translate_state.visible).toBe(true)
             expect(translate_state.bounds).not.toBeNull()
-            expect((translate_state.bounds?.width ?? 0)).toBeGreaterThanOrEqual(350 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
-            expect((translate_state.bounds?.width ?? 0)).toBeLessThanOrEqual(350 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
-            expect((translate_state.bounds?.height ?? 0)).toBeGreaterThanOrEqual(420 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
-            expect((translate_state.bounds?.height ?? 0)).toBeLessThanOrEqual(420 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.width ?? 0)).toBeGreaterThanOrEqual(430 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.width ?? 0)).toBeLessThanOrEqual(430 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.height ?? 0)).toBeGreaterThanOrEqual(360 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.height ?? 0)).toBeLessThanOrEqual(360 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
         } finally {
             await omni.stop()
         }
@@ -133,7 +133,7 @@ test.describe('@core app lifecycle', () => {
         try {
             const translate_page = await omni.firstWindow()
             const translate = await omni.translate()
-            await translate.sourceInput().click()
+            await expect(translate.welcomeEmpty()).toBeVisible()
             await press_key_and_allow_close(translate_page, 'Escape')
             await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
 
