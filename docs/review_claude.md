@@ -1,89 +1,148 @@
-# Review: 2026-05-17-local-capabilities-design.md
+# Review: Local Capabilities (Chinese Dict + Language Detection)
 
-> 审阅日期：2026-05-17
-> 审阅模型：Claude Opus 4.7
-> 范围：中文字典数据导入 + cld3-asm 语言检测替换
+**Reviewed**: 2026-05-17
+**Files**:
+- `docs/superpowers/plans/2026-05-17-local-capabilities.md`
+- `docs/superpowers/specs/2026-05-17-local-capabilities-design.md`
 
-## 总评
-
-设计整体扎实，路径契约、错误降级、热加载、回滚开关都覆盖到位。相比前轮 review，已修复 pinned commit、LICENSE 复制、FTS 转义、WASM 状态机、is_ready 失败缓存等关键点。剩余问题集中在开发者体验与边界一致性，无 BLOCK 级。
-
-判定：**可进入实现**，按下列 HIGH 项在实现中收口。
+**Decision**: REQUEST CHANGES — 多处 plan/spec 不一致与若干逻辑漏洞。无 CRITICAL 安全问题。
 
 ---
 
-## CRITICAL
-无。
+## Summary
+
+整体方案扎实：分层清晰、spike-first、有回滚开关、覆盖 license/打包/状态机。但 plan 与 spec 存在事实性偏差，plan 内部有 Task 编号断档和命名漂移，会让执行者卡住或写出与 spec 不一致的代码。
+
+---
 
 ## HIGH
 
-### H1. dev 自动构建 db 与 IPC 错误描述不一致
-spec L33-35 同时写「dev 启动脚本缺失则自动触发 build」和「is_ready=false 返回结构化错误，UI 提示手动执行」。两条路径并存会导致自动构建中途 UI 已渲染错误提示。
-- **建议**：明确选一条。推荐「postinstall + dev 启动 prebuild」为主，IPC 错误仅作 prod 兜底。dev 模式不应出现「未构建」提示。
+### H1. Task 编号断档：缺失 Task 7
+Plan 从 Task 6 直接跳到 Task 8。Task 0 注释写"`cld3-asm` goes in Task 7"，但 Task 7 不存在；Task 0 Step 4 已经把 cld3-asm 加进 dependencies。
+**Fix**: 重新编号 Task 8→7、9→8、…，或显式说明 Task 7 已合并入 Task 0。
 
-### H2. schema_version 类型矛盾
-L94 metadata 写入示例为字符串 `"1"`，L100 又声明「schema_version 为 INTEGER」。metadata.value 列为 TEXT。
-- **建议**：统一为「TEXT 存储、消费侧 parseInt」并在 spec 删除「INTEGER」字样。
+### H2. Spec vs Plan BCP-47 映射不一致：`pt`
+- Spec line 517：`pt → pt`
+- Plan `CLD3_LANG_MAP`：`'pt': 'pt_pt'`
+- Plan BCP-47 测试表（line 1467）：`pt_pt`
 
-### H3. characters 表 → DictResult 映射不闭环
-L120-126 explanation/speech/words 都是 JSON，L258-264 又说「主进程映射、渲染层不 parse」。但多音字时 partOfSpeech 取值、definition 数组形态未规约。
-- **建议**：补一段映射伪代码，明确单音字 → 单 definition、多音字 → 按读音分组多 definition 的产出形态。
+必须以 `shared/types/language.ts` 的 `LanguageCode` 为权威，统一三处。
 
-### H4. FTS 输入清洗规则模糊
-L236-238「strip 或 quote 转义」二选一未定，且没说前缀 `*` 由谁追加、用户输入能否含 `*`。
-- **建议**：固化为「strip 所有非白名单字符 → 主进程在末尾追加 `*` 形成前缀查询」，补一例「含全角标点」测试。
+### H3. Spec 缺失若干 plan 实现的映射
+Plan `CLD3_LANG_MAP` 含 `sv`、`pl`，spec line 524-528 把 `sv/da/fi/pl/cs` 全部 fallback 到 `en`。直接冲突。
+**Fix**: 确认 `LanguageCode` 是否含 `sv/pl`；按真实值同步两文档。
 
-### H5. cld3 未映射 BCP-47 直接返 en 与「不退化」承诺冲突
-L441 未映射语言一律返 en。若 cld3 把越南语准确识别为 vi，被映射为 en，反而比 regex 表现更差（regex 至少按字符系统判定）。
-- **建议**：未映射时与 regex 结果比对取「不更差」者，或在 spec 显式声明「拉丁语系未映射一律 en，承认这部分回退」。
+### H4. 状态机语义错误：`set_service_state('missing')` 当作 "reset"
+Plan Task 4 Step 1 用 `set_service_state('missing')` 重置状态，但 spec line 42 定义 `missing = db 文件不存在`，UI 会显示"未构建"。dev 自动构建完成后短暂窗口里 `check()` 会返回 `missing`，UI 闪一次错误提示。
+**Fix**: build 成功后显式 `set_service_state('ready')`；或新增 `'idle'` 状态区分"未尝试" vs "确认缺失"。
+
+### H5. `electron/main.ts` 的 `import` 写在函数调用之后
+Plan Task 4 Step 1 在 `registerChineseDictHandlers()` 调用后嵌入 `import` 语句。ES module 必须顶部 import，会编译失败。
+**Fix**: 明确"imports 放文件顶部 import 块；以下代码放 `app.whenReady()` 内"。
+
+### H6. `fs.watch(file)` 在文件不存在时永久失效
+Task 4 Step 2 try/catch 吞掉 watch 失败。但 dev 模式自动构建是 async（spawn），主线程立即进入 watch 块时 db 尚不存在，watcher 永远不会注册——后续构建完成也不会热重载。
+**Fix**: 监听目录，或在 spawn `close` 回调（成功后）再注册 watcher。
+
+### H7. Prepared statement 每次调用都重新 prepare
+`electron/chinese_dict/index.ts` 每次 `lookup_word()` 都 `database.prepare(...)`。better-sqlite3 应缓存 statement，否则失去性能优势，与 spec "< 1ms" 性能预期冲突。
+**Fix**: `open_db()` 时 prepare 常用 statement，模块级缓存；`reload_db()` 时清空。
+
+### H8. Spec 文件清单内部有重复条目
+Spec line 224 和 line 230 都列 extraResources；line 224-225 重复"增加 build:chinese-dict 脚本"两次。
+**Fix**: 合并去重。
+
+---
 
 ## MEDIUM
 
-### M1. db 体积硬约束未挂到构建脚本步骤
-L338 阈值放在「性能预期」节，构建脚本步骤 L168-179 没有引用。
-- **建议**：构建脚本步骤补「11. 校验输出体积，超阈值 warn/fail」。
+### M1. 多处路径解析层级不一致
+- Task 2 `find_db_path()` dev：上溯 3 层 (`'..', '..', '..'`)
+- Task 4 fs.watch fallback：上溯 2 层 (`'..', '..'`)
+- Task 4 spawn cwd：上溯 2 层
 
-### M2. dev 模式 mtime 监听细节缺失
-L279 未指明 watcher 类型、debounce 时长、enable 条件。
-- **建议**：补「fs.watch / chokidar、debounce 500ms、仅 dev 且 chinese_enabled=true」。
+electron-vite 编译后 `__dirname` 位置只有一种，至少有一处错。
+**Fix**: 用 `app.getAppPath()` 或单一 helper 统一。
 
-### M3. cld3 短文本阈值未规定
-划词翻译命中短文本（< 7 字符）是常态，cld3 多数 unreliable。
-- **建议**：测试用例补「<= 5 字符」短输入，验证 regex fallback 不误判「Hi」。
+### M2. `to_dict_result_char` 的 `words` 字段映射与 build 不一致
+Build 直接序列化 `e['words'].slice(0, 5)`（结构未严格化），IPC handler `as Array<{word: string; text: string}>`。若 mapull 真实字段名不同，渲染拿空串。
+**Fix**: build 显式 normalize 成 `{word, text}`；spec 写明字段约定。
 
-### M4. 缺多平台打包冒烟入口
-L463 仅在风险表点 better-sqlite3，测试计划未列三平台冒烟。
-- **建议**：测试计划加「dist 后 Windows/macOS/Linux 各跑一次 dict.lookup + detect:local」。
+### M3. `chineseDict:check` 返回字段不一致
+- Spec line 252: `{ ready, entry_count }`
+- Plan handler 返回 `{ ready, status, entry_count }`
+- Plan ElectronAPI 类型: `{ ready, status, entry_count }`
 
-### M5. metadata schema_migration 策略未定
-prod 用户拿旧 db + 新 app 会直接服务降级。
-- **建议**：补「dev 模式 schema_version 低于期望则自动 rebuild；prod 模式接受降级（db 为 bundled 资源）」。
+**Fix**: 更新 spec 类型签名补 `status`。
+
+### M4. `SELECT *` 强转类型
+`lookup_idiom`/`lookup_character` 用 `SELECT *` 强转。schema 升级时类型静默漂移。
+**Fix**: 显式列名。
+
+### M5. FTS 前缀清洗保留空格导致多 token 问题
+`clean_for_fts` 保留 `\s`，`${cleaned}*` 直接拼。输入 "学 习" → "学 习*"，FTS5 只在最后 token 加 `*`，前 token 变 exact，反直觉。
+**Fix**: 决定压缩空格 vs 每 token 加 `*`，在 spec 写明。
+
+### M6. 同步 `getConfig` 在 hot path
+每次 lookup 都调用。确认 config 为内存读，否则缓存 + 监听。
+
+### M7. `detect_local` IPC fallback 复制了 regex 子集
+Spec 强调"映射归属：主进程"，但渲染 catch 又搬回一小段 regex。Plan 已注明"最小冗余，不要扩展"——spec 需要同步该说明。
+
+### M8. `it.skipIf(!db_exists)` 会让 CI 默认全部 skip 还显示绿
+若 CI 未构建 db，测试全 skip = 全绿，等于无验证。
+**Fix**: CI workflow 强制先 build；或在测试里设 sentinel "CI 必须有 db"。
+
+### M9. `init_cld3()` 无超时
+WASM 加载若卡住，`wasm_state` 永停 `loading`（虽然走 regex 不阻塞，但 promise 悬挂）。建议 timeout。
+
+### M10. "是否中文" 阈值未定义
+Spec line 277 没说"含一个汉字算中文吗？混合文本？"。Plan 用 `/\p{Script=Han}/u.test`（任意一个就算）。需在 spec 写死。
+
+---
 
 ## LOW
 
-- **L1.** `.gitignore` 同时 ignore `*.db-shm`、`*.db-wal`（WAL 模式副产物）。
-- **L2.** `extraResources` 加 `filter`，显式排除 `db-shm/db-wal`。
-- **L3.** L156 unicode61 CJK unigram 前缀查询「莫名其*」语法需测试时实证而非理论推断。
-- **L4.** L406/L378 表述重复，可精简。
-- **L5.** cld3-asm Apache-2.0 要求保留 NOTICE，本 spec 加 TODO 引用，避免后续遗漏。
+- **L1**: Spec line 199 连续两个 "7." 编号。
+- **L2**: schema_version 比较用 `parseInt`，build 写字符串 `'1'`——直接 `=== '1'` 更安全（避免 `parseInt('1abc')` 通过）。
+- **L3**: Task 0 spike 文件 (`scripts/spike_cld3.ts`) 在 master 上创建后删除，会留在 git 历史；建议 spike 分支做。
+- **L4**: `to_dict_result_idiom` 丢弃 `similar/opposite`，handler 内未加 TODO 注释指向 FUTURE 扩展。
+- **L5**: `to_dict_result_char` examples 硬编码 `slice(0, 3)`，未在 spec 提及上限。
+- **L6**: Plan 用 `log.error('... %s', e)` printf 风格——确认 electron-log 是否支持，否则会变字面量。
+- **L7**: `chineseDict` 无点 vs `detect.local` 带点——文档加一句说明 preload 命名空间结构。
 
 ---
 
-## 文件清单核查
+## Validation
 
-- ✅ 构建脚本、主进程、IPC、preload、main 注册、electron-builder、package.json、.gitignore 全覆盖
-- ⚠️ 缺 `shared/types/service.ts` 引用说明（本期若 DictResult 不变请显式声明「不动」）
-- ⚠️ preload 中 `detect.local` bridge 的类型声明归属未明（shared/ vs preload 内部）
+| Check | Result |
+|---|---|
+| Type check | Skipped (review-only) |
+| Lint | Skipped |
+| Tests | Skipped |
+| Build | Skipped |
 
-## 测试覆盖核查
-
-- ✅ FTS 验收词、查询用例、IPC、性能、cld3 准确率均覆盖
-- ⚠️ 缺「源 commit 与 pinned hash 不一致」warn 路径测试
-- ⚠️ 缺 `dict:reload` 在 db 文件被替换后状态切换测试
-- ⚠️ 缺 cld3-asm WASM 初始化耗时上限断言（防依赖升级回归）
+仅文档审阅。
 
 ---
 
-## 结论
+## Required Fixes Before Implementation
 
-`APPROVED with HIGH-priority refinements`。建议实现 PR 同步修订 H1-H5 后合并。MEDIUM/LOW 可实现期或独立 follow-up 处理。
+1. **H1** Task 编号断档
+2. **H2/H3** BCP-47 映射对齐（以 `LanguageCode` 为准）
+3. **H4** state machine 重置语义
+4. **H5** import 位置
+5. **H6** fs.watch 永久失效
+6. **H7** 缓存 prepared statements
+7. **H8** spec 文件清单去重
+
+---
+
+## Strengths
+
+- Spike-first 降低 WASM 集成风险。
+- 双路径 + extraResources 复用 ecdict 模式。
+- 回滚开关 + 热重载 + 失败缓存覆盖 ops 场景。
+- FTS5 有验收词，避免理论翻车。
+- License 义务显式处理。
+- 异步预加载不阻塞 UI。

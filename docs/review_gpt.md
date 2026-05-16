@@ -1,14 +1,14 @@
-# Review: 2026-05-17-local-capabilities-design.md
+# Review: local capabilities design + plan
 
-> 审阅日期：2026-05-17
-> 审阅模型：GPT-5.5
-> 范围：中文字典数据导入 + 本地语言检测替换
+> 审阅日期：2026-05-17  
+> 审阅模型：GPT-5.5  
+> 范围：`docs/superpowers/specs/2026-05-17-local-capabilities-design.md` + `docs/superpowers/plans/2026-05-17-local-capabilities.md`
 
 ## 总评
 
-设计方向正确，模块边界清晰：中文字典独立 SQLite + IPC，语言检测独立本地服务 + regex fallback。路径契约、LICENSE、schema metadata、运行时降级、FTS 验收、WASM 状态机都已有覆盖。
+方向正确：中文字典走 SQLite + 主进程 IPC，语言检测走 `cld3-asm` + regex fallback，主/渲染边界清楚。当前文档仍有多处 plan/spec 不一致，且示例代码里有几个会导致实现返工的问题。
 
-结论：**可进入实现**。无 CRITICAL 阻塞；建议先收口 HIGH 项，避免实现后返工。
+结论：**APPROVED with HIGH/MEDIUM refinements**。无 CRITICAL。建议先修 HIGH，再进入实现。
 
 ## CRITICAL
 
@@ -16,109 +16,142 @@
 
 ## HIGH
 
-### H1. dev 自动构建与 UI 错误路径仍需定序
+### H1. plan 的 Task 编号断档，执行流会出错
 
-spec 同时描述：
-
-- dev 启动时自动检测并触发 `build:chinese-dict`。
-- `is_ready()=false` 时 IPC 返回结构化错误，UI 提示手动执行命令。
-
-如果自动构建耗时较长，UI 可能先显示“未构建”错误，随后又恢复可用，体验混乱。
-
-建议：明确状态机：`missing -> building -> ready | failed`。dev 自动构建中 UI 显示“正在构建中文词典”；只有 `failed` 才提示手动命令。prod 不自动构建，只降级并提示资源缺失。
-
-### H2. `source_commit` 校验 warn 不阻塞，可能削弱可复现性
-
-文档要求 pinned commit 不一致只 warn，并记录实际 `metadata.source_commit`。这能提高开发便利性，但构建产物不再严格可复现。
+`Task 6` 后直接跳到 `Task 8`，但前文多处写“Task 7 after spike verification”。实际没有 Task 7。
 
 建议：
 
-- 本地 dev：warn 不阻塞。
-- CI / release 构建：commit 不一致直接 fail。
-- metadata 同时记录 `expected_source_commit` 与 `actual_source_commit`。
+- 把 cld3 依赖落地任务明确为 Task 7，或统一重编号。
+- 确保 “do NOT add cld3-asm here / Task 7 after spike” 指向真实任务。
 
-### H3. FTS5 中文模糊查询能力可能被高估
+### H2. spec 和 plan 对 idiom 查询顺序互相矛盾
 
-`unicode61` 对中文分词能力有限，prefix 查询更适合英文 token，不等价于中文子串搜索。设计中验收词已列出，但查询策略若承诺“模糊”过宽，用户预期会偏高。
+spec 写“词语：words 精确 → idioms 精确 → FTS”，但又写“words 表已包含 idiom，当前实现不做 words→idioms 二次查询，idioms 表仅作为独立查询入口”。plan 示例代码也是 `lookup_word()` 命中后直接返回，不会查询 idioms。
 
-建议：把能力定义改成“前缀 / FTS 辅助召回 + exact 优先”，并在实现中保留 `LIKE ?` 或 trigram 方案作为验收失败时的 fallback 选项。不要只依赖 FTS5 证明中文模糊可用。
+结果：用户输入成语若 words 表命中，将永远拿不到 idioms 表的出处/example 映射。
 
-### H4. `lookup()` 查询异常返回空结果会掩盖损坏状态
+建议二选一：
 
-设计写查询异常捕获后返回空结果，不阻塞其他服务。对 UI 友好，但如果 db 损坏或 SQL/schema 不匹配，用户看到的是“查不到”，不是“词典不可用”。
+- 若本期要展示 idiom richer fields：查询顺序改为 idioms exact → words exact → FTS，或 words 命中后再查 idioms 覆盖。
+- 若本期不展示 idiom extra fields：删除“words 后查 idioms”的承诺，避免假测试。
 
-建议：区分：
+### H3. package.json `build.extraResources` 可能不是真实配置入口
 
-- 输入无命中：返回空结果。
-- db/schema/SQL 异常：返回结构化错误或 `service_unavailable`，并把 `is_ready()` 置 false。
+文档多处要求修改 `package.json build.extraResources`，但项目存在 `electron-builder.yml`。如果 electron-builder 实际读取 yml，则 package.json 修改无效。
 
-### H5. `cld3` 未映射语言一律返回 `en` 有误判风险
+建议：
 
-未映射语言返回 `en` 会把越南语、印尼语等拉丁语系误判为英文。比 regex fallback 更差。
-
-建议：未映射时返回 `unknown` 或使用 regex 结果；不要默认 `en`。如果业务必须给英文，需在 spec 明确这是产品取舍。
+- 实现前确认 builder 配置来源。
+- spec/plan 只写真实配置文件。
+- final dist 验证必须检查产物内 `resources/data/dict/chinese_dict.db` 和 `chinese-dictionary-LICENSE`。
 
 ## MEDIUM
 
-### M1. `postinstall` 自动构建不适合默认启用
+### M1. plan 仍含直接 `npm install` / `npm install --no-save`，会改锁文件或依赖状态
 
-词典源数据不随仓库提交，`postinstall` 很可能在新环境失败，影响普通依赖安装。
+spike 要求 `npm install --no-save cld3-asm`，后续又 `npm install`。这可能污染当前大量未提交修改和 lockfile。
 
-建议：优先用 `npm run dev` 的 preflight 检测；`postinstall` 只打印提示或不做构建。
+建议：
 
-### M2. `.gitignore` 不应忽略 LICENSE 产物
+- spike 放到临时 worktree 或明确“会修改 node_modules/package-lock，完成后清理”。
+- 依赖落地单独一节，列出预期 package/lockfile 变更。
 
-文件清单写忽略 `resources/data/dict/chinese-dictionary-LICENSE`。但 MIT LICENSE 是打包合规必需资源，若由构建脚本复制且不提交，release 构建必须保证它存在。
+### M2. renderer 字典服务仍吞 IPC 异常为无结果
 
-建议：二选一：
+Task 5 的 `translate()` catch 返回 `''`。这会把 IPC channel broken、main handler throw、schema mismatch 包装成“无命中”。spec 又要求“不伪装为无命中”，两者冲突。
 
-- LICENSE 复制产物不提交，但 release 构建前强校验存在。
-- 或提交 LICENSE 文本，减少 release 漏包风险。
+建议：
 
-### M3. `is_ready()` 成功后缓存路径，db 被替换时一致性需定义
+- IPC 返回 `{ ok, result, error_code }` 或 check 状态先行。
+- renderer 至少记录日志并让 `testConfig()` 反映不可用。
+- UI 能区分“无命中”和“服务不可用”。
 
-文档写成功后缓存路径，失败可 reload。若 dev 中 db 文件被重新构建，已打开连接与新文件替换的行为需要定义。
+### M3. SQLite open 后设置 WAL 与 readonly 模式冲突风险
 
-建议：`dict:reload` 明确关闭旧连接、清空 prepared statement、重开 db；mtime watcher 触发同一路径。
+`new Database(path, { readonly: true })` 后执行 `db.pragma('journal_mode = WAL')` 可能需要写入 journal state，在只读/打包资源环境不稳。
 
-### M4. build 脚本内存峰值风险未写
+建议：
 
-源 JSON 合计接近 100MB，直接 `JSON.parse` 三个文件会有较高内存峰值。WSL / CI 小内存环境可能失败。
+- build 阶段设置 WAL/优化。
+- runtime readonly 只执行读安全 pragma，或不设置 journal_mode。
+- dist smoke 覆盖只读 resources 路径。
 
-建议：实现前明确可接受内存上限；若超限，使用流式 JSON 解析或分文件串行 parse + insert + GC。
+### M4. FTS 测试示例绕过了实际清洗逻辑
 
-### M5. 语言检测包兼容性需先做 spike
+`FTS fullwidth punctuation does not throw` 直接对 `words_fts MATCH '你好，世界！*'`，但实际代码会先 whitelist 清洗。这条测试可能因 SQLite FTS 语法失败，且不能验证实现。
 
-`cld3-asm` 与 Electron 39 / Vite / 主进程 WASM 加载存在打包兼容风险。
+建议：
 
-建议：实现第一步先做最小 spike：dev + build + dist 环境各调用一次 `detect_local()`。
+- 测 `clean_for_fts()` 或 handler 层输入。
+- 不直接把未清洗输入送进 FTS MATCH。
+
+### M5. `it.skipIf(!existsSync(LICENSE_PATH))('LICENSE file exists')` 逻辑反了
+
+如果 LICENSE 不存在，这个测试会 skip，永远不会失败。它无法保障合规资源存在。
+
+建议：
+
+- 对 release/dist 验证：LICENSE 缺失必须 fail。
+- 单测可在 db 缺失时 skip，但 db 存在时 LICENSE 缺失不能 skip。
+
+### M6. language detect 单测复制实现，无法防真实实现漂移
+
+`tests/detect/cld3.test.ts` 复制 `detect_regex()`，不是 import 真实函数。实现改坏时测试仍可能过。
+
+建议：
+
+- 从 `electron/detect/index.ts` export/import `detect_regex`。
+- 对 `detect_local_cld3()` 用可注入 fake cld3 instance 或小型 seam 测 fallback。
+
+### M7. cld3 映射表与 spec 不一致
+
+spec 表中 `sv/pl` 等项目不支持语言写 fallback `en`，plan 示例却把 `sv`、`pl` 映射为 `LanguageCode`。需确认 `shared/types/language` 是否真实支持。
+
+建议：
+
+- 以实际 `LanguageCode` 类型为准。
+- 未支持语言不要硬映射。
+- 测试覆盖 `sv`、`pl`、`id`、`tr`、未知码。
+
+### M8. `reload` 与 service_state 状态语义不完整
+
+`reload_db()` 只重置 `db_state/cached_path`，没有同步 `service_state`。构建失败后再 reload，`get_service_state()` 可能继续返回 failed/missing 的旧语义。
+
+建议：
+
+- reload 后按打开结果设置 `ready` 或 `failed/missing`。
+- check 返回稳定枚举，不靠 `is_ready()` 副作用隐式改变状态。
 
 ## LOW
 
-- L1. `metadata.schema_version` 建议统一为 TEXT 存储，消费侧 parse，避免文档中类型不一致。
-- L2. `resources/data/dict/*.db-wal`、`*.db-shm` 应加入 ignore 和 `extraResources.filter` 排除。
-- L3. FTS 输入清洗规则应固定为白名单或 quote，不保留“strip 或 quote 二选一”。
-- L4. `dict:reload` IPC 建议限制为内部 bridge，不暴露任意路径参数，避免路径滥用。
-- L5. `detect_local()` 建议返回 `source: 'cld3' | 'regex' | 'unknown'`，便于测试与日志判断。
+- spike 代码含 `console.log` 可以作为临时脚本，但最终代码不要保留调试输出。
+- `get_entry_count()` 只统计 words，命名建议改为 `word_count` 或返回 words/chars/idioms 三项。
+- `DictResult` 对 char 多音字分组没有显示 pinyin 归属，UI 可能难以对应读音与释义。
+- spec 文件清单里 `package.json` 重复两行，可清理。
+- “CI 验证 db 体积 ≤ 100MB”和构建脚本 “>100MB warn；>150MB fail”标准不一致。
+- dev `fs.watch` 监听文件不存在时失败后不会重新 watch；若依赖 auto-build，热 reload 可能失效。
 
-## 测试覆盖建议
+## 测试补充
 
-已有测试计划较完整。建议补充：
+建议补充或调整：
 
-- 源 commit 与 pinned commit 不一致：dev warn、release fail。
-- FTS 特殊字符、全角标点、超长输入不抛异常。
-- db 损坏 / schema mismatch 返回服务不可用，不伪装为空结果。
-- `dict:reload` 后旧连接关闭，新 db 可查。
-- `cld3` 初始化失败只记录一次 warning，并稳定 fallback。
-- 未映射语言不默认 `en`。
-- 打包后 Windows/macOS/Linux 各跑 `chineseDict.lookup()` 与 `detect.local()` 冒烟。
+- packaged app 只读 resources 路径能打开 db。
+- db 存在但 LICENSE 缺失时 release 验证失败。
+- schema mismatch、损坏 db、SQL throw 能返回服务不可用。
+- 成语输入明确验证到底返回 words 释义还是 idiom richer fields。
+- FTS 特殊字符走 handler 层，不直接测未清洗 MATCH。
+- `detect.cld3_enabled=false` 时不 import/load cld3。
+- cld3 loading/failed 只 fallback，不阻塞翻译。
+- 未支持 cld3 code 不默认覆盖 regex 非英文结果。
 
 ## 安全与合规
 
-- IPC 不应允许渲染进程传入 db 路径或源数据路径。
-- FTS 查询字符串必须清洗，不能直接拼接用户原文。
-- 第三方 LICENSE 必须进入打包产物；后续 About 窗口再展示不应影响当前合规文件落盘。
+- IPC 不允许 renderer 传 db 路径，当前方向正确。
+- SQL exact 查询参数化，方向正确；FTS 必须只拼接主进程清洗后的 query。
+- 外部数据源必须固定 commit，并在 CI/release mismatch fail。
+- MIT LICENSE 必须进入 release；Apache NOTICE 需要在第三方声明里处理，不只检查 node_modules 存在。
 
 ## 最终意见
 
-`APPROVED with HIGH-priority refinements`。实现前优先修 H1-H5；M 项可在实现 spike 和构建脚本阶段同步收口。
+可继续。先修 H1-H3、M2、M5、M6；否则实现时会出现任务断档、成语行为歧义、打包资源遗漏和测试假阳性。
