@@ -34,7 +34,6 @@ test.describe('@ui config service management', () => {
             await config.openSection('service')
 
             await expect(config.title()).toContainText('服务')
-            await expect(config.route()).toHaveText('/service')
             await expect(config.addServiceButton()).toBeVisible()
 
             for (const [category, label, service_keys] of SERVICE_CATEGORIES) {

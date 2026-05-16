@@ -114,7 +114,7 @@ export default function ScreenshotWindow(): React.ReactElement {
             }
 
             if (full_text && config.recognize_auto_copy) {
-                await navigator.clipboard.writeText(full_text)
+                await window.electronAPI.text.writeClipboard(full_text)
             }
 
             if (mode === 'translate') {

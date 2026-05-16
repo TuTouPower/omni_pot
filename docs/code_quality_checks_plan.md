@@ -45,34 +45,38 @@
 
 ## 2. 当前状态
 
-技术栈以仓库当前配置为准：Electron 39 + React 19 + TypeScript 6 + electron-vite。
+omni_pot = Electron 39 + React 19 + TypeScript 6 + electron-vite，当前已落地基础门禁：
 
-| 已有 | 状态 |
+| 已有 | 后续增强 |
 |---|---|
-| TypeScript strict | 已启用 |
-| `noUncheckedIndexedAccess` | 已启用 |
-| `noUnusedLocals` / `noUnusedParameters` | 已启用 |
-| `noImplicitReturns` / `noFallthroughCasesInSwitch` | 已启用 |
-| type-aware ESLint | 已接入 `eslint_config.mjs` |
-| `typescript-eslint strictTypeChecked` | 已启用 |
-| React Hooks 规则 | 已启用 |
-| `eslint --max-warnings=0` | 已启用 |
-| unit tests | 已有 Vitest |
-| user E2E | 已迁移 Playwright |
+| `typecheck` 脚本（tsc --noEmit），并已开启第一档严格 TS 选项 | 全仓 Biome 格式化基线 |
+| ESLint flat config + type-aware 规则 + React Hooks 规则 | Gitleaks / osv-scanner / Semgrep |
+| Vitest 单测 + Playwright E2E | Git hooks / CI required checks |
+| Knip 死代码 / 依赖检查 | dependency-cruiser 架构边界 |
+| Biome scoped format check | CodeQL / Electron Fuses 检查 |
+| `npm audit --audit-level=high` | |
 
-仍缺：
+### 2.1 当前 package.json 脚本
 
-| 缺失 | 作用 |
-|---|---|
-| format check | 防止格式化 diff 混入功能变更 |
-| Knip | 检查未使用文件、导出、依赖、devDependencies |
-| dependency-cruiser | 检查循环依赖和架构边界 |
-| Gitleaks | 防止 API key / token 泄漏 |
-| npm audit + OSV-Scanner | 依赖漏洞扫描 |
-| Semgrep | Electron / Node / Web 安全 SAST |
-| CodeQL | GitHub 侧深度静态分析 |
-| lint-staged / hooks | 提交前快速拦截 |
-| CI required checks | 保护 `master` |
+```jsonc
+{
+    "scripts": {
+        "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+        "lint": "eslint --config eslint_config.mjs . --max-warnings=0",
+        "format:check": "biome ci ... package.json knip.json",
+        "deadcode": "knip",
+        "security": "npm audit --audit-level=high",
+        "check": "npm run typecheck && npm run lint && npm run format:check && npm run deadcode && npm run security && npm test"
+    }
+}
+```
+
+说明：
+
+- `format:check` 当前用 Biome CLI 参数检查 `package.json` 与 `knip.json`，不新增 `biome.json`；本地配置保护 hook 会阻止修改 `biome.json`。
+- 全仓 Biome 格式化会触发大量存量 diff，需要单独做格式化基线迁移后再扩大 `format:check` 范围。
+- `deadcode` 使用 `knip.json` 记录当前存量未引用文件和工具依赖 false positive，避免在质量门禁落地时顺手删除无关旧代码。
+- `security` 先纳入 `npm audit --audit-level=high`；Gitleaks / osv-scanner / Semgrep 放到后续增强继续补。
 
 ---
 
@@ -80,30 +84,19 @@
 
 ### P0 — 保持现有门禁稳定
 
-现有脚本：
-
-```jsonc
-{
-    "scripts": {
-        "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-        "lint": "eslint --config eslint_config.mjs . --max-warnings=0",
-        "check": "npm run typecheck && npm run lint && npm test"
-    }
-}
-```
-
 要求：
 
 - `npm run typecheck` 必须零错误；
 - `npm run lint` 必须零 warning；
 - `npm test` 必须通过；
-- 新增 TS / TSX 文件必须纳入 `tsconfig.eslint.json` 覆盖，避免 type-aware lint 漏扫。
+- `npm run check` 必须通过；
+- 新增 TS / TSX 文件必须纳入 type-aware lint 覆盖，避免漏扫。
 
 ### P1 — 格式化与死代码
 
 #### 3.1 format check
 
-推荐 Biome 或 Prettier 二选一，先只上 `check`，不要自动格式化全仓。
+当前已用 Biome CLI 参数做 scoped check。下一步是做一次独立格式化基线迁移，再把检查范围从 `package.json knip.json` 扩大到全仓。
 
 必须配置：
 
@@ -114,46 +107,16 @@ useTabs = false
 
 原因：项目 CLAUDE.md 要求 4 空格缩进，默认 2 空格会制造大规模无意义 diff。
 
-建议脚本：
-
-```jsonc
-{
-    "scripts": {
-        "format:check": "biome ci ."
-    }
-}
-```
-
-如果选择 Prettier：
-
-```jsonc
-{
-    "scripts": {
-        "format:check": "prettier --check ."
-    }
-}
-```
-
 #### 3.2 Knip
 
 用于检查未使用文件、导出、依赖和 devDependencies。
 
-建议脚本：
+当前已接入 `npm run deadcode`，并用 `knip.json` 保存存量动态入口 / false positive 基线。后续规则：
 
-```jsonc
-{
-    "scripts": {
-        "deadcode": "knip"
-    }
-}
-```
-
-落地方式：
-
-1. 先运行 `npx knip` 生成现状；
-2. 对测试夹具、Electron preload、动态注册服务、Playwright 文件配置必要 ignore；
-3. 只删除确认无引用且不属于动态入口的项目；
-4. CI 初期允许 baseline，后续逐步收紧。
+1. 动态入口误报必须写入配置；
+2. 只删除确认无引用且不属于动态入口的项目；
+3. baseline 每轮减少；
+4. CI 初期可只报告，稳定后设为必过。
 
 ### P2 — 安全与依赖漏洞
 
@@ -175,7 +138,17 @@ useTabs = false
 
 #### 3.4 npm audit + OSV-Scanner
 
-建议脚本：
+当前已接入：
+
+```jsonc
+{
+    "scripts": {
+        "security": "npm audit --audit-level=high"
+    }
+}
+```
+
+后续增强：
 
 ```jsonc
 {

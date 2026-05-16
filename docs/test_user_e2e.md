@@ -243,7 +243,7 @@ class TranslatePage {
   `ocr-lang-select`、`ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、
   `ocr-copy-btn`、`ocr-export-btn`、`ocr-translate-btn`
 - 截图：`shot-overlay`、`shot-selection`、`shot-size-label`、`shot-hint`
-- 配置：`config-wordmark`、`config-pin`、`config-version`、`config-route`、
+- 配置：`config-wordmark`、`config-pin`、`config-version`、
   `config-nav-{page}`、`config-title`、`config-close`、各设置项
   `cfg-{key}`、服务项 `svc-item`、服务 tab `svc-tab-{listKey}`、`svc-add-btn`、
   `svc-add-option`、`svc-delete`、`svc-move-up`、`svc-move-down`、`svc-drag-handle`、
@@ -313,8 +313,8 @@ class TranslatePage {
 ### 5.3 translate_titlebar.spec.ts — 翻译窗口标题栏 · issues #4 #8
 
 - 布局：左对齐顺序为 置顶按钮 → wordmark → 模式标签；右上角只有关闭按钮
-- wordmark 文本为 `omni_pot`、带主色圆点，无样式/拼写问题（issue #8）
-- 模式标签文本为 `翻译`，渲染正常（issue #8）
+- wordmark 文本为 `Omni Pot`，使用常规字标样式（issue #8）
+- 模式标签文本为 `翻译`，无胶囊背景，渲染正常（issue #8）
 - **点击置顶按钮** → `translate_always_on_top` 翻转 + 按钮变主色 + 窗口实际置顶；
   再次点击恢复（issue #4）
 - **点击关闭按钮** → 窗口关闭/隐藏（issue #4）
@@ -322,7 +322,7 @@ class TranslatePage {
 
 ### 5.4 translate_source_area.spec.ts — 源文本区 · issue #5
 
-- 卡片样式渲染；输入框可见容量 ≥ 8 行
+- 卡片样式渲染；输入框从 1 行起随内容自动增长，最多显示约 8 行
 - 输入超长文本：操作按钮仍可见、不被遮挡，输入框内部滚动出现
 - **点击翻译按钮** → 触发翻译、产出结果卡片（issue #5）
 - 翻译按钮只有翻译符号、无“翻译”文字、无独立背景，颜色为主色

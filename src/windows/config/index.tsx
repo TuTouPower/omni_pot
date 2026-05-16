@@ -60,7 +60,7 @@ export default function ConfigWindow(): React.ReactElement {
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
                 {/* Sidebar */}
                 <div style={{
-                    width: 220,
+                    width: 184,
                     background: 'var(--bg-card)',
                     borderRight: '1px solid var(--line-soft)',
                     display: 'flex',
@@ -78,11 +78,10 @@ export default function ConfigWindow(): React.ReactElement {
                             <Icons.Pin size={13} />
                         </button>
                         <div className="op-wordmark" data-testid="config-wordmark">
-                            <span className="dot" style={{ background: 'var(--brand-primary)' }} />
-                            omni_pot
+                            Omni Pot
                         </div>
                     </div>
-                    <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                    <div style={{ padding: 6, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
                         {pages.map((n) => (
                             <button
                                 key={n.key}
@@ -90,7 +89,7 @@ export default function ConfigWindow(): React.ReactElement {
                                 aria-current={activePage === n.key ? 'page' : undefined}
                                 onClick={() => { setActivePage(n.key); }}
                                 style={{
-                                    height: 32,
+                                    height: 30,
                                     padding: '0 10px',
                                     borderRadius: 8,
                                     display: 'flex',
@@ -113,7 +112,7 @@ export default function ConfigWindow(): React.ReactElement {
                             </button>
                         ))}
                     </div>
-                    <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
+                    <div style={{ padding: '8px 12px', borderTop: '1px solid var(--line-soft)' }}>
                         <div className="hint mono" data-testid="config-version" style={{ fontSize: 10.5 }}>v0.1.0</div>
                     </div>
                 </div>
@@ -122,13 +121,12 @@ export default function ConfigWindow(): React.ReactElement {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <div style={{ height: 38, display: 'flex', alignItems: 'center', padding: '0 10px 0 14px', gap: 8 }}>
                         <div data-testid="config-title" style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
-                        <span className="hint mono" data-testid="config-route" style={{ marginLeft: 4 }}>/{activePage}</span>
                         <div style={{ flex: 1 }} />
                         <button className="ic-btn" title="关闭" data-testid="config-close" onClick={() => { handleClose().catch(console.error); }}>
                             <Icons.Close size={14} />
                         </button>
                     </div>
-                    <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+                    <div style={{ flex: 1, overflow: 'auto', padding: '4px 16px 16px' }}>
                         {renderPage()}
                     </div>
                 </div>

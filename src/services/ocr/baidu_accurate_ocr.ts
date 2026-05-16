@@ -60,7 +60,7 @@ export const baiduAccurateOcrService: OcrService = {
             }
         )
 
-        if (!resp.ok) {
+        if (!resp.ok && resp.status !== 0) {
             throw new Error(`Baidu Accurate OCR API error: ${String(resp.status)}`)
         }
 

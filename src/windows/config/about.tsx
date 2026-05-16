@@ -38,10 +38,10 @@ export default function AboutPage(): React.ReactElement {
                 >
                     op
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>omni_pot</div>
+                <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Omni Pot</div>
                 <div className="hint mono" data-testid="about-version">version {VERSION}</div>
                 <div className="hint" style={{ maxWidth: 360 }}>
-                    一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和自定义插件。
+                    一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和内置服务配置。
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
                     <button className="btn sm" data-testid="about-home-link" onClick={() => { openExternal(REPO_URL); }}>
@@ -72,7 +72,7 @@ export default function AboutPage(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label="本机 API">
                     <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>
-                    <button className="ic-btn" title="复制" data-testid="about-copy-api" onClick={() => { navigator.clipboard.writeText(apiUrl).catch(() => undefined); }}>
+                    <button className="ic-btn" title="复制" data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>

@@ -34,7 +34,7 @@ test.describe('@ui updater and tray', () => {
                 current_version: '1.0.0',
                 name: 'E2E Release 2.0.0',
                 body: '### Changes\n- Added updater and tray coverage',
-                html_url: 'https://example.invalid/omni-pot/releases/2.0.0',
+                html_url: 'https://example.invalid/omni_pot/releases/2.0.0',
                 published_at: '2026-05-15T08:30:00.000Z',
                 assets: [{
                     name: 'omni_pot-2.0.0-win.zip',
@@ -69,7 +69,7 @@ test.describe('@ui updater and tray', () => {
             const config_result = await omni.api.trayAction('config')
             expect(config_result.success).toBe(true)
             const config = await omni.config()
-            await expect(config.wordmark()).toContainText('omni_pot')
+            await expect(config.wordmark()).toContainText('Omni Pot')
             await expect_window_visible(omni, 'config')
 
             await expect.poll(async () => (await omni.api.getConfig()).clipboard_monitor).toBe(false)
@@ -95,7 +95,7 @@ test.describe('@ui updater and tray', () => {
             const config_result = await show_config.api.trayAction('tray_click')
             expect(config_result.success).toBe(true)
             const config = await show_config.config()
-            await expect(config.wordmark()).toContainText('omni_pot')
+            await expect(config.wordmark()).toContainText('Omni Pot')
             await expect_window_visible(show_config, 'config')
         } finally {
             await show_config.stop()

@@ -5,12 +5,13 @@ test.describe('@ui translate source area', () => {
     test('user can edit, normalize, copy, and clear source text', async ({ omni }) => {
         const translate = await omni.translate()
 
-        await expect(translate.sourceInput()).toHaveAttribute('rows', '8')
+        await expect(translate.sourceInput()).toHaveAttribute('rows', '1')
         await expect(translate.clearSourceButton()).toBeDisabled()
         await expect(translate.sourceTtsButton()).toBeDisabled()
 
         await translate.typeSource('hello\nworld')
         await expect(translate.sourceInput()).toHaveValue('hello\nworld')
+        await expect(translate.sourceInput()).toHaveAttribute('rows', '2')
         await expect(translate.clearSourceButton()).toBeEnabled()
         await expect(translate.sourceTtsButton()).toBeDisabled()
 

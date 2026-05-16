@@ -61,14 +61,14 @@ if (!gotLock) {
         callback({
           responseHeaders: {
             ...details.responseHeaders,
-            'Content-Security-Policy': ["default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"]
+            'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https:"]
           }
         })
       } else {
         callback({
           responseHeaders: {
             ...details.responseHeaders,
-            'Content-Security-Policy': ["default-src 'self' http://localhost:* ws://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:*; connect-src 'self' http://localhost:* ws://localhost:*"]
+            'Content-Security-Policy': ["default-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:* http://127.0.0.1:*; media-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https:"]
           }
         })
       }
