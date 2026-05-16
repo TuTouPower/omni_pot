@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
-import { language_options } from '../../i18n/language_names'
+import { native_language_options } from '../../i18n/language_names'
 import { LANGUAGE_CODES } from '@shared/types/language'
 import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect } from './config_components'
 
@@ -46,8 +46,8 @@ export default function TranslatePage(): React.ReactElement {
     const [rememberWindowSize, setRememberWindowSize] = useConfig('translate_remember_window_size')
     const [hideWindow, setHideWindow] = useConfig('translate_hide_window')
 
-    const allLangOpts = language_options(t, ALL_LANGUAGES)
-    const targetLangOpts = language_options(t, TARGET_LANGUAGES)
+    const allLangOpts = native_language_options(t, ALL_LANGUAGES)
+    const targetLangOpts = native_language_options(t, TARGET_LANGUAGES)
     const autoCopyOpts = AUTO_COPY_VALUES.map((value) => ({ value, label: t(AUTO_COPY_LABEL_KEYS[value]) }))
     const windowPositionOpts: { value: 'mouse' | 'pre_state'; label: string }[] = [
         { value: 'mouse', label: t('translate_settings.window_position_mouse') },

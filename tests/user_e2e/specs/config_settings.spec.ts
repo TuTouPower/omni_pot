@@ -98,6 +98,8 @@ test.describe('@ui config settings window', () => {
 
             await config.openSection('translate')
             await config.setting('cfg-translate_source_language').click()
+            await expect(config.selectOption('cfg-translate_source_language', 'en')).toContainText('English')
+            await expect(config.selectOption('cfg-translate_source_language', 'ja')).toContainText('日本語')
             await expect.poll(async () => await config.optionReceivesPointer('cfg-translate_source_language', 'ja')).toBe(true)
             await config.clickOutsideSelects()
             await expect(config.selectOption('cfg-translate_source_language', 'ja')).toHaveCount(0)

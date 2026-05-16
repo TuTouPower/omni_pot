@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
-import { language_options } from '../../i18n/language_names'
+import { native_language_options } from '../../i18n/language_names'
 import { LANGUAGE_CODES } from '@shared/types/language'
 import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect } from './config_components'
 
@@ -14,7 +14,7 @@ export default function RecognizeSettings(): React.ReactElement {
     const [autoCopy, setAutoCopy] = useConfig('recognize_auto_copy')
     const [closeOnBlur, setCloseOnBlur] = useConfig('recognize_close_on_blur')
     const [hideWindow, setHideWindow] = useConfig('recognize_hide_window')
-    const allLangOpts = language_options(t, ALL_LANGUAGES)
+    const allLangOpts = native_language_options(t, ALL_LANGUAGES)
 
     return (
         <div className="stack gap-12">
