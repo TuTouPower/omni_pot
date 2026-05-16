@@ -109,6 +109,9 @@ export class WindowManager {
       if (opts.label === WindowLabel.TRANSLATE && getConfig('translate_close_on_blur')) {
         win.close()
       }
+      if (opts.label === WindowLabel.TRAY) {
+        win.close()
+      }
     })
 
     win.webContents.on('console-message', (_event, level, message) => {

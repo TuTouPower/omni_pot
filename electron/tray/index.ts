@@ -1,4 +1,4 @@
-import { Tray, Menu, nativeImage, app } from 'electron'
+import { Tray, nativeImage, app, screen } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { WindowLabel } from '../windows/types'
@@ -81,6 +81,64 @@ function open_config_window(): void {
   })
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), Math.max(min, max))
+}
+
+export function show_tray_popup(): boolean {
+  if (!tray || !windowManager) return false
+  const popup = windowManager.focusOrCreate(WindowLabel.TRAY, {
+    label: WindowLabel.TRAY,
+    width: 260,
+    height: 318,
+    minWidth: 260,
+    minHeight: 318,
+    resizable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    transparent: false
+  })
+  const tray_bounds = tray.getBounds()
+  const current_bounds = popup.isDestroyed() ? null : popup.getBounds()
+  const bounds = current_bounds ?? { width: 260, height: 318 }
+  const display = screen.getDisplayNearestPoint({
+    x: Math.round(tray_bounds.x + tray_bounds.width / 2),
+    y: Math.round(tray_bounds.y + tray_bounds.height / 2)
+  })
+  const work_area = display.workArea
+  const gap = 6
+  const below_y = tray_bounds.y + tray_bounds.height + gap
+  const above_y = tray_bounds.y - bounds.height - gap
+  const fits_below = below_y + bounds.height <= work_area.y + work_area.height
+  const preferred_y = fits_below ? below_y : above_y
+
+  popup.setBounds({
+    x: Math.round(clamp(tray_bounds.x + tray_bounds.width - bounds.width, work_area.x, work_area.x + work_area.width - bounds.width)),
+    y: Math.round(clamp(preferred_y, work_area.y, work_area.y + work_area.height - bounds.height)),
+    width: bounds.width,
+    height: bounds.height
+  })
+  popup.show()
+  popup.focus()
+  return true
+}
+
+export function close_tray_popup(): void {
+  windowManager?.closeWindow(WindowLabel.TRAY)
+}
+
+export function tray_action(action: string): boolean {
+  return trigger_tray_action(action)
+}
+
+export function tray_labels(): string[] {
+  return get_tray_menu_labels()
+}
+
+export function is_tray_clipboard_monitoring(): boolean {
+  return isClipboardMonitoring()
+}
+
 export function trigger_tray_click(): boolean {
   const action = getConfig('tray_click_event') as string
   if (action === 'show_translate') {
@@ -101,6 +159,8 @@ export function trigger_tray_action(action: string): boolean {
   switch (action) {
     case 'input_translate':
       open_translate_window()
+      windowManager?.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
+      close_tray_popup()
       return true
     case 'ocr_recognize':
       if (!windowManager) return false
@@ -119,12 +179,23 @@ export function trigger_tray_action(action: string): boolean {
         setConfig('clipboard_monitor', true)
       }
       rebuildMenu()
+      close_tray_popup()
       return true
     case 'config':
       open_config_window()
+      close_tray_popup()
+      return true
+    case 'restart':
+      app.relaunch()
+      app.exit(0)
+      return true
+    case 'quit':
+      app.quit()
       return true
     case 'tray_click':
       return trigger_tray_click()
+    case 'show_tray':
+      return show_tray_popup()
     default:
       return false
   }
@@ -141,65 +212,15 @@ export function createTray(): void {
     trigger_tray_click()
   })
 
+  tray.on('right-click', () => {
+    show_tray_popup()
+  })
+
   rebuildMenu()
 }
 
 export function rebuildMenu(): void {
-  if (!tray) return
   const labels = get_tray_labels()
-
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: labels.input_translate,
-      click: () => {
-        trigger_tray_action('input_translate')
-      }
-    },
-    {
-      label: labels.ocr_recognize,
-      click: () => {
-        trigger_tray_action('ocr_recognize')
-      }
-    },
-    {
-      label: labels.screenshot_translate,
-      click: () => {
-        trigger_tray_action('screenshot_translate')
-      }
-    },
-    { type: 'separator' },
-    {
-      label: labels.clipboard_monitor,
-      type: 'checkbox',
-      checked: isClipboardMonitoring(),
-      click: () => {
-        trigger_tray_action('clipboard_monitor')
-      }
-    },
-    { type: 'separator' },
-    {
-      label: labels.config,
-      click: () => {
-        trigger_tray_action('config')
-      }
-    },
-    { type: 'separator' },
-    {
-      label: labels.restart,
-      click: () => {
-        app.relaunch()
-        app.exit(0)
-      }
-    },
-    {
-      label: labels.quit,
-      click: () => {
-        app.quit()
-      }
-    }
-  ])
-
-  tray.setContextMenu(contextMenu)
   last_tray_menu_labels = tray_labels_to_array(labels)
 }
 

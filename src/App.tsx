@@ -5,6 +5,7 @@ import ScreenshotWindow from './windows/screenshot'
 import RecognizeWindow from './windows/recognize'
 import DictWindow from './windows/dict'
 import UpdaterWindow from './windows/updater'
+import TrayWindow from './windows/tray'
 
 function getLabel(): string {
   return window.location.hash.replace(/^#/, '') || 'translate'
@@ -28,6 +29,8 @@ export default function App(): React.ReactElement {
       return <DictWindow />
     case 'updater':
       return <UpdaterWindow />
+    case 'tray':
+      return <TrayWindow />
     default:
       return <TranslateWindow />
   }

@@ -91,6 +91,13 @@ export interface ElectronAPI {
       assets: Array<{ name: string; url: string }>
     }) => void): () => void
   }
+  tray: {
+    show(): Promise<boolean>
+    close(): Promise<void>
+    action(action: string): Promise<boolean>
+    labels(): Promise<string[]>
+    clipboardMonitoring(): Promise<boolean>
+  }
 }
 
 declare global {

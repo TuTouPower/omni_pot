@@ -118,6 +118,13 @@ const api: Omit<ElectronAPI, 'ready'> = {
       ipcRenderer.on('updater:release', handler)
       return () => { ipcRenderer.off('updater:release', handler) }
     }
+  },
+  tray: {
+    show: () => ipcRenderer.invoke('tray:show'),
+    close: () => ipcRenderer.invoke('tray:close'),
+    action: (action) => ipcRenderer.invoke('tray:action', action),
+    labels: () => ipcRenderer.invoke('tray:labels'),
+    clipboardMonitoring: () => ipcRenderer.invoke('tray:clipboard-monitoring')
   }
 }
 

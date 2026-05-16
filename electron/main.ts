@@ -23,6 +23,7 @@ import { registerOcrHandlers } from './ipc/ocr_handlers'
 import { registerHistoryHandlers } from './ipc/history_handlers'
 import { registerBackupHandlers } from './ipc/backup_handlers'
 import { registerDictHandlers } from './ipc/dict_handlers'
+import { registerTrayHandlers } from './ipc/tray_handlers'
 import { close_history } from './history'
 import { close_dict, auto_import_if_needed } from './dict'
 import { startServer, stopServer } from './server'
@@ -101,6 +102,7 @@ if (!gotLock) {
     registerHistoryHandlers()
     registerBackupHandlers()
     registerDictHandlers()
+    registerTrayHandlers()
     log_main.info('IPC handlers: all registered')
 
     log_main.info('creating tray...')
