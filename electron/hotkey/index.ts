@@ -14,6 +14,7 @@ const log_hotkey = log.scope('hotkey')
 
 let windowManager: WindowManager | null = null
 const registered_hotkeys = new Map<string, string>()
+const registered_hotkey_actions = new Map<string, () => void>()
 
 export function setWindowManagerForHotkey(mgr: WindowManager): void {
   windowManager = mgr
@@ -26,21 +27,16 @@ const DICT_OPTS = {
 } as const
 
 export function buildHotkeyAction(name: string, mgr: WindowManager): () => void {
-  const toggleOrSend = (channel: string): (() => void) => {
+  const sendToTranslate = (channel: string): (() => void) => {
     return () => {
-      const existing = mgr.getWindow(WindowLabel.TRANSLATE)
-      if (existing && !existing.isDestroyed() && existing.isVisible()) {
-        existing.hide()
-        return
-      }
-      const win = mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-      win.webContents.send(channel)
+      mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+      mgr.sendWhenReady(WindowLabel.TRANSLATE, channel)
     }
   }
 
   switch (name) {
     case 'hotkey_input_translate':
-      return toggleOrSend('translate:input-translate')
+      return sendToTranslate('translate:input-translate')
     case 'hotkey_selection_translate':
       return () => { triggerSelectionTranslate(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_recognize':
@@ -55,12 +51,6 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
 }
 
 async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
-    const existing = mgr.getWindow(WindowLabel.TRANSLATE)
-    if (existing && !existing.isDestroyed() && existing.isVisible()) {
-        existing.hide()
-        return
-    }
-
     const result = await readSelectedText()
 
     if (!result.text.trim()) {
@@ -73,12 +63,6 @@ async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
 }
 
 async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
-    const existing = mgr.getWindow(WindowLabel.DICT)
-    if (existing && !existing.isDestroyed() && existing.isVisible()) {
-        existing.hide()
-        return
-    }
-
     const result = await readSelectedText()
 
     if (!result.text.trim()) {
@@ -113,7 +97,15 @@ export function registerHotkey(
     }
 
     registered_hotkeys.set(shortcut, name)
+    registered_hotkey_actions.set(name, action)
     return { success: true }
+}
+
+export function triggerRegisteredHotkey(name: string): boolean {
+    const action = registered_hotkey_actions.get(name)
+    if (!action) return false
+    action()
+    return true
 }
 
 export function unregisterHotkey(name: string, shortcut: string): void {
@@ -123,11 +115,15 @@ export function unregisterHotkey(name: string, shortcut: string): void {
         globalShortcut.unregister(shortcut)
     }
     registered_hotkeys.delete(shortcut)
+    if (!Array.from(registered_hotkeys.values()).includes(name)) {
+        registered_hotkey_actions.delete(name)
+    }
 }
 
 export function unregisterAll(): void {
     globalShortcut.unregisterAll()
     registered_hotkeys.clear()
+    registered_hotkey_actions.clear()
 }
 
 const HOTKEY_KEYS: ConfigKey[] = [
