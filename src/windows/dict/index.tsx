@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useDictStore } from '../../stores/dict_store'
@@ -132,8 +132,10 @@ export default function DictWindow(): React.ReactElement {
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
+    const [selection_notice, setSelectionNotice] = useState(false)
     const [importing, setImporting] = useState(false)
     const [collected, setCollected] = useState(false)
+    const lookup_request_ref = useRef(0)
 
     useEffect(() => {
         window.electronAPI.dict.check().then(({ ready }) => { setDictReady(ready); }).catch(console.error)
@@ -152,6 +154,9 @@ export default function DictWindow(): React.ReactElement {
         const trimmed = text.trim()
         if (!trimmed) return
 
+        setSelectionNotice(false)
+        const request_id = lookup_request_ref.current + 1
+        lookup_request_ref.current = request_id
         setWord(trimmed)
         setCollected(false)
         setIsLoading(true)
@@ -165,24 +170,31 @@ export default function DictWindow(): React.ReactElement {
             const serviceKey = getServiceKey(instanceKey)
             const service = translateServiceRegistry.get(serviceKey)
             if (!service) {
-                setResult(instanceKey, null)
+                if (lookup_request_ref.current === request_id) {
+                    setResult(instanceKey, null)
+                }
                 return
             }
             const instanceConfig = get_service_config(serviceInstances, instanceKey)
             try {
                 const result = await service.translate(lookupWord, source_language, target_language, instanceConfig)
+                if (lookup_request_ref.current !== request_id) return
                 if (typeof result === 'object') {
                     setResult(instanceKey, result)
                 } else {
                     setResult(instanceKey, null)
                 }
             } catch {
-                setResult(instanceKey, null)
+                if (lookup_request_ref.current === request_id) {
+                    setResult(instanceKey, null)
+                }
             }
         })
 
         await Promise.allSettled(promises)
-        setIsLoading(false)
+        if (lookup_request_ref.current === request_id) {
+            setIsLoading(false)
+        }
     }, [enabledServiceList, serviceInstances, setWord, setIsLoading, clearResults, setResult])
 
     useEffect(() => {
@@ -192,6 +204,17 @@ export default function DictWindow(): React.ReactElement {
         })
         return unsub
     }, [handleLookup])
+
+    useEffect(() => {
+        const unsub = window.electronAPI.text.onDictSelectionEmpty(() => {
+            lookup_request_ref.current += 1
+            setSelectionNotice(true)
+            setWord('')
+            setIsLoading(false)
+            clearResults()
+        })
+        return unsub
+    }, [setWord, setIsLoading, clearResults])
 
     useEffect(() => {
         window.electronAPI.ready('dict')
@@ -307,6 +330,13 @@ export default function DictWindow(): React.ReactElement {
                         </button>
                     </div>
                 </div>
+
+                {/* Empty selection feedback */}
+                {selection_notice && (
+                    <div className="card" data-testid="selection-empty-notice" style={{ padding: '12px 14px', color: 'var(--text-dim)', fontSize: 13 }}>
+                        {t('selection.no_text')}
+                    </div>
+                )}
 
                 {/* Dictionary not ready */}
                 {dictReady === false && (

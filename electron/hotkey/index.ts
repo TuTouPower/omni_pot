@@ -55,6 +55,8 @@ async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
 
     if (!result.text.trim()) {
         log_hotkey.info('selection translate: no text, reason=%s', result.reason ?? 'empty')
+        mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-empty')
         return
     }
 
@@ -67,6 +69,8 @@ async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
 
     if (!result.text.trim()) {
         log_hotkey.info('selection dictionary: no text, reason=%s', result.reason ?? 'empty')
+        mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+        mgr.sendWhenReady(WindowLabel.DICT, 'dict:selection-empty')
         return
     }
 
@@ -99,6 +103,10 @@ export function registerHotkey(
     registered_hotkeys.set(shortcut, name)
     registered_hotkey_actions.set(name, action)
     return { success: true }
+}
+
+export function hasRegisteredHotkey(name: string): boolean {
+    return registered_hotkey_actions.has(name)
 }
 
 export function triggerRegisteredHotkey(name: string): boolean {

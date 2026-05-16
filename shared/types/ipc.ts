@@ -45,10 +45,12 @@ export interface ElectronAPI {
     getSelection(): Promise<string>
     writeClipboard(text: string): Promise<void>
     onTranslateFromSelection(callback: (text: string) => void): () => void
+    onTranslateSelectionEmpty(callback: () => void): () => void
     onInputTranslate(callback: () => void): () => void
     onTranslateFromApi(callback: (text: string) => void): () => void
     onTranslateFromClipboard(callback: (text: string) => void): () => void
     onDictLookup(callback: (text: string) => void): () => void
+    onDictSelectionEmpty(callback: () => void): () => void
   }
   ocr: {
     captureScreenshot(mode: 'recognize' | 'translate'): Promise<boolean>

@@ -16,6 +16,9 @@
     "source_placeholder": "输入要翻译的文本...",
     "translation_failed": "翻译失败",
     "preview": "预览",
+    "selection": {
+        "no_text": "未读取到选中的文本，请先选中文本后再触发快捷键。"
+    },
     "update_available": "有可用更新",
     "no_updates": "已是最新版本",
     "update_check_failed": "检查更新失败",

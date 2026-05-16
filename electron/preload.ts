@@ -41,6 +41,11 @@ const api: Omit<ElectronAPI, 'ready'> = {
       ipcRenderer.on('translate:from-selection', handler)
       return () => { ipcRenderer.off('translate:from-selection', handler) }
     },
+    onTranslateSelectionEmpty: (callback) => {
+      const handler = () => { callback(); }
+      ipcRenderer.on('translate:selection-empty', handler)
+      return () => { ipcRenderer.off('translate:selection-empty', handler) }
+    },
     onInputTranslate: (callback) => {
       const handler = () => { callback(); }
       ipcRenderer.on('translate:input-translate', handler)
@@ -60,6 +65,11 @@ const api: Omit<ElectronAPI, 'ready'> = {
       const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('dict:lookup', handler)
       return () => { ipcRenderer.off('dict:lookup', handler) }
+    },
+    onDictSelectionEmpty: (callback) => {
+      const handler = () => { callback(); }
+      ipcRenderer.on('dict:selection-empty', handler)
+      return () => { ipcRenderer.off('dict:selection-empty', handler) }
     }
   },
   ocr: {

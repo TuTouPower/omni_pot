@@ -7,8 +7,8 @@ import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
-import { triggerRegisteredHotkey } from '../hotkey'
-import { readSelectedText } from '../selection'
+import { hasRegisteredHotkey, triggerRegisteredHotkey } from '../hotkey'
+import { readSelectedText, setE2eSelectedTextResult } from '../selection'
 import { log } from '../log'
 
 const log_server = log.scope('server')
@@ -544,9 +544,21 @@ function handle_trigger_hotkey(
                 res.end(JSON.stringify({ success: false, error: 'missing name' }))
                 return
             }
-            const success = triggerRegisteredHotkey(name)
-            res.writeHead(success ? 200 : 404)
-            res.end(JSON.stringify(success ? { success: true } : { success: false, error: 'hotkey not registered' }))
+            if (!hasRegisteredHotkey(name)) {
+                res.writeHead(404)
+                res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
+                return
+            }
+            if (typeof body.selectionText === 'string') {
+                setE2eSelectedTextResult({
+                    text: body.selectionText,
+                    method: 'none',
+                    reason: body.selectionText.trim() ? undefined : 'empty'
+                })
+            }
+            triggerRegisteredHotkey(name)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
         } catch (error: unknown) {
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(error) }))
