@@ -1,13 +1,15 @@
-# 中文字典数据导入与改造设计
+# 本地能力设计：中文字典 + 语言检测
 
 > 日期: 2026-05-17
 > 状态: 已确认（review 后修订）
-> 关联: PLAN.md "接入真实中文字典数据源"
+> 关联: PLAN.md "接入真实中文字典数据源"、PLAN.md "本地语言检测替换"
 > 评审: review_claude.md, review_gpt.md
 
 ---
 
-## 目标
+## 一、中文字典数据导入与改造
+
+### 目标
 
 将 `chinese_dictionary.ts` 从 3 个硬编码样例词条改造为接入完整中文词典数据（32万+词语、2万+汉字、5万成语），提供简体中文释义。
 
@@ -242,3 +244,95 @@ idiom 表的额外数据（source、similar、opposite）暂不映射到 DictRes
 - 查询延迟：精确匹配 < 1ms，FTS 模糊 < 5ms（本地 SSD）
 - 首次加载：SQLite 文件打开 + WAL 模式设置 < 50ms
 - 打包体积增加：需实际构建后测量（预估 30-40MB，待验证）
+
+---
+
+## 二、本地语言检测替换
+
+> 关联: PLAN.md "本地语言检测替换"
+> 对比文档: `docs/external_services/language_detection_comparison.md`
+
+### 目标
+
+将 `src/services/detect.ts` 的 `detect_local()` 从 Unicode 正则匹配替换为 cld3-asm（Google Compact Language Detector v3 WASM），提升拉丁字母系语言的识别准确率。
+
+### 现状问题
+
+当前 `detect_local()` 使用 Unicode 字符范围正则，只能区分不同字符系统（中日韩俄泰阿拉伯等），拉丁字母系语言（英法德西意葡土等）全部 fallback 到 `en`。基准测试准确率仅 46.7%。
+
+### 方案选择
+
+| 方案 | 准确率 | 速度（短/长） | 体积 | 依赖 |
+|------|--------|---------------|------|------|
+| 当前 regex | 46.7% | ~0ms | 0 | 无 |
+| franc（trigram） | 66.7% | 0.24ms / 3.6ms | ~236KB | 纯 JS |
+| **cld3-asm（推荐）** | **73.3%** | **0.10ms / 0.44ms** | ~2MB WASM | WASM |
+| lingua-rs | ~99.7% | 最慢 | ~288MB | 需自行编译 |
+
+**选择 cld3-asm**：准确率最高、速度最快、有现成 npm 包。franc 作为 WASM 加载失败时的 fallback。
+
+### 架构
+
+```
+detect_local(text) →
+  1. 尝试 cld3-asm 检测
+  2. cld3 不可用（WASM 未加载）→ fallback 到 regex
+  3. cld3 返回 BCP-47 代码 → 映射到 LanguageCode
+```
+
+### 集成步骤
+
+1. `npm install cld3-asm`
+2. 添加 `detect_cld3()` 函数，使用 `loadModule()` 初始化 WASM
+3. 添加 BCP-47 → 项目 `LanguageCode` 映射表（如 `zh` → `zh_cn`、`zh-Hant` → `zh_tw`、`ja` → `ja`、`ko` → `ko`）
+4. 修改 `detect_local()` 优先使用 cld3，regex 作为 fallback
+5. 处理 WASM 初始化：在 app 启动时预加载 factory，避免首次检测延迟
+
+### 映射表
+
+| BCP-47 | LanguageCode | 说明 |
+|--------|-------------|------|
+| zh | zh_cn | 简体中文（默认） |
+| zh-Hant | zh_tw | 繁体中文 |
+| ja | ja | 日语 |
+| ko | ko | 韩语 |
+| en | en | 英语 |
+| fr | fr | 法语 |
+| de | de | 德语 |
+| es | es | 西班牙语 |
+| it | it | 意大利语 |
+| pt | pt | 葡萄牙语 |
+| nl | nl | 荷兰语 |
+| tr | tr | 土耳其语 |
+| ru | ru | 俄语 |
+| ar | ar | 阿拉伯语 |
+| hi | hi | 印地语 |
+| th | th | 泰语 |
+
+未匹配的 BCP-47 代码 fallback 到 regex 结果。
+
+### 文件变更
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/services/detect.ts` | 修改 | 添加 `detect_cld3()`，修改 `detect_local()` 优先级 |
+| `package.json` | 修改 | 增加 `cld3-asm` 依赖 |
+
+### 风险
+
+| 风险 | 缓解 |
+|------|------|
+| WASM 在 Electron 中加载失败 | regex fallback，日志警告 |
+| `cld3-asm` 包较老，Node/Electron 兼容性 | 先在 dev 环境验证 |
+| WASM 文件打包问题 | `emscripten-wasm-loader` 自动处理 |
+| 首次加载延迟 | app 启动时异步预加载 |
+
+### 测试计划
+
+使用 `docs/external_services/language_detection_comparison.md` 中的 15 种语言 × 2 种长度（短/长）共 30 个用例：
+
+- 验证 cld3 准确率 ≥ 73.3%
+- 验证 regex fallback 正常工作（模拟 WASM 加载失败）
+- 验证 BCP-47 映射表覆盖所有目标语言
+- 验证 app 启动时 WASM 预加载不阻塞 UI
+- 验证非拉丁语言（中日韩俄泰阿）检测不受影响
