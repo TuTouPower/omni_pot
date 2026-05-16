@@ -50,8 +50,7 @@ test.describe('@ui config service management', () => {
             await expect(config.serviceDragHandle('bing@default')).toBeVisible()
             await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
             await expect(config.serviceEdit('bing@default')).toBeVisible()
-            await expect(config.serviceMoveUp('bing@default')).toBeDisabled()
-            await expect(config.serviceMoveDown('bing@default')).toBeEnabled()
+            await expect(config.serviceMoveControls('bing@default')).toHaveCount(0)
             await expect(config.serviceDelete('bing@default')).toBeEnabled()
         } finally {
             await omni.stop()

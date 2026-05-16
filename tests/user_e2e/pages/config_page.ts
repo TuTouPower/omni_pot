@@ -99,12 +99,8 @@ export class ConfigPage {
         return this.page.locator(`[data-testid="svc-add-option"][data-service-template="${serviceKey}"]`)
     }
 
-    serviceMoveUp(instanceKey: string): Locator {
-        return this.serviceItem(instanceKey).getByTestId('svc-move-up')
-    }
-
-    serviceMoveDown(instanceKey: string): Locator {
-        return this.serviceItem(instanceKey).getByTestId('svc-move-down')
+    serviceMoveControls(instanceKey: string): Locator {
+        return this.serviceItem(instanceKey).locator('[data-testid="svc-move-up"], [data-testid="svc-move-down"]')
     }
 
     serviceDelete(instanceKey: string): Locator {
@@ -289,10 +285,6 @@ export class ConfigPage {
     async addService(serviceKey: string): Promise<void> {
         await this.addServiceButton().click()
         await this.serviceAddOption(serviceKey).click()
-    }
-
-    async moveServiceDown(instanceKey: string): Promise<void> {
-        await this.serviceMoveDown(instanceKey).click()
     }
 
     async deleteService(instanceKey: string): Promise<void> {

@@ -67,30 +67,22 @@ function get_service_config(service_instances: ServiceInstancesMap, instance_key
 
 interface ServiceItemRowProps {
     instanceKey: string
-    index: number
     isEnabled: boolean
     canDelete: boolean
-    canMoveDown: boolean
     name: string
     svcKey: string
     onToggle: (instanceKey: string) => void
-    onMoveUp: (index: number) => void
-    onMoveDown: (index: number) => void
     onEdit: (instanceKey: string) => void
     onRemove: (instanceKey: string) => void
 }
 
 function ServiceItemRow({
     instanceKey,
-    index,
     isEnabled,
     canDelete,
-    canMoveDown,
     name,
     svcKey,
     onToggle,
-    onMoveUp,
-    onMoveDown,
     onEdit,
     onRemove,
 }: ServiceItemRowProps): React.ReactElement {
@@ -131,36 +123,20 @@ function ServiceItemRow({
             <ConfigSwitch on={isEnabled} onChange={() => { onToggle(instanceKey); }} testId="svc-toggle" />
             <button
                 data-testid="svc-edit"
-                className="btn ghost icon sm"
+                className="btn ghost icon"
                 title={t('service.edit')}
                 onClick={() => { onEdit(instanceKey); }}
             >
-                <Icons.Settings size={13} />
-            </button>
-            <button
-                data-testid="svc-move-up"
-                className="btn ghost icon sm"
-                disabled={index === 0}
-                onClick={() => { onMoveUp(index); }}
-            >
-                <Icons.Chev size={12} style={{ transform: 'rotate(90deg)' }} />
-            </button>
-            <button
-                data-testid="svc-move-down"
-                className="btn ghost icon sm"
-                disabled={!canMoveDown}
-                onClick={() => { onMoveDown(index); }}
-            >
-                <Icons.Chev size={12} style={{ transform: 'rotate(-90deg)' }} />
+                <Icons.Settings size={16} />
             </button>
             <button
                 data-testid="svc-delete"
-                className="btn ghost icon sm"
+                className="btn ghost icon"
                 style={{ color: canDelete ? 'var(--danger)' : 'var(--text-mute)' }}
                 disabled={!canDelete}
                 onClick={() => { onRemove(instanceKey); }}
             >
-                <Icons.Trash size={13} />
+                <Icons.Trash size={16} />
             </button>
         </div>
     )
@@ -234,26 +210,6 @@ export default function ServiceSettings(): React.ReactElement {
         useConfigStore.getState().set(activeTab, newList)
         setServiceInstances(newInstances)
         setShowAddModal(false)
-    }
-
-    const moveUp = (index: number): void => {
-        if (index <= 0) return
-        const newList = [...serviceList]
-        const [current] = newList.slice(index, index + 1) as [string]
-        const [previous] = newList.slice(index - 1, index) as [string]
-        newList[index] = previous
-        newList[index - 1] = current
-        useConfigStore.getState().set(activeTab, newList)
-    }
-
-    const moveDown = (index: number): void => {
-        if (index >= serviceList.length - 1) return
-        const newList = [...serviceList]
-        const [current] = newList.slice(index, index + 1) as [string]
-        const [next] = newList.slice(index + 1, index + 2) as [string]
-        newList[index] = next
-        newList[index + 1] = current
-        useConfigStore.getState().set(activeTab, newList)
     }
 
     const handleDragEnd = (event: DragEndEvent): void => {
@@ -385,22 +341,18 @@ export default function ServiceSettings(): React.ReactElement {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={serviceList} strategy={verticalListSortingStrategy}>
                         <div style={{ padding: 4 }}>
-                            {serviceList.map((instanceKey, index) => {
+                            {serviceList.map((instanceKey) => {
                                 const svcKey = getServiceKey(instanceKey)
                                 const isEnabled = get_service_config(serviceInstances, instanceKey).enable !== false
                                 return (
                                     <ServiceItemRow
                                         key={instanceKey}
                                         instanceKey={instanceKey}
-                                        index={index}
                                         isEnabled={isEnabled}
                                         canDelete={serviceList.length > 1}
-                                        canMoveDown={index < serviceList.length - 1}
                                         name={getInstanceName(instanceKey)}
                                         svcKey={svcKey}
                                         onToggle={toggleService}
-                                        onMoveUp={moveUp}
-                                        onMoveDown={moveDown}
                                         onEdit={openEdit}
                                         onRemove={removeService}
                                     />
