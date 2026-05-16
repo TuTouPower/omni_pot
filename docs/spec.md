@@ -822,8 +822,8 @@ interface DictResult {
 |---|---|---|---|
 | `translate_service_list` | string[] | `['bing@default','baidu@default','google@default']` | 翻译实例顺序 |
 | `dictionary_service_list` | string[] | `['free_dictionary@default','ecdict@default']` | 词典实例顺序 |
-| `recognize_service_list` | string[] | `[]` | OCR 实例顺序 |
-| `tts_service_list` | string[] | `[]` | TTS 实例顺序 |
+| `recognize_service_list` | string[] | `['tesseract@default']` | OCR 实例顺序 |
+| `tts_service_list` | string[] | `['edge_tts@default']` | TTS 实例顺序 |
 | `collection_service_list` | string[] | `[]` | 收藏实例顺序 |
 | `service_instances` | ServiceInstancesMap | `DEFAULT_SERVICE_INSTANCES` | 实例配置；`config.instanceName` 为显示名，`config.enable=false` 表示停用 |
 

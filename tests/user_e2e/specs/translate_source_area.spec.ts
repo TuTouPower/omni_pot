@@ -13,7 +13,7 @@ test.describe('@ui translate source area', () => {
         await expect(translate.sourceInput()).toHaveValue('hello\nworld')
         await expect(translate.sourceInput()).toHaveAttribute('rows', '2')
         await expect(translate.clearSourceButton()).toBeEnabled()
-        await expect(translate.sourceTtsButton()).toBeDisabled()
+        await expect(translate.sourceTtsButton()).toBeEnabled()
 
         await translate.clickDeleteNewline()
         await expect(translate.sourceInput()).toHaveValue('hello world')

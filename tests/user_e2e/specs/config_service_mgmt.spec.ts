@@ -4,8 +4,8 @@ import { AppFixture } from '../fixtures/app_fixture'
 const SERVICE_CATEGORIES = [
     ['translate_service_list', '翻译', ['bing@default', 'google@default', 'deepl@default']],
     ['dictionary_service_list', '字典', ['free_dictionary@default', 'ecdict@default']],
-    ['recognize_service_list', '识别', []],
-    ['tts_service_list', '语音合成', []],
+    ['recognize_service_list', '识别', ['tesseract@default']],
+    ['tts_service_list', '语音合成', ['edge_tts@default']],
     ['collection_service_list', '收藏', []],
 ] as const
 

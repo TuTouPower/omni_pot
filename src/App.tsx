@@ -1,12 +1,10 @@
-import React, { Suspense } from 'react'
-import { Spinner } from '@heroui/react'
-
-const TranslateWindow = React.lazy(() => import('./windows/translate'))
-const ConfigWindow = React.lazy(() => import('./windows/config'))
-const ScreenshotWindow = React.lazy(() => import('./windows/screenshot'))
-const RecognizeWindow = React.lazy(() => import('./windows/recognize'))
-const DictWindow = React.lazy(() => import('./windows/dict'))
-const UpdaterWindow = React.lazy(() => import('./windows/updater'))
+import React from 'react'
+import TranslateWindow from './windows/translate'
+import ConfigWindow from './windows/config'
+import ScreenshotWindow from './windows/screenshot'
+import RecognizeWindow from './windows/recognize'
+import DictWindow from './windows/dict'
+import UpdaterWindow from './windows/updater'
 
 function getLabel(): string {
   return window.location.hash.replace(/^#/, '') || 'translate'
@@ -15,26 +13,22 @@ function getLabel(): string {
 export default function App(): React.ReactElement {
   const label = getLabel()
 
-  const child = (() => {
-    switch (label) {
-      case 'translate':
-        return <TranslateWindow />
-      case 'daemon':
-        return <></>
-      case 'config':
-        return <ConfigWindow />
-      case 'screenshot':
-        return <ScreenshotWindow />
-      case 'recognize':
-        return <RecognizeWindow />
-      case 'dict':
-        return <DictWindow />
-      case 'updater':
-        return <UpdaterWindow />
-      default:
-        return <TranslateWindow />
-    }
-  })()
-
-  return <Suspense fallback={<Spinner />}>{child}</Suspense>
+  switch (label) {
+    case 'translate':
+      return <TranslateWindow />
+    case 'daemon':
+      return <></>
+    case 'config':
+      return <ConfigWindow />
+    case 'screenshot':
+      return <ScreenshotWindow />
+    case 'recognize':
+      return <RecognizeWindow />
+    case 'dict':
+      return <DictWindow />
+    case 'updater':
+      return <UpdaterWindow />
+    default:
+      return <TranslateWindow />
+  }
 }
