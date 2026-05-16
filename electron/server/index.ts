@@ -7,6 +7,7 @@ import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
+import { triggerRegisteredHotkey } from '../hotkey'
 import { readSelectedText } from '../selection'
 import { log } from '../log'
 
@@ -122,6 +123,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-input-translate') {
                 handle_trigger_input_translate(mgr, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-hotkey') {
+                handle_trigger_hotkey(req, res)
                 return
             }
 
@@ -521,6 +527,31 @@ function handle_trigger_input_translate(
         res.writeHead(500)
         res.end(JSON.stringify({ success: false, error: String(error) }))
     }
+}
+
+function handle_trigger_hotkey(
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = parse_json_body(chunks)
+            const name = typeof body.name === 'string' ? body.name : ''
+            if (!name) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'missing name' }))
+                return
+            }
+            const success = triggerRegisteredHotkey(name)
+            res.writeHead(success ? 200 : 404)
+            res.end(JSON.stringify(success ? { success: true } : { success: false, error: 'hotkey not registered' }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
 }
 
 function handle_tray_action(

@@ -122,6 +122,58 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
+    test('input translate hotkey opens source input instead of hiding the visible translate window', async () => {
+        const omni = await AppFixture.start({
+            config: no_service_config({
+                hide_source: true,
+                hide_language: true,
+                hotkey_input_translate: 'CommandOrControl+Shift+Alt+F9',
+            }),
+        })
+
+        try {
+            const translate = await omni.translate()
+            await expect(translate.wordmark()).toBeVisible()
+            await expect(translate.sourceInput()).toHaveCount(0)
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(true)
+
+            const result = await omni.api.triggerHotkey('hotkey_input_translate')
+            expect(result.success).toBe(true)
+
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(true)
+            await expect(translate.sourceInput()).toBeVisible()
+            await expect(translate.sourceInput()).toBeFocused()
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('input translate hotkey opens source input after the translate window was closed', async () => {
+        const omni = await AppFixture.start({
+            config: no_service_config({
+                hide_source: true,
+                hide_language: true,
+                hotkey_input_translate: 'CommandOrControl+Shift+Alt+F9',
+            }),
+        })
+
+        try {
+            const translate = await omni.translate()
+            await expect(translate.wordmark()).toBeVisible()
+            await translate.clickClose()
+            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+
+            const result = await omni.api.triggerHotkey('hotkey_input_translate')
+            expect(result.success).toBe(true)
+
+            const reopened = await omni.translate()
+            await expect(reopened.sourceInput()).toBeVisible()
+            await expect(reopened.sourceInput()).toBeFocused()
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user-triggered translation replaces text and normalizes newlines when incremental mode is off', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({ translate_delete_newline: true }),
