@@ -197,6 +197,30 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
+    test('selection hotkeys use selected text for translate and dictionary actions', async () => {
+        const omni = await AppFixture.start({
+            config: no_service_config({
+                dictionary_service_list: [],
+                hotkey_selection_translate: 'CommandOrControl+Shift+Alt+F8',
+                hotkey_selection_dictionary: 'CommandOrControl+Shift+Alt+F7',
+            }),
+        })
+
+        try {
+            const translate_result = await omni.api.triggerHotkey('hotkey_selection_translate', 'selected translate text')
+            expect(translate_result.success).toBe(true)
+            const translate = await omni.translate()
+            await expect(translate.sourceInput()).toHaveValue('selected translate text')
+
+            const dict_result = await omni.api.triggerHotkey('hotkey_selection_dictionary', 'selected')
+            expect(dict_result.success).toBe(true)
+            const dict = await omni.dict()
+            await expect(dict.word()).toContainText('selected')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user-triggered translation replaces text and normalizes newlines when incremental mode is off', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({ translate_delete_newline: true }),
