@@ -56,6 +56,36 @@ test.describe('@ui updater and tray', () => {
         }
     })
 
+    test('screenshot hotkeys open the capture overlay', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                ...TEST_CONFIG,
+                hotkey_ocr_recognize: 'CommandOrControl+Shift+Alt+F6',
+                hotkey_ocr_translate: 'CommandOrControl+Shift+Alt+F5',
+            },
+        })
+
+        try {
+            const recognize_result = await omni.api.triggerHotkey('hotkey_ocr_recognize')
+            expect(recognize_result.success).toBe(true)
+            let screenshot = await omni.screenshot()
+            await expect_window_visible(omni, 'screenshot')
+            await expect(screenshot.overlay()).toBeVisible()
+            await screenshot.press_escape()
+            await expect_window_not_exists(omni, 'screenshot')
+
+            const translate_result = await omni.api.triggerHotkey('hotkey_ocr_translate')
+            expect(translate_result.success).toBe(true)
+            screenshot = await omni.screenshot()
+            await expect_window_visible(omni, 'screenshot')
+            await expect(screenshot.overlay()).toBeVisible()
+            await screenshot.press_escape()
+            await expect_window_not_exists(omni, 'screenshot')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user opens windows from tray actions and toggles clipboard monitor', async () => {
         const omni = await AppFixture.start({ config: { ...TEST_CONFIG, clipboard_monitor: false } })
         try {
