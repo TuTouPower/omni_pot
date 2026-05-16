@@ -55,7 +55,7 @@ export default function AboutPage(): React.ReactElement {
                     </button>
                     <button className="btn primary sm" data-testid="about-check-update" onClick={() => { openExternal(`${REPO_URL}/releases`); }}>
                         <Icons.Cloud size={12} />
-                        {t('about.check_update') || '检查更新'}
+                        {t('about.check_update')}
                     </button>
                 </div>
             </div>

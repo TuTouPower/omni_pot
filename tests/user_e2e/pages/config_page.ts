@@ -253,6 +253,10 @@ export class ConfigPage {
         return this.page.getByTestId('about-version')
     }
 
+    aboutCheckUpdate(): Locator {
+        return this.page.getByTestId('about-check-update')
+    }
+
     aboutDiagnostic(testId: 'about-config-dir' | 'about-log-dir' | 'about-api-url'): Locator {
         return this.page.getByTestId(testId)
     }
