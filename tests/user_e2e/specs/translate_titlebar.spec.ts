@@ -5,10 +5,10 @@ test.describe('@ui translate titlebar', () => {
     test('titlebar renders the designed layout and drag regions', async ({ omni }) => {
         const translate = await omni.translate()
 
-        await expect(translate.wordmark()).toContainText('omni_pot')
-        await expect(translate.modeLabel()).toContainText('翻译')
+        await expect(translate.wordmark()).toContainText('Omni Pot')
+        await expect(translate.modeLabel()).toHaveText('翻译')
         expect(await translate.titlebarOrder()).toEqual(['pin', 'wordmark', 'mode', 'close'])
-        await expect.poll(async () => await translate.modeLabelHasPillBackground()).toBe(true)
+        await expect.poll(async () => await translate.modeLabelHasPillBackground()).toBe(false)
         await expect.poll(async () => await translate.titlebarAppRegion()).toBe('drag')
         await expect.poll(async () => await translate.pinButtonAppRegion()).toBe('no-drag')
         await expect.poll(async () => await translate.closeButtonAppRegion()).toBe('no-drag')

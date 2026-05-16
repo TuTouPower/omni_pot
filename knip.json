@@ -1,0 +1,39 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "electron/main.ts",
+    "electron/preload.ts",
+    "tests/**/*.ts"
+  ],
+  "project": [
+    "electron/**/*.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "shared/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "ignore": [
+    "electron/selection/permissions.ts",
+    "src/components/simple_select.tsx",
+    "src/hooks/use_tts.ts",
+    "src/env.d.ts"
+  ],
+  "ignoreDependencies": [
+    "@electron-toolkit/utils",
+    "@rollup/rollup-win32-x64-msvc",
+    "@vitejs/plugin-react",
+    "framer-motion",
+    "nanoid",
+    "react-icons",
+    "@testing-library/jest-dom",
+    "@testing-library/react",
+    "@types/ws",
+    "autoprefixer",
+    "eslint-plugin-react",
+    "ws"
+  ],
+  "rules": {
+    "exports": "off",
+    "types": "off"
+  }
+}

@@ -7,7 +7,7 @@ export async function getAccessToken(clientId: string, clientSecret: string): Pr
 
     const url = `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`
     const resp = await fetch(url)
-    if (!resp.ok) {
+    if (!resp.ok && resp.status !== 0) {
         throw new Error(`Baidu OCR token error: ${String(resp.status)}`)
     }
     const data = (await resp.json()) as { access_token?: string; expires_in?: number; error?: string }

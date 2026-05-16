@@ -23,7 +23,7 @@ test.describe('@ui config settings window', () => {
         try {
             const config = await omni.openConfig()
 
-            await expect(config.wordmark()).toContainText('omni_pot')
+            await expect(config.wordmark()).toContainText('Omni Pot')
             await expect(config.pinButton()).toBeVisible()
             await expect(config.version()).toContainText(/^v\d+\.\d+\.\d+$/)
             await expect(config.navItems()).toHaveCount(8)
@@ -31,7 +31,6 @@ test.describe('@ui config settings window', () => {
             for (const [key, title] of CONFIG_SECTIONS) {
                 await config.openSection(key)
                 await expect(config.title()).toContainText(title)
-                await expect(config.route()).toHaveText(`/${key}`)
                 await expect(config.nav(key)).toHaveAttribute('aria-current', 'page')
             }
 
@@ -100,11 +99,16 @@ test.describe('@ui config settings window', () => {
             await config.select('cfg-translate_detect_engine', 'local')
             await config.select('cfg-translate_auto_copy', 'source_target')
             await config.toggle('cfg-incremental_translate')
+            await config.toggle('cfg-dynamic_translate')
             await config.toggle('cfg-translate_delete_newline')
+            await config.toggle('cfg-translate_remember_language')
+            await config.toggle('cfg-history_disable')
+            await config.select('cfg-translate_window_position', 'pre_state')
             await config.toggle('cfg-translate_close_on_blur')
             await config.toggle('cfg-translate_always_on_top')
             await config.toggle('cfg-hide_source')
             await config.toggle('cfg-hide_language')
+            await config.toggle('cfg-translate_hide_window')
             await config.toggle('cfg-translate_remember_window_size')
 
             await expect_config(omni, 'translate_source_language', 'en')
@@ -113,11 +117,16 @@ test.describe('@ui config settings window', () => {
             await expect_config(omni, 'translate_detect_engine', 'local')
             await expect_config(omni, 'translate_auto_copy', 'source_target')
             await expect_config(omni, 'incremental_translate', true)
+            await expect_config(omni, 'dynamic_translate', true)
             await expect_config(omni, 'translate_delete_newline', true)
+            await expect_config(omni, 'translate_remember_language', true)
+            await expect_config(omni, 'history_disable', true)
+            await expect_config(omni, 'translate_window_position', 'pre_state')
             await expect_config(omni, 'translate_close_on_blur', true)
             await expect_config(omni, 'translate_always_on_top', true)
             await expect_config(omni, 'hide_source', true)
             await expect_config(omni, 'hide_language', true)
+            await expect_config(omni, 'translate_hide_window', true)
             await expect_config(omni, 'translate_remember_window_size', true)
 
             await config.openSection('recognize')

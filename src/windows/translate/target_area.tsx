@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { DndContext, closestCenter, PointerSensor, type DragEndEvent, type SensorDescriptor, type SensorOptions } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useTranslateStore } from '../../stores/translate_store'
@@ -258,7 +258,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     }, [])
 
     const handleCopy = useCallback((text: string) => {
-        navigator.clipboard.writeText(text).catch(() => undefined)
+        window.electronAPI.text.writeClipboard(text).catch(() => undefined)
     }, [])
 
     const handleReverseTranslate = useCallback((text: string) => {
@@ -371,7 +371,10 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         }
     }, [results, sourceText, sourceLanguage, targetLanguage, enabledCollectionServiceList, serviceInstances])
 
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+    const sensors = useMemo<SensorDescriptor<SensorOptions>[]>(() => [{
+        sensor: PointerSensor,
+        options: { activationConstraint: { distance: 5 } },
+    }], [])
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         const { active, over } = event

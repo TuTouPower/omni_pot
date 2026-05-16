@@ -96,6 +96,7 @@ test.describe('@ui translate language area', () => {
         try {
             const translate = await omni.translate()
 
+            await translate.fulfill_lingva_translation_once('中文译文')
             await translate.selectSourceLanguage('en')
             await expect(translate.sourceLanguage()).toContainText('英文')
             await translate.typeSource('hello world')
@@ -104,6 +105,7 @@ test.describe('@ui translate language area', () => {
             const chinese_result = await first_visible_result_text(translate)
 
             await translate.selectTargetLanguage('ja')
+            await translate.fulfill_lingva_translation_once('日本語訳', 'ja')
             await expect(translate.targetLanguage()).toContainText('日语')
             await translate.clickTranslate()
             await expect.poll(async () => {

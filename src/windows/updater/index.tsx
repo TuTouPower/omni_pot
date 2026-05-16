@@ -136,10 +136,9 @@ export default function UpdaterWindow(): React.ReactElement {
                     <Icons.Pin size={14} />
                 </button>
                 <div className="op-wordmark" style={{ marginLeft: 2 }}>
-                    <span className="dot" style={{ background: 'var(--brand-primary)' }} />
-                    omni_pot
+                    Omni Pot
                 </div>
-                <span className="op-mode">· {t('updater.title')}</span>
+                <span className="op-mode">{t('updater.title')}</span>
                 <div style={{ flex: 1 }} />
                 <button className="ic-btn" title={t('close')} onClick={handleClose}>
                     <Icons.Close size={14} />
