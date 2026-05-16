@@ -105,7 +105,7 @@ React 18 + NextUI，技术老旧；本项目从零实现 spec 中定义的全部
 | IPC | Electron contextBridge + ipcMain / ipcRenderer |
 | HTTP 服务器 | Node.js `http` 模块 |
 | FFI | koffi（跨平台选中文本提取，调用系统动态库） |
-| OCR | tesseract.js（renderer 端）+ 系统 OCR（main 进程） |
+| OCR | tesseract.js（renderer 端，本地 worker/core + 语言包下载）+ 系统 OCR（main 进程） |
 | 测试 | Vitest（unit + integration）+ Playwright（e2e） |
 | i18n | react-i18next |
 | 拖拽 | `@dnd-kit/*`（服务排序） |
@@ -176,6 +176,8 @@ enum WindowLabel {
 14. 检查更新
 15. CC-CEDICT 词典数据库按需自动导入
 
+CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与本机 HTTP 端点，以支持翻译、OCR、TTS、Ollama、DeepLX、Anki 等服务 API；`media-src` 允许 `blob:`，以支持本地合成音频播放；`worker-src` 允许 `blob:`，且 `script-src` 允许 WebAssembly 执行，以支持 Tesseract.js OCR worker/core。
+
 ---
 
 ## 4. 设计系统
@@ -203,8 +205,8 @@ enum WindowLabel {
 翻译 / 词典 / 识别窗口的顶部栏从左到右：
 
 1. 置顶按钮（左上角，激活时为主色）
-2. 软件名 `omni_pot`（带主色圆点 logo）
-3. 当前模式标签（如 `· 翻译`）
+2. 显示名 `Omni Pot`
+3. 当前模式标签（如 `翻译`）
 
 以上整体左对齐；右上角只保留关闭按钮。
 
@@ -223,7 +225,7 @@ enum WindowLabel {
 
 ### 5.1 顶部栏
 
-通用左对齐顶部栏（见 [4.3](#43-通用顶部栏)），模式标签为 `· 翻译`。
+通用左对齐顶部栏（见 [4.3](#43-通用顶部栏)），模式标签为 `翻译`。
 
 - **置顶按钮**：切换 `translate_always_on_top`，激活时图标为主色
 - **关闭按钮**：关闭窗口
@@ -233,8 +235,8 @@ enum WindowLabel {
 **文件**: `src/windows/translate/source_area.tsx`
 
 - 用小卡片样式框起来
-- 输入文本框至少展示 8 行内容
-- 文本过多时只允许输入框内部滚动，旁边有滚动条
+- 输入文本框从 1 行起随内容自动增长，最多展示约 8 行
+- 文本超过 8 行时只允许输入框内部滚动，旁边有滚动条
 - 区域内的操作按钮**永久可见**，不被文本遮挡
 - 检测到的语言标签：中文 UI 下显示"检测为**英文**"（"英文"为主色），不显示"检测为 EN"
 - 操作按钮：去除换行、朗读、复制原文、清空
@@ -423,8 +425,8 @@ OCR 识别结果窗口。三段式布局。
 
 ### 9.1 布局
 
-- **左侧边栏**：固定宽度，顶部 omni_pot logo + 置顶按钮，下方 8 个导航按钮，底部版本号
-- **右侧内容区**：顶部标题栏（页面名 + 路由 + 关闭按钮）+ 可滚动的卡片式内容区
+- **左侧边栏**：固定窄宽度，顶部显示名 `Omni Pot` + 置顶按钮，下方 8 个导航按钮，底部版本号
+- **右侧内容区**：顶部标题栏（页面名 + 关闭按钮）+ 可滚动的卡片式内容区
 - 激活导航项高亮，图标为主色
 
 ### 9.2 侧边栏导航
@@ -498,7 +500,7 @@ Tabs 切换五类服务：翻译 / 字典 / 识别 / 朗读 / 收藏。
 
 ### 9.10 配置页: 关于
 
-omni_pot logo + 版本号、简介、官网 / 文档 / 反馈 / 检查更新链接、诊断信息（日志目录 / 配置目录 / 本机 API 地址）。
+Omni Pot logo + 版本号、简介、官网 / 文档 / 反馈 / 检查更新链接、诊断信息（日志目录 / 配置目录 / 本机 API 地址）。
 
 版本号格式带平台后缀：`version {x.y.z} · {platform-arch}`，如 `version 3.1.0 · darwin-arm64` / `version 3.1.0 · win32-x64`。
 
@@ -560,7 +562,7 @@ renderer: useConfigStore
 
 ### 12.1 服务接口
 
-所有服务遵循插件式统一接口。
+所有内置服务遵循插件式统一接口；当前版本不实现外部插件系统，也不加载 `.potext` 插件包。
 
 **翻译服务**（`shared/types/service.ts`）：
 
@@ -663,7 +665,7 @@ interface DictResult {
 
 | # | 服务 | Key | 说明 |
 |---|---|---|---|
-| 1 | Tesseract | `tesseract` | tesseract.js 客户端 OCR |
+| 1 | Tesseract | `tesseract` | tesseract.js 客户端 OCR，本地加载 worker/core，按语言下载 traineddata |
 | 2 | 百度 OCR | `baidu_ocr` | client_id + client_secret |
 | 3 | 百度高精度 | `baidu_accurate_ocr` | client_id + client_secret |
 | 4 | 百度图片 | `baidu_img_ocr` | appid + secret |
@@ -847,7 +849,7 @@ interface DictResult {
 | `window` | `close` / `minimize` / `maximize` / `setAlwaysOnTop` / `getLabel` |
 | `config` | `get` / `set` / `getAll` / `onChange`（`config:changed` 广播） |
 | `hotkey` | `register` / `unregister` |
-| `text` | `getSelection` / `onTranslateFromSelection` / `onInputTranslate` / `onTranslateFromApi` / `onTranslateFromClipboard` / `onDictLookup` |
+| `text` | `getSelection` / `writeClipboard` / `onTranslateFromSelection` / `onInputTranslate` / `onTranslateFromApi` / `onTranslateFromClipboard` / `onDictLookup` |
 | `ocr` | `captureScreenshot` / `openRecognize` / `sendToTranslate` / `systemRecognize` / `onScreenshotShow` / `onRecognizeShow` |
 | `history` | `add` / `list` / `count` / `update` / `delete` / `clear` |
 | `backup` | `create` / `list` / `restore` |

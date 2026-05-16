@@ -45,7 +45,7 @@ test.describe('@core app lifecycle', () => {
 
         try {
             const translate = await omni.translate()
-            await expect(translate.wordmark()).toContainText('omni_pot')
+            await expect(translate.wordmark()).toContainText('Omni Pot')
 
             const daemon_state = await omni.api.windowState('daemon')
             expect(daemon_state.exists).toBe(true)
@@ -73,8 +73,8 @@ test.describe('@core app lifecycle', () => {
             const translate = await omni.translate()
             const config = await omni.config()
 
-            await expect(translate.wordmark()).toContainText('omni_pot')
-            await expect(config.wordmark()).toContainText('omni_pot')
+            await expect(translate.wordmark()).toContainText('Omni Pot')
+            await expect(config.wordmark()).toContainText('Omni Pot')
             await expect_window_visible(omni, 'config')
         } finally {
             await omni.stop()

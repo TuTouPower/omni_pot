@@ -287,7 +287,7 @@ export default function RecognizeWindow(): React.ReactElement {
             setImageBase64(base64)
             setRecognizedText(next_text)
             if (config.recognize_auto_copy && next_text) {
-                navigator.clipboard.writeText(next_text).catch(() => undefined)
+                window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
             }
         })
         return unsub
@@ -353,7 +353,7 @@ export default function RecognizeWindow(): React.ReactElement {
             const next_text = config.recognize_delete_newline ? normalize_recognized_text(result || '') : result || ''
             setRecognizedText(next_text)
             if (config.recognize_auto_copy && next_text) {
-                await navigator.clipboard.writeText(next_text).catch(() => undefined)
+                await window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
             }
         } catch {
             // keep existing text on failure
@@ -363,7 +363,7 @@ export default function RecognizeWindow(): React.ReactElement {
 
     const handleCopy = useCallback(async () => {
         if (recognizedText) {
-            await navigator.clipboard.writeText(recognizedText).catch(() => undefined)
+            await window.electronAPI.text.writeClipboard(recognizedText).catch(() => undefined)
         }
     }, [recognizedText])
 
@@ -405,10 +405,9 @@ export default function RecognizeWindow(): React.ReactElement {
                     <Icons.Pin size={14} fill={alwaysOnTop} />
                 </button>
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
-                    <span className="dot" style={{ background: 'var(--brand-primary)' }} />
-                    omni_pot
+                    Omni Pot
                 </div>
-                <span className="op-mode" data-testid="titlebar-mode">· {t('recognize.title')}</span>
+                <span className="op-mode" data-testid="titlebar-mode">{t('recognize.title')}</span>
                 <div style={{ flex: 1 }} />
                 <button className="ic-btn" title={t('close')} data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={14} />

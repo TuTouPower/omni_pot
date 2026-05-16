@@ -15,7 +15,7 @@ const MOCK_RELEASE = {
     current_version: '1.0.0',
     name: 'E2E Release 2.0.0',
     body: 'Localized changelog text',
-    html_url: 'https://example.invalid/omni-pot/releases/2.0.0',
+    html_url: 'https://example.invalid/omni_pot/releases/2.0.0',
     published_at: '2026-05-15T08:30:00.000Z',
     assets: [{
         name: 'omni_pot-2.0.0-win.zip',

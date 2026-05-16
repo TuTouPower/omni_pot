@@ -1,5 +1,5 @@
 {
-  "name": "omni-pot",
+  "name": "omni_pot",
   "version": "0.1.0",
   "description": "Cross-platform translation, OCR and dictionary tool",
   "author": "TuTouPower",
@@ -13,7 +13,10 @@
     "postinstall": "electron-builder install-app-deps",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint --config eslint_config.mjs . --max-warnings=0",
-    "check": "npm run typecheck && npm run lint && npm test",
+    "format:check": "biome ci --formatter-enabled=true --linter-enabled=false --assist-enabled=false --indent-style=space --indent-width=4 --line-width=160 --javascript-formatter-indent-width=4 --javascript-formatter-line-width=160 --javascript-formatter-quote-style=single --jsx-quote-style=double --semicolons=as-needed --json-formatter-indent-width=2 --json-formatter-line-width=160 --json-formatter-expand=always --files-ignore-unknown=true package.json knip.json",
+    "deadcode": "knip",
+    "security": "npm audit --audit-level=high",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run deadcode && npm run security && npm test",
     "test": "vitest run",
     "test:e2e": "npx playwright test --project=full",
     "test:e2e:core": "npx playwright test --project=core",
@@ -43,8 +46,8 @@
     "zustand": "^5.0.13"
   },
   "build": {
-    "appId": "com.tutoupower.omni-pot",
-    "productName": "omni_pot",
+    "appId": "com.tutoupower.omni_pot",
+    "productName": "Omni Pot",
     "directories": {
       "output": "release"
     },
@@ -87,6 +90,8 @@
     }
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.52.0",
     "@tailwindcss/postcss": "^4.2.4",
     "@testing-library/jest-dom": "^6.9.1",
@@ -105,6 +110,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^29.1.1",
+    "knip": "^6.14.0",
     "playwright": "^1.60.0",
     "postcss": "^8.5.14",
     "tailwindcss": "^4.2.4",

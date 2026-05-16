@@ -105,7 +105,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     )
 
     const handleCopy = useCallback(() => {
-        navigator.clipboard.writeText(sourceText).catch(() => undefined)
+        window.electronAPI.text.writeClipboard(sourceText).catch(console.error)
     }, [sourceText])
 
     const handleDeleteNewline = useCallback(() => {
@@ -125,10 +125,12 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         return () => { clearTimeout(timer); }
     }, [sourceText, dynamicTranslate, onTranslate])
 
+    const sourceRows = Math.min(8, Math.max(1, (sourceText || '').split('\n').length))
+
     return (
-        <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '0 0 auto', minHeight: 120 }}>
+        <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '0 0 auto' }}>
             {/* Text area */}
-            <div style={{ flex: 1, overflow: 'auto', padding: '12px 14px 6px', minHeight: 0 }}>
+            <div style={{ maxHeight: 176, overflow: 'auto', padding: '12px 14px 4px' }}>
                 <textarea
                     ref={textAreaRef}
                     value={sourceText}
@@ -141,15 +143,16 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                     style={{
                         width: '100%',
                         fontSize: 13.5,
-                        lineHeight: 1.6,
+                        lineHeight: '22px',
                         color: 'var(--text)',
                         background: 'transparent',
                         border: 'none',
                         outline: 'none',
                         resize: 'none',
                         fontFamily: 'inherit',
+                        overflowY: 'auto',
                     }}
-                    rows={8}
+                    rows={sourceRows}
                 />
             </div>
             {/* Action bar */}

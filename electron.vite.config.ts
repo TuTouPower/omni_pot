@@ -33,7 +33,8 @@ export default defineConfig({
       alias: {
         '@': resolve(__dirname, 'src'),
         '@shared': resolve(__dirname, 'shared')
-      }
+      },
+      dedupe: ['react', 'react-dom']
     },
     build: {
       rollupOptions: {
