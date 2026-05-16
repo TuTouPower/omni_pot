@@ -8,9 +8,12 @@ import { get_translate_window_options } from '../windows/translate_options'
 import { readSelectedText } from '../selection'
 import { log } from '../log'
 
+import type { HotkeyRegisterResult } from '@shared/types/ipc'
+
 const log_hotkey = log.scope('hotkey')
 
 let windowManager: WindowManager | null = null
+const registered_hotkeys = new Map<string, string>()
 
 export function setWindowManagerForHotkey(mgr: WindowManager): void {
   windowManager = mgr
@@ -88,23 +91,43 @@ async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
 }
 
 export function registerHotkey(
-  shortcut: string,
-  action: () => void
-): boolean {
-  if (globalShortcut.isRegistered(shortcut)) {
-    globalShortcut.unregister(shortcut)
-  }
-  return globalShortcut.register(shortcut, action)
+    name: string,
+    shortcut: string,
+    action: () => void
+): HotkeyRegisterResult {
+    const owner = registered_hotkeys.get(shortcut)
+    if (owner && owner !== name) {
+        return { success: false, reason: 'conflict' }
+    }
+
+    if (owner === name) {
+        globalShortcut.unregister(shortcut)
+        registered_hotkeys.delete(shortcut)
+    } else if (globalShortcut.isRegistered(shortcut)) {
+        return { success: false, reason: 'conflict' }
+    }
+
+    const success = globalShortcut.register(shortcut, action)
+    if (!success) {
+        return { success: false, reason: 'system' }
+    }
+
+    registered_hotkeys.set(shortcut, name)
+    return { success: true }
 }
 
-export function unregisterHotkey(shortcut: string): void {
-  if (globalShortcut.isRegistered(shortcut)) {
-    globalShortcut.unregister(shortcut)
-  }
+export function unregisterHotkey(name: string, shortcut: string): void {
+    const owner = registered_hotkeys.get(shortcut)
+    if (owner && owner !== name) return
+    if (globalShortcut.isRegistered(shortcut)) {
+        globalShortcut.unregister(shortcut)
+    }
+    registered_hotkeys.delete(shortcut)
 }
 
 export function unregisterAll(): void {
-  globalShortcut.unregisterAll()
+    globalShortcut.unregisterAll()
+    registered_hotkeys.clear()
 }
 
 const HOTKEY_KEYS: ConfigKey[] = [
@@ -121,6 +144,6 @@ export function registerGlobalShortcutsFromConfig(): void {
     const value = getConfig(name)
     const shortcut = typeof value === 'string' ? value : ''
     if (!shortcut) continue
-    registerHotkey(shortcut, buildHotkeyAction(name, windowManager))
+    registerHotkey(name, shortcut, buildHotkeyAction(name, windowManager))
   }
 }
