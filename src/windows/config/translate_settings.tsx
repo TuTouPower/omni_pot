@@ -50,8 +50,8 @@ export default function TranslatePage(): React.ReactElement {
     const targetLangOpts = language_options(t, TARGET_LANGUAGES)
     const autoCopyOpts = AUTO_COPY_VALUES.map((value) => ({ value, label: t(AUTO_COPY_LABEL_KEYS[value]) }))
     const windowPositionOpts: { value: 'mouse' | 'pre_state'; label: string }[] = [
-        { value: 'mouse', label: '鼠标位置' },
-        { value: 'pre_state', label: '上次位置' },
+        { value: 'mouse', label: t('translate_settings.window_position_mouse') },
+        { value: 'pre_state', label: t('translate_settings.window_position_pre_state') },
     ]
 
     return (
@@ -63,7 +63,7 @@ export default function TranslatePage(): React.ReactElement {
                 <ConfigRow label={t('translate_settings.target_language') || '目标语言'}>
                     <ConfigSelect value={targetLang} onChange={setTargetLang} options={targetLangOpts} testId="cfg-translate_target_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.second_language') || '第二语言'} sub="检测到目标语言相同时切换到此语言">
+                <ConfigRow label={t('translate_settings.second_language') || '第二语言'} sub={t('translate_settings.second_language_sub')}>
                     <ConfigSelect value={secondLang} onChange={setSecondLang} options={targetLangOpts} testId="cfg-translate_second_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.detect_engine') || '检测引擎'}>
@@ -75,10 +75,10 @@ export default function TranslatePage(): React.ReactElement {
                 <ConfigRow label={t('translate_settings.auto_copy') || '自动复制'}>
                     <ConfigSelect value={autoCopy} onChange={setAutoCopy} options={autoCopyOpts} testId="cfg-translate_auto_copy" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.incremental_translate') || '增量翻译'} sub="新选取的文本追加到现有源文本而非替换">
+                <ConfigRow label={t('translate_settings.incremental_translate') || '增量翻译'} sub={t('translate_settings.incremental_translate_sub')}>
                     <ConfigSwitch on={incremental} onChange={setIncremental} testId="cfg-incremental_translate" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.dynamic_translate') || '动态翻译'} sub="输入时自动翻译（1s 防抖）">
+                <ConfigRow label={t('translate_settings.dynamic_translate') || '动态翻译'} sub={t('translate_settings.dynamic_translate_sub')}>
                     <ConfigSwitch on={dynamicTranslate} onChange={setDynamicTranslate} testId="cfg-dynamic_translate" />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.delete_newline') || '自动去除换行'}>
@@ -111,7 +111,7 @@ export default function TranslatePage(): React.ReactElement {
                 <ConfigRow label={t('translate_settings.hide_language') || '隐藏语言选择'}>
                     <ConfigSwitch on={hideLanguage} onChange={setHideLanguage} testId="cfg-hide_language" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.hide_window', { defaultValue: '翻译后隐藏窗口' })} sub="后台完成翻译并通过通知告知">
+                <ConfigRow label={t('translate_settings.hide_window', { defaultValue: '翻译后隐藏窗口' })} sub={t('translate_settings.hide_window_sub')}>
                     <ConfigSwitch on={hideWindow} onChange={setHideWindow} testId="cfg-translate_hide_window" />
                 </ConfigRow>
             </ConfigCard>
