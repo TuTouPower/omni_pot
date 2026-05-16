@@ -471,7 +471,7 @@ OCR 识别结果窗口。三段式布局。
 - 划词字典（`hotkey_selection_dictionary`）
 
 录入行为：捕获组合键、Backspace 清除、绑定按钮在主进程注册、成功/失败提示。
-Wayland 用户提示：系统级快捷键可能不可用，可用 `curl localhost:{port}/...` 替代。
+Wayland / 桌面环境限制属于故障排查或文档说明，不在快捷键设置页默认常驻展示。
 
 ### 9.7 配置页: 服务
 

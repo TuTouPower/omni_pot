@@ -169,6 +169,7 @@ test.describe('@ui config settings window', () => {
         try {
             const config = await omni.openConfig()
             await config.openSection('hotkey')
+            await expect(config.window()).not.toContainText('Wayland 用户')
 
             await bind_hotkey(config, hotkey, 'Control+Alt+Shift+F9')
             await expect(config.hotkeyStatus(hotkey)).toContainText('绑定成功')
