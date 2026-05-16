@@ -9,7 +9,7 @@ const TEST_CONFIG = {
     translate_service_list: [],
 }
 
-type WindowLabel = 'translate' | 'config' | 'updater' | 'screenshot'
+type WindowLabel = 'translate' | 'config' | 'updater' | 'screenshot' | 'tray'
 
 async function expect_window_visible(omni: AppFixture, label: WindowLabel): Promise<void> {
     await expect.poll(async () => (await omni.api.windowState(label)).visible).toBe(true)
@@ -86,6 +86,23 @@ test.describe('@ui updater and tray', () => {
         }
     })
 
+    test('user opens a custom light tray popover instead of a native menu', async () => {
+        const omni = await AppFixture.start({ config: { ...TEST_CONFIG, app_language: 'zh_cn', clipboard_monitor: false } })
+        try {
+            const result = await omni.api.trayAction('show_tray')
+            expect(result.success).toBe(true)
+            await expect_window_visible(omni, 'tray')
+            const tray_page = await omni.waitForWindow(/#tray/)
+            await expect(tray_page.getByTestId('tray-popover')).toBeVisible()
+            await expect(tray_page.getByTestId('tray-action-input_translate')).toContainText('输入翻译')
+            await expect(tray_page.getByTestId('tray-action-ocr_recognize')).toContainText('OCR 识别')
+            await expect(tray_page.getByTestId('tray-action-clipboard_monitor')).toContainText('剪贴板监听')
+            await expect(tray_page.getByTestId('tray-popover')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user opens windows from tray actions and toggles clipboard monitor', async () => {
         const omni = await AppFixture.start({ config: { ...TEST_CONFIG, clipboard_monitor: false } })
         try {
@@ -123,9 +140,11 @@ test.describe('@ui updater and tray', () => {
             expect(enable_result.success).toBe(true)
             await expect.poll(async () => (await omni.api.getConfig()).clipboard_monitor).toBe(true)
 
-            const clipboard_result = await omni.api.triggerClipboard('tray clipboard text')
+            const current_clipboard = (await omni.api.readClipboard()).text
+            const clipboard_text = current_clipboard === 'tray clipboard text' ? 'tray clipboard text changed' : 'tray clipboard text'
+            const clipboard_result = await omni.api.triggerClipboard(clipboard_text)
             expect(clipboard_result.success).toBe(true)
-            await expect(translate.sourceInput()).toHaveValue('tray clipboard text', { timeout: 10_000 })
+            await expect(translate.sourceInput()).toHaveValue(clipboard_text, { timeout: 10_000 })
 
             const disable_result = await omni.api.trayAction('clipboard_monitor')
             expect(disable_result.success).toBe(true)

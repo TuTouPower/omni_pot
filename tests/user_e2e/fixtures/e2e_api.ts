@@ -143,7 +143,7 @@ export class E2eApi {
         return this.request('POST', '/e2e/hotkey-system-failures', { shortcuts }) as Promise<{ success: boolean; error?: string }>
     }
 
-    async trayAction(action: 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'tray_click'): Promise<{ success: boolean; action?: string; error?: string }> {
+    async trayAction(action: 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'tray_click' | 'show_tray'): Promise<{ success: boolean; action?: string; error?: string }> {
         return this.request('POST', '/e2e/tray-action', { action }) as Promise<{ success: boolean; action?: string; error?: string }>
     }
 

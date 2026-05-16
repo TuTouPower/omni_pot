@@ -5,7 +5,8 @@ export enum WindowLabel {
   RECOGNIZE = 'recognize',
   DICT = 'dict',
   CONFIG = 'config',
-  UPDATER = 'updater'
+  UPDATER = 'updater',
+  TRAY = 'tray'
 }
 
 export interface WindowOptions {
