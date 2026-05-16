@@ -63,13 +63,15 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
 
     const handleConfirm = async (): Promise<void> => {
         if (tempValue) {
-            const success = await window.electronAPI.hotkey.register(configKey, tempValue)
-            if (success) {
+            const result = await window.electronAPI.hotkey.register(configKey, tempValue)
+            if (result.success) {
                 if (currentValue && currentValue !== tempValue) {
                     await window.electronAPI.hotkey.unregister(configKey, currentValue)
                 }
                 setCurrentValue(tempValue)
                 setStatus('绑定成功')
+            } else if (result.reason === 'conflict') {
+                setStatus('快捷键冲突')
             } else {
                 setStatus('绑定失败')
             }

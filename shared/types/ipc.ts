@@ -11,6 +11,11 @@ export interface HistoryRecord {
     created_at: string
 }
 
+export interface HotkeyRegisterResult {
+    success: boolean
+    reason?: 'conflict' | 'invalid' | 'system'
+}
+
 export interface ElectronAPI {
   ready(label: string): void
   window: {
@@ -33,7 +38,7 @@ export interface ElectronAPI {
     onChange(callback: (key: ConfigKey, value: unknown) => void): () => void
   }
   hotkey: {
-    register(name: string, shortcut: string): Promise<boolean>
+    register(name: string, shortcut: string): Promise<HotkeyRegisterResult>
     unregister(name: string, shortcut: string): Promise<void>
   }
   text: {

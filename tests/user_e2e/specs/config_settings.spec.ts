@@ -16,6 +16,12 @@ async function expect_config(omni: AppFixture, key: string, value: unknown): Pro
     await expect.poll(async () => (await omni.api.getConfig())[key]).toEqual(value)
 }
 
+async function bind_hotkey(config: Awaited<ReturnType<AppFixture['openConfig']>>, hotkey: string, shortcut: string): Promise<void> {
+    await config.hotkeyBindButton(hotkey).click()
+    await config.hotkeyField(hotkey).press(shortcut)
+    await config.hotkeyConfirmButton(hotkey).click()
+}
+
 test.describe('@ui config settings window', () => {
     test('user navigates the settings window and uses window controls', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
@@ -164,9 +170,7 @@ test.describe('@ui config settings window', () => {
             const config = await omni.openConfig()
             await config.openSection('hotkey')
 
-            await config.hotkeyBindButton(hotkey).click()
-            await config.hotkeyField(hotkey).press('Control+Alt+Shift+F9')
-            await config.hotkeyConfirmButton(hotkey).click()
+            await bind_hotkey(config, hotkey, 'Control+Alt+Shift+F9')
             await expect(config.hotkeyStatus(hotkey)).toContainText('绑定成功')
             await expect_config(omni, hotkey, 'CommandOrControl+Shift+Alt+F9')
 
@@ -175,6 +179,29 @@ test.describe('@ui config settings window', () => {
             await config.hotkeyConfirmButton(hotkey).click()
             await expect(config.hotkeyStatus(hotkey)).toContainText('已清除')
             await expect_config(omni, hotkey, '')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user sees a conflict when another action already uses the same hotkey', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+        const firstHotkey = 'hotkey_selection_translate'
+        const secondHotkey = 'hotkey_input_translate'
+        const shortcut = 'CommandOrControl+Shift+Alt+F9'
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('hotkey')
+
+            await bind_hotkey(config, firstHotkey, 'Control+Alt+Shift+F9')
+            await expect(config.hotkeyStatus(firstHotkey)).toContainText('绑定成功')
+            await expect_config(omni, firstHotkey, shortcut)
+
+            await bind_hotkey(config, secondHotkey, 'Control+Alt+Shift+F9')
+            await expect(config.hotkeyStatus(secondHotkey)).toContainText('快捷键冲突')
+            await expect_config(omni, firstHotkey, shortcut)
+            await expect_config(omni, secondHotkey, '')
         } finally {
             await omni.stop()
         }
