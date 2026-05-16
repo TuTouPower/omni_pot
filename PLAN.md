@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-功能与 UI 重写在代码层已基本完成。E2E 测试方向已统一为 Playwright，基础设施已初步落地，后续继续补齐完整用户路径 spec。
+功能与 UI 重写已有基础实现，但按 example 和真实用户路径复核后，已重新打开一批产品缺陷与测试缺口。当前重点不是继续声明“已完成”，而是先重审测试，让测试按用户验收标准失败，再按模块修复实现。
 
 ---
 
@@ -15,7 +15,16 @@
 
 按优先级排列：
 
-### P0: Playwright E2E 基础设施落地
+### P0: 已知产品缺陷与测试重审（重新打开）
+
+- [ ] 全量重审当前 Playwright/Vitest 测试，改掉按当前错误实现补断言的用例
+- [ ] 为 `docs/issues/issues.md` 中的开放问题补失败测试或人工验收步骤
+- [ ] 先解决规格冲突：欢迎页、Wayland 提示、开发者模式、OCR/TTS 默认服务、主题/主色模型
+- [ ] 修复通用窗口加载转圈、设置/识别窗口尺寸与拖动、下拉框裁剪等窗口基础问题
+- [ ] 修复托盘、快捷键、OCR/TTS、服务管理、i18n、主题/透明背景等功能闭环
+- [ ] 完成打包后 Windows smoke 验收：首次启动、托盘、快捷键、截图、设置/识别窗口
+
+### P0: Playwright E2E 基础设施落地（已完成）
 
 - [X] 安装 Playwright 依赖（`npm install`）
 - [X] 实现 `tests/user_e2e/fixtures/electron_app.ts` — Electron 启动/停止 fixture
@@ -26,12 +35,12 @@
 - [X] 实现独立 userData 临时目录（环境变量传入 main 进程）
 - [X] 删除旧 Vitest + CDP E2E 文件与 legacy 脚本（剩余关键路径由 P1/P2 Playwright spec 继续补齐）
 
-### P1: P0 守护已知 bug 的 spec
+### P1: 旧已修复问题的回归 spec
 
-- [X] `translate_titlebar.spec.ts` — issues #4 #8（补齐布局顺序、模式标签样式、拖拽/按钮 no-drag 断言）
-- [X] `translate_source_area.spec.ts` — issue #5（补齐键盘、IME、朗读、复制/清空、真实翻译断言）
-- [X] `translate_language_area.spec.ts` — issues #6 #7（补齐语言选择、检测语言反转与重译断言）
-- [X] `translate_core.spec.ts` — issue #3（补齐全部免费翻译服务真实结果用例）
+- [X] `translate_titlebar.spec.ts` — 旧已修复问题：标题栏布局、模式标签样式、拖拽与按钮 no-drag
+- [X] `translate_source_area.spec.ts` — 旧已修复问题：输入区键盘、IME、朗读、复制/清空、真实翻译
+- [X] `translate_language_area.spec.ts` — 旧已修复问题：语言选择、检测语言反转与重译
+- [X] `translate_core.spec.ts` — 旧已修复问题：全部免费翻译服务真实结果
 
 ### P1: 核心窗口 spec
 
@@ -56,13 +65,15 @@
 - [X] CSP `connect-src` 放开 — 当前 `'self'` 阻止了所有外部翻译 API 请求，需改为允许外部连接
 - [X] 命名统一 — 给用户看的显示名用 **Omni Pot**，代码/文件名/package name 一律用 **omni_pot**
 - [X] 服务管理未实现功能：服务启停、编辑/测试保存、真实拖拽排序，并同步补规格与用户 E2E
-- [X] 修复已知 bug — 见 `docs/issues/issues.md`
+- [ ] 重新修复已知产品缺陷 — 见 `docs/issues/issues.md` 当前开放问题
 - [X] 插件系统（`.potext` 格式）当前明确延期：本阶段不实现外部插件加载，仅保留内置服务接口
 - [X] 代码质量检查体系 — 见 `docs/code_quality_checks_plan.md`
 
 ---
 
-## 已完成
+## 历史已完成基础工作
+
+> 以下记录表示基础实现或历史修复已完成；最终用户验收覆盖正在上方重新打开的 P0 中复审。
 
 - [X] 全部 UI 重写（翻译/词典/识别/截图/配置/更新器窗口）
 - [X] Bing Translate 修复
@@ -75,4 +86,4 @@
 - [X] 截图覆盖层修复
 - [X] 国际化（19 种语言）
 - [X] E2E 测试方向统一为 Playwright
-- [X] 文档审阅与清理 — 见 `docs/issues/documentation_review.md`
+- [X] 文档审阅与清理 — 见 `docs/issues/closed/documentation_review.md`
