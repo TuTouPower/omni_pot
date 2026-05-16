@@ -207,6 +207,26 @@ test.describe('@ui config settings window', () => {
         }
     })
 
+    test('user sees failure when the system refuses to register a hotkey', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+        const hotkey = 'hotkey_ocr_recognize'
+        const shortcut = 'CommandOrControl+Shift+Alt+F10'
+
+        try {
+            const system_failures = await omni.api.setHotkeySystemFailures([shortcut])
+            expect(system_failures.success).toBe(true)
+
+            const config = await omni.openConfig()
+            await config.openSection('hotkey')
+
+            await bind_hotkey(config, hotkey, 'Control+Alt+Shift+F10')
+            await expect(config.hotkeyStatus(hotkey)).toContainText('绑定失败')
+            await expect_config(omni, hotkey, '')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user sees about links and diagnostics', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
 

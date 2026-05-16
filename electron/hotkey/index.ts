@@ -15,6 +15,15 @@ const log_hotkey = log.scope('hotkey')
 let windowManager: WindowManager | null = null
 const registered_hotkeys = new Map<string, string>()
 const registered_hotkey_actions = new Map<string, () => void>()
+const e2e_system_failure_shortcuts = new Set<string>()
+
+export function setE2eHotkeySystemFailures(shortcuts: string[]): void {
+    if (!process.env['OMNI_POT_E2E']) return
+    e2e_system_failure_shortcuts.clear()
+    for (const shortcut of shortcuts) {
+        if (shortcut) e2e_system_failure_shortcuts.add(shortcut)
+    }
+}
 
 export function setWindowManagerForHotkey(mgr: WindowManager): void {
   windowManager = mgr
@@ -95,7 +104,9 @@ export function registerHotkey(
         return { success: false, reason: 'conflict' }
     }
 
-    const success = globalShortcut.register(shortcut, action)
+    const success = e2e_system_failure_shortcuts.has(shortcut)
+        ? false
+        : globalShortcut.register(shortcut, action)
     if (!success) {
         return { success: false, reason: 'system' }
     }
