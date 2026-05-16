@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import GeneralPage from './general'
@@ -28,6 +28,17 @@ export default function ConfigWindow(): React.ReactElement {
         await window.electronAPI.window.setAlwaysOnTop(next)
         setAlwaysOnTop(next)
     }, [alwaysOnTop])
+
+    useEffect(() => {
+        window.electronAPI.ready('config')
+        const valid_sections: ConfigPage[] = ['general', 'translate', 'recognize', 'hotkey', 'service', 'history', 'backup', 'about']
+        const unsub = window.electronAPI.window.onConfigNavigate((section) => {
+            if ((valid_sections as string[]).includes(section)) {
+                setActivePage(section as ConfigPage)
+            }
+        })
+        return unsub
+    }, [])
 
     const pages: NavItem[] = [
         { key: 'general', label: t('general.title') || '通用', icon: <Icons.Grid size={15} /> },

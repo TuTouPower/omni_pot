@@ -24,6 +24,8 @@ export interface ElectronAPI {
     maximize(): Promise<void>
     setAlwaysOnTop(flag: boolean): Promise<void>
     getLabel(): Promise<string>
+    openConfig(section?: string): Promise<void>
+    onConfigNavigate(callback: (section: string) => void): () => void
   }
   shell: {
     openExternal(url: string): Promise<boolean>

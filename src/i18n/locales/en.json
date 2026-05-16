@@ -34,6 +34,30 @@
     "selection": {
         "no_text": "No selected text was found. Select text before triggering the hotkey."
     },
+    "result": {
+        "tts": "Read aloud",
+        "copy": "Copy",
+        "collect": "Collect",
+        "expand": "Expand",
+        "collapse": "Collapse",
+        "retry": "Retry",
+        "failed": "Translation failed"
+    },
+    "welcome": {
+        "title": "Welcome to Omni Pot",
+        "subtitle": "The shortcuts below are preset for you; change them anytime under Settings.",
+        "selection_translate": "Selection translate",
+        "selection_translate_sub": "Select text, press the shortcut to translate it",
+        "input_translate": "Input translate",
+        "input_translate_sub": "Open the window to type text manually",
+        "ocr_recognize": "OCR recognize",
+        "ocr_recognize_sub": "Capture a region and lift the text into recognize",
+        "ocr_translate": "OCR translate",
+        "ocr_translate_sub": "Capture, recognize, then translate in one step",
+        "configure_hotkeys": "Configure shortcuts",
+        "skip": "Skip",
+        "not_set": "Not set"
+    },
     "update_available": "Update Available",
     "no_updates": "No Updates",
     "update_check_failed": "Update Check Failed",
@@ -204,7 +228,9 @@
         "no_result": "No results found",
         "look_up": "Look Up",
         "lookup_failed": "Lookup failed",
-        "examples": "Examples"
+        "examples": "Examples",
+        "definitions": "Definitions",
+        "copied": "Copied"
     },
     "ui": {
         "cancel": "Cancel",

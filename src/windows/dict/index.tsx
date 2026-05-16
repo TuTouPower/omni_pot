@@ -59,35 +59,21 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <span className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
-                                    <span style={{ fontSize: 14, fontWeight: 500 }}>{def.meanings.join('; ')}</span>
+                                    <span style={{ fontSize: 14, fontWeight: 500 }} data-testid="dict-meaning-primary">{def.meanings[0] ?? ''}</span>
                                 </div>
+                                {def.meanings.slice(1).map((m, mi) => (
+                                    <div key={mi} data-testid="dict-meaning-alt" style={{ marginTop: 2, fontSize: 12.5, color: 'var(--text-dim)', fontStyle: 'italic' }}>{m}</div>
+                                ))}
                             </div>
                         </div>
                     ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                    <button className="ic-btn" data-testid="dict-copy-btn" title={copied ? '已复制' : '复制'} onClick={handleCopy}>
+                    <button className="ic-btn" data-testid="dict-copy-btn" title={copied ? (t('dict.copied') || '已复制') : (t('result.copy') || '复制')} onClick={handleCopy}>
                         <Icons.Copy size={14} />
                     </button>
                 </div>
             </div>
-
-            {/* Pronunciations card */}
-            {result.pronunciations.length > 0 && (
-                <div className="card" data-testid="dict-pronunciations" style={{ padding: '12px 14px' }}>
-                    <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
-                        {t('dict.pronunciations') || '发音'}
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                        {result.pronunciations.map((p, i) => (
-                            <div key={i} data-testid="dict-pronunciation" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                {p.region && <span className="chip plain mono" style={{ fontSize: 10 }}>{p.region}</span>}
-                                <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>{p.phonetic}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Examples card */}
             {result.examples.length > 0 && (
@@ -303,7 +289,7 @@ export default function DictWindow(): React.ReactElement {
                             {firstResult && firstResult.pronunciations.length > 0 && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
                                     {firstResult.pronunciations.map((p, i) => (
-                                        <span key={i} className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>
+                                        <span key={i} data-testid="dict-pronunciation" className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>
                                             {p.region && `${p.region} `}{p.phonetic}
                                         </span>
                                     ))}

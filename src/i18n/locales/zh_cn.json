@@ -34,6 +34,30 @@
     "selection": {
         "no_text": "未读取到选中的文本，请先选中文本后再触发快捷键。"
     },
+    "result": {
+        "tts": "朗读",
+        "copy": "复制",
+        "collect": "收藏",
+        "expand": "展开",
+        "collapse": "收起",
+        "retry": "重试",
+        "failed": "翻译失败"
+    },
+    "welcome": {
+        "title": "欢迎使用 Omni Pot",
+        "subtitle": "下面的快捷键已为你预设，随时可在「设置」中修改",
+        "selection_translate": "划词翻译",
+        "selection_translate_sub": "选中文本后按下快捷键即翻译",
+        "input_translate": "输入翻译",
+        "input_translate_sub": "呼出窗口手动输入要翻译的文本",
+        "ocr_recognize": "OCR 识别",
+        "ocr_recognize_sub": "截图后将文字提取到识别窗口",
+        "ocr_translate": "OCR 翻译",
+        "ocr_translate_sub": "截图、识别并直接翻译结果",
+        "configure_hotkeys": "配置快捷键",
+        "skip": "跳过",
+        "not_set": "未设置"
+    },
     "update_available": "有可用更新",
     "no_updates": "已是最新版本",
     "update_check_failed": "检查更新失败",
@@ -204,7 +228,9 @@
         "no_result": "未找到结果",
         "look_up": "查询",
         "lookup_failed": "查询失败",
-        "examples": "例句"
+        "examples": "例句",
+        "definitions": "释义",
+        "copied": "已复制"
     },
     "ui": {
         "cancel": "取消",
