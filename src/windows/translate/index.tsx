@@ -119,6 +119,7 @@ export default function TranslateWindow(): React.ReactElement {
     const sourceTtsLanguageRef = useRef<LanguageCode | null>(null)
     const retryRequestRef = useRef<Record<string, number>>({})
     const translate_timer_ref = useRef<number | null>(null)
+    const previousLanguagesRef = useRef({ sourceLanguage, targetLanguage })
 
     const handleTranslate = useCallback(async (textOverride?: string) => {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
@@ -233,6 +234,14 @@ export default function TranslateWindow(): React.ReactElement {
         }
     }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, setEffectiveTargetLanguage, secondLanguage, autoCopy, historyDisable])
 
+    useEffect(() => {
+        const previous = previousLanguagesRef.current
+        previousLanguagesRef.current = { sourceLanguage, targetLanguage }
+        if (!languageConfigReadyRef.current || !sourceText.trim()) return
+        if (previous.sourceLanguage === sourceLanguage && previous.targetLanguage === targetLanguage) return
+        handleTranslate().catch(console.error)
+    }, [sourceLanguage, targetLanguage, sourceText, handleTranslate])
+
     const cancel_scheduled_translate = useCallback(() => {
         if (translate_timer_ref.current === null) return
         window.clearTimeout(translate_timer_ref.current)
@@ -315,6 +324,9 @@ export default function TranslateWindow(): React.ReactElement {
         })
         return unsub
     }, [cancel_scheduled_translate, setSourceText, setDetectedLanguage, clearResults])
+
+    const showSource = forceShowSource || !hideSource
+    const show_welcome_empty = sourceText.trim() === '' && !forceShowSource && !welcome_dismissed && !selection_notice
 
     useEffect(() => {
         window.electronAPI.ready('translate')
@@ -512,8 +524,6 @@ export default function TranslateWindow(): React.ReactElement {
 
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
-    const showSource = forceShowSource || !hideSource
-    const show_welcome_empty = sourceText.trim() === '' && !welcome_dismissed && !selection_notice
 
     return (
         <div
@@ -530,7 +540,7 @@ export default function TranslateWindow(): React.ReactElement {
                     onClick={() => { handleToggleAlwaysOnTop(); }}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
-                    <Icons.Pin size={14} fill={alwaysOnTop} />
+                    <Icons.Pin size={18} fill={alwaysOnTop} />
                 </button>
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     Omni Pot
@@ -538,13 +548,13 @@ export default function TranslateWindow(): React.ReactElement {
                 <span className="op-mode" data-testid="titlebar-mode">翻译</span>
                 <div style={{ flex: 1 }} />
                 <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={() => { handleClose().catch(console.error); }}>
-                    <Icons.Close size={14} />
+                    <Icons.Close size={18} />
                 </button>
             </div>
 
             {/* Content */}
-            <div style={{ flex: 1, overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {showSource && (
+            <div style={{ flex: '0 1 auto', overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {showSource && !show_welcome_empty && (
                     <SourceArea
                         onTranslate={() => { handleTranslate().catch(console.error); }}
                         onTts={() => { handleSourceTts().catch(console.error); }}
@@ -560,7 +570,7 @@ export default function TranslateWindow(): React.ReactElement {
                         {t('selection.no_text')}
                     </div>
                 )}
-                {!hideLanguage && <LanguageArea onSwap={handleSwapLanguages} />}
+                {!hideLanguage && !show_welcome_empty && <LanguageArea onSwap={handleSwapLanguages} />}
                 {show_welcome_empty && (
                     <WelcomeEmpty onSkip={() => { setWelcomeDismissed(true); }} />
                 )}

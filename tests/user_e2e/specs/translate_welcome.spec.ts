@@ -19,6 +19,9 @@ test.describe('@ui translate welcome empty state', () => {
 
             const welcome = page.getByTestId('welcome-empty')
             await expect(welcome).toBeVisible()
+            await expect(translate.sourceInput()).toHaveCount(0)
+            await expect(translate.sourceLanguage()).toHaveCount(0)
+            await expect(translate.targetLanguage()).toHaveCount(0)
             await expect(translate.resultCards()).toHaveCount(0)
             await expect(page.getByTestId('welcome-title')).toContainText('欢迎使用 Omni Pot')
             await expect(page.getByTestId('welcome-selection-translate')).toContainText('划词翻译')
@@ -35,15 +38,15 @@ test.describe('@ui translate welcome empty state', () => {
         }
     })
 
-    test('typing source hides welcome and clearing source shows it again', async () => {
-        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+    test('incoming source hides welcome and clearing source shows it again', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', dynamic_translate: false, translate_service_list: [] } })
 
         try {
             const translate = await omni.translate()
             const page = translate.sourceInput().page()
 
             await expect(page.getByTestId('welcome-empty')).toBeVisible()
-            await translate.typeSource('hello')
+            expect((await omni.api.triggerSelection('hello')).success).toBe(true)
             await expect(page.getByTestId('welcome-empty')).toHaveCount(0)
             await translate.clickClearSource()
             await expect(page.getByTestId('welcome-empty')).toBeVisible()

@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useTranslateStore } from '../../stores/translate_store'
@@ -18,7 +19,14 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
 }): React.ReactElement {
     const { t } = useTranslation()
     const [open, setOpen] = React.useState(false)
+    const [menuRect, setMenuRect] = React.useState<{ top: number; left: number; width: number } | null>(null)
     const ref = React.useRef<HTMLDivElement>(null)
+
+    const toggle_open = () => {
+        const rect = ref.current?.getBoundingClientRect()
+        if (rect) setMenuRect({ top: rect.bottom + 4, left: rect.left, width: Math.max(140, rect.width) })
+        setOpen((o) => !o)
+    }
 
     React.useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -34,7 +42,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
         <div ref={ref} style={{ position: 'relative' }}>
             <button
                 data-testid={testId}
-                onClick={() => { setOpen((o) => !o); }}
+                onClick={toggle_open}
                 style={{
                     height: 28,
                     padding: '0 6px',
@@ -53,18 +61,20 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                 {language_name(t, value)}
                 <Icons.Chev size={12} style={{ color: 'var(--text-mute)', marginTop: 1 }} />
             </button>
-            {open && (
-                <div style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 4px)',
-                    left: 0,
-                    minWidth: 140,
+            {open && menuRect && createPortal(
+                <div
+                    onMouseDown={(e) => { e.stopPropagation(); }}
+                    style={{
+                    position: 'fixed',
+                    top: menuRect.top,
+                    left: menuRect.left,
+                    minWidth: menuRect.width,
                     background: 'var(--bg-elev)',
                     border: '1px solid var(--line)',
                     borderRadius: 'var(--r-md)',
                     boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
                     padding: 4,
-                    zIndex: 50,
+                    zIndex: 1000,
                     maxHeight: 280,
                     overflowY: 'auto',
                 }}>
@@ -97,7 +107,8 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                             {language_name(t, code as LanguageCode)}
                         </div>
                     ))}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     )

@@ -16,6 +16,7 @@ test.describe('@ui translate titlebar', () => {
 
     test('ordinary action symbols match text size while window controls are larger', async ({ omni }) => {
         const translate = await omni.translate()
+        await translate.dismissWelcome()
 
         const clear_width = await translate.icon_width(translate.clearSourceButton())
         const translate_width = await translate.icon_width(translate.translateButton())

@@ -312,6 +312,31 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
+    test('changing language with source text retranslates immediately', async () => {
+        const omni = await AppFixture.start({ config: lingva_config() })
+
+        try {
+            const translate = await omni.translate()
+            await translate.fulfill_lingva_translation_once('初始译文')
+            await translate.typeSource('language switch text')
+            await translate.clickTranslate()
+            await expect(translate.resultBody('lingva@default')).toContainText('初始译文')
+
+            await translate.sourceInput().page().route('https://lingva.lunar.icu/api/v1/*/ja/**', async (route) => {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ translation: '日语译文' }),
+                })
+            }, { times: 1 })
+
+            await translate.selectTargetLanguage('ja')
+            await expect(translate.resultBody('lingva@default')).toContainText('日语译文')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user gets the configured second language when detected language equals target language', async () => {
         const omni = await AppFixture.start({
             config: lingva_config({
@@ -369,6 +394,7 @@ test.describe('@ui translate behavior settings', () => {
             const open_result = await omni.api.openWindow('translate')
             expect(open_result.success).toBe(true)
             const reopened = await omni.translate()
+            await reopened.dismissWelcome()
 
             await expect(reopened.sourceLanguage()).toContainText('英文')
             await expect(reopened.targetLanguage()).toContainText('日语')

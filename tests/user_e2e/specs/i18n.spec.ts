@@ -37,6 +37,7 @@ test.describe('@ui i18n', () => {
 
         try {
             const translate = await omni.translate()
+            await translate.dismissWelcome()
             const config = await omni.openConfig()
             const recognize = await omni.openRecognize()
             const updater = await omni.mockUpdate(MOCK_RELEASE)
@@ -122,6 +123,7 @@ test.describe('@ui i18n', () => {
 
         try {
             const translate = await omni.translate()
+            await translate.dismissWelcome()
             const updater = await omni.mockUpdate(MOCK_RELEASE)
 
             await expect(translate.sourceLanguageButton()).toContainText('Auto Detect')

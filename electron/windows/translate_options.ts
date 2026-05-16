@@ -6,8 +6,10 @@ export function get_translate_window_options(): WindowOptions {
     const remember_size = getConfig('translate_remember_window_size') as boolean
     return {
         label: WindowLabel.TRANSLATE,
-        width: remember_size ? (getConfig('translate_window_width') as number) : 350,
-        height: remember_size ? (getConfig('translate_window_height') as number) : 420,
+        width: remember_size ? (getConfig('translate_window_width') as number) : 430,
+        height: remember_size ? (getConfig('translate_window_height') as number) : 360,
+        minWidth: 430,
+        minHeight: 240,
         alwaysOnTop: getConfig('translate_always_on_top') as boolean,
     }
 }

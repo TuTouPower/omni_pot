@@ -7,6 +7,14 @@
     box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     margin: 0;
     font-family: var(--font-sans);
@@ -255,8 +263,8 @@ select {
 
 .op-titlebar .ic-btn svg,
 .drag-region .ic-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
 .ic-btn:disabled {

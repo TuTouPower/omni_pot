@@ -156,13 +156,13 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 />
             </div>
             {/* Action bar */}
-            <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px 8px' }}>
+            <div data-testid="source-action-row" style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px 8px', minWidth: 390 }}>
                 {detectedLanguage && sourceLanguage === 'auto' && (
                     <button
                         type="button"
                         data-testid="detected-lang"
                         onClick={onDetectedLanguageClick}
-                        style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4, background: 'transparent', border: 0, cursor: onDetectedLanguageClick ? 'pointer' : 'default' }}
+                        style={{ fontSize: 10.5, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4, background: 'transparent', border: 0, cursor: onDetectedLanguageClick ? 'pointer' : 'default', whiteSpace: 'nowrap' }}
                     >
                         {t('detected_language_prefix')} <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{language_name(t, detectedLanguage)}</span>
                     </button>

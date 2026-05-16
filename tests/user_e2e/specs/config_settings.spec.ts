@@ -62,8 +62,8 @@ test.describe('@ui config settings window', () => {
             const config = await omni.openConfig()
 
             await expect.poll(async () => await translate.documentTheme()).toBe('light')
-            await expect.poll(async () => await translate.documentPrimaryColor()).toBe('#c4623a')
-            await expect_config(omni, 'app_primary_color', '#c4623a')
+            await expect.poll(async () => await translate.documentPrimaryColor()).toBe('#5a9bbf')
+            await expect_config(omni, 'app_primary_color', '#5a9bbf')
             await expect.poll(async () => await translate.documentTransparent()).toBe('true')
             await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(true)
             await config.select('cfg-app_theme', 'dark')
@@ -74,7 +74,7 @@ test.describe('@ui config settings window', () => {
             await expect_config(omni, 'app_theme', 'dark')
 
             await expect(config.primaryColorButtons()).toHaveCount(5)
-            await expect(config.setting('cfg-app_primary_color-terracotta')).toHaveAttribute('aria-pressed', 'true')
+            await expect(config.setting('cfg-app_primary_color-sky')).toHaveAttribute('aria-pressed', 'true')
             await config.setting('cfg-app_primary_color-ultramarine').click()
             await expect(config.setting('cfg-app_primary_color-ultramarine')).toHaveAttribute('aria-pressed', 'true')
             await expect.poll(async () => await config.documentPrimaryColor()).toBe('#3a6ea5')
