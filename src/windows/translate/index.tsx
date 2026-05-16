@@ -508,6 +508,7 @@ export default function TranslateWindow(): React.ReactElement {
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
     const showSource = forceShowSource || !hideSource
+    const show_welcome_empty = sourceText.trim() === '' && !welcome_dismissed && !selection_notice
 
     return (
         <div
@@ -555,10 +556,12 @@ export default function TranslateWindow(): React.ReactElement {
                     </div>
                 )}
                 {!hideLanguage && <LanguageArea onSwap={handleSwapLanguages} />}
-                {sourceText.trim() === '' && !welcome_dismissed && !selection_notice && (
+                {show_welcome_empty && (
                     <WelcomeEmpty onSkip={() => { setWelcomeDismissed(true); }} />
                 )}
-                <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />
+                {!show_welcome_empty && (
+                    <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />
+                )}
             </div>
         </div>
     )
