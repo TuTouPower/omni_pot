@@ -4,10 +4,23 @@ import App from './App'
 import './styles/globals.css'
 import { registerAllServices } from './services'
 import { useConfigStore } from './stores/config_store'
-import type { AppConfig } from '@shared/types/config'
+import type { AppConfig, AppPrimaryColor } from '@shared/types/config'
 import { bindI18nToConfig } from './i18n'
 
 const theme_query = window.matchMedia('(prefers-color-scheme: dark)')
+
+function apply_primary_color(color: AppPrimaryColor): void {
+  const root = document.documentElement
+  root.style.setProperty('--brand-primary', color)
+  root.style.setProperty('--brand-primary-hover', `color-mix(in oklab, ${color} 88%, black)`)
+  root.style.setProperty('--brand-primary-soft', `color-mix(in oklab, ${color} 14%, transparent)`)
+  root.dataset.primaryColor = color
+}
+
+function apply_transparent(transparent: boolean): void {
+  document.documentElement.classList.toggle('transparent', transparent)
+  document.documentElement.dataset.transparent = String(transparent)
+}
 
 function apply_theme(theme: AppConfig['app_theme']): void {
   const dark = theme === 'dark' || (theme === 'system' && theme_query.matches)
@@ -16,10 +29,19 @@ function apply_theme(theme: AppConfig['app_theme']): void {
 }
 
 function bind_theme_to_config(): void {
-  apply_theme(useConfigStore.getState().config.app_theme)
+  const initial_config = useConfigStore.getState().config
+  apply_theme(initial_config.app_theme)
+  apply_primary_color(initial_config.app_primary_color)
+  apply_transparent(initial_config.transparent)
   useConfigStore.subscribe((state, prev) => {
     if (state.config.app_theme !== prev.config.app_theme) {
       apply_theme(state.config.app_theme)
+    }
+    if (state.config.app_primary_color !== prev.config.app_primary_color) {
+      apply_primary_color(state.config.app_primary_color)
+    }
+    if (state.config.transparent !== prev.config.transparent) {
+      apply_transparent(state.config.transparent)
     }
   })
   theme_query.addEventListener('change', () => {

@@ -113,6 +113,7 @@ export class E2eApi {
         visible: boolean
         focused: boolean
         alwaysOnTop: boolean
+        transparent: boolean
         bounds: { x: number; y: number; width: number; height: number } | null
     }> {
         return this.request('GET', `/e2e/window-state?label=${encodeURIComponent(label)}`) as Promise<{

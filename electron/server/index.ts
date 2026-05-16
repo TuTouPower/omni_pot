@@ -473,7 +473,7 @@ function handleWindowState(
     const win = mgr.getWindow(label as WindowLabel)
     if (!win) {
         res.writeHead(200)
-        res.end(JSON.stringify({ success: true, label, exists: false, visible: false, focused: false, alwaysOnTop: false, bounds: null }))
+        res.end(JSON.stringify({ success: true, label, exists: false, visible: false, focused: false, alwaysOnTop: false, transparent: false, bounds: null }))
         return
     }
 
@@ -485,6 +485,7 @@ function handleWindowState(
         visible: win.isVisible(),
         focused: win.isFocused(),
         alwaysOnTop: win.isAlwaysOnTop(),
+        transparent: mgr.isTransparent(label as WindowLabel),
         bounds: win.getBounds(),
     }))
 }

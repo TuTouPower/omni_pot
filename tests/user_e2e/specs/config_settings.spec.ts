@@ -55,19 +55,31 @@ test.describe('@ui config settings window', () => {
     })
 
     test('user changes general settings and the theme broadcasts to open windows', async () => {
-        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', dev_mode: true } })
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', app_primary_color: '#bad', transparent: true, dev_mode: true } })
 
         try {
             const translate = await omni.translate()
             const config = await omni.openConfig()
 
             await expect.poll(async () => await translate.documentTheme()).toBe('light')
+            await expect.poll(async () => await translate.documentPrimaryColor()).toBe('#c4623a')
+            await expect_config(omni, 'app_primary_color', '#c4623a')
+            await expect.poll(async () => await translate.documentTransparent()).toBe('true')
+            await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(true)
             await config.select('cfg-app_theme', 'dark')
             await expect.poll(async () => await config.documentTheme()).toBe('dark')
             await expect.poll(async () => await config.documentHasDarkClass()).toBe(true)
             await expect.poll(async () => await translate.documentTheme()).toBe('dark')
             await expect.poll(async () => await translate.documentHasDarkClass()).toBe(true)
             await expect_config(omni, 'app_theme', 'dark')
+
+            await expect(config.primaryColorButtons()).toHaveCount(5)
+            await expect(config.setting('cfg-app_primary_color-terracotta')).toHaveAttribute('aria-pressed', 'true')
+            await config.setting('cfg-app_primary_color-ultramarine').click()
+            await expect(config.setting('cfg-app_primary_color-ultramarine')).toHaveAttribute('aria-pressed', 'true')
+            await expect.poll(async () => await config.documentPrimaryColor()).toBe('#3a6ea5')
+            await expect.poll(async () => await translate.documentPrimaryColor()).toBe('#3a6ea5')
+            await expect_config(omni, 'app_primary_color', '#3a6ea5')
 
             await config.select('cfg-app_language', 'en')
             await expect_config(omni, 'app_language', 'en')
@@ -87,10 +99,26 @@ test.describe('@ui config settings window', () => {
             await expect_config(omni, 'app_font_size', 18)
             await expect_config(omni, 'server_port', 20444)
 
-            if (await config.setting('cfg-transparent').count() > 0) {
-                await config.toggle('cfg-transparent')
-                await expect_config(omni, 'transparent', false)
-            }
+            await expect(config.setting('cfg-transparent')).toBeVisible()
+            await config.toggle('cfg-transparent')
+            await expect.poll(async () => await config.documentTransparent()).toBe('false')
+            await expect.poll(async () => await translate.documentTransparent()).toBe('false')
+            await expect_config(omni, 'transparent', false)
+
+            await translate.clickClose()
+            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            const input_result = await omni.api.triggerInputTranslate()
+            expect(input_result.success).toBe(true)
+            await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(false)
+
+            const opaque_translate = await omni.translate()
+            await opaque_translate.clickClose()
+            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            await config.toggle('cfg-transparent')
+            await expect_config(omni, 'transparent', true)
+            const transparent_result = await omni.api.triggerInputTranslate()
+            expect(transparent_result.success).toBe(true)
+            await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(true)
         } finally {
             await omni.stop()
         }

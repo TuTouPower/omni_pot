@@ -16,6 +16,21 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+.transparent body {
+    background: transparent;
+}
+
+.transparent .op-window {
+    background: color-mix(in oklab, var(--bg) 88%, transparent);
+}
+
+.transparent .card,
+.transparent .field,
+.transparent .select,
+.transparent .bg-elev {
+    backdrop-filter: blur(18px);
+}
+
 button {
     font: inherit;
     color: inherit;
