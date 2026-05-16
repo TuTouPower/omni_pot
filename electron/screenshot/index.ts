@@ -15,12 +15,12 @@ export async function capture_screenshot(): Promise<string> {
         }
     })
 
-    const first_source = sources.at(0)
-    if (!first_source) {
+    const source = sources.find((item) => item.display_id === String(primary_display.id)) ?? sources.at(0)
+    if (!source) {
         throw new Error('No screen source available')
     }
 
-    const thumbnail = first_source.thumbnail
+    const thumbnail = source.thumbnail
     return thumbnail.toPNG().toString('base64')
 }
 

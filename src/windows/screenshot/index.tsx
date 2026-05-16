@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
+import { map_cover_rect_to_image_rect } from './crop'
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -14,19 +15,23 @@ interface SelectionRect {
     height: number
 }
 
-function crop_image(base64: string, rect: SelectionRect): Promise<string> {
+function crop_image(base64: string, rect: SelectionRect, container_size: { width: number; height: number }): Promise<string> {
     return new Promise((resolve, reject) => {
         const img = new Image()
         img.onload = () => {
+            const image_rect = map_cover_rect_to_image_rect(rect, container_size, {
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+            })
             const canvas = document.createElement('canvas')
-            canvas.width = rect.width
-            canvas.height = rect.height
+            canvas.width = image_rect.width
+            canvas.height = image_rect.height
             const ctx = canvas.getContext('2d')
             if (!ctx) {
                 reject(new Error('Failed to get canvas context'))
                 return
             }
-            ctx.drawImage(img, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height)
+            ctx.drawImage(img, image_rect.x, image_rect.y, image_rect.width, image_rect.height, 0, 0, image_rect.width, image_rect.height)
             const data_url = canvas.toDataURL('image/png')
             resolve(data_url.replace('data:image/png;base64,', ''))
         }
@@ -85,7 +90,10 @@ export default function ScreenshotWindow(): React.ReactElement {
         }
 
         try {
-            const cropped = await crop_image(background, rect)
+            const container = containerRef.current
+            if (!container) return
+            const bounds = container.getBoundingClientRect()
+            const cropped = await crop_image(background, rect, { width: bounds.width, height: bounds.height })
 
             const { ocrServiceRegistry } = await import('@/services/registry')
             const { useConfigStore } = await import('@/stores/config_store')
