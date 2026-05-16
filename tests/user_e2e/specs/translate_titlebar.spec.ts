@@ -14,6 +14,15 @@ test.describe('@ui translate titlebar', () => {
         await expect.poll(async () => await translate.closeButtonAppRegion()).toBe('no-drag')
     })
 
+    test('ordinary action symbols match text size while window controls are larger', async ({ omni }) => {
+        const translate = await omni.translate()
+
+        await expect.poll(async () => await translate.icon_width(translate.clearSourceButton())).toBe(13)
+        await expect.poll(async () => await translate.icon_width(translate.translateButton())).toBe(13)
+        await expect.poll(async () => await translate.icon_width(translate.pinButton())).toBe(14)
+        await expect.poll(async () => await translate.icon_width(translate.closeButton())).toBe(14)
+    })
+
     test('user can pin and close the translate window', async ({ omni }) => {
         const page = await omni.firstWindow()
         const translate = await omni.translate()

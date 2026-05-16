@@ -28,6 +28,10 @@ export class TranslatePage {
         return this.page.getByTestId('titlebar-close')
     }
 
+    icon_width(locator: Locator): Promise<number> {
+        return locator.locator('svg').evaluate((svg) => svg.getBoundingClientRect().width)
+    }
+
     sourceInput(): Locator {
         return this.page.getByTestId('source-input')
     }
