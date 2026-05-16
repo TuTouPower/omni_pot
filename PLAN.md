@@ -17,7 +17,7 @@
 
 ### P0: 已知产品缺陷与测试重审（重新打开）
 
-- [X] 全量重审当前 Playwright/Vitest 测试，改掉按当前错误实现补断言的用例（已重写源文本 TTS 按钮启用断言、收敛 OCR/TTS 默认期望、补 OCR 跨域 mock fetch override）
+- [X] 全量重审当前 Playwright/Vitest 测试，改掉按当前错误实现补断言的用例（已重写源文本 TTS 按钮启用断言、收敛 OCR/TTS 默认期望、补 OCR 跨域 mock fetch override；再次审计并改写 daemon / `__initialized` / exact icon px / result-card key order / service key order 等内部实现断言，集成测试改为真实 config store 行为）
 - [X] 为 `docs/issues/issues.md` 中的开放问题补失败测试或人工验收步骤（剩余 2 条明确标为 Windows 实机 smoke）
 - [X] 先解决规格冲突：欢迎页（决策维持配置窗作首运行入口）、OCR/TTS 默认服务（已补 tesseract / edge_tts 默认）
 - [X] 修复通用窗口加载转圈（移除 React.lazy 改直接 import）、设置/识别窗口尺寸与拖动、下拉框裁剪等窗口基础问题

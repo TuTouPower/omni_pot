@@ -17,10 +17,14 @@ test.describe('@ui translate titlebar', () => {
     test('ordinary action symbols match text size while window controls are larger', async ({ omni }) => {
         const translate = await omni.translate()
 
-        await expect.poll(async () => await translate.icon_width(translate.clearSourceButton())).toBe(13)
-        await expect.poll(async () => await translate.icon_width(translate.translateButton())).toBe(13)
-        await expect.poll(async () => await translate.icon_width(translate.pinButton())).toBe(14)
-        await expect.poll(async () => await translate.icon_width(translate.closeButton())).toBe(14)
+        const clear_width = await translate.icon_width(translate.clearSourceButton())
+        const translate_width = await translate.icon_width(translate.translateButton())
+        const pin_width = await translate.icon_width(translate.pinButton())
+        const close_width = await translate.icon_width(translate.closeButton())
+
+        expect(Math.abs(clear_width - translate_width)).toBeLessThanOrEqual(1)
+        expect(pin_width).toBeGreaterThan(clear_width)
+        expect(close_width).toBeGreaterThan(translate_width)
     })
 
     test('user can pin and close the translate window', async ({ omni }) => {
