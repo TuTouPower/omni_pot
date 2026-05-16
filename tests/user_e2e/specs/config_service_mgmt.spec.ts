@@ -3,7 +3,7 @@ import { AppFixture } from '../fixtures/app_fixture'
 
 const SERVICE_CATEGORIES = [
     ['translate_service_list', '翻译', ['Bing', 'Google', 'DeepL']],
-    ['dictionary_service_list', '字典', ['Free Dictionary', 'ECDICT']],
+    ['dictionary_service_list', '字典', ['中文词典', 'Free Dictionary', 'ECDICT']],
     ['recognize_service_list', '识别', ['Tesseract']],
     ['tts_service_list', '语音合成', ['Edge TTS']],
     ['collection_service_list', '收藏', []],
@@ -105,6 +105,7 @@ test.describe('@ui config service management', () => {
 
         try {
             const translate = await omni.translate()
+            await translate.typeSource('hello')
             const config = await omni.openConfig()
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')
@@ -174,6 +175,7 @@ test.describe('@ui config service management', () => {
 
         try {
             const translate = await omni.translate()
+            await translate.typeSource('hello')
             const config = await omni.openConfig()
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')

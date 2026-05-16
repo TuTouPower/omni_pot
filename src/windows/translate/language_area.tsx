@@ -111,6 +111,7 @@ export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement 
     const { t } = useTranslation()
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
+    const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
     const setSourceLanguage = useTranslateStore((s) => s.setSourceLanguage)
     const setTargetLanguage = useTranslateStore((s) => s.setTargetLanguage)
 
@@ -123,7 +124,7 @@ export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement 
                 <Icons.Swap size={18} />
             </button>
             <div data-testid="lang-target">
-                <LangPick value={targetLanguage} onChange={setTargetLanguage} options={TARGET_LANGUAGES} testId="lang-target-button" optionTestIdPrefix="lang-target-option" />
+                <LangPick value={effectiveTargetLanguage ?? targetLanguage} onChange={setTargetLanguage} options={TARGET_LANGUAGES} testId="lang-target-button" optionTestIdPrefix="lang-target-option" />
             </div>
         </div>
     )
