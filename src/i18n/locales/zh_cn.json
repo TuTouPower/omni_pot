@@ -173,7 +173,8 @@
     "about": {
         "title": "关于",
         "version": "版本",
-        "github": "GitHub"
+        "github": "GitHub",
+        "check_update": "检查更新"
     },
     "recognize": {
         "title": "识别",

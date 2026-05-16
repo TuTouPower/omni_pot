@@ -181,6 +181,8 @@ test.describe('@ui config settings window', () => {
             await expect(config.aboutLink('home')).toContainText('官网')
             await expect(config.aboutLink('docs')).toContainText('文档')
             await expect(config.aboutLink('feedback')).toContainText('反馈')
+            await expect(config.aboutCheckUpdate()).toContainText('检查更新')
+            await expect(config.aboutCheckUpdate()).not.toContainText('about.check_update')
             await expect(config.aboutDiagnostic('about-config-dir')).toContainText('config.json')
             await expect(config.aboutDiagnostic('about-log-dir')).toContainText('logs')
             await expect(config.aboutDiagnostic('about-api-url')).toContainText(/http:\/\/127\.0\.0\.1:\d+/)

@@ -173,7 +173,8 @@
     "about": {
         "title": "About",
         "version": "Version",
-        "github": "GitHub"
+        "github": "GitHub",
+        "check_update": "Check for updates"
     },
     "recognize": {
         "title": "Recognize",
