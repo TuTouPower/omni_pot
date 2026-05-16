@@ -233,6 +233,17 @@ select {
     color: var(--text);
 }
 
+.ic-btn svg {
+    width: var(--fs-base);
+    height: var(--fs-base);
+}
+
+.op-titlebar .ic-btn svg,
+.drag-region .ic-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
 .ic-btn:disabled {
     cursor: default;
     opacity: 0.45;
