@@ -47,10 +47,11 @@
 | E1 | Bing Translate | `src/services/bing.ts` | ✅ 已修复 | **问题**: token 正则匹配错误 + token/key 分开发送；后续又发现 `bing.com/translator` 会跳转到区域域名。**修复**: 正则改为 `\[(\d+),\s*"([^"]+)"`，`key` 字段传时间戳，并使用最终页面 origin 调用 `ttranslatev3` |
 | E2 | Yandex Translate | `src/services/yandex.ts` | ❌ 已移除 | 403 "Session is invalid"，免费端点已关闭，代码已删除 |
 | E3 | Bing Dictionary | `src/services/bing_dict.ts` | ❌ 已移除 | API 返回 403 "Access disabled"，服务已停用，代码已删除 |
-| E4 | ECDICT | `src/services/ecdict.ts` | ✅ 已替换 | 已替换为 CC-CEDICT 离线方案（better-sqlite3 + FTS5） |
+| E4 | ECDICT | `src/services/ecdict.ts` | ✅ 已替换 | 已替换为 CC-CEDICT 离线方案（better-sqlite3 + FTS5），用于中英词典，不作为中文释义词典 |
 | E5 | Cambridge Dictionary | `src/services/cambridge_dict.ts` | ✅ 可用 | HTML 抓取验证通过，所有 CSS 选择器匹配正常 |
 | E6 | Lingva | `src/services/lingva.ts` | ✅ 可用 | 默认实例切换为 `https://lingva.lunar.icu`，使用 `/api/v1` JSON 端点 |
 | E7 | Google Translate | `src/services/google.ts` | ✅ 可用 | 已确认可用 |
+| E8 | 中文词典 | `src/services/chinese_dictionary.ts` | ✅ 可用 | 内置中文单字/词语释义，用于中文输入的中文词典/中文字典结果 |
 
 ---
 
@@ -63,11 +64,12 @@
 4. **MyMemory** — 独立引擎，已有实现 `src/services/mymemory.ts`
 
 ### 词典服务（当前可用）
-1. **dictionaryapi.dev** — 英文词典首选，完全免费，音标+释义+例句+发音
-2. **Cambridge Dictionary** — 已有 HTML 抓取实现，双语支持
-3. **freedictionaryapi.com** — 备选，数据更丰富
-4. **Datamuse** — 同义词/联想词专用
-5. **CC-CEDICT** — 中英词典离线方案，已替换 ECDICT（`src/services/ecdict.ts`）
+1. **中文词典** — 当前内置中文单字/词语释义，用于中文查询（`src/services/chinese_dictionary.ts`）
+2. **dictionaryapi.dev** — 英文词典首选，完全免费，音标+释义+例句+发音
+3. **Cambridge Dictionary** — 已有 HTML 抓取实现，英文释义
+4. **freedictionaryapi.com** — 备选，数据更丰富
+5. **Datamuse** — 同义词/联想词专用
+6. **CC-CEDICT** — 中英词典离线方案，已替换 ECDICT（`src/services/ecdict.ts`）
 
 ### 需要处理（已完成）
 - ~~`src/services/yandex.ts`~~ — 已移除
@@ -75,3 +77,4 @@
 - ~~`src/services/ecdict.ts`~~ — 已替换为 CC-CEDICT 离线方案
 - ~~新增 MyMemory 翻译服务实现~~ — `src/services/mymemory.ts` ✅ 已完成
 - 新增 Free Dictionary 词典服务 — `src/services/free_dictionary.ts` ✅ 已完成
+- 新增中文词典服务 — `src/services/chinese_dictionary.ts` ✅ 已完成

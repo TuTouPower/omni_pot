@@ -40,6 +40,7 @@
 | 服务 | 实现文件 | 说明 |
 |------|----------|------|
 | **Cambridge Dictionary** | `cambridge_dict.ts` | 抓取 Cambridge 词典网页，英文释义，输出 `DictResult` |
+| **中文词典** | `chinese_dictionary.ts` | 内置中文单字/词语释义，输出 `DictResult` |
 | **Free Dictionary** | `free_dictionary.ts` | 调用 dictionaryapi.dev，英文词典，输出 `DictResult` |
 | **ECDict（CC-CEDICT）** | `ecdict.ts` | 离线中英词典（CC-CEDICT SQLite），通过 IPC 调用主进程，输出 `DictResult` |
 
@@ -47,12 +48,13 @@
 
 ## 词典服务
 
-词典查询通过 `dictionary_service_list` 配置，与翻译服务共用同一注册表。
+词典查询通过 `dictionary_service_list` 配置，与翻译服务共用同一注册表。词典窗口按输入文字类型筛选服务：中文输入只查询中文词典/中文字典服务，英文输入查询英文词典服务。
 以下服务返回 `DictResult`（`type='dict'`），适合在词典窗口使用：
 
 | 服务 | Key | 费用 | 说明 |
 |------|-----|------|------|
-| **Free Dictionary** | `free_dictionary` | 免费 | dictionaryapi.dev，发音/释义/例句 |
+| **中文词典** | `chinese_dictionary` | 免费 | 内置中文单字/词语释义 |
+| **Free Dictionary** | `free_dictionary` | 免费 | dictionaryapi.dev，英文发音/释义/例句 |
 | **ECDict（CC-CEDICT）** | `ecdict` | 免费 | 离线中英词典，better-sqlite3 + FTS5 |
 | **Cambridge Dictionary** | `cambridge_dict` | 免费 | HTML 抓取，英文释义 |
 
@@ -98,8 +100,9 @@
 - ✅ Google — 免费，非官方接口
 - ✅ Bing — 免费，非官方接口
 - ✅ MyMemory — 免费，匿名 5000 字符/天
+- ✅ 中文词典 — 免费，内置中文释义
 - ✅ Free Dictionary — 免费（dictionaryapi.dev）
-- ✅ ECDict（CC-CEDICT）— 免费，离线词典
+- ✅ ECDict（CC-CEDICT）— 免费，离线中英词典
 - ✅ Cambridge Dictionary — 免费
 - ✅ Lingva — 免费（依赖第三方实例）
 - ✅ Tesseract — 免费，本地 OCR
