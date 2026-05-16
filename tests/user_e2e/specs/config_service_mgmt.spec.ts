@@ -2,20 +2,16 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
 const SERVICE_CATEGORIES = [
-    ['translate_service_list', '翻译', ['bing@default', 'google@default', 'deepl@default']],
-    ['dictionary_service_list', '字典', ['free_dictionary@default', 'ecdict@default']],
-    ['recognize_service_list', '识别', ['tesseract@default']],
-    ['tts_service_list', '语音合成', ['edge_tts@default']],
+    ['translate_service_list', '翻译', ['Bing', 'Google', 'DeepL']],
+    ['dictionary_service_list', '字典', ['Free Dictionary', 'ECDICT']],
+    ['recognize_service_list', '识别', ['Tesseract']],
+    ['tts_service_list', '语音合成', ['Edge TTS']],
     ['collection_service_list', '收藏', []],
 ] as const
 
 type ServiceInstanceConfig = {
     serviceKey: string
     config: Record<string, unknown>
-}
-
-async function expect_config(omni: AppFixture, key: string, value: unknown): Promise<void> {
-    await expect.poll(async () => (await omni.api.getConfig())[key]).toEqual(value)
 }
 
 async function expect_service_config(omni: AppFixture, instance_key: string, value: Record<string, unknown>): Promise<void> {
@@ -36,12 +32,15 @@ test.describe('@ui config service management', () => {
             await expect(config.title()).toContainText('服务')
             await expect(config.addServiceButton()).toBeVisible()
 
-            for (const [category, label, service_keys] of SERVICE_CATEGORIES) {
+            for (const [category, label, service_names] of SERVICE_CATEGORIES) {
                 await config.openServiceCategory(category)
                 await expect(config.serviceTab(category)).toHaveAttribute('aria-selected', 'true')
                 await expect(config.serviceTab(category)).toContainText(label)
-                await expect(config.serviceTab(category)).toContainText(String(service_keys.length))
-                await expect.poll(async () => await config.serviceItemKeys()).toEqual([...service_keys])
+                await expect(config.serviceTab(category)).toContainText(String(service_names.length))
+                await expect(config.serviceItems()).toHaveCount(service_names.length)
+                for (const service_name of service_names) {
+                    await expect(config.serviceItems().filter({ hasText: service_name })).toBeVisible()
+                }
             }
 
             await config.openServiceCategory('translate_service_list')
@@ -73,28 +72,24 @@ test.describe('@ui config service management', () => {
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')
 
-            await expect.poll(async () => await config.serviceItemKeys()).toEqual(['bing@default'])
+            await expect(config.serviceItems()).toHaveCount(1)
+            await expect(config.serviceItems().first()).toContainText('Bing')
             await config.addService('google')
 
             let google_key = ''
             await expect.poll(async () => {
                 const service_list = (await omni.api.getConfig()).translate_service_list as string[]
                 google_key = service_list.find((key) => key.startsWith('google@')) ?? ''
-                return service_list.length === 2 && !!google_key
+                return !!google_key
             }).toBe(true)
             await expect(config.serviceItem(google_key)).toContainText('Google')
-            await expect.poll(async () => {
-                const instances = (await omni.api.getConfig()).service_instances as Record<string, { serviceKey: string }>
-                return instances[google_key].serviceKey
-            }).toBe('google')
+            await expect(config.serviceItems()).toHaveCount(2)
 
             await config.deleteService(google_key)
 
-            await expect_config(omni, 'translate_service_list', ['bing@default'])
-            await expect.poll(async () => {
-                const instances = (await omni.api.getConfig()).service_instances as Record<string, unknown>
-                return google_key in instances
-            }).toBe(false)
+            await expect(config.serviceItems()).toHaveCount(1)
+            await expect(config.serviceItems().first()).toContainText('Bing')
+            await expect(config.serviceItems().filter({ hasText: 'Google' })).toHaveCount(0)
         } finally {
             await omni.stop()
         }
@@ -114,18 +109,21 @@ test.describe('@ui config service management', () => {
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')
 
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+            await expect(translate.resultCards()).toHaveCount(2)
+            await expect(translate.resultCards().nth(0)).toContainText('Bing')
+            await expect(translate.resultCards().nth(1)).toContainText('Google')
             await config.toggleService('bing@default')
 
             await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'false')
-            await expect_service_config(omni, 'bing@default', { enable: false })
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['google@default'])
+            await expect(translate.resultCards()).toHaveCount(1)
+            await expect(translate.resultCards().first()).toContainText('Google')
 
             await config.toggleService('bing@default')
 
             await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
-            await expect_service_config(omni, 'bing@default', { enable: true })
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+            await expect(translate.resultCards()).toHaveCount(2)
+            await expect(translate.resultCards().nth(0)).toContainText('Bing')
+            await expect(translate.resultCards().nth(1)).toContainText('Google')
         } finally {
             await omni.stop()
         }
@@ -180,14 +178,19 @@ test.describe('@ui config service management', () => {
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')
 
-            await expect.poll(async () => await config.serviceItemKeys()).toEqual(['bing@default', 'google@default'])
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+            await expect(config.serviceItems()).toHaveCount(2)
+            await expect(config.serviceItems().nth(0)).toContainText('Bing')
+            await expect(config.serviceItems().nth(1)).toContainText('Google')
+            await expect(translate.resultCards()).toHaveCount(2)
+            await expect(translate.resultCards().nth(0)).toContainText('Bing')
+            await expect(translate.resultCards().nth(1)).toContainText('Google')
 
             await config.dragService('bing@default', 'google@default')
 
-            await expect.poll(async () => await config.serviceItemKeys()).toEqual(['google@default', 'bing@default'])
-            await expect_config(omni, 'translate_service_list', ['google@default', 'bing@default'])
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['google@default', 'bing@default'])
+            await expect(config.serviceItems().nth(0)).toContainText('Google')
+            await expect(config.serviceItems().nth(1)).toContainText('Bing')
+            await expect(translate.resultCards().nth(0)).toContainText('Google')
+            await expect(translate.resultCards().nth(1)).toContainText('Bing')
         } finally {
             await omni.stop()
         }

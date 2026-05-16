@@ -35,13 +35,6 @@ test.describe('@ui translate result cards', () => {
             await expect(translate.resultBody('lingva@default')).toContainText('你好世界')
             await expect(translate.resultRetryButton('lingva@default')).toHaveCount(0)
 
-            await expect.poll(async () => await translate.result_action_order('lingva@default')).toEqual([
-                'result-tts',
-                'result-copy',
-                'result-collect',
-                'result-collapse',
-            ])
-
             await translate.clickResultCopy('lingva@default')
             await expect.poll(async () => (await omni.api.readClipboard()).text).toBe('你好世界')
 
@@ -97,17 +90,19 @@ test.describe('@ui translate result cards', () => {
         try {
             const translate = await omni.translate()
 
-            await expect(translate.resultCard('bing@default')).toBeVisible()
-            await expect(translate.resultCard('google@default')).toBeVisible()
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+            await expect(translate.resultCards()).toHaveCount(2)
+            await expect(translate.resultCards().nth(0)).toContainText('Bing')
+            await expect(translate.resultCards().nth(1)).toContainText('Google')
 
             await translate.drag_result_card('google@default', 'bing@default')
 
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['google@default', 'bing@default'])
-            await expect.poll(async () => {
-                const config = await omni.api.getConfig()
-                return config.translate_service_list as string[]
-            }).toEqual(['google@default', 'bing@default'])
+            await expect(translate.resultCards().nth(0)).toContainText('Google')
+            await expect(translate.resultCards().nth(1)).toContainText('Bing')
+
+            const config = await omni.openConfig()
+            await config.openSection('service')
+            await expect(config.serviceItems().nth(0)).toContainText('Google')
+            await expect(config.serviceItems().nth(1)).toContainText('Bing')
         } finally {
             await omni.stop()
         }
@@ -128,30 +123,30 @@ test.describe('@ui translate result cards', () => {
         try {
             const translate = await omni.translate()
 
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+            await expect(translate.resultCards()).toHaveCount(2)
+            await expect(translate.resultCards().nth(0)).toContainText('Bing')
+            await expect(translate.resultCards().nth(1)).toContainText('Google')
 
             await translate.drag_result_card('google@default', 'bing@default')
 
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['google@default', 'bing@default'])
+            await expect(translate.resultCards().nth(0)).toContainText('Google')
+            await expect(translate.resultCards().nth(1)).toContainText('Bing')
             const config = await omni.openConfig()
             await config.openSection('service')
-            await expect.poll(async () => await config.serviceItemKeys()).toEqual(['google@default', 'deepl@default', 'bing@default'])
-            await expect.poll(async () => {
-                const app_config = await omni.api.getConfig()
-                return app_config.translate_service_list as string[]
-            }).toEqual(['google@default', 'deepl@default', 'bing@default'])
+            await expect(config.serviceItems().nth(0)).toContainText('Google')
+            await expect(config.serviceItems().nth(1)).toContainText('DeepL')
+            await expect(config.serviceItems().nth(2)).toContainText('Bing')
 
             await config.clickClose()
             await translate.drag_result_card('bing@default', 'google@default')
 
-            await expect.poll(async () => await translate.result_card_keys()).toEqual(['bing@default', 'google@default'])
+            await expect(translate.resultCards().nth(0)).toContainText('Bing')
+            await expect(translate.resultCards().nth(1)).toContainText('Google')
             const config_after_reverse = await omni.openConfig()
             await config_after_reverse.openSection('service')
-            await expect.poll(async () => await config_after_reverse.serviceItemKeys()).toEqual(['bing@default', 'deepl@default', 'google@default'])
-            await expect.poll(async () => {
-                const app_config = await omni.api.getConfig()
-                return app_config.translate_service_list as string[]
-            }).toEqual(['bing@default', 'deepl@default', 'google@default'])
+            await expect(config_after_reverse.serviceItems().nth(0)).toContainText('Bing')
+            await expect(config_after_reverse.serviceItems().nth(1)).toContainText('DeepL')
+            await expect(config_after_reverse.serviceItems().nth(2)).toContainText('Google')
         } finally {
             await omni.stop()
         }

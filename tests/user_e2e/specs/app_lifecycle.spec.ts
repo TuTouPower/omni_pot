@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
-type WindowLabel = 'daemon' | 'translate' | 'dict' | 'recognize' | 'config'
+type WindowLabel = 'translate' | 'dict' | 'recognize' | 'config'
 const WINDOW_SIZE_DPI_RATIO_TOLERANCE = 0.2
 
 function is_target_closed_error(error: unknown): boolean {
@@ -40,16 +40,13 @@ async function open_recognize_from_screenshot(omni: AppFixture): Promise<void> {
 }
 
 test.describe('@core app lifecycle', () => {
-    test('user starts the app and sees daemon plus default translate window without first-run config', async () => {
+    test('returning user starts the app and sees the default translate window without first-run config', async () => {
         const omni = await AppFixture.start()
 
         try {
             const translate = await omni.translate()
             await expect(translate.wordmark()).toContainText('Omni Pot')
-
-            const daemon_state = await omni.api.windowState('daemon')
-            expect(daemon_state.exists).toBe(true)
-            expect(daemon_state.visible).toBe(false)
+            await expect(translate.sourceInput()).toBeVisible()
 
             const config_state = await omni.api.windowState('config')
             expect(config_state.exists).toBe(false)
@@ -140,9 +137,11 @@ test.describe('@core app lifecycle', () => {
             await press_key_and_allow_close(translate_page, 'Escape')
             await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
 
-            await expect.poll(async () => (await omni.api.getConfig()).__initialized).toBe(true)
             expect((await omni.api.trayAction('input_translate')).success).toBe(true)
             await expect_window_visible(omni, 'translate')
+            const reopened_translate = await omni.translate()
+            await expect(reopened_translate.wordmark()).toContainText('Omni Pot')
+            await expect(reopened_translate.sourceInput()).toBeVisible()
         } finally {
             await omni.stop()
         }

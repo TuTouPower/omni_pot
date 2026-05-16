@@ -431,5 +431,8 @@
    - 当前 `docs/spec.md` 没有定义独立欢迎页；首次运行已经由主进程在 `isFirstRun()` 时打开配置窗口，作为隐式的欢迎/配置引导。
    - 决策：维持现状，不引入独立欢迎页，配置窗口的"通用 / 服务 / 快捷键"分区即作为首次引导。若后续 example 要求独立欢迎页，再补规格、E2E 和实现。
 28. **测试体系守护错误实现 / UI 与功能对齐 example 仍需推进**: 上半轮 P1/P2 已重写大量 Playwright 用例（标题栏、源文本区、语言区、结果卡、词典、识别、截图、配置、托盘、i18n 等），并按真实用户路径断言。
-   - 决策：作为持续工作项，不再单独列为开放 bug。后续每发现一处"测试守护了错误实现"，应在 PR 内同时重写测试 + 修复实现，而不是回到本文件。
+   - 已补充欢迎空状态与配置导航 E2E，覆盖首次/空状态引导、关闭后不反复打扰、配置分区跳转。
+   - 已再次审计测试中守护内部实现的断言，并把 daemon 隐藏窗口、`__initialized`、精确图标像素、result card key 顺序、service key 顺序等断言改为用户可见窗口/文本/服务顺序行为。
+   - 旧 `tests/integration/test_config.ts` 已改为真实 config store integration 并纳入 Vitest；旧 history SQL 复制测试已移除，历史记录增删改查、分页、禁用历史和备份恢复由 Electron 用户 E2E 覆盖。
+   - 后续每发现一处"测试守护了错误实现"，应在 PR 内同时重写测试 + 修复实现，不再作为开放 bug 反复挂起。
    - example 视觉/功能对齐仍以 `docs/design/example/` 为最高优先级，偏差登记到 `docs/design/example_todo.md`，不直接修改 example 文件。
