@@ -18,7 +18,9 @@
 **mapull/chinese-dictionary**（MIT License）
 - GitHub: https://github.com/mapull/chinese-dictionary
 - **Pinned commit**: 构建脚本中硬编码一个已验证的 commit hash（实现时从 clone 的 HEAD 取），
-  构建时校验源目录 HEAD 与 pinned hash 一致，不一致则 warn（不阻塞，但记录到 metadata.source_commit）
+  构建时校验源目录 HEAD 与 pinned hash 一致：
+  - 本地 dev：warn 不阻塞，记录 `expected_source_commit` 与 `actual_source_commit` 到 metadata
+  - CI / release 构建：commit 不一致直接 fail（保证可复现性）
 - 导入范围: `word.json`（61MB, 32万+词语）、`char_detail.json`（13MB, 2万+汉字）、`idiom.json`（24MB, 5万成语）
 - **License 义务**: MIT 要求保留 LICENSE 文件。构建脚本需将源数据的 LICENSE 复制到 `resources/data/dict/chinese-dictionary-LICENSE`
 
@@ -31,8 +33,18 @@
 
 **db 不提交 git**。开发者首次 `npm run dev` 前必须先运行 `npm run build:chinese-dict`。
 为降低门槛，`npm run dev` 启动脚本中自动检测 `resources/data/dict/chinese_dict.db` 是否存在，
-缺失则自动触发 `build:chinese-dict`（或在 `postinstall` 中触发）。
-主进程 `is_ready()=false` 时通过 IPC 返回结构化错误，UI 显示"未构建中文词典，请执行 `npm run build:chinese-dict`"。
+缺失则自动触发 `build:chinese-dict`。**不使用 `postinstall`**（源数据不随仓库提交，新环境 postinstall 会失败）。
+
+主进程 db 状态机：`missing → building → ready | failed`。
+
+| 状态 | 行为 |
+|------|------|
+| `missing` | dev 模式自动触发构建 → 进入 `building`；prod 模式直接进入 `failed` |
+| `building` | IPC `check()` 返回 `{ ready: false, status: 'building' }`，UI 显示"正在构建中文词典" |
+| `ready` | 正常查询 |
+| `failed` | IPC `check()` 返回 `{ ready: false, status: 'failed' }`，UI 显示"未构建中文词典，请执行 `npm run build:chinese-dict`"（仅 prod 或构建失败时） |
+
+dev 模式不应出现"未构建"提示——自动构建应覆盖绝大多数情况。
 
 ## 架构
 
@@ -97,7 +109,8 @@ CREATE TABLE metadata (
 --   build_time = ISO8601
 ```
 
-`schema_version` 为 INTEGER，表结构变更时递增。`data_version` 为语义化字符串。
+`schema_version` 以 TEXT 存储（metadata.value 列为 TEXT），消费侧 `parseInt` 比较。
+表结构变更时递增（如 `"1"` → `"2"`）。`data_version` 为语义化字符串。
 
 ### words 表（word.json，32万+条）
 
@@ -156,6 +169,8 @@ CREATE VIRTUAL TABLE characters_fts USING fts5(char, explanation, content=charac
 `MATCH '莫名其*'` 会匹配"莫名其妙"（前 3 个 unigram 匹配）。
 `tokenize='trigram'`（SQLite 3.34+）对短前缀更友好，但对 32 万行的 words 表会增加索引体积。
 选择 `unicode61` 并在测试中严格验证三个验收词的命中行为，不扩大承诺。
+能力定义为"前缀 / FTS 辅助召回 + exact 优先"，不等价于中文子串搜索。
+若验收词测试失败，fallback 方案：`LIKE '词%'` 或 `tokenize='trigram'`（需评估索引体积）。
 
 构建脚本在所有数据插入完成后执行 FTS rebuild:
 ```sql
@@ -173,10 +188,13 @@ INSERT INTO characters_fts(characters_fts) VALUES('rebuild');
 4. 只提取需要的字段，丢弃 story、spelling、detail 等冗余数据
 5. 对 word、pinyin、explanation 设长度上限（如 word ≤ 100 字符，explanation ≤ 10000 字符），超限记录警告
 6. 用 better-sqlite3 创建 SQLite，**所有写入使用 prepared statements**
+7. 源 JSON 合计 ~100MB，直接 `JSON.parse` 内存峰值高。实现时分文件串行 parse → insert → GC，
+   或使用流式 JSON 解析（如 `stream-json`）。WSL / CI 小内存环境需关注。
 7. 执行 FTS rebuild
 8. 写入 metadata（schema_version、data_version、source、source_commit、build_time）
 9. 复制 LICENSE 到 `resources/data/dict/chinese-dictionary-LICENSE`
 10. 输出到 `resources/data/dict/chinese_dict.db`
+11. 校验输出 db 体积：> 100MB → warn；> 150MB → 构建失败
 
 ### char_detail.json 展平规则
 
@@ -198,7 +216,20 @@ INSERT INTO characters_fts(characters_fts) VALUES('rebuild');
 | `electron/main.ts` | 修改 | 注册 IPC handlers |
 | `electron-builder.yml` | 修改 | 添加 `extraResources` 配置 |
 | `package.json` | 修改 | 增加 `build:chinese-dict` 脚本 |
-| `.gitignore` | 修改 | 忽略 `resources/data/dict/chinese_dict.db` 和 `resources/data/dict/chinese-dictionary-LICENSE` |
+| `.gitignore` | 修改 | 忽略 `resources/data/dict/chinese_dict.db`、`*.db-shm`、`*.db-wal` |
+
+### extraResources 配置
+
+```yaml
+extraResources:
+  - from: "resources/data/dict/"
+    to: "data/dict/"
+    filter:
+      - "**/*.db"
+      - "**/chinese-dictionary-LICENSE"
+      - "!**/*.db-shm"
+      - "!**/*.db-wal"
+```
 
 ### shared 类型变更
 
@@ -212,6 +243,17 @@ chineseDict: {
 ```
 
 命名约定：主进程内部函数/变量用 `snake_case`（CLAUDE.md 规范），preload contextBridge 暴露用 `camelCase`（JavaScript API 惯例）。
+
+### 文件清单补充
+
+- `shared/types/service.ts`：本期 DictResult 类型**不修改**，idiom_meta 扩展留到 FUTURE
+- `detect.local` bridge 类型声明在 `electron/preload.ts` 内部（contextBridge），不单独放 shared/
+- `detect_local()` 返回值增加 `source: 'cld3' | 'regex'` 字段，便于测试和日志判断
+
+### 安全约束
+
+- IPC 不允许渲染进程传入 db 路径或源数据路径（路径由主进程硬编码）
+- cld3-asm Apache-2.0 要求保留 NOTICE 文件，构建时需确认 `node_modules/cld3-asm/NOTICE` 存在
 
 ## 查询策略
 
@@ -234,8 +276,12 @@ chineseDict: {
 不使用 LIKE（LIKE 无法利用 FTS5 索引，性能差）。
 
 **FTS 查询转义**：用户输入直接拼接到 FTS MATCH 可能被特殊字符破坏语法。
-exact 查询用普通参数绑定；FTS 查询只允许中文、字母、数字、空白，
-其他字符做 FTS5 `quote()` 转义或直接 strip。空输入、超长输入（>100 字符）直接返回空。
+清洗规则：
+1. strip 所有非白名单字符（只保留中文、字母、数字、空白）
+2. 主进程在末尾追加 `*` 形成前缀查询
+3. 用户输入不含 `*`（已 strip），前缀 `*` 由主进程统一追加
+4. 空输入、超长输入（>100 字符）直接返回空
+5. exact 查询用普通参数绑定，不做 FTS 拼接
 
 ### idiom 二次查询说明
 
@@ -255,9 +301,32 @@ definitions: [{ partOfSpeech: speech, meanings: [explanation] }]
 examples: [{ source: example, target: '' }]  // 仅当有 example 时
 ```
 
-characters 表的 `explanation` 为 JSON 数组（含多音字分组），映射时：
-- 单音字：直接取 `content` 作为 meanings
-- 多音字：按读音分组，每个读音一个 definition 条目
+characters 表的 `explanation` 为 JSON 数组（含多音字分组），映射伪代码：
+
+```typescript
+// 主进程 chinese_dict_handlers.ts 中
+function to_dict_result_char(row: CharacterRow): DictResult {
+    const explanations = JSON.parse(row.explanation) as { pinyin: string; speech: string; content: string }[]
+    const pinyins = JSON.parse(row.pinyin) as string[]
+
+    // 单音字：一个 definition
+    // 多音字：按 pinyin 分组，每个读音一个 definition
+    const grouped = group_by(explanations, e => e.pinyin)
+    const definitions = Object.entries(grouped).map(([py, items]) => ({
+        partOfSpeech: items.map(i => i.speech).join('、'),
+        meanings: items.map(i => i.content),
+    }))
+
+    return {
+        type: 'dict',
+        pronunciations: pinyins.map(p => ({ region: '普通话', phonetic: p })),
+        definitions,
+        examples: [],
+    }
+}
+```
+
+单音字产出 1 个 definition，多音字产出 N 个 definition（按读音分组）。
 
 **映射归属：主进程 `chinese_dict_handlers.ts`**。
 IPC 返回的已经是完整 `DictResult`，渲染层直接使用，不做 JSON.parse 或二次分组。
@@ -269,14 +338,17 @@ IPC 返回的已经是完整 `DictResult`，渲染层直接使用，不做 JSON.
 |------|------|
 | db 文件缺失 | `is_ready()` 返回 false，`lookup()` 返回空，服务降级为不可用 |
 | db 文件损坏（SQLite 打开失败） | 捕获异常，log.error，`is_ready()` 返回 false，缓存失败状态避免重复重试 |
-| db schema 版本不匹配 | dev: log.error 提示重跑 `build:chinese-dict`；prod: log.error 服务降级（db 是 bundled 资源，用户无构建环境） |
-| 查询异常 | 捕获异常，返回空结果，不阻塞其他服务 |
+| db schema 版本不匹配 | dev: 自动 rebuild（schema_version 低于期望时触发）；prod: log.error 服务降级（db 为 bundled 资源，用户无构建环境） |
+| 查询异常（SQL/schema 错误） | 捕获异常，log.error，`is_ready()` 置 false，后续调用直接返回空（不伪装为"无命中"） |
+| 查询无命中 | 返回空结果（正常业务） |
 
 ### 失败缓存与热加载
 
 `is_ready()` 失败缓存为 in-memory 状态（进程级）。
 提供 `dict:reload` IPC，用户重新构建 db 后可通过 UI 触发重新打开，无需重启应用。
 开发模式下也可监听 `resources/data/dict/chinese_dict.db` 的文件 mtime 变化自动触发 reload。
+使用 `fs.watch` + debounce 500ms，仅 dev 且 `dict.chinese_enabled=true` 时启用。
+`dict:reload` IPC 关闭旧连接、清空 prepared statement、重开 db，无路径参数（避免路径滥用）。
 
 ## 测试计划
 
@@ -289,6 +361,8 @@ IPC 返回的已经是完整 `DictResult`，渲染层直接使用，不做 JSON.
 - 验证 LICENSE 缺失时构建脚本 fail fast
 - 验证源 JSON 字段缺失时构建脚本 fail fast
 - 验证 `explanation` JSON 数组结构正确（多音字保持分组）
+- 验证源 commit 与 pinned hash 不一致时：dev warn + CI fail
+- 验证 `dict:reload` 后旧连接关闭，新 db 可查
 
 ### FTS 模糊查询验收词
 
@@ -323,8 +397,11 @@ IPC 返回的已经是完整 `DictResult`，渲染层直接使用，不做 JSON.
 - 验证 db 重新构建后通过 `dict:reload` IPC 热加载，无需重启
 - 验证 `dict.chinese_enabled=false` 时 IPC 短路返回 null
 - 验证 FTS 查询特殊字符输入不抛异常
-- 验证 FTS 中文分词：`MATCH '莫名其*'` 命中"莫名其妙"
+- 验证 FTS 中文分词：`MATCH '莫名其*'` 命中"莫名其妙"（需实证，非理论推断）
+- 验证 FTS 全角标点输入（如"你好，世界！"）不抛异常
+- 验证 cld3 初始化耗时 < 500ms（防依赖升级回归）
 - CI 验证 db 体积 ≤ 100MB
+- 三平台冒烟：dist 后 Windows/macOS/Linux 各跑 `chineseDict.lookup()` + `detect.local()`
 
 ## 性能预期
 
@@ -403,7 +480,8 @@ cld3 返回 `is_reliable`（布尔）和 `proportion`（0-1）。
 
 ### 集成步骤
 
-1. `npm install cld3-asm`
+1. **Spike 验证**：先做最小集成——dev + build + dist 环境各调用一次 `detect_local()`，确认 cld3-asm 与 Electron 39 / Vite 兼容
+2. `npm install cld3-asm`
 2. 在主进程添加 `detect_cld3()` 函数，使用 `loadModule()` 初始化 WASM
 3. `app.whenReady()` 后异步预加载 WASM factory，失败不阻塞应用启动（log.error + 标记不可用）
 4. 添加 BCP-47 → 项目 `LanguageCode` 映射表
@@ -438,7 +516,10 @@ cld3 返回 `is_reliable`（布尔）和 `proportion`（0-1）。
 | pl | en | 波兰语（同上） |
 | cs | en | 捷克语（同上） |
 
-未映射的 BCP-47 代码：log.warn 记录，返回 `en`（不走 regex，因为 regex 只能区分字符系统，对 cld3 已识别的拉丁语言无意义）。
+未映射的 BCP-47 代码：log.warn 记录，**与 regex 结果比对取更优者**。
+- regex 能区分字符系统（如越南语用拉丁扩展字符，regex 可能识别为非 en）→ 用 regex 结果
+- regex 也无法区分（纯 ASCII 拉丁文）→ 返回 `en` 并记录，承认这部分回退
+- 不默认 `en`，避免把 cld3 已准确识别的越南语/印尼语等误判为英文
 
 ### 文件变更
 
@@ -477,6 +558,8 @@ cld3 返回 `is_reliable`（布尔）和 `proportion`（0-1）。
 - 验证 WASM 加载中（state=loading）触发翻译时走 regex，不阻塞
 - 验证 cld3 初始化失败时 warning 只记录一次
 - 验证 `detect.cld3_enabled=false` 时 IPC 直接走 regex
+- 验证短文本（≤ 5 字符，如 "Hi"）`is_reliable=false` 时正确 fallback 到 regex
+- 三平台冒烟：dist 后 Windows/macOS/Linux 各跑 `detect.local()` 一次
 
 ---
 
