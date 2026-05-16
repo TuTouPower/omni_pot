@@ -56,9 +56,8 @@ export default function ConfigWindow(): React.ReactElement {
     const cur = pages.find((n) => n.key === activePage)
 
     return (
-        <div className="op-window" style={{ width: 880, height: 600 }}>
+        <div className="op-window" data-testid="config-window" style={{ width: '100vw', height: '100vh' }}>
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-                {/* Sidebar */}
                 <div style={{
                     width: 184,
                     background: 'var(--bg-card)',
@@ -66,7 +65,7 @@ export default function ConfigWindow(): React.ReactElement {
                     display: 'flex',
                     flexDirection: 'column',
                 }}>
-                    <div style={{ height: 38, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div className="drag-region" data-testid="config-sidebar-titlebar" style={{ height: 38, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <button
                             className="ic-btn"
                             title="置顶"
@@ -119,7 +118,7 @@ export default function ConfigWindow(): React.ReactElement {
 
                 {/* Content */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <div style={{ height: 38, display: 'flex', alignItems: 'center', padding: '0 10px 0 14px', gap: 8 }}>
+                    <div className="drag-region" data-testid="config-titlebar" style={{ height: 38, display: 'flex', alignItems: 'center', padding: '0 10px 0 14px', gap: 8 }}>
                         <div data-testid="config-title" style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
                         <div style={{ flex: 1 }} />
                         <button className="ic-btn" title="关闭" data-testid="config-close" onClick={() => { handleClose().catch(console.error); }}>

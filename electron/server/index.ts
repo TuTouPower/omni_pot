@@ -401,7 +401,7 @@ function handleOpenWindow(
 
             const windowOpts: Partial<Record<string, { label: typeof WindowLabel[keyof typeof WindowLabel]; width: number; height: number }>> = {
                 dict: { label: WindowLabel.DICT, width: 350, height: 420 },
-                config: { label: WindowLabel.CONFIG, width: 800, height: 600 },
+                config: { label: WindowLabel.CONFIG, width: 880, height: 600 },
                 recognize: { label: WindowLabel.RECOGNIZE, width: 600, height: 500 },
                 updater: { label: WindowLabel.UPDATER, width: 400, height: 300 },
             }
