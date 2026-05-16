@@ -160,14 +160,6 @@ export default function HotkeySettings(): React.ReactElement {
                     configKey="hotkey_selection_dictionary"
                 />
             </ConfigCard>
-            <div className="card" style={{ background: 'var(--brand-primary-soft)', borderColor: 'transparent' }}>
-                <div style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                    <Icons.Info size={16} style={{ color: 'var(--brand-primary)', marginTop: 1 }} />
-                    <div style={{ fontSize: 12.5, color: 'var(--brand-primary)', lineHeight: 1.55 }}>
-                        Wayland 用户：系统级快捷键可能不可用。你可以在桌面环境的快捷键设置中调用 <span className="mono">curl localhost:60828/selection_translate</span> 作为替代方案。
-                    </div>
-                </div>
-            </div>
         </div>
     )
 }
