@@ -5,6 +5,7 @@ import { DEFAULT_CONFIG } from '@shared/types/config'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
+import { get_recognize_window_options } from '../windows/recognize_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
 import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures } from '../hotkey'
@@ -410,10 +411,10 @@ function handleOpenWindow(
                 return
             }
 
-            const windowOpts: Partial<Record<string, { label: typeof WindowLabel[keyof typeof WindowLabel]; width: number; height: number }>> = {
+            const windowOpts: Partial<Record<string, ReturnType<typeof get_translate_window_options>>> = {
                 dict: { label: WindowLabel.DICT, width: 350, height: 420 },
                 config: { label: WindowLabel.CONFIG, width: 880, height: 600 },
-                recognize: { label: WindowLabel.RECOGNIZE, width: 600, height: 500 },
+                recognize: get_recognize_window_options(),
                 updater: { label: WindowLabel.UPDATER, width: 400, height: 300 },
             }
 

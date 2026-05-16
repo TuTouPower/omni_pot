@@ -63,6 +63,14 @@ test.describe('@ui recognize window', () => {
             const recognize = await open_recognize_with_sample(omni, 'Line one\nLine two with spaces')
 
             await expect(recognize.wordmark()).toContainText('Omni Pot')
+            const bounds = (await omni.api.windowState('recognize')).bounds
+            if (!bounds) throw new Error('Recognize window bounds unavailable')
+            expect(bounds.width).toBeGreaterThanOrEqual(600)
+            expect(bounds.height).toBeGreaterThanOrEqual(420)
+            const viewport = await recognize.viewportMetrics()
+            expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.innerWidth + 1)
+            expect(viewport.scrollHeight).toBeLessThanOrEqual(viewport.innerHeight + 1)
+            expect(viewport.shellBottom).toBeGreaterThanOrEqual(viewport.innerHeight - 1)
             await expect(recognize.modeLabel()).toContainText('识别')
             expect(await recognize.titlebarOrder()).toEqual(['pin', 'wordmark', 'mode', 'close'])
             await expect(recognize.image().locator('img')).toBeVisible()

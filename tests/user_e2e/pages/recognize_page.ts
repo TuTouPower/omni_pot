@@ -121,6 +121,19 @@ export class RecognizePage {
         return this.text().inputValue()
     }
 
+    viewportMetrics(): Promise<{ innerWidth: number; innerHeight: number; scrollWidth: number; scrollHeight: number; shellBottom: number }> {
+        return this.page.evaluate(() => {
+            const shell = document.querySelector('.op-window')?.getBoundingClientRect()
+            return {
+                innerWidth: window.innerWidth,
+                innerHeight: window.innerHeight,
+                scrollWidth: document.documentElement.scrollWidth,
+                scrollHeight: document.documentElement.scrollHeight,
+                shellBottom: shell?.bottom ?? 0,
+            }
+        })
+    }
+
     setText(text: string): Promise<void> {
         return this.text().fill(text)
     }

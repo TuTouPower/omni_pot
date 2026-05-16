@@ -392,7 +392,7 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [alwaysOnTop])
 
     return (
-        <div className="op-window" style={{ width: 860, height: 520 }}>
+        <div className="op-window">
             {/* Titlebar */}
             <div className="op-titlebar">
                 <button
