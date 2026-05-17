@@ -136,7 +136,7 @@ test.describe('@ui config history and backup settings', () => {
             await expect(config.field('cfg-webdav_url')).toHaveCount(0)
             await expect.poll(async () => (await omni.api.getConfig()).backup_type).toBe('local')
 
-            await expect(config.backupContentHint()).toContainText('配置、历史记录数据库、CC-CEDICT 词典数据库')
+            await expect(config.backupContentHint()).toContainText('设置、历史记录数据库、CC-CEDICT 词典数据库')
             await config.backupCreateButton().click()
             await expect(config.backupStatus()).toContainText('Backup created', { timeout: 10_000 })
             await expect(config.backupRows()).toHaveCount(1)

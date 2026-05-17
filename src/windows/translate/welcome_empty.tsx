@@ -117,7 +117,7 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
             <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 4 }}>
                 <button className="btn sm" data-testid="welcome-configure-hotkeys" onClick={handle_open_hotkey}>
                     <Icons.Settings size={13} />
-                    {t('welcome.configure_hotkeys') || '配置快捷键'}
+                    {t('welcome.configure_hotkeys') || '设置快捷键'}
                 </button>
                 <button className="btn sm" data-testid="welcome-skip" style={{ color: 'var(--brand-primary)' }} onClick={onSkip}>
                     {t('welcome.skip') || '跳过'}

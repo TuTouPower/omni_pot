@@ -54,7 +54,7 @@
         "ocr_recognize_sub": "截图后将文字提取到识别窗口",
         "ocr_translate": "OCR 翻译",
         "ocr_translate_sub": "截图、识别并直接翻译结果",
-        "configure_hotkeys": "配置快捷键",
+        "configure_hotkeys": "设置快捷键",
         "skip": "跳过",
         "not_set": "未设置"
     },
@@ -115,7 +115,7 @@
         "app_language_zh_cn": "简体中文",
         "app_language_en": "English",
         "tray_click": "托盘点击事件",
-        "tray_show_config": "显示配置",
+        "tray_show_config": "显示设置",
         "tray_show_translate": "显示翻译",
         "tray_none": "无",
         "server_port": "服务器端口",
@@ -197,13 +197,13 @@
         "edit": "编辑",
         "edit_service": "编辑服务",
         "instance_name": "实例名称",
-        "config_json": "配置 JSON",
+        "config_json": "设置 JSON",
         "test": "测试",
         "testing": "测试中…",
         "test_success": "测试成功",
         "test_failed": "测试失败",
         "test_unavailable": "此服务不支持测试",
-        "invalid_config": "配置 JSON 无效"
+        "invalid_config": "设置 JSON 无效"
     },
     "history": {
         "title": "历史记录",

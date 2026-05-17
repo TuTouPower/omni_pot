@@ -44,10 +44,10 @@ test.describe('@ui tray popover layout', () => {
         // Bottom item (退出) must be fully within the popover (no clipping).
         const popover_box = await popover.boundingBox()
         const quit_box = await tray_page.getByTestId('tray-action-quit').boundingBox()
-        expect(popover_box).not.toBeNull()
-        expect(quit_box).not.toBeNull()
-        expect(quit_box!.y + quit_box!.height)
-            .toBeLessThanOrEqual(popover_box!.y + popover_box!.height + 1)
+        if (!popover_box) throw new Error('missing tray popover box')
+        if (!quit_box) throw new Error('missing tray quit item box')
+        expect(quit_box.y + quit_box.height)
+            .toBeLessThanOrEqual(popover_box.y + popover_box.height + 1)
 
         // No tall blank gap inside the items area. We measure the vertical gap
         // between adjacent items and assert it is below a "blank block" threshold.

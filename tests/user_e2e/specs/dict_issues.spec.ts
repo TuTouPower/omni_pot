@@ -33,7 +33,7 @@ test.describe('@ui dict query and layout', () => {
         // Header card bounding box must fully contain pronunciation and POS
         // chips — none of them may overflow the card's bottom edge.
         const card_box = await dict['page'].locator('[data-testid="dict-card"]').first().boundingBox()
-        expect(card_box).not.toBeNull()
+        if (!card_box) throw new Error('missing dictionary card box')
 
         const meta_elements = dict['page'].locator(
             '[data-testid="dict-card"]:first-of-type [data-testid="dict-pronunciation"], '
@@ -44,10 +44,10 @@ test.describe('@ui dict query and layout', () => {
 
         for (let i = 0; i < count; i += 1) {
             const box = await meta_elements.nth(i).boundingBox()
-            expect(box).not.toBeNull()
-            expect(box!.y + box!.height,
+            if (!box) throw new Error(`missing metadata chip box at index ${String(i)}`)
+            expect(box.y + box.height,
                 `第 ${String(i)} 个元数据 chip 超出卡片底边，被遮挡`)
-                .toBeLessThanOrEqual(card_box!.y + card_box!.height)
+                .toBeLessThanOrEqual(card_box.y + card_box.height)
         }
     })
 })

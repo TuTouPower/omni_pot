@@ -20,21 +20,21 @@ test.describe('@ui translate input row cap', () => {
         // 1) Single line: textarea height ~= 1 line.
         await translate.typeSource('one line')
         const one_line_box = await textarea.boundingBox()
-        expect(one_line_box).not.toBeNull()
-        expect(one_line_box!.height).toBeLessThanOrEqual(LINE_HEIGHT_PX + PADDING_TOLERANCE_PX)
+        if (!one_line_box) throw new Error('missing one-line textarea box')
+        expect(one_line_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX + PADDING_TOLERANCE_PX)
 
         // 2) Five lines: textarea grows roughly linearly.
         await translate.typeSource(Array.from({ length: 5 }, (_, i) => `line ${String(i + 1)}`).join('\n'))
         const five_line_box = await textarea.boundingBox()
-        expect(five_line_box).not.toBeNull()
-        expect(five_line_box!.height).toBeGreaterThanOrEqual(LINE_HEIGHT_PX * 4)
-        expect(five_line_box!.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * 6)
+        if (!five_line_box) throw new Error('missing five-line textarea box')
+        expect(five_line_box.height).toBeGreaterThanOrEqual(LINE_HEIGHT_PX * 4)
+        expect(five_line_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * 6)
 
         // 3) Twenty lines: textarea caps at 8 visible lines and becomes scrollable.
         await translate.typeSource(Array.from({ length: 20 }, (_, i) => `line ${String(i + 1)}`).join('\n'))
         const big_box = await textarea.boundingBox()
-        expect(big_box).not.toBeNull()
-        expect(big_box!.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * 8 + PADDING_TOLERANCE_PX * 2)
+        if (!big_box) throw new Error('missing twenty-line textarea box')
+        expect(big_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * 8 + PADDING_TOLERANCE_PX * 2)
 
         // Internal scroll must be enabled — scrollHeight should exceed clientHeight.
         const scroll_state = await textarea.evaluate((el) => {

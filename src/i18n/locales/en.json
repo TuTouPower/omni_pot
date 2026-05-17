@@ -115,7 +115,7 @@
         "app_language_zh_cn": "Simplified Chinese",
         "app_language_en": "English",
         "tray_click": "Tray click action",
-        "tray_show_config": "Show Config",
+        "tray_show_config": "Show Settings",
         "tray_show_translate": "Show Translate",
         "tray_none": "None",
         "server_port": "Server Port",
@@ -197,13 +197,13 @@
         "edit": "Edit",
         "edit_service": "Edit Service",
         "instance_name": "Instance Name",
-        "config_json": "Config JSON",
+        "config_json": "Settings JSON",
         "test": "Test",
         "testing": "Testing…",
         "test_success": "Test succeeded",
         "test_failed": "Test failed",
         "test_unavailable": "This service does not support testing",
-        "invalid_config": "Invalid config JSON"
+        "invalid_config": "Invalid settings JSON"
     },
     "history": {
         "title": "History",

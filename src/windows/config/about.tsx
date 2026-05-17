@@ -41,7 +41,7 @@ export default function AboutPage(): React.ReactElement {
                 <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Omni Pot</div>
                 <div className="hint mono" data-testid="about-version">version {VERSION}</div>
                 <div className="hint" style={{ maxWidth: 360 }}>
-                    一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和内置服务配置。
+                    一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和内置服务设置。
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
                     <button className="btn sm" data-testid="about-home-link" onClick={() => { openExternal(REPO_URL); }}>
@@ -64,7 +64,7 @@ export default function AboutPage(): React.ReactElement {
                 <ConfigRow label="版本">
                     <div className="mono hint" data-testid="about-diagnostic-version" style={{ marginRight: 8 }}>{VERSION}</div>
                 </ConfigRow>
-                <ConfigRow label="配置目录">
+                <ConfigRow label="设置目录">
                     <div className="mono hint" data-testid="about-config-dir" style={{ marginRight: 8 }}>userData/config.json</div>
                 </ConfigRow>
                 <ConfigRow label="日志目录">

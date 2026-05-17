@@ -121,7 +121,7 @@ export default function BackupSettings(): React.ReactElement {
                     </button>
                 </div>
                 {status && <p data-testid="backup-status" style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
-                <div data-testid="backup-content-hint" className="hint">备份内容：配置、历史记录数据库、CC-CEDICT 词典数据库</div>
+                <div data-testid="backup-content-hint" className="hint">备份内容：设置、历史记录数据库、CC-CEDICT 词典数据库</div>
             </ConfigCard>
 
             {/* Recent backups */}

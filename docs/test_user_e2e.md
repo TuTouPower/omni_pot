@@ -243,7 +243,7 @@ class TranslatePage {
   `ocr-lang-select`、`ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、
   `ocr-copy-btn`、`ocr-export-btn`、`ocr-translate-btn`
 - 截图：`shot-overlay`、`shot-selection`、`shot-size-label`、`shot-hint`
-- 配置：`config-wordmark`、`config-pin`、`config-version`、
+- 设置：`config-wordmark`、`config-pin`、`config-version`、
   `config-nav-{page}`、`config-title`、`config-close`、各设置项
   `cfg-{key}`、服务项 `svc-item`、服务 tab `svc-tab-{listKey}`、`svc-add-btn`、
   `svc-add-option`、`svc-delete`、`svc-move-up`、`svc-move-down`、`svc-drag-handle`、
@@ -287,7 +287,7 @@ class TranslatePage {
 ### 5.1 app_lifecycle.spec.ts — 应用生命周期与窗口管理
 
 - 启动后创建 daemon（隐藏）+ 翻译窗口
-- `firstRun` 模式额外自动打开配置窗口；非首次运行不打开
+- `firstRun` 模式额外自动打开设置窗口；非首次运行不打开
 - 窗口复用：重复触发同一窗口 → focus 而非新建（窗口数不增）
 - 关闭所有可见窗口后应用进程仍存活（托盘常驻）
 - 多窗口并存：翻译 + 词典 + 识别同时打开，互不干扰
@@ -303,7 +303,7 @@ class TranslatePage {
 - 外部脚本通过 HTTP API 发文本（`POST /translate`）
 - 用户复制文字、剪贴板监听自动翻译（`clipboard_monitor`）
 - 用户截图做 OCR 翻译（截图 → OCR → 翻译，CP4）
-- **全部免费翻译服务真实出结果**（覆盖 issue #3）：用户在配置页启用 bing / google /
+- **全部免费翻译服务真实出结果**（覆盖 issue #3）：用户在设置页启用 bing / google /
   deepl(free) / mymemory / lingva 实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都
   显示真实译文，无“翻译失败”
 - 翻译成功写入历史；`history_disable=true` 时不写
@@ -418,7 +418,7 @@ class TranslatePage {
 - 截图完成后衔接识别（mode=recognize）/ 翻译（mode=translate）流程
 - CI 无显示器时：跳过真实截屏断言，保留窗口创建与 Esc 取消路径
 
-### 5.11 config_settings.spec.ts — 配置：通用/翻译/识别/快捷键/关于
+### 5.11 config_settings.spec.ts — 设置：通用/翻译/识别/快捷键/关于
 
 - 侧栏：logo + 置顶按钮 + 8 个导航项 + 版本号
 - 点击各导航项切换页面，激活项高亮、图标主色
@@ -429,8 +429,8 @@ class TranslatePage {
 - **识别页**：识别语言、去换行、自动复制、失焦关闭、隐藏窗口读写
 - **快捷键页**：5 个录入框（含“划词字典”）；录入组合键、Backspace 清除、
   绑定按钮注册成功/失败提示
-- **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/配置目录、API 地址）
-- **config:changed 广播**：配置窗口改 `app_theme` → 翻译窗口主题同步变化
+- **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/设置目录、API 地址）
+- **config:changed 广播**：设置窗口改 `app_theme` → 翻译窗口主题同步变化
 
 ### 5.12 config_service_mgmt.spec.ts — 服务管理页
 
@@ -439,7 +439,7 @@ class TranslatePage {
 - **添加内置服务** → 创建新实例（key 形如 `bing@xxxx`），出现在列表与 `*_service_list`
 - **删除实例** → 从列表与 `*_service_list` 移除，并同步删除 `service_instances` 项
 - **启停实例** → `service_instances[instanceKey].config.enable` 翻转；翻译窗口结果卡片只显示启用实例
-- **编辑/测试保存实例** → 输入实例名与 JSON 配置，点击测试显示成功/失败，保存后配置持久化并更新列表名称
+- **编辑/测试保存实例** → 输入实例名与 JSON 设置，点击测试显示成功/失败，保存后设置持久化并更新列表名称
 - **拖拽排序** → `*_service_list` 顺序更新，翻译窗口结果卡片顺序随之变化
 
 ### 5.13 config_history_backup.spec.ts — 历史页 + 备份页
@@ -457,7 +457,7 @@ class TranslatePage {
 - 备份目标切换 WebDAV / 本地；断言**无”阿里云盘”**选项（见 `docs/design/demo_todo.md` A4）
 - 本地备份 → 生成 zip，列表列出
 - 恢复 → 配置与历史记录被覆盖
-- 备份内容含配置与 CC-CEDICT 数据库
+- 备份内容含设置与 CC-CEDICT 数据库
 
 ### 5.14 updater_and_tray.spec.ts — 更新器 + 托盘
 
@@ -470,13 +470,13 @@ class TranslatePage {
 托盘：
 
 - 菜单项触发：Input Translate → 打开翻译窗口；Clipboard Monitor → 切换
-  `clipboard_monitor` 并在复制文本后自动翻译；Config → 打开配置窗口
+  `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 
 ### 5.15 i18n.spec.ts — 国际化
 
 - 切换 `app_language`（en ↔ zh_cn）→ 所有已打开窗口 UI 文案即时切换，无需重启
-- 中文下关键文案正确：自动检测、简体中文、检测为英文、各配置页标签、托盘项
+- 中文下关键文案正确：自动检测、简体中文、检测为英文、各设置页标签、托盘项
 - 英文下对应英文文案
 - 回退链：未翻译的 key 回退到默认语言
 
