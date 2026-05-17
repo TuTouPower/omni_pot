@@ -46,17 +46,17 @@ export const lingvaService: TranslateService = {
         const url = `${request_path}/api/v1/${map_lang(from)}/${map_lang(to)}/${encoded_text}`
 
         const resp = await fetch(url)
+        const data = (await resp.json().catch(() => null)) as { translation?: string; error?: string } | null
         if (!resp.ok) {
             throw new Error(`Lingva API error: ${String(resp.status)}`)
         }
-        const data = (await resp.json()) as { translation?: string; error?: string }
-        if (data.error) {
+        if (data?.translation) {
+            return data.translation
+        }
+        if (data?.error) {
             throw new Error(`Lingva error: ${data.error}`)
         }
-        if (!data.translation) {
-            throw new Error('Lingva returned empty translation')
-        }
-        return data.translation
+        throw new Error('Lingva returned empty translation')
     },
 
     async testConfig(config: ServiceConfig): Promise<boolean> {
