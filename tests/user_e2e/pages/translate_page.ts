@@ -219,7 +219,7 @@ export class TranslatePage {
         return new URL(request.url()).pathname
     }
 
-    async hold_lingva_translation_once(translation: string): Promise<{ wait_for_request: () => Promise<void>; release_response: () => void }> {
+    async hold_lingva_translation_once(translation: string): Promise<{ wait_for_request: () => Promise<void>; release_response: () => Promise<void> }> {
         await this.page.evaluate((translation_text: string) => {
             type E2eWindow = Window & {
                 __e2e_lingva_request_seen?: boolean
@@ -253,11 +253,9 @@ export class TranslatePage {
                     return Boolean((window as Window & { __e2e_lingva_request_seen?: boolean }).__e2e_lingva_request_seen)
                 }, undefined, { timeout: 10_000 })
             },
-            release_response: () => {
-                this.page.evaluate(() => {
-                    ;(window as Window & { __e2e_lingva_release?: () => void }).__e2e_lingva_release?.()
-                }).catch(() => undefined)
-            },
+            release_response: () => this.page.evaluate(() => {
+                ;(window as Window & { __e2e_lingva_release?: () => void }).__e2e_lingva_release?.()
+            }).then(() => undefined),
         }
     }
 
@@ -493,7 +491,7 @@ export class TranslatePage {
         }, { times: 1 })
     }
 
-    async hold_lingva_tts(): Promise<{ wait_for_request: () => Promise<void>; wait_for_request_count: (expected_count: number) => Promise<void>; release_response: () => void }> {
+    async hold_lingva_tts(): Promise<{ wait_for_request: () => Promise<void>; wait_for_request_count: (expected_count: number) => Promise<void>; release_response: () => Promise<void> }> {
         await this.page.evaluate(() => {
             type E2eWindow = Window & {
                 __e2e_lingva_tts_request_count?: number
@@ -537,11 +535,9 @@ export class TranslatePage {
                     await this.page.waitForTimeout(Math.min(50, end - Date.now()))
                 }
             },
-            release_response: () => {
-                this.page.evaluate(() => {
-                    ;(window as Window & { __e2e_lingva_tts_release?: () => void }).__e2e_lingva_tts_release?.()
-                }).catch(() => undefined)
-            },
+            release_response: () => this.page.evaluate(() => {
+                ;(window as Window & { __e2e_lingva_tts_release?: () => void }).__e2e_lingva_tts_release?.()
+            }).then(() => undefined),
         }
     }
 

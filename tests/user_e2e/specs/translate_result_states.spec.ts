@@ -63,7 +63,7 @@ test.describe('@ui translate result card states', () => {
 
             // Once the response is released, the card auto-expands and the
             // loading indicator disappears.
-            lingva.release_response()
+            await lingva.release_response()
             await expect(translate.resultBody('lingva@default'))
                 .toBeVisible({ timeout: 10_000 })
             await expect(translate.resultCard('lingva@default').getByTestId('result-loading'))

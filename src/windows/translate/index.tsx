@@ -350,12 +350,12 @@ export default function TranslateWindow(): React.ReactElement {
 
     const handleToggleAlwaysOnTop = useCallback(() => {
         const next = !alwaysOnTop
-        window.electronAPI.window.setAlwaysOnTop(next).catch(console.error)
+        window.electronAPI.window.setAlwaysOnTop(next)
             .then(() => {
                 setConfig('translate_always_on_top', next)
                 if (next) setConfig('translate_pinned', true)
             })
-            .catch(() => undefined)
+            .catch(console.error)
     }, [alwaysOnTop, setConfig])
 
     const handleSwapLanguages = useCallback(() => {
@@ -509,6 +509,8 @@ export default function TranslateWindow(): React.ReactElement {
         const serviceKey = getServiceKey(instanceKey)
         const service = translateServiceRegistry.get(serviceKey)
         if (!service) return
+
+        if (!isCurrentRetry()) return
 
         useTranslateStore.setState((state) => {
             const results = Object.fromEntries(

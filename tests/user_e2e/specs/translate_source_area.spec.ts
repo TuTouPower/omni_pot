@@ -65,7 +65,7 @@ test.describe('@ui translate source area', () => {
             await translate.clickTranslate()
             await held_translation.wait_for_request()
             await translate.clickClearSource()
-            held_translation.release_response()
+            await held_translation.release_response()
 
             await expect(translate.sourceInput()).toHaveValue('')
             await expect.poll(async () => await translate.resultBodies().count(), { timeout: 2_000 }).toBe(0)
