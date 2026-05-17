@@ -28,6 +28,10 @@ export class TranslatePage {
         return this.page.getByTestId('titlebar-pin')
     }
 
+    topmostButton(): Locator {
+        return this.page.getByTestId('titlebar-topmost')
+    }
+
     closeButton(): Locator {
         return this.page.getByTestId('titlebar-close')
     }
@@ -110,6 +114,10 @@ export class TranslatePage {
         return this.page.getByTestId('titlebar-pin').click()
     }
 
+    clickTopmost(): Promise<void> {
+        return this.page.getByTestId('titlebar-topmost').click()
+    }
+
     async clickClose(): Promise<void> {
         try {
             await this.page.getByTestId('titlebar-close').click()
@@ -137,6 +145,7 @@ export class TranslatePage {
     async titlebarOrder(): Promise<string[]> {
         const items = [
             { name: 'pin', locator: this.pinButton() },
+            { name: 'topmost', locator: this.topmostButton() },
             { name: 'wordmark', locator: this.wordmark() },
             { name: 'mode', locator: this.modeLabel() },
             { name: 'close', locator: this.closeButton() },
@@ -156,6 +165,12 @@ export class TranslatePage {
 
     pinButtonAppRegion(): Promise<string> {
         return this.pinButton().evaluate((el) => {
+            return (getComputedStyle(el) as CSSStyleDeclaration & { webkitAppRegion?: string }).webkitAppRegion ?? ''
+        })
+    }
+
+    topmostButtonAppRegion(): Promise<string> {
+        return this.topmostButton().evaluate((el) => {
             return (getComputedStyle(el) as CSSStyleDeclaration & { webkitAppRegion?: string }).webkitAppRegion ?? ''
         })
     }
@@ -299,6 +314,8 @@ export class TranslatePage {
 
     async resizeWindowTo(width: number, height: number): Promise<void> {
         await this.page.evaluate((size) => { window.resizeTo(size.width, size.height); }, { width, height })
+        const viewport = await this.page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }))
+        await this.page.setViewportSize(viewport)
     }
 
     // Result cards
@@ -424,7 +441,7 @@ export class TranslatePage {
     }
 
     async fulfill_lingva_translation_once(translation: string, target_language = 'zh'): Promise<void> {
-        await this.page.route(`https://lingva.lunar.icu/api/v1/*/${target_language}/**`, async (route) => {
+        await this.page.route(`**/api/v1/*/${target_language}/**`, async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',

@@ -3,20 +3,20 @@ import { AppFixture } from '../fixtures/app_fixture'
 
 const WINDOW_SIZE_TOLERANCE = 8
 
-const LINGVA_INSTANCE = {
-    serviceKey: 'lingva',
-    config: { requestPath: 'https://lingva.lunar.icu' },
+const MYMEMORY_INSTANCE = {
+    serviceKey: 'mymemory',
+    config: {},
 }
 
-function lingva_config(config: Record<string, unknown> = {}): Record<string, unknown> {
+function mymemory_config(config: Record<string, unknown> = {}): Record<string, unknown> {
     return {
         app_language: 'zh_cn',
         dynamic_translate: false,
         translate_detect_engine: 'local',
         translate_source_language: 'en',
         translate_target_language: 'zh_cn',
-        translate_service_list: ['lingva@default'],
-        service_instances: { 'lingva@default': LINGVA_INSTANCE },
+        translate_service_list: ['mymemory@default'],
+        service_instances: { 'mymemory@default': MYMEMORY_INSTANCE },
         ...config,
     }
 }
@@ -56,8 +56,9 @@ test.describe('@ui translate behavior settings', () => {
 
             await expect.poll(async () => (await pinned_app.api.windowState('translate')).alwaysOnTop).toBe(true)
             await expect(translate.pinButton()).toHaveAttribute('aria-pressed', 'true')
+            await expect(translate.topmostButton()).toHaveAttribute('aria-pressed', 'true')
 
-            await translate.clickPin()
+            await translate.clickTopmost()
             await expect.poll(async () => (await pinned_app.api.windowState('translate')).alwaysOnTop).toBe(false)
             await expect_config(pinned_app, 'translate_always_on_top', false)
 
@@ -137,12 +138,13 @@ test.describe('@ui translate behavior settings', () => {
             await expect(translate.sourceInput()).toHaveCount(0)
             await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(true)
 
-            const result = await omni.api.triggerHotkey('hotkey_input_translate')
+            const result = await omni.api.triggerHotkey('hotkey_input_translate', 'selected text should be ignored')
             expect(result.success).toBe(true)
 
             await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(true)
             await expect(translate.sourceInput()).toBeVisible()
             await expect(translate.sourceInput()).toBeFocused()
+            await expect(translate.sourceInput()).toHaveValue('')
         } finally {
             await omni.stop()
         }
@@ -174,7 +176,7 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
-    test('selection hotkeys show visible feedback when no text is selected', async () => {
+    test('selection hotkeys handle empty selection for translate and dictionary actions', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({
                 hotkey_selection_translate: 'CommandOrControl+Shift+Alt+F8',
@@ -186,7 +188,8 @@ test.describe('@ui translate behavior settings', () => {
             const translate_result = await omni.api.triggerHotkey('hotkey_selection_translate', '')
             expect(translate_result.success).toBe(true)
             const translate = await omni.translate()
-            await expect(translate.selectionEmptyNotice()).toContainText('未读取到选中的文本')
+            await expect(translate.sourceInput()).toBeVisible()
+            await expect(translate.sourceInput()).toBeFocused()
 
             const dict_result = await omni.api.triggerHotkey('hotkey_selection_dictionary', '')
             expect(dict_result.success).toBe(true)
@@ -276,18 +279,18 @@ test.describe('@ui translate behavior settings', () => {
     ] as const) {
         test(`user sees translate_auto_copy=${mode} update clipboard correctly`, async () => {
             const omni = await AppFixture.start({
-                config: lingva_config({ translate_auto_copy: mode }),
+                config: mymemory_config({ translate_auto_copy: mode }),
             })
 
             try {
                 const translate = await omni.translate()
                 await omni.api.triggerClipboard('previous clipboard')
-                await translate.fulfill_lingva_translation_once('复制目标译文')
+                await translate.fulfill_mymemory_translation_once('复制目标译文')
 
                 await translate.typeSource('copy source text')
                 await translate.clickTranslate()
 
-                await expect(translate.resultBody('lingva@default')).toContainText('复制目标译文')
+                await expect(translate.resultBody('mymemory@default')).toContainText('复制目标译文')
                 await expect_clipboard(omni, expected_clipboard)
             } finally {
                 await omni.stop()
@@ -297,41 +300,35 @@ test.describe('@ui translate behavior settings', () => {
 
     test('user stops typing and dynamic translate shows a result without clicking translate', async () => {
         const omni = await AppFixture.start({
-            config: lingva_config({ dynamic_translate: true }),
+            config: mymemory_config({ dynamic_translate: true }),
         })
 
         try {
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('动态翻译结果')
+            await translate.fulfill_mymemory_translation_once('动态翻译结果')
 
             await translate.typeSource('dynamic source text')
 
-            await expect(translate.resultBody('lingva@default')).toContainText('动态翻译结果', { timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@default')).toContainText('动态翻译结果', { timeout: 15_000 })
         } finally {
             await omni.stop()
         }
     })
 
     test('changing language with source text retranslates immediately', async () => {
-        const omni = await AppFixture.start({ config: lingva_config() })
+        const omni = await AppFixture.start({ config: mymemory_config() })
 
         try {
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('初始译文')
+            await translate.fulfill_mymemory_translation_once('初始译文')
             await translate.typeSource('language switch text')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@default')).toContainText('初始译文')
+            await expect(translate.resultBody('mymemory@default')).toContainText('初始译文')
 
-            await translate.sourceInput().page().route('https://lingva.lunar.icu/api/v1/*/ja/**', async (route) => {
-                await route.fulfill({
-                    status: 200,
-                    contentType: 'application/json',
-                    body: JSON.stringify({ translation: '日语译文' }),
-                })
-            }, { times: 1 })
+            await translate.fulfill_mymemory_translation_once('日语译文')
 
             await translate.selectTargetLanguage('ja')
-            await expect(translate.resultBody('lingva@default')).toContainText('日语译文')
+            await expect(translate.resultBody('mymemory@default')).toContainText('日语译文')
         } finally {
             await omni.stop()
         }
@@ -339,7 +336,7 @@ test.describe('@ui translate behavior settings', () => {
 
     test('user gets the configured second language when detected language equals target language', async () => {
         const omni = await AppFixture.start({
-            config: lingva_config({
+            config: mymemory_config({
                 translate_source_language: 'auto',
                 translate_target_language: 'en',
                 translate_second_language: 'zh_cn',
@@ -348,13 +345,13 @@ test.describe('@ui translate behavior settings', () => {
 
         try {
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('回退到第二语言')
+            await translate.fulfill_mymemory_translation_once('回退到第二语言')
 
             await translate.typeSource('hello fallback target')
             await translate.clickTranslate()
 
             await expect(translate.detectedLanguage()).toContainText('英文')
-            await expect(translate.resultBody('lingva@default')).toContainText('回退到第二语言')
+            await expect(translate.resultBody('mymemory@default')).toContainText('回退到第二语言')
         } finally {
             await omni.stop()
         }
@@ -379,7 +376,7 @@ test.describe('@ui translate behavior settings', () => {
             await translate.resizeWindowTo(520, 560)
             await expect.poll(async () => {
                 const bounds = (await omni.api.windowState('translate')).bounds
-                return !!bounds && bounds.width > 350 && bounds.height > 420
+                return !!bounds && bounds.width > 500 && bounds.height >= 320 && bounds.height <= 400 + WINDOW_SIZE_TOLERANCE
             }).toBe(true)
             const resized_bounds = (await omni.api.windowState('translate')).bounds
             if (!resized_bounds) throw new Error('Translate window bounds unavailable')
