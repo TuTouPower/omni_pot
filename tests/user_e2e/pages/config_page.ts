@@ -1,11 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import type { HistoryRecord } from '@shared/types/ipc'
 
-const cors_headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-}
-
 function exact_text(text: string): RegExp {
     return new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
 }
@@ -344,14 +339,21 @@ export class ConfigPage {
     }
 
     async fulfillLingvaTestOnce(translation = '你好'): Promise<void> {
-        await this.page.route('https://lingva.lunar.icu/api/v1/en/zh/**', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                headers: cors_headers,
-                body: JSON.stringify({ translation }),
-            })
-        }, { times: 1 })
+        await this.page.evaluate((translation_text: string) => {
+            const original_fetch = window.fetch.bind(window)
+            let consumed = false
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (!consumed && url.includes('/api/v1/en/zh/')) {
+                    consumed = true
+                    return new Response(JSON.stringify({ translation: translation_text }), {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    })
+                }
+                return original_fetch(input, init)
+            }
+        }, translation)
     }
 
     async dragService(sourceKey: string, targetKey: string): Promise<void> {
