@@ -24,6 +24,25 @@
 - [X] 继续修复快捷键、OCR/TTS、服务管理、i18n 等功能闭环（托盘入口、主题/主色、透明背景、OCR/TTS 默认均已补齐）
 - [ ] 完成打包后 Windows smoke 验收：首次启动、托盘、快捷键、截图、设置/识别窗口（自动化与 `npm run dist` 通过后仍需人工执行真实系统路径）
 
+### P0: 用户验收 issue 守护 spec（2026-05-18 新增，对应 `docs/issues.md` 当前清单）
+
+写完即跑，下面这批 spec 设计为**用户验收标准**，因此在对应缺陷修复前会失败 —— 这是预期行为。按列表逐项修复源码并让 spec 转绿。
+
+- [ ] `tests/user_e2e/specs/translate_result_states.spec.ts` —— 翻译失败重试 + 卡片折叠+加载动效（issues "翻译失败重试功能失效" "翻译结果卡片折叠与加载动效"）。修复目标：错误态新增 `result-retry` 触发重译；初始查询时卡片折叠 + 显示 `result-loading`，结果到达后自动展开。
+- [ ] `tests/user_e2e/specs/translate_input_rows.spec.ts` —— 输入框 ≤8 行随内容增长、>8 行内部滚动（issue "输入框动态行数限制"）。修复目标：`source_area.tsx` 用真实可滚动容器替代 `rows={sourceRows}` 单一控制。
+- [ ] `tests/user_e2e/specs/translate_window_constraints.spec.ts` —— 翻译窗口 max-height / min-height / min-width 约束（issues "翻译窗口垂直拉伸限制缺失" "翻译窗口最小宽度限制不准确"）。修复目标：在 `electron/windows/translate.ts` 设 setMinimumSize / setMaximumSize，并按内容动态计算 max-height。
+- [ ] `tests/user_e2e/specs/translate_pin_topmost.spec.ts` —— 拆分"固定/置顶"为两按钮、补 `titlebar-topmost` testid、固定独立控制失焦关闭（issue "固定与置顶功能拆分与联动"）。修复目标：新增 `translate_pinned` 配置项与按钮，调整失焦关闭判定逻辑。
+- [ ] `tests/user_e2e/specs/translate_entry_merge.spec.ts` —— 选中/输入翻译合并入口（issue "翻译功能合并（输入/选中）"）。修复目标：实现 `triggerHotkey('translate', selection?)` 统一 action，并按选中文本存在与否切换分支。
+- [ ] `tests/user_e2e/specs/tray_layout.spec.ts` —— 托盘 popover 项目齐全、分隔线、无截断（issue "系统托盘菜单UI缺失与显示不全"）。修复目标：托盘自绘 popover 补 `check_update / view_log / restart / quit` 与 `tray-separator`，调整高度避免裁切，移除多余空白。
+- [ ] `tests/user_e2e/specs/terminology_settings.spec.ts` —— UI 文案禁用"配置"统一为"设置"（issue "术语统一：配置改为设置"）。修复目标：`src/i18n/locales/*.json` 与 React 组件文本审计；不要求改内部变量名，仅改用户可见字符串与 window title。
+- [ ] `tests/user_e2e/specs/dict_issues.spec.ts` —— 中文单字（"我"）查询成功 + 词典 header 卡片不遮挡读音/词性（issues "中文词典查询失败" "词典卡片内容被遮挡"）。修复目标：CC-CEDICT / chinese-dictionary 单字查询路径修复；为 `dict-pronunciation` / `dict-pos-tag` 加 testid，并调整卡片 padding/overflow。
+- [ ] `tests/user_e2e/specs/window_rounded_corner.spec.ts` —— 窗口圆角外不应有白色直角（issue "窗口圆角带白色背景瑕疵"）。修复目标：`<html>` / `<body>` 背景透明（与 `transparent: true` 配合），主窗口 React 根组件不设白色背景。
+- [ ] 朗读 / TTS "按了没声"（issue "语音朗读（TTS）功能失效"）—— 自动化只能验 IPC 链路，发声本身归为 **Windows 实机 smoke**；在 issue.md 标记并在打包 smoke checklist 中加一条 "翻译/词典/识别窗口点朗读，能听到声音"。
+- [ ] 截图 OCR 唤起卡顿（issue "截图 OCR 唤起卡顿"）—— 加 Playwright 计时断言（从 trigger 到 SCREENSHOT 窗口可见 < 300ms），写入新 spec `tests/user_e2e/specs/screenshot_latency.spec.ts`（占位，后续如有性能预算确认再补）。
+- [ ] 谷歌翻译失效（issue "谷歌翻译失效"）—— 已被 `translate_core.spec.ts` "all free translation services" 用例覆盖；若该用例本地通过而 release 产物失败，需补一条"跑 `release/Omni Pot 0.1.0.exe` 的 smoke" 作业。
+
+完成上述每条后，在 `docs/issues.md` 删除对应条目（解决后归档到 `docs/archive/closed_issues/`），并同步更新 `docs/design/demo_todo.md` 第 10–15 节中已经跟随实现落地的部分。
+
 ### P0: Playwright E2E 基础设施落地（已完成）
 
 - [X] 安装 Playwright 依赖（`npm install`）
