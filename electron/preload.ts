@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ElectronAPI } from '@shared/types/ipc'
+import type { ElectronAPI, ChineseDictServiceState } from '@shared/types/ipc'
 import type { ConfigKey } from '@shared/types/config'
 
 const api: Omit<ElectronAPI, 'ready'> = {
@@ -112,6 +112,16 @@ const api: Omit<ElectronAPI, 'ready'> = {
     check: () => ipcRenderer.invoke('dict:check'),
     import: (url) => ipcRenderer.invoke('dict:import', url)
   },
+  chineseDict: {
+    lookup: (text: string) => ipcRenderer.invoke('chineseDict:lookup', text),
+    check: () => ipcRenderer.invoke('chineseDict:check'),
+    reload: () => ipcRenderer.invoke('chineseDict:reload'),
+    onStateChanged: (callback: (state: ChineseDictServiceState) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, state: ChineseDictServiceState) => { callback(state); }
+      ipcRenderer.on('chineseDict:state-changed', handler)
+      return () => { ipcRenderer.off('chineseDict:state-changed', handler) }
+    },
+  },
   update: {
     onRelease: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, release: Parameters<typeof callback>[0]) => { callback(release); }
@@ -125,7 +135,10 @@ const api: Omit<ElectronAPI, 'ready'> = {
     action: (action) => ipcRenderer.invoke('tray:action', action),
     labels: () => ipcRenderer.invoke('tray:labels'),
     clipboardMonitoring: () => ipcRenderer.invoke('tray:clipboard-monitoring')
-  }
+  },
+  detect: {
+    local: (text: string) => ipcRenderer.invoke('detect:local', text),
+  },
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {

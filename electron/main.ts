@@ -1,4 +1,5 @@
-import { app, Menu, session } from 'electron'
+import { app, BrowserWindow, Menu, session } from 'electron'
+import { basename, dirname } from 'path'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { attach_translate_resize_persistence, get_translate_window_options } from './windows/translate_options'
@@ -23,6 +24,12 @@ import { registerOcrHandlers } from './ipc/ocr_handlers'
 import { registerHistoryHandlers } from './ipc/history_handlers'
 import { registerBackupHandlers } from './ipc/backup_handlers'
 import { registerDictHandlers } from './ipc/dict_handlers'
+import { registerChineseDictHandlers } from './ipc/chinese_dict_handlers'
+import { registerDetectHandlers } from './ipc/detect_handlers'
+import { get_db_path, set_service_state, reload_db, close_chinese_dict } from './chinese_dict'
+import { init_cld3 } from './detect'
+import { existsSync, watch, type FSWatcher } from 'fs'
+import { spawn } from 'child_process'
 import { registerTrayHandlers } from './ipc/tray_handlers'
 import { close_history } from './history'
 import { close_dict, auto_import_if_needed } from './dict'
@@ -35,6 +42,7 @@ import {
 } from './clipboard'
 
 let windowManager: WindowManager | undefined
+let db_watcher: FSWatcher | null = null
 
 const isE2e = !!process.env['OMNI_POT_E2E']
 const gotLock = isE2e || app.requestSingleInstanceLock()
@@ -102,8 +110,67 @@ if (!gotLock) {
     registerHistoryHandlers()
     registerBackupHandlers()
     registerDictHandlers()
+    registerChineseDictHandlers()
+    registerDetectHandlers()
     registerTrayHandlers()
     log_main.info('IPC handlers: all registered')
+
+    // Chinese dict: dev auto-build + state machine
+    const dict_db_path = get_db_path()
+
+    function register_db_watch(db_path: string): void {
+        let debounce: ReturnType<typeof setTimeout> | null = null
+        const db_dir = dirname(db_path)
+        const db_file = basename(db_path)
+        if (db_watcher) { db_watcher.close(); db_watcher = null }
+        try {
+            db_watcher = watch(db_dir, { persistent: false }, (_event_type, filename) => {
+                if (filename && filename !== db_file) return
+                if (debounce) clearTimeout(debounce)
+                debounce = setTimeout(() => { reload_db() }, 500)
+            })
+        } catch (e) {
+            log_main.warn('db watch failed: %s', e)
+        }
+    }
+
+    if (!dict_db_path || !existsSync(dict_db_path)) {
+        if (app.isPackaged) {
+            set_service_state('failed')
+        } else {
+            set_service_state('building')
+            for (const win of BrowserWindow.getAllWindows()) {
+                win.webContents.send('chineseDict:state-changed', 'building')
+            }
+            const npm_cmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+            const build = spawn(npm_cmd, ['run', 'build:chinese-dict'], { cwd: app.getAppPath(), shell: false })
+            build.stdout.on('data', (data: Buffer) => { log_main.info('build:chinese-dict: %s', data.toString().trimEnd()) })
+            build.stderr.on('data', (data: Buffer) => { log_main.error('build:chinese-dict stderr: %s', data.toString().trimEnd()) })
+            build.on('close', (code) => {
+                if (code === 0) {
+                    set_service_state('ready')
+                    reload_db()
+                    for (const win of BrowserWindow.getAllWindows()) {
+                        win.webContents.send('chineseDict:state-changed', 'ready')
+                    }
+                    const new_path = get_db_path()
+                    if (new_path) register_db_watch(new_path)
+                } else {
+                    set_service_state('failed')
+                    for (const win of BrowserWindow.getAllWindows()) {
+                        win.webContents.send('chineseDict:state-changed', 'failed')
+                    }
+                    log_main.error('auto build:chinese-dict failed with code %d', code)
+                }
+            })
+        }
+    } else {
+        set_service_state('ready')
+        register_db_watch(dict_db_path)
+    }
+
+    // Preload cld3 WASM (non-blocking)
+    init_cld3().catch((err: unknown) => { log_main.error('cld3 init failed:', err) })
 
     log_main.info('creating tray...')
     createTray()
@@ -182,10 +249,12 @@ if (!gotLock) {
   })
 
   app.on('will-quit', () => {
+    if (db_watcher) { db_watcher.close(); db_watcher = null }
     stopClipboardMonitor()
     stopServer()
     close_history()
     close_dict()
+    close_chinese_dict()
     flush_config()
     unregisterAll()
   })

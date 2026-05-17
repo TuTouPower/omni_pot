@@ -11,8 +11,9 @@
 1. **[需运行验证][P0] 打包单文件 Windows smoke**: 本轮代码已修复翻译欢迎空状态、标题栏图标尺寸、自绘浅色托盘、翻译窗口初始布局、语言栏最小宽度/下拉裁剪、OCR 截图 DPI 坐标映射和识别窗口尺寸一致性，并补充对应自动化测试。仍需在 `npm run dist` 产物中人工打开 `release/Omni Pot 0.1.0.exe` 验证：欢迎空状态是否完整接管窗口、pin/close 视觉尺寸是否符合预期、托盘 popover 是否为浅色自绘 UI 且失焦关闭、翻译窗口是否不再被自动 resize 逻辑异常拉宽、OCR 框选区域是否与识别窗口预览一致。
 2. **[需运行验证][P0] 截图识别快捷键真实 OCR 流程 Windows smoke**: Playwright 已覆盖 hotkey action 打开截图覆盖层、框选松手自动打开识别窗口、截图裁剪按原图物理像素映射、识别窗口尺寸不再与渲染根节点错位。Electron `globalShortcut` 和真实桌面 OCR 结果仍需 Windows 实机验证：按截图识别快捷键，框选一个小文字区域，确认识别窗口预览与框选区域一致且能用当前 OCR 服务得到文本。
 3. **[需运行验证][P0] 输入翻译、划词翻译、划词字典真实系统热键 Windows smoke**: 三个快捷键的已注册 action 已分别由 `translate_behavior.spec.ts` 验证输入状态、选中文本成功路径和无选中文本反馈。Electron `globalShortcut` 真实绑定路径无法在 Playwright 内自动触发；需在 Windows 实机按下用户绑定的快捷键，确认事件能从系统传到主进程并触发对应 action。
-4. **[延期][P1] 本地语言检测仍是轻量字符系统判断**: `src/services/detect.ts` 的 `detect_local` 仍只按 Unicode 字符系统区分中日韩俄泰阿拉伯等，拉丁字母系语言会回退到 `en`。本轮按用户要求只记录到 `PLAN.md`，不实现替换。
-5. **[延期][P1] 中文词典仍缺完整数据源**: `chinese_dictionary` 仍只有少量样例词条和“暂无内置释义”占位。完整中文单字/词语释义数据源已记录到 `PLAN.md`，本轮按用户要求不实现。
+4. **[确认缺陷][P1] Git Bash 调用 `wsl.exe` 时会把 WSL 路径错误转换到 Git 安装目录**: 在 Git Bash 中直接执行 `wsl -d Ubuntu-22.04 -- git clone ... /home/karon/...`，MSYS 会把 `/home/karon/...` 当作传给 Windows 程序的路径自动转换成 `D:/Program Files/Git/home/karon/...`。该字符串进入 WSL 后会被当作 Linux 相对路径，映射回 Windows 时冒号 `:` 被编码成 ``，从而在项目目录下生成 `D/Program Files/...` 异常目录。后续凡是在 Git Bash 里调用 `wsl.exe` 并传 WSL 绝对路径，必须使用 `MSYS_NO_PATHCONV=1`，或把命令放进 `wsl ... bash -c "..."` 内部执行。
+5. **[延期][P1] 本地语言检测仍是轻量字符系统判断**: `src/services/detect.ts` 的 `detect_local` 仍只按 Unicode 字符系统区分中日韩俄泰阿拉伯等，拉丁字母系语言会回退到 `en`。本轮按用户要求只记录到 `PLAN.md`，不实现替换。
+6. **[延期][P1] 中文词典仍缺完整数据源**: `chinese_dictionary` 仍只有少量样例词条和“暂无内置释义”占位。完整中文单字/词语释义数据源已记录到 `PLAN.md`，本轮按用户要求不实现。
 
 ## 问题背景与根因分析
 
@@ -89,6 +90,12 @@
     - Wayland 提示已从快捷键页默认 UI 和当前规格中移除；如需说明，只应作为故障排查文档或错误态展示。
     - 透明背景入口已在 Windows 等平台显示；新建窗口会读取 `transparent` 配置。
     - 当前 spec 明确为 2 种主题 + 5 种主色；设置页已补齐 5 个主色按钮，并将主色广播到已打开窗口。
+
+13. **`D/Program Files` 异常目录来自 Git Bash 的 MSYS 路径转换**
+    - 触发命令是在 Git Bash 中执行 Windows 的 `wsl.exe`，同时把 `/home/karon/karson_ubuntu/github_repo/...` 作为参数传入。
+    - MSYS 会在调用 Windows 可执行文件前自动把类 Unix 路径转换为 Windows 路径，实际传给 WSL 的 clone 目标变成 `D:/Program Files/Git/home/karon/karson_ubuntu/github_repo/chinese-dictionary`。
+    - WSL 内部把这个字符串当作普通 Linux 相对路径；回到 Windows 文件系统时，文件名中的冒号 `:` 不能直接表示，于是显示为私用字符 ``，最终在项目目录出现 `D/Program Files/...`。
+    - 避免方式：Git Bash 调 `wsl.exe` 时加 `MSYS_NO_PATHCONV=1`，或使用 `wsl -d Ubuntu-22.04 bash -c "mkdir -p /home/... && cd /home/... && git clone ..."`，让 WSL 路径只在 WSL shell 内解释。
 
 ### 为什么测试没有测出来
 

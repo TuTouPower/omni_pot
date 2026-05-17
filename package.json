@@ -9,8 +9,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "dist:check-locks": "node scripts/check_dist_locks.mjs",
-    "dist": "npm run dist:check-locks && npm run build && npm run dist:check-locks && electron-builder -c.win.signAndEditExecutable=false",
-    "dist:dir": "npm run dist:check-locks && npm run build && npm run dist:check-locks && electron-builder --dir -c.win.signAndEditExecutable=false",
+    "dist": "npm run dist:check-locks && npm run build:chinese-dict && npm run build && npm run dist:check-locks && electron-builder -c.win.signAndEditExecutable=false",
+    "dist:dir": "npm run dist:check-locks && npm run build:chinese-dict && npm run build && npm run dist:check-locks && electron-builder --dir -c.win.signAndEditExecutable=false",
     "postinstall": "electron-builder install-app-deps",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint --config eslint_config.mjs . --max-warnings=0",
@@ -22,6 +22,7 @@
     "test:e2e": "npx playwright test --project=full",
     "test:e2e:core": "npx playwright test --project=core",
     "test:e2e:ui": "npx playwright test --project=ui --pass-with-no-tests",
+    "build:chinese-dict": "npx tsx scripts/build_chinese_dict.ts",
     "start": "electron-vite preview"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "@heroui/theme": "^2.4.26",
     "@rollup/rollup-win32-x64-msvc": "^4.60.3",
     "better-sqlite3": "^12.9.0",
+    "cld3-asm": "^4.0.0",
     "electron-log": "^5.4.4",
     "framer-motion": "^12.38.0",
     "i18next": "^26.0.8",
@@ -63,6 +65,16 @@
         "filter": [
           "dict/**",
           "tesseract/**"
+        ]
+      },
+      {
+        "from": "resources/data/dict/",
+        "to": "data/dict/",
+        "filter": [
+          "**/*.db",
+          "**/chinese-dictionary-LICENSE",
+          "!**/*.db-shm",
+          "!**/*.db-wal"
         ]
       },
       {
@@ -116,6 +128,7 @@
     "playwright": "^1.60.0",
     "postcss": "^8.5.14",
     "tailwindcss": "^4.2.4",
+    "tsx": "^4.22.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.3",
     "vite": "^7.3.2",

@@ -66,8 +66,8 @@
 - [X] 命名统一 — 给用户看的显示名用 **Omni Pot**，代码/文件名/package name 一律用 **omni_pot**
 - [X] 服务管理未实现功能：服务启停、编辑/测试保存、真实拖拽排序，并同步补规格与用户 E2E
 - [X] 重新修复已知产品缺陷 — 托盘自绘浅色 popover、翻译欢迎态/窗口布局/语言下拉与重译、OCR 截图裁剪/识别窗口尺寸已完成；剩余真实 Windows smoke 与延期项见 `docs/issues/issues.md`
-- [ ] 本地语言检测替换：当前 `src/services/detect.ts` 的 `detect_local` 用 Unicode 正则匹配，只能区分不同字符系统（中日韩俄泰阿拉伯等），拉丁字母系语言（英法德西意葡土等）全部 fallback 到 `en`，基本不可用。旧版 pot-desktop 用 Rust `lingua` crate（n-gram 概率模型，22 种语言），应替换为 Lingua 的 JS/TS 移植版或同类 n-gram 库；本轮仅记录，不实现
-- [ ] 接入真实中文字典数据源：当前 `chinese_dictionary` 只提供少量内置样例词条和“暂无内置释义”占位，用于先修正中文查询路由语义；后续需要接入完整中文单字/词语释义数据，才能宣称中文词典/中文字典能力完整；本轮仅记录，不实现
+- [X] 本地语言检测替换：cld3-asm WASM 已集成到主进程，IPC bridge 到渲染进程，配置项 `detect_cld3_enabled` 可运行时回退到正则；`npm run dist` 通过
+- [X] 接入真实中文字典数据源：mapull/chinese-dictionary JSON → SQLite 构建脚本（320K 词、16K 字、50K 成语），IPC bridge 到渲染进程，FTS5 前缀搜索，配置项 `dict_chinese_enabled`；`npm run dist` 通过
 - [X] 插件系统（`.potext` 格式）当前明确延期：本阶段不实现外部插件加载，仅保留内置服务接口
 - [X] 代码质量检查体系 — 见 `docs/code_quality_checks_plan.md`
 

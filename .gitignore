@@ -13,3 +13,7 @@ tests/user_e2e/test-results/
 data/
 !data/dict/
 !data/dict/cedict.txt.gz
+resources/data/dict/chinese_dict.db
+*.db-shm
+*.db-wal
+github_repo/

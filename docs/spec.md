@@ -342,10 +342,17 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 中文词典/中文字典查询：
 
 ```
-renderer: chinese_dictionary.translate()
-  → 内置中文单字/词语释义
-  → 返回中文读音、词性、中文释义和例句
+renderer: chinese_dictionary.translate(word)
+  → window.electronAPI.chineseDict.lookup(word)
+    → IPC → electron/ipc/chinese_dict_handlers.ts
+      → 单字 → characters 表查询
+      → 词语/成语 → words → idioms 表查询
+      → FTS5 前缀搜索兜底
+      → better-sqlite3 查询 chinese_dict.db → DictResult | null
 ```
+
+数据源：mapull/chinese-dictionary JSON → `scripts/build_chinese_dict.ts` 构建 SQLite（320K 词、16K 字、50K 成语）。
+配置项 `dict_chinese_enabled`（默认 `true`）可运行时禁用。
 
 CC-CEDICT 离线词典查询：
 
@@ -659,7 +666,7 @@ interface DictResult {
 | 17 | Gemini Pro | `geminipro` | API Key，流式 |
 | 18 | Ollama | `ollama` | 本地，流式 |
 | 19 | MyMemory | `mymemory` | 免费 |
-| 20 | 中文词典 | `chinese_dictionary` | 内置中文单字/词语释义，输出词典结果 |
+| 20 | 中文词典 | `chinese_dictionary` | 离线（mapull SQLite，320K 词/16K 字/50K 成语），输出词典结果 |
 | 21 | Free Dictionary | `free_dictionary` | 免费（dictionaryapi.dev），英文词典，输出词典结果 |
 | 22 | ECDict | `ecdict` | 离线（CC-CEDICT SQLite），输出中英词典结果 |
 
@@ -725,7 +732,9 @@ interface DictResult {
 `translate_detect_engine` 配置（默认 `bing`）：
 
 - 在线引擎：bing、google、baidu、tencent、niutrans
-- 离线引擎：local
+- 离线引擎：local（cld3-asm WASM 神经网络，19 种 BCP-47 映射覆盖 18 种语言；WASM 加载失败或检测不可靠时自动回退到 Unicode 正则）
+
+配置项 `detect_cld3_enabled`（默认 `true`）可运行时禁用 cld3，回退到纯正则检测。
 
 **失败回退**：用户配置的检测引擎调用失败时，按以下顺序依次尝试其他引擎，直到任一成功为止：
 `bing → google → baidu → tencent → niutrans → local`。
@@ -765,6 +774,8 @@ interface DictResult {
 | `clipboard_monitor` | boolean | `false` | 剪贴板监听 |
 | `auto_start` | boolean | `false` | 开机自启 |
 | `tray_click_event` | `'show_config'\|'show_translate'\|'none'` | `'show_config'` | 托盘左键点击行为 |
+| `dict_chinese_enabled` | boolean | `true` | 中文字典（SQLite）开关，关闭后走在线词典 |
+| `detect_cld3_enabled` | boolean | `true` | cld3-asm 语言检测开关，关闭后回退到 Unicode 正则 |
 
 #### 代理设置
 
