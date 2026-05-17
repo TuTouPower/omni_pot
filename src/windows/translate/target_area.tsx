@@ -168,34 +168,32 @@ function SortableCard({
                 </div>
 
                 {/* Content */}
-                {!collapsed && (
-                    result === null ? (
-                        <div data-testid="result-error" data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed') || '翻译失败'}</span>
-                            {onRetry && (
-                                <button data-testid="result-retry" className="ic-btn" title={t('result.retry') || '重试'} onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
-                                    <Icons.Cycle size={14} />
-                                </button>
-                            )}
-                        </div>
-                    ) : is_loading ? (
-                        <div data-testid="result-loading" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-mute)', fontSize: 13 }}>
-                            <span data-testid="result-loading-dots" aria-hidden="true" style={{ display: 'inline-flex', gap: 3 }}>
-                                <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.45 }} />
-                                <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.7 }} />
-                                <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor' }} />
-                            </span>
-                            <span>{t('result.translating', { defaultValue: '翻译中…' })}</span>
-                        </div>
-                    ) : result === undefined ? null : (
-                        <div data-testid="result-body" data-result-content style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
-                            {typeof result === 'string'
-                                ? (result || <span style={{ color: 'var(--text-mute)' }}>…</span>)
-                                : <DictResultInline result={result} />
-                            }
-                        </div>
-                    )
-                )}
+                {result === null ? (
+                    <div data-testid="result-error" data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed') || '翻译失败'}</span>
+                        {onRetry && (
+                            <button data-testid="result-retry" className="ic-btn" title={t('result.retry') || '重试'} onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
+                                <Icons.Cycle size={14} />
+                            </button>
+                        )}
+                    </div>
+                ) : is_loading ? (
+                    <div data-testid="result-loading" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-mute)', fontSize: 13 }}>
+                        <span data-testid="result-loading-dots" aria-hidden="true" style={{ display: 'inline-flex', gap: 3 }}>
+                            <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.45 }} />
+                            <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.7 }} />
+                            <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor' }} />
+                        </span>
+                        <span>{t('result.translating', { defaultValue: '翻译中…' })}</span>
+                    </div>
+                ) : !collapsed && result !== undefined ? (
+                    <div data-testid="result-body" data-result-content style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
+                        {typeof result === 'string'
+                            ? (result || <span style={{ color: 'var(--text-mute)' }}>…</span>)
+                            : <DictResultInline result={result} />
+                        }
+                    </div>
+                ) : null}
             </div>
         </div>
     )

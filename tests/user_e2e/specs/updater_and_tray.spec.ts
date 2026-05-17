@@ -20,6 +20,7 @@ async function expect_window_not_exists(omni: AppFixture, label: WindowLabel): P
 }
 
 async function close_translate_window(omni: AppFixture): Promise<void> {
+    if (!(await omni.api.windowState('translate')).exists) return
     const translate = await omni.translate()
     await translate.clickClose()
     await expect_window_not_exists(omni, 'translate')

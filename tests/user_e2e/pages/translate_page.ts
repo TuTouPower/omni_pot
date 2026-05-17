@@ -225,33 +225,44 @@ export class TranslatePage {
     }
 
     async hold_lingva_translation_once(translation: string): Promise<{ wait_for_request: () => Promise<void>; release_response: () => void }> {
-        let release_response = (): void => {}
-        const release_promise = new Promise<void>((resolve) => {
-            release_response = resolve
-        })
-        let resolve_request = (): void => {}
-        let reject_request: (error: Error) => void = () => {}
-        const request_promise = new Promise<void>((resolve, reject) => {
-            resolve_request = resolve
-            reject_request = reject
-        })
-        const timeout = setTimeout(() => { reject_request(new Error('Timed out waiting for Lingva translation request')); }, 10_000)
-
-        await this.page.route('https://lingva.lunar.icu/api/v1/*/zh/**', async (route) => {
-            clearTimeout(timeout)
-            resolve_request()
-            await release_promise
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                headers: cors_headers,
-                body: JSON.stringify({ translation }),
+        await this.page.evaluate((translation_text: string) => {
+            type E2eWindow = Window & {
+                __e2e_lingva_request_seen?: boolean
+                __e2e_lingva_release?: () => void
+            }
+            const e2e_window = window as E2eWindow
+            const original_fetch = window.fetch.bind(window)
+            let consumed = false
+            const release_promise = new Promise<void>((resolve) => {
+                e2e_window.__e2e_lingva_release = resolve
             })
-        }, { times: 1 })
+            e2e_window.__e2e_lingva_request_seen = false
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (!consumed && url.includes('/api/v1/') && !url.includes('/api/v1/audio/')) {
+                    consumed = true
+                    e2e_window.__e2e_lingva_request_seen = true
+                    await release_promise
+                    return new Response(JSON.stringify({ translation: translation_text }), {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    })
+                }
+                return original_fetch(input, init)
+            }
+        }, translation)
 
         return {
-            wait_for_request: () => request_promise,
-            release_response,
+            wait_for_request: async () => {
+                await this.page.waitForFunction(() => {
+                    return Boolean((window as Window & { __e2e_lingva_request_seen?: boolean }).__e2e_lingva_request_seen)
+                }, undefined, { timeout: 10_000 })
+            },
+            release_response: () => {
+                void this.page.evaluate(() => {
+                    ;(window as Window & { __e2e_lingva_release?: () => void }).__e2e_lingva_release?.()
+                })
+            },
         }
     }
 
@@ -420,35 +431,45 @@ export class TranslatePage {
     }
 
     async fail_then_succeed_lingva_translation_once(translation: string): Promise<void> {
-        let request_count = 0
-        await this.page.route('https://lingva.lunar.icu/api/v1/*/zh/**', async (route) => {
-            request_count += 1
-            if (request_count === 1) {
-                await route.fulfill({
-                    status: 500,
-                    contentType: 'application/json',
-                    body: JSON.stringify({ error: 'e2e translation failure' }),
-                })
-                return
+        await this.page.evaluate((translation_text: string) => {
+            const original_fetch = window.fetch.bind(window)
+            let request_count = 0
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (url.includes('/api/v1/') && !url.includes('/api/v1/audio/')) {
+                    request_count += 1
+                    if (request_count === 1) {
+                        return new Response(JSON.stringify({ error: 'e2e translation failure' }), {
+                            status: 500,
+                            headers: { 'content-type': 'application/json' },
+                        })
+                    }
+                    return new Response(JSON.stringify({ translation: translation_text }), {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    })
+                }
+                return original_fetch(input, init)
             }
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                headers: cors_headers,
-                body: JSON.stringify({ translation }),
-            })
-        }, { times: 2 })
+        }, translation)
     }
 
     async fulfill_lingva_translation_once(translation: string, target_language = 'zh'): Promise<void> {
-        await this.page.route(`**/api/v1/*/${target_language}/**`, async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                headers: cors_headers,
-                body: JSON.stringify({ translation }),
-            })
-        }, { times: 1 })
+        await this.page.evaluate(({ translation_text, target_language_code }) => {
+            const original_fetch = window.fetch.bind(window)
+            let consumed = false
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (!consumed && url.includes('/api/v1/') && !url.includes('/api/v1/audio/') && url.includes(`/${target_language_code}/`)) {
+                    consumed = true
+                    return new Response(JSON.stringify({ translation: translation_text }), {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    })
+                }
+                return original_fetch(input, init)
+            }
+        }, { translation_text: translation, target_language_code: target_language })
     }
 
     async fulfill_mymemory_translation_once(translation: string): Promise<void> {
@@ -478,43 +499,54 @@ export class TranslatePage {
     }
 
     async hold_lingva_tts(): Promise<{ wait_for_request: () => Promise<void>; wait_for_request_count: (expected_count: number) => Promise<void>; release_response: () => void }> {
-        let request_count = 0
-        let release_response = (): void => {}
-        const release_promise = new Promise<void>((resolve) => {
-            release_response = resolve
-        })
-        let resolve_request = (): void => {}
-        let reject_request: (error: Error) => void = () => {}
-        const request_promise = new Promise<void>((resolve, reject) => {
-            resolve_request = resolve
-            reject_request = reject
-        })
-        const timeout = setTimeout(() => { reject_request(new Error('Timed out waiting for Lingva TTS request')); }, 10_000)
-
-        await this.page.route('https://lingva.lunar.icu/api/v1/audio/**', async (route) => {
-            request_count += 1
-            clearTimeout(timeout)
-            resolve_request()
-            await release_promise
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({ audio: [1, 2, 3] }),
+        await this.page.evaluate(() => {
+            type E2eWindow = Window & {
+                __e2e_lingva_tts_request_count?: number
+                __e2e_lingva_tts_release?: () => void
+            }
+            const e2e_window = window as E2eWindow
+            const original_fetch = window.fetch.bind(window)
+            const release_promise = new Promise<void>((resolve) => {
+                e2e_window.__e2e_lingva_tts_release = resolve
             })
+            e2e_window.__e2e_lingva_tts_request_count = 0
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (url.includes('/api/v1/audio/')) {
+                    e2e_window.__e2e_lingva_tts_request_count = (e2e_window.__e2e_lingva_tts_request_count ?? 0) + 1
+                    await release_promise
+                    return new Response(JSON.stringify({ audio: [1, 2, 3] }), {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    })
+                }
+                return original_fetch(input, init)
+            }
         })
 
         return {
-            wait_for_request: () => request_promise,
+            wait_for_request: async () => {
+                await this.page.waitForFunction(() => {
+                    return ((window as Window & { __e2e_lingva_tts_request_count?: number }).__e2e_lingva_tts_request_count ?? 0) > 0
+                }, undefined, { timeout: 10_000 })
+            },
             wait_for_request_count: async (expected_count: number) => {
                 const end = Date.now() + 1_000
                 while (Date.now() < end) {
-                    await this.page.waitForTimeout(50)
+                    const request_count = await this.page.evaluate(() => {
+                        return ((window as Window & { __e2e_lingva_tts_request_count?: number }).__e2e_lingva_tts_request_count ?? 0)
+                    })
                     if (request_count !== expected_count) {
                         throw new Error(`Expected ${String(expected_count)} Lingva TTS request(s), got ${String(request_count)}`)
                     }
+                    await this.page.waitForTimeout(Math.min(50, end - Date.now()))
                 }
             },
-            release_response,
+            release_response: () => {
+                void this.page.evaluate(() => {
+                    ;(window as Window & { __e2e_lingva_tts_release?: () => void }).__e2e_lingva_tts_release?.()
+                })
+            },
         }
     }
 

@@ -49,8 +49,15 @@ function find_db_path(): string | null {
         const prod_path = join(process.resourcesPath, 'data', 'dict', 'chinese_dict.db')
         return existsSync(prod_path) ? prod_path : null
     }
-    const dev_path = join(app.getAppPath(), 'resources', 'data', 'dict', 'chinese_dict.db')
-    return existsSync(dev_path) ? dev_path : null
+
+    const app_path = app.getAppPath()
+    const candidates = [
+        join(app_path, 'resources', 'data', 'dict', 'chinese_dict.db'),
+        join(app_path, '..', 'resources', 'data', 'dict', 'chinese_dict.db'),
+        join(app_path, '..', '..', 'resources', 'data', 'dict', 'chinese_dict.db'),
+        join(process.cwd(), 'resources', 'data', 'dict', 'chinese_dict.db'),
+    ]
+    return candidates.find((path) => existsSync(path)) ?? null
 }
 
 function open_db(): Database.Database | null {
@@ -84,7 +91,14 @@ function open_db(): Database.Database | null {
         stmt_cache.set('lookup_word', db.prepare('SELECT word, pinyin, explanation FROM words WHERE word = ?'))
         stmt_cache.set('lookup_idiom', db.prepare('SELECT word, pinyin, explanation, source, example, similar, opposite FROM idioms WHERE word = ?'))
         stmt_cache.set('lookup_char', db.prepare('SELECT char, pinyin, explanation, speech, words FROM characters WHERE char = ?'))
-        stmt_cache.set('fts_search', db.prepare('SELECT word, pinyin, explanation FROM words_fts WHERE word MATCH ? ORDER BY bm25(words_fts), length(word) LIMIT ?'))
+        stmt_cache.set('fts_search', db.prepare(`
+            SELECT words.word, words.pinyin, words.explanation
+            FROM words_fts
+            JOIN words ON words.id = words_fts.rowid
+            WHERE words_fts MATCH ?
+            ORDER BY bm25(words_fts), length(words.word)
+            LIMIT ?
+        `))
 
         log_dict.info('db opened: %s', path)
         return db
@@ -151,7 +165,14 @@ export function fts_search(prefix: string, limit = 5): WordRow[] {
     const cleaned = prefix.replace(/[^\p{Script=Han}a-zA-Z0-9]/gu, '')
     if (!cleaned) return []
     const query = `${cleaned}*`
-    const stmt = stmt_cache.get('fts_search') ?? database.prepare('SELECT word, pinyin, explanation FROM words_fts WHERE word MATCH ? ORDER BY bm25(words_fts), length(word) LIMIT ?')
+    const stmt = stmt_cache.get('fts_search') ?? database.prepare(`
+        SELECT words.word, words.pinyin, words.explanation
+        FROM words_fts
+        JOIN words ON words.id = words_fts.rowid
+        WHERE words_fts MATCH ?
+        ORDER BY bm25(words_fts), length(words.word)
+        LIMIT ?
+    `)
     return stmt.all(query, limit) as WordRow[]
 }
 

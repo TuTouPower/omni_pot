@@ -6,6 +6,10 @@ async function wait_for_dict_ready(page: Page): Promise<void> {
     await expect.poll(async () => page.evaluate(() => window.electronAPI.dict.check().then((result) => result.ready)), { timeout: 45_000 }).toBe(true)
 }
 
+async function wait_for_chinese_dict_ready(page: Page): Promise<void> {
+    await expect.poll(async () => page.evaluate(() => window.electronAPI.chineseDict.check().then((result) => result.ready)), { timeout: 60_000 }).toBe(true)
+}
+
 test.describe('@ui dict window', () => {
     test.describe.configure({ retries: 2 })
 
@@ -69,7 +73,9 @@ test.describe('@ui dict window', () => {
         })
 
         try {
-            await wait_for_dict_ready(await omni.firstWindow())
+            const page = await omni.firstWindow()
+            await wait_for_dict_ready(page)
+            await wait_for_chinese_dict_ready(page)
 
             const english_result = await omni.api.triggerDict('hello')
             expect(english_result.success).toBe(true)
@@ -79,15 +85,16 @@ test.describe('@ui dict window', () => {
             await expect(dict.sourceTags()).toHaveCount(3)
             await expect.poll(async () => await dict.definitions().count(), { timeout: 60_000 }).toBeGreaterThanOrEqual(3)
 
-            const chinese_result = await omni.api.triggerDict('你好')
+            const chinese_result = await omni.api.triggerDict('谢谢')
             expect(chinese_result.success).toBe(true)
-            await expect(dict.word()).toContainText('你好')
+            await expect(dict.word()).toContainText('谢谢')
             await dict.waitForCards(1, 10_000)
             await expect(dict.sourceTags()).toHaveCount(1)
             await expect(dict.sourceTags().first()).toContainText('中文词典')
-            await expect(dict.definitions().first()).toContainText('用于见面')
-            await expect(dict.dictCards()).not.toContainText('hello')
-            await expect(dict.dictCards()).not.toContainText('en')
+            await expect(dict.definitions().first()).toContainText('对别人表示感谢')
+            const card_text = (await dict.dictCards().allTextContents()).join('\n')
+            expect(card_text).not.toContain('hello')
+            expect(card_text).not.toContain('en')
         } finally {
             await omni.stop()
         }
