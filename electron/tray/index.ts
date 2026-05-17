@@ -1,4 +1,4 @@
-import { Tray, nativeImage, app, screen } from 'electron'
+import { Tray, Menu, nativeImage, app, screen } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { WindowLabel } from '../windows/types'
@@ -216,12 +216,43 @@ export function createTray(): void {
     show_tray_popup()
   })
 
+  // Linux fires no 'right-click' on the tray icon (the OS owns the context
+  // menu). Fall back to a native Electron menu so the user can still reach
+  // Config / Quit there.
+  if (process.platform === 'linux') {
+    install_linux_fallback_menu()
+  }
+
   rebuildMenu()
+}
+
+function install_linux_fallback_menu(): void {
+  if (!tray) return
+  const labels = get_tray_labels()
+  const menu = Menu.buildFromTemplate([
+    { label: labels.input_translate, click: () => { trigger_tray_action('input_translate') } },
+    { label: labels.ocr_recognize, click: () => { trigger_tray_action('ocr_recognize') } },
+    { label: labels.screenshot_translate, click: () => { trigger_tray_action('screenshot_translate') } },
+    {
+      label: labels.clipboard_monitor,
+      type: 'checkbox',
+      checked: isClipboardMonitoring(),
+      click: () => { trigger_tray_action('clipboard_monitor') }
+    },
+    { type: 'separator' },
+    { label: labels.config, click: () => { trigger_tray_action('config') } },
+    { label: labels.restart, click: () => { trigger_tray_action('restart') } },
+    { label: labels.quit, click: () => { trigger_tray_action('quit') } }
+  ])
+  tray.setContextMenu(menu)
 }
 
 export function rebuildMenu(): void {
   const labels = get_tray_labels()
   last_tray_menu_labels = tray_labels_to_array(labels)
+  if (process.platform === 'linux' && tray) {
+    install_linux_fallback_menu()
+  }
 }
 
 export function destroyTray(): void {
