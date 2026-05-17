@@ -73,6 +73,7 @@ export class WindowManager {
       height: opts.height,
       minWidth: opts.minWidth,
       minHeight: opts.minHeight,
+      maxHeight: opts.maxHeight,
       resizable: opts.resizable ?? true,
       alwaysOnTop: opts.alwaysOnTop ?? false,
       skipTaskbar: opts.skipTaskbar ?? false,
@@ -106,7 +107,10 @@ export class WindowManager {
     })
 
     win.on('blur', () => {
-      if (opts.label === WindowLabel.TRANSLATE && getConfig('translate_close_on_blur')) {
+      if (opts.label === WindowLabel.TRANSLATE
+        && getConfig('translate_close_on_blur')
+        && !getConfig('translate_pinned')
+        && !getConfig('translate_always_on_top')) {
         win.close()
       }
       if (opts.label === WindowLabel.TRAY) {

@@ -8,7 +8,7 @@ import { get_translate_window_options } from '../windows/translate_options'
 import { get_recognize_window_options } from '../windows/recognize_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
-import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures } from '../hotkey'
+import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures, triggerTranslateEntry } from '../hotkey'
 import { readSelectedText, setE2eSelectedTextResult } from '../selection'
 import { log } from '../log'
 
@@ -128,7 +128,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
             }
 
             if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-hotkey') {
-                handle_trigger_hotkey(req, res)
+                handle_trigger_hotkey(mgr, req, res)
                 return
             }
 
@@ -537,6 +537,7 @@ function handle_trigger_input_translate(
 }
 
 function handle_trigger_hotkey(
+    mgr: WindowManager,
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
@@ -551,17 +552,24 @@ function handle_trigger_hotkey(
                 res.end(JSON.stringify({ success: false, error: 'missing name' }))
                 return
             }
+            const selectionText = typeof body.selectionText === 'string' ? body.selectionText : undefined
+            if (name === 'translate') {
+                triggerTranslateEntry(mgr, selectionText).catch((err: unknown) => { log_server.error(err) })
+                res.writeHead(200)
+                res.end(JSON.stringify({ success: true }))
+                return
+            }
+            if (selectionText !== undefined) {
+                setE2eSelectedTextResult({
+                    text: selectionText,
+                    method: 'none',
+                    reason: selectionText.trim() ? undefined : 'empty'
+                })
+            }
             if (!hasRegisteredHotkey(name)) {
                 res.writeHead(404)
                 res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
                 return
-            }
-            if (typeof body.selectionText === 'string') {
-                setE2eSelectedTextResult({
-                    text: body.selectionText,
-                    method: 'none',
-                    reason: body.selectionText.trim() ? undefined : 'empty'
-                })
             }
             triggerRegisteredHotkey(name)
             res.writeHead(200)
