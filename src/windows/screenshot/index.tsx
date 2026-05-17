@@ -193,13 +193,12 @@ export default function ScreenshotWindow(): React.ReactElement {
                 borderRadius: 12,
                 overflow: 'hidden',
             }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
+            onMouseDown={background ? handleMouseDown : undefined}
+            onMouseMove={background ? handleMouseMove : undefined}
+            onMouseUp={background ? handleMouseUp : undefined}
             onContextMenu={(e) => { e.preventDefault(); }}
         >
-            {/* Dark translucent overlay */}
-            <div data-testid="shot-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(10, 10, 15, 0.55)' }} />
+            {background && <div data-testid="shot-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(10, 10, 15, 0.55)' }} />}
 
             {/* Selection area */}
             {selection_rect && selection_rect.width > 0 && selection_rect.height > 0 && (
@@ -251,35 +250,36 @@ export default function ScreenshotWindow(): React.ReactElement {
                 </div>
             )}
 
-            {/* Top hint bar */}
-            <div
-                data-testid="shot-hint"
-                style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: 14,
-                    transform: 'translateX(-50%)',
-                    display: 'flex',
-                    gap: 6,
-                    padding: '6px 10px',
-                    background: 'rgba(20, 18, 16, 0.85)',
-                    color: '#f5f3f0',
-                    borderRadius: 999,
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    pointerEvents: 'none',
-                }}
-            >
-                <span>拖动选取区域</span>
-                <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
-                <span>
-                    <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>↵</kbd> 确认
-                </span>
-                <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
-                <span>
-                    <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>Esc</kbd> 取消
-                </span>
-            </div>
+            {background && (
+                <div
+                    data-testid="shot-hint"
+                    style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: 14,
+                        transform: 'translateX(-50%)',
+                        display: 'flex',
+                        gap: 6,
+                        padding: '6px 10px',
+                        background: 'rgba(20, 18, 16, 0.85)',
+                        color: '#f5f3f0',
+                        borderRadius: 999,
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 11,
+                        pointerEvents: 'none',
+                    }}
+                >
+                    <span>拖动选取区域</span>
+                    <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
+                    <span>
+                        <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>↵</kbd> 确认
+                    </span>
+                    <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
+                    <span>
+                        <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>Esc</kbd> 取消
+                    </span>
+                </div>
+            )}
         </div>
     )
 }
