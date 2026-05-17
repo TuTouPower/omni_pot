@@ -27,15 +27,26 @@ function load_json(filename: string): unknown[] {
     if (!existsSync(path)) fail(`Missing source file: ${path}`)
     const raw = readFileSync(path, 'utf-8')
     const trimmed = raw.trimStart()
+    let parsed: unknown
     try {
         if (trimmed.startsWith('[')) {
-            return JSON.parse(raw)
+            parsed = JSON.parse(raw)
+        } else if (trimmed.startsWith('{')) {
+            // Some upstream files are a sequence of comma-separated objects without
+            // top-level brackets; wrap them. Anything else (single object, NDJSON,
+            // malformed) must fail loud rather than silently produce garbage.
+            const body = raw.trimEnd().replace(/,\s*$/, '')
+            parsed = JSON.parse('[' + body + ']')
+        } else {
+            fail(`Unexpected JSON shape in ${filename}: must start with '[' or '{'`)
         }
-        const body = raw.trimEnd().replace(/,\s*$/, '')
-        return JSON.parse('[' + body + ']')
     } catch (e) {
         fail(`Failed to parse ${filename}: ${e}`)
     }
+    if (!Array.isArray(parsed)) {
+        fail(`Expected an array in ${filename}, got ${typeof parsed}`)
+    }
+    return parsed
 }
 
 function get_source_commit(): string {
