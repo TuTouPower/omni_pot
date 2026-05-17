@@ -86,4 +86,32 @@ describe('Config Store integration', () => {
         expect(store.getConfig('app_theme')).toBe('dark')
         expect(store.getConfig('app_primary_color')).toBe(DEFAULT_CONFIG.app_primary_color)
     })
+
+    it('migrates old factory default translate_service_list to new free defaults', async () => {
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+            translate_service_list: ['bing@default', 'google@default', 'deepl@default'],
+        }))
+        const store = await import('../../electron/config/store')
+
+        store.initConfigStore()
+        store.flush_config()
+
+        expect(store.getConfig('translate_service_list'))
+            .toEqual(DEFAULT_CONFIG.translate_service_list)
+    })
+
+    it('preserves user-customized translate_service_list across init', async () => {
+        const custom_list = ['bing@default', 'google@default']
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+            translate_service_list: custom_list,
+        }))
+        const store = await import('../../electron/config/store')
+
+        store.initConfigStore()
+        store.flush_config()
+
+        expect(store.getConfig('translate_service_list')).toEqual(custom_list)
+    })
 })

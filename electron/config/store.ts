@@ -90,6 +90,17 @@ export function initConfigStore(): void {
         saveToDisk()
     }
 
+    // Migrate: replace the old factory default translate_service_list
+    // (bing/google/deepl) with the new free defaults (bing/deepl/mymemory)
+    // for users who never customized it. Leave user-customized lists alone.
+    const OLD_DEFAULT_TRANSLATE_LIST = ['bing@default', 'google@default', 'deepl@default']
+    if (Array.isArray(data.translate_service_list)
+        && data.translate_service_list.length === OLD_DEFAULT_TRANSLATE_LIST.length
+        && data.translate_service_list.every((v, i) => v === OLD_DEFAULT_TRANSLATE_LIST[i])) {
+        data.translate_service_list = [...DEFAULT_CONFIG.translate_service_list]
+        saveToDisk()
+    }
+
     if (typeof data.app_primary_color !== 'string'
         || !(APP_PRIMARY_COLORS as readonly string[]).includes(data.app_primary_color)) {
         data.app_primary_color = DEFAULT_CONFIG.app_primary_color

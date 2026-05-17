@@ -345,15 +345,14 @@ export default function TranslateWindow(): React.ReactElement {
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
 
     const handleTogglePin = useCallback(() => {
-        setConfig('translate_pinned', !pinned)
-    }, [pinned, setConfig])
+        setConfig('translate_pinned', !configPinned)
+    }, [configPinned, setConfig])
 
     const handleToggleAlwaysOnTop = useCallback(() => {
         const next = !alwaysOnTop
         window.electronAPI.window.setAlwaysOnTop(next)
             .then(() => {
                 setConfig('translate_always_on_top', next)
-                if (next) setConfig('translate_pinned', true)
             })
             .catch(console.error)
     }, [alwaysOnTop, setConfig])
@@ -556,7 +555,7 @@ export default function TranslateWindow(): React.ReactElement {
             <div className="op-titlebar" data-testid="titlebar">
                 <button
                     className="ic-btn"
-                    title="固定"
+                    title={t('pin')}
                     data-testid="titlebar-pin"
                     aria-pressed={pinned}
                     onClick={handleTogglePin}
@@ -566,7 +565,7 @@ export default function TranslateWindow(): React.ReactElement {
                 </button>
                 <button
                     className="ic-btn"
-                    title="置顶"
+                    title={t('translate_settings.always_on_top')}
                     data-testid="titlebar-topmost"
                     aria-pressed={alwaysOnTop}
                     onClick={handleToggleAlwaysOnTop}
