@@ -16,7 +16,7 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 |---|---|
 | `npm run dev` | 启动开发模式（热重载） |
 | `npm run build` | 构建（不打包） |
-| `npm run dist` | 构建 + 打包（NSIS 安装版 + 便携版；若既有 release 产物被 Omni Pot 或其他进程占用，会在打包前直接报错） |
+| `npm run dist` | 构建 + 打包（NSIS 安装版 + 便携版；若既有 release 产物被 Omni Pot 占用，会在打包前自动关闭 Omni Pot，并在打包完成后重启新产物） |
 | `npm run typecheck` | TypeScript 类型检查 |
 | `npm run lint` | ESLint 检查 |
 | `npm test` | 运行单元测试 |
@@ -70,6 +70,8 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 ## 编码约定
 
 - `scripts/` 下的命令行构建脚本可以使用 `console.log` / `console.warn` / `console.error` 输出用户可见进度与错误；应用代码仍使用日志模块。
+
+- `scripts/build_chinese_dict.ts` 默认优先使用项目内 `github_repo/chinese-dictionary`；不存在时自动回退到 WSL 上游仓库 `\\wsl.localhost\Ubuntu-22.04\home\karon\karson_ubuntu\github_repo\chinese-dictionary`。
 
 ## 测试要求
 

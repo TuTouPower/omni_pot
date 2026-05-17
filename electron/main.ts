@@ -139,21 +139,33 @@ if (!gotLock) {
             set_service_state('failed')
         } else {
             set_service_state('building')
-            const npm_cmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-            const build = spawn(npm_cmd, ['run', 'build:chinese-dict'], { cwd: app.getAppPath(), shell: false })
-            build.stdout.on('data', (data: Buffer) => { log_main.info('build:chinese-dict: %s', data.toString().trimEnd()) })
-            build.stderr.on('data', (data: Buffer) => { log_main.error('build:chinese-dict stderr: %s', data.toString().trimEnd()) })
-            build.on('close', (code) => {
-                if (code === 0) {
-                    set_service_state('ready')
-                    reload_db()
-                    const new_path = get_db_path()
-                    if (new_path) register_db_watch(new_path)
-                } else {
+            try {
+                const npm_cmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+                const build = spawn(npm_cmd, ['run', 'build:chinese-dict'], { cwd: app.getAppPath(), shell: process.platform === 'win32' })
+                let build_failed = false
+                build.stdout.on('data', (data: Buffer) => { log_main.info('build:chinese-dict: %s', data.toString().trimEnd()) })
+                build.stderr.on('data', (data: Buffer) => { log_main.error('build:chinese-dict stderr: %s', data.toString().trimEnd()) })
+                build.on('error', (err: Error) => {
+                    build_failed = true
                     set_service_state('failed')
-                    log_main.error('auto build:chinese-dict failed with code %d', code)
-                }
-            })
+                    log_main.error('auto build:chinese-dict failed to start: %s', err)
+                })
+                build.on('close', (code) => {
+                    if (build_failed) return
+                    if (code === 0) {
+                        set_service_state('ready')
+                        reload_db()
+                        const new_path = get_db_path()
+                        if (new_path) register_db_watch(new_path)
+                    } else {
+                        set_service_state('failed')
+                        log_main.error('auto build:chinese-dict failed with code %d', code)
+                    }
+                })
+            } catch (e) {
+                set_service_state('failed')
+                log_main.error('auto build:chinese-dict failed to start: %s', e)
+            }
         }
     } else {
         set_service_state('ready')

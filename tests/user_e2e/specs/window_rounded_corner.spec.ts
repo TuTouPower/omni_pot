@@ -8,9 +8,10 @@
 // indicates the body/background is painting a white rectangle behind the
 // rounded shell.
 
+import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 
-async function corner_pixel_alpha(page_obj: { evaluate: (...args: any[]) => Promise<number> }, dx: number, dy: number): Promise<number> {
+async function corner_pixel_alpha(page_obj: Pick<Page, 'evaluate'>, dx: number, dy: number): Promise<number> {
     return page_obj.evaluate(({ x, y }: { x: number; y: number }) => {
         const root = document.documentElement
         const style = getComputedStyle(root)

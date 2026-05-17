@@ -1,11 +1,13 @@
 import { readFileSync, mkdirSync, copyFileSync, existsSync, statSync, unlinkSync } from 'fs'
 import { join } from 'path'
 import Database from 'better-sqlite3'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 
 // Step 0: Clone mapull/chinese-dictionary, run `git rev-parse HEAD`, paste here
 const PINNED_COMMIT = 'e804ada333b68afddfdccbe8dcc938a72da157a7'
-const DATA_DIR = process.env['CHINESE_DICT_DATA_DIR'] || join(__dirname, '..', 'github_repo', 'chinese-dictionary')
+const LOCAL_DATA_DIR = join(__dirname, '..', 'github_repo', 'chinese-dictionary')
+const WSL_DATA_DIR = '\\\\wsl.localhost\\Ubuntu-22.04\\home\\karon\\karson_ubuntu\\github_repo\\chinese-dictionary'
+const DATA_DIR = process.env['CHINESE_DICT_DATA_DIR'] || (existsSync(LOCAL_DATA_DIR) ? LOCAL_DATA_DIR : WSL_DATA_DIR)
 const OUTPUT_DIR = join(__dirname, '..', 'resources', 'data', 'dict')
 const OUTPUT_DB = join(OUTPUT_DIR, 'chinese_dict.db')
 const MAX_WORD_LEN = 100
@@ -51,7 +53,7 @@ function load_json(filename: string): unknown[] {
 
 function get_source_commit(): string {
     try {
-        return execSync('git rev-parse HEAD', { cwd: DATA_DIR, encoding: 'utf-8' }).trim()
+        return execFileSync('git', ['-C', DATA_DIR, 'rev-parse', 'HEAD'], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
     } catch {
         return 'unknown'
     }

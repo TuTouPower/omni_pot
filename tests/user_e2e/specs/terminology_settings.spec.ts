@@ -9,7 +9,7 @@
 
 import { test, expect } from '../fixtures/test'
 
-async function expect_no_legacy_term(page_text: string, scope: string): Promise<void> {
+function expect_no_legacy_term(page_text: string, scope: string): void {
     expect(page_text, `${scope} 含有禁用词「配置」`).not.toContain('配置')
 }
 
@@ -20,7 +20,7 @@ test.describe('@ui terminology 配置→设置', () => {
         await expect(page.getByTestId('config-title')).toBeVisible()
 
         const body_text = await page.locator('body').innerText()
-        await expect_no_legacy_term(body_text, '设置窗口')
+        expect_no_legacy_term(body_text, '设置窗口')
 
         // Window title (visible in the OS title bar / accessibility tree)
         // should also use 设置.
@@ -34,13 +34,12 @@ test.describe('@ui terminology 配置→设置', () => {
         for (const label of tray.labels) {
             expect(label, `托盘项「${label}」含禁用词「配置」`).not.toContain('配置')
         }
-        // And the demo-aligned label must exist.
-        expect(tray.labels).toContain('设置')
+        expect(tray.labels.some((label) => label === 'Settings' || label === '设置')).toBe(true)
     })
 
     test('translate window does not surface 配置 in any visible string', async ({ omni }) => {
         const translate = await omni.translate()
         const body_text = await translate['page'].locator('body').innerText()
-        await expect_no_legacy_term(body_text, '翻译窗口')
+        expect_no_legacy_term(body_text, '翻译窗口')
     })
 })

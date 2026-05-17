@@ -28,7 +28,7 @@
 6. [窗口: 词典](#6-窗口-词典)
 7. [窗口: 截图](#7-窗口-截图)
 8. [窗口: 识别 (OCR)](#8-窗口-识别-ocr)
-9. [窗口: 配置](#9-窗口-配置)
+9. [窗口: 设置](#9-窗口-设置)
 10. [窗口: 更新器](#10-窗口-更新器)
 11. [守护进程窗口](#11-守护进程窗口)
 12. [服务系统](#12-服务系统)
@@ -140,7 +140,7 @@ enum WindowLabel {
 | 截图 | `screenshot` | 全屏 | — | 始终置顶，截图后自动关闭 |
 | 识别 | `recognize` | 800×400 | — | 可置顶 |
 | 词典 | `dict` | 400×500（快捷键）/ 350×420（HTTP） | — | 可置顶 |
-| 配置 | `config` | 800×600 | 800×400 | — |
+| 设置 | `config` | 800×600 | 800×400 | — |
 | 更新器 | `updater` | 600×400 | — | — |
 
 > 所有窗口均为 frameless（`frame: false`），使用自绘标题栏。
@@ -172,7 +172,7 @@ enum WindowLabel {
 10. 如 `clipboard_monitor=true` 启动剪贴板监听
 11. 创建 daemon 窗口（隐藏）
 12. 创建翻译窗口
-13. 首次运行时创建配置窗口
+13. 首次运行时创建设置窗口
 14. 检查更新
 15. CC-CEDICT 词典数据库按需自动导入
 
@@ -434,7 +434,7 @@ OCR 识别结果窗口。三段式布局。
 
 ---
 
-## 9. 窗口: 配置
+## 9. 窗口: 设置
 
 **文件**: `src/windows/config/index.tsx`
 
@@ -459,23 +459,23 @@ OCR 识别结果窗口。三段式布局。
 
 通用组件：`src/windows/config/config_components.tsx`（Card / Row / Switch / Select 等）。
 
-### 9.3 配置页: 通用
+### 9.3 设置页: 通用
 
 - **应用卡片**：开机自启（`auto_start`）、启动时检查更新（`check_update`）、本地 API 端口（`server_port`，修改后需重启）
 - **外观卡片**：主题（`app_theme`：跟随系统 / 浅色 / 深色）、界面语言（`app_language`）、字体（`app_font` / `app_fallback_font`，与字号 `app_font_size` 同行展示，左侧字体下拉、右侧字号下拉）、主色调（`app_primary_color`，5 个圆形选色按钮）、透明背景（`transparent`）、托盘点击行为（`tray_click_event`）
 - **网络代理卡片**：启用代理（`proxy_enable`）、代理地址（`proxy_host`）、代理端口（`proxy_port`）
 
-### 9.4 配置页: 翻译
+### 9.4 设置页: 翻译
 
 - **语言卡片**：源语言、目标语言、第二语言、检测引擎
 - **行为卡片**：自动复制、增量翻译、动态翻译、自动去除换行、记住语言选择、禁用历史记录
 - **窗口卡片**：窗口位置（鼠标位置 / 上次位置）、记住窗口大小、失焦时关闭、始终置顶、隐藏源文本、隐藏语言选择、翻译后隐藏窗口
 
-### 9.5 配置页: 识别
+### 9.5 设置页: 识别
 
 默认识别语言、自动去除换行、自动复制结果、失焦时关闭、识别后隐藏窗口。
 
-### 9.6 配置页: 快捷键
+### 9.6 设置页: 快捷键
 
 五个全局快捷键录入框，每个有绑定按钮：
 
@@ -488,7 +488,7 @@ OCR 识别结果窗口。三段式布局。
 录入行为：捕获组合键、Backspace 清除、绑定按钮在主进程注册、成功/失败提示。
 Wayland / 桌面环境限制属于故障排查或文档说明，不在快捷键设置页默认常驻展示。
 
-### 9.7 配置页: 服务
+### 9.7 设置页: 服务
 
 Tabs 切换五类服务：翻译 / 字典 / 识别 / 朗读 / 收藏。
 
@@ -499,21 +499,21 @@ Tabs 切换五类服务：翻译 / 字典 / 识别 / 朗读 / 收藏。
 - 删除实例后从对应 `*_service_list` 移除，并同步删除 `service_instances` 项
 - 编辑实例可修改显示名与 JSON 配置；测试按钮调用服务 `testConfig()` 并显示成功/失败，保存后持久化到 `service_instances`
 
-### 9.8 配置页: 历史
+### 9.8 设置页: 历史
 
 - 翻译历史表格：服务图标、源文本、源/目标语言、译文、时间戳
 - 分页浏览
 - 点击行打开详情，可编辑源文本 / 译文
 - 清空按钮
 
-### 9.9 配置页: 备份
+### 9.9 设置页: 备份
 
 - 备份目标（`backup_type`）：WebDAV / 本地
 - WebDAV：服务器地址、用户名、密码
 - 操作：立即备份、从备份恢复
-- 备份内容：配置、历史记录数据库、CC-CEDICT 词典数据库
+- 备份内容：设置、历史记录数据库、CC-CEDICT 词典数据库
 
-### 9.10 配置页: 关于
+### 9.10 设置页: 关于
 
 Omni Pot logo + 版本号、简介、官网 / 文档 / 反馈 / 检查更新链接、诊断信息（日志目录 / 配置目录 / 本机 API 地址）。
 
@@ -752,7 +752,7 @@ interface DictResult {
 - **机制**：`electron/config/store.ts` 自实现 JSON 读写
 - **前端访问**：`src/stores/config_store.ts`（Zustand）+ `config:get/set/getAll` IPC
 - **变更广播**：`setConfig()` 写文件后通过 `config:changed` 广播到所有 renderer
-- **首次运行**：空 config 触发自动打开配置窗口
+- **首次运行**：空 config 触发自动打开设置窗口
 
 ### 18.2 完整配置键参考
 
@@ -915,7 +915,7 @@ E2E 测试专用端点（仅 `OMNI_POT_E2E` 环境变量启用）：
 | — | 分隔线 | — |
 | Clipboard Monitor | 复选框 | 切换剪贴板监听 |
 | — | 分隔线 | — |
-| Config | 按钮 | 打开配置窗口 |
+| Settings | 按钮 | 打开设置窗口 |
 | — | 分隔线 | — |
 | Restart | 按钮 | 重启应用 |
 | Quit | 按钮 | 退出应用 |
@@ -1009,7 +1009,7 @@ export async function getSelectedText(): Promise<string>
 - 记录结构：`id`、`service_key`（实例 key）、`source_text`、`source_lang`、
   `target_text`、`target_lang`、`created_at`
 - 翻译成功后自动写入，除非 `history_disable=true`
-- 配置页历史子页支持分页浏览、编辑、清空
+- 设置页历史子页支持分页浏览、编辑、清空
 
 ---
 
@@ -1098,7 +1098,7 @@ export async function getSelectedText(): Promise<string>
 - OCR 操作区包含方法选择、识别语言、重新识别、去换行、去空格、复制、导出、翻译
 - OCR 窗口去掉图片尺寸、类型、识别字数、耗时等弱价值信息
 - 词典窗口没有搜索框，支持单词级收藏，含词形变化与来源 chips
-- 配置窗口为左导航 + 右卡片布局，覆盖 8 个页面
+- 设置窗口为左导航 + 右卡片布局，覆盖 8 个页面
 - 截图窗口主色仅用于选区描边与尺寸标签
 - 所有图标按钮大小接近汉字大小
 - 主题支持日/夜 × 5 主色共 10 种组合，且颜色使用克制
@@ -1111,7 +1111,7 @@ export async function getSelectedText(): Promise<string>
 ### P1: 应用壳 + 翻译核心
 
 Electron 多窗口管理器、翻译窗口（SourceArea + LanguageArea + TargetArea）、
-3 个翻译服务（Bing / Google / DeepL）、配置窗口（通用 + 翻译 tab）、
+3 个翻译服务（Bing / Google / DeepL）、设置窗口（通用 + 翻译 tab）、
 系统托盘、全局快捷键（划词 + 输入翻译）、配置持久化 + 变更广播。
 
 ### P2: OCR + 截图
@@ -1127,7 +1127,7 @@ Electron 多窗口管理器、翻译窗口（SourceArea + LanguageArea + TargetA
 ### P4: 高级功能
 
 HTTP API 服务器、备份与恢复（WebDAV / 本地）、自动更新、完整 i18n、
-剪贴板监听、翻译历史记录（SQLite）、划词字典 + CC-CEDICT 离线词典、配置页完整实现。
+剪贴板监听、翻译历史记录（SQLite）、划词字典 + CC-CEDICT 离线词典、设置页完整实现。
 
 ---
 

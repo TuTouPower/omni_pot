@@ -34,7 +34,7 @@
 - [ ] `tests/user_e2e/specs/translate_pin_topmost.spec.ts` —— 拆分"固定/置顶"为两按钮、补 `titlebar-topmost` testid、固定独立控制失焦关闭（issue "固定与置顶功能拆分与联动"）。修复目标：新增 `translate_pinned` 配置项与按钮，调整失焦关闭判定逻辑。
 - [ ] `tests/user_e2e/specs/translate_entry_merge.spec.ts` —— 选中/输入翻译合并入口（issue "翻译功能合并（输入/选中）"）。修复目标：实现 `triggerHotkey('translate', selection?)` 统一 action，并按选中文本存在与否切换分支。
 - [ ] `tests/user_e2e/specs/tray_layout.spec.ts` —— 托盘 popover 项目齐全、分隔线、无截断（issue "系统托盘菜单UI缺失与显示不全"）。修复目标：托盘自绘 popover 补 `check_update / view_log / restart / quit` 与 `tray-separator`，调整高度避免裁切，移除多余空白。
-- [ ] `tests/user_e2e/specs/terminology_settings.spec.ts` —— UI 文案禁用"配置"统一为"设置"（issue "术语统一：配置改为设置"）。修复目标：`src/i18n/locales/*.json` 与 React 组件文本审计；不要求改内部变量名，仅改用户可见字符串与 window title。
+- [X] `tests/user_e2e/specs/terminology_settings.spec.ts` —— UI 文案禁用"配置"统一为"设置"（issue "术语统一：配置改为设置"）。修复目标：`src/i18n/locales/*.json` 与 React 组件文本审计；不要求改内部变量名，仅改用户可见字符串与 window title。
 - [ ] `tests/user_e2e/specs/dict_issues.spec.ts` —— 中文单字（"我"）查询成功 + 词典 header 卡片不遮挡读音/词性（issues "中文词典查询失败" "词典卡片内容被遮挡"）。修复目标：CC-CEDICT / chinese-dictionary 单字查询路径修复；为 `dict-pronunciation` / `dict-pos-tag` 加 testid，并调整卡片 padding/overflow。
 - [ ] `tests/user_e2e/specs/window_rounded_corner.spec.ts` —— 窗口圆角外不应有白色直角（issue "窗口圆角带白色背景瑕疵"）。修复目标：`<html>` / `<body>` 背景透明（与 `transparent: true` 配合），主窗口 React 根组件不设白色背景。
 - [ ] 朗读 / TTS "按了没声"（issue "语音朗读（TTS）功能失效"）—— 自动化只能验 IPC 链路，发声本身归为 **Windows 实机 smoke**；在 issue.md 标记并在打包 smoke checklist 中加一条 "翻译/词典/识别窗口点朗读，能听到声音"。

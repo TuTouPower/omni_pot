@@ -36,11 +36,11 @@ test.describe('@ui translate window constraints', () => {
                 { timeout: 5_000, intervals: [100, 200, 400] }).toBeLessThanOrEqual(2000)
 
             const final_bounds = (await omni.api.windowState('translate')).bounds
-            expect(final_bounds).not.toBeNull()
+            if (!final_bounds) throw new Error('missing translate window bounds')
 
             // Measure the actual rendered content stack height (sum of cards).
             const content_height = await translate.titlebar().evaluate(() => {
-                const cards = Array.from(document.querySelectorAll('.card')) as HTMLElement[]
+                const cards = Array.from(document.querySelectorAll<HTMLElement>('.card'))
                 if (cards.length === 0) return 0
                 const top = Math.min(...cards.map(c => c.getBoundingClientRect().top))
                 const bottom = Math.max(...cards.map(c => c.getBoundingClientRect().bottom))
@@ -48,7 +48,7 @@ test.describe('@ui translate window constraints', () => {
             })
 
             // Window height should be near content + chrome; absolutely not 2000.
-            expect(final_bounds!.height).toBeLessThan(content_height + 200)
+            expect(final_bounds.height).toBeLessThan(content_height + 200)
         } finally {
             await omni.stop()
         }

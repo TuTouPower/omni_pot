@@ -27,7 +27,7 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
     ocr_recognize: 'OCR Recognize',
     screenshot_translate: 'Screenshot Translate',
     clipboard_monitor: 'Clipboard Monitor',
-    config: 'Config',
+    config: 'Settings',
     restart: 'Restart',
     quit: 'Quit'
   },
@@ -36,7 +36,7 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
     ocr_recognize: 'OCR 识别',
     screenshot_translate: '截图翻译',
     clipboard_monitor: '剪贴板监听',
-    config: '配置',
+    config: '设置',
     restart: '重启',
     quit: '退出'
   }
