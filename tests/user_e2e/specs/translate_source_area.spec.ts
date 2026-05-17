@@ -95,9 +95,9 @@ test.describe('@ui translate source area', () => {
             const omni = await AppFixture.start({
                 config: {
                     app_language: 'zh_cn',
-                    tts_service_list: ['lingva_tts@default'],
+                    tts_service_list: ['edge_tts@default'],
                     service_instances: {
-                        'lingva_tts@default': { serviceKey: 'lingva_tts', config: { requestPath: 'https://lingva.lunar.icu' } },
+                        'edge_tts@default': { serviceKey: 'edge_tts', config: {} },
                     },
                 },
             })
@@ -113,7 +113,7 @@ test.describe('@ui translate source area', () => {
                 await translate.clickSourceTts()
 
                 await expect(translate.sourceTtsButton()).toHaveAttribute('aria-pressed', 'true', { timeout: 60_000 })
-                await expect(translate.sourceTtsButton()).toHaveAttribute('title', '停止朗读')
+                await expect(translate.sourceTtsButton()).toHaveAttribute('title', '取消朗读')
                 await expect(translate.sourceInput()).toHaveValue(source_text)
 
                 await translate.clickSourceTts()

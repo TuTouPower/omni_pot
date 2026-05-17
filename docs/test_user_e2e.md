@@ -77,6 +77,7 @@ tests/user_e2e/
 │   ├── dict_window.spec.ts
 │   ├── recognize_window.spec.ts
 │   ├── screenshot_window.spec.ts
+│   ├── screenshot_latency.spec.ts
 │   ├── config_settings.spec.ts
 │   ├── config_service_mgmt.spec.ts
 │   ├── config_history_backup.spec.ts
@@ -312,11 +313,12 @@ class TranslatePage {
 
 ### 5.3 translate_titlebar.spec.ts — 翻译窗口标题栏 · issues #4 #8
 
-- 布局：左对齐顺序为 置顶按钮 → wordmark → 模式标签；右上角只有关闭按钮
+- 布局：左对齐顺序为 固定按钮 → 置顶按钮 → wordmark → 模式标签；右上角只有关闭按钮
 - wordmark 文本为 `Omni Pot`，使用常规字标样式（issue #8）
 - 模式标签文本为 `翻译`，无胶囊背景，渲染正常（issue #8）
-- **点击置顶按钮** → `translate_always_on_top` 翻转 + 按钮变主色 + 窗口实际置顶；
-  再次点击恢复（issue #4）
+- **点击固定按钮** → `translate_pinned` 翻转；固定只阻止失焦关闭，不让窗口实际置顶
+- **点击置顶按钮** → `translate_always_on_top` 翻转 + 自动开启 `translate_pinned` + 按钮变主色 + 窗口实际置顶；
+  再次点击恢复置顶状态（issue #4）
 - **点击关闭按钮** → 窗口关闭/隐藏（issue #4）
 - 标题栏区域可拖拽（`-webkit-app-region: drag`），按钮区不可拖拽
 
@@ -327,7 +329,7 @@ class TranslatePage {
 - **点击翻译按钮** → 触发翻译、产出结果卡片（issue #5）
 - 翻译按钮只有翻译符号、无“翻译”文字、无独立背景，颜色为主色
 - 点击去除换行 → 源文本换行被规范化
-- 点击朗读 → 配置真实 Lingva TTS 服务后触发合成，按钮进入播放态；再次点击停止播放；清空原文会停止朗读
+- 点击朗读 → 配置真实 Edge TTS 服务后触发合成，按钮进入忙碌/播放激活态；再次点击可取消；清空原文会停止朗读
 - 点击复制原文 → `readClipboard()` 等于源文本
 - 点击清空 → 源文本清空；源文本为空时清空按钮禁用
 - 键盘：`Enter` 翻译、`Shift+Enter` 换行、`Escape` 关闭
@@ -407,8 +409,9 @@ class TranslatePage {
 - 服务真实覆盖：用户切换 system / tesseract 引擎；Tesseract 重新识别得到真实识别文本
 - `recognize_delete_newline` / `recognize_auto_copy` 配置联动
 
-### 5.10 screenshot_window.spec.ts — 截图窗口
+### 5.10 screenshot_window.spec.ts / screenshot_latency.spec.ts — 截图窗口
 
+- `screenshot_latency.spec.ts`：触发截图后 SCREENSHOT 窗口应在 300ms 内可见，用于守护截图 OCR 唤起卡顿回归
 - 触发截图 → 创建全屏 SCREENSHOT 窗口，全屏且置顶
 - 屏幕图像作背景，其上有半透明遮罩
 - 鼠标拖拽创建选区 → 出现主色描边、四角句柄、尺寸标签

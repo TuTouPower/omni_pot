@@ -74,6 +74,18 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     const internalRef = useRef<HTMLTextAreaElement>(null)
     const textAreaRef = inputRef ?? internalRef
     const isComposingRef = useRef(false)
+    const dynamic_timer_ref = useRef<number | null>(null)
+
+    const cancel_dynamic_translate = useCallback(() => {
+        if (dynamic_timer_ref.current === null) return
+        window.clearTimeout(dynamic_timer_ref.current)
+        dynamic_timer_ref.current = null
+    }, [])
+
+    const handle_translate_now = useCallback(() => {
+        cancel_dynamic_translate()
+        onTranslate()
+    }, [cancel_dynamic_translate, onTranslate])
 
     const handleVariableCycle = useCallback(() => {
         const textarea = textAreaRef.current
@@ -98,10 +110,10 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
             }
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
-                onTranslate()
+                handle_translate_now()
             }
         },
-        [onTranslate, handleVariableCycle]
+        [handle_translate_now, handleVariableCycle]
     )
 
     const handleCopy = useCallback(() => {
@@ -119,11 +131,12 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
 
     useEffect(() => {
         if (!dynamicTranslate || !sourceText.trim()) return
-        const timer = setTimeout(() => {
+        dynamic_timer_ref.current = window.setTimeout(() => {
+            dynamic_timer_ref.current = null
             onTranslate()
         }, 1000)
-        return () => { clearTimeout(timer); }
-    }, [sourceText, dynamicTranslate, onTranslate])
+        return () => { cancel_dynamic_translate(); }
+    }, [sourceText, dynamicTranslate, onTranslate, cancel_dynamic_translate])
 
     const sourceRows = Math.min(8, Math.max(1, (sourceText || '').split('\n').length))
 
@@ -175,10 +188,10 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                     className="ic-btn"
                     title={ttsBusy ? t('tts_cancel') : (ttsPlaying ? t('tts_stop') : t('tts_read'))}
                     data-testid="source-tts-btn"
-                    aria-pressed={ttsPlaying}
+                    aria-pressed={ttsBusy || ttsPlaying}
                     onClick={onTts}
                     disabled={!ttsAvailable || (!sourceText.trim() && !ttsBusy && !ttsPlaying)}
-                    style={{ color: ttsPlaying ? 'var(--brand-primary)' : undefined }}
+                    style={{ color: ttsBusy || ttsPlaying ? 'var(--brand-primary)' : undefined }}
                 >
                     <Icons.Volume size={16} />
                 </button>
@@ -188,7 +201,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 <button className="ic-btn" title={t('clear') || '清空'} data-testid="source-clear-btn" onClick={handleClear} disabled={!sourceText.trim()}>
                     <Icons.Trash size={16} />
                 </button>
-                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={() => { onTranslate(); }} style={{ color: 'var(--brand-primary)' }}>
+                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={handle_translate_now} style={{ color: 'var(--brand-primary)' }}>
                     <Icons.Translate size={18} />
                 </button>
             </div>
