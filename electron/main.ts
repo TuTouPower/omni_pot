@@ -33,9 +33,10 @@ import { spawn } from 'child_process'
 import { registerTrayHandlers } from './ipc/tray_handlers'
 import { close_history } from './history'
 import { close_dict, auto_import_if_needed } from './dict'
-import { startServer, stopServer } from './server'
 import { applyProxy } from './proxy'
 import { checkForUpdate } from './updater'
+import { startServer, stopServer } from './server'
+import { preload_screenshot_window } from './screenshot'
 import {
   startClipboardMonitor,
   stopClipboardMonitor
@@ -96,6 +97,7 @@ if (!gotLock) {
     log_main.info('creating window manager...')
     const manager = new WindowManager()
     windowManager = manager
+    preload_screenshot_window(manager)
 
     setWindowManagerForTray(manager)
     setWindowManagerForHotkey(manager)
