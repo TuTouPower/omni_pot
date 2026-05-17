@@ -338,7 +338,7 @@
 
 1. 当前 16 个开放问题都有对应修复、明确产品决策，或明确标注为外部/环境限制。
 2. 每个修复都有自动测试或人工验收步骤。
-3. `docs/issues/issues.md`、`PLAN.md`、`docs/spec.md` 和测试期望不再互相矛盾，例如不能同时出现“PLAN 标记已完成、issues 仍开放”或“spec 默认空服务、测试却要求默认可用服务”。
+3. `docs/issues.md`、`PLAN.md`、`docs/spec.md` 和测试期望不再互相矛盾，例如不能同时出现“PLAN 标记已完成、issues 仍开放”或“spec 默认空服务、测试却要求默认可用服务”。
 4. 设置页不再出现“看起来对齐但功能没接上”的控件。
 5. 打包后的单文件 exe 通过首次启动、托盘、快捷键、OCR/TTS、设置窗口 smoke 验证。
 6. 测试从“验证当前实现”改为“验证用户期望行为”。
@@ -445,7 +445,7 @@
    - 已再次审计测试中守护内部实现的断言，并把 daemon 隐藏窗口、`__initialized`、精确图标像素、result card key 顺序、service key order 等断言改为用户可见窗口/文本/服务顺序行为。
    - 旧 `tests/integration/test_config.ts` 已改为真实 config store integration 并纳入 Vitest；旧 history SQL 复制测试已移除，历史记录增删改查、分页、禁用历史和备份恢复由 Electron 用户 E2E 覆盖。
    - 后续每发现一处"测试守护了错误实现"，应在 PR 内同时重写测试 + 修复实现，不再作为开放 bug 反复挂起。
-   - example 视觉/功能对齐仍以 `docs/design/example/` 为最高优先级，偏差登记到 `docs/design/example_todo.md`，不直接修改 example 文件。
+   - 视觉/功能对齐仍以 `docs/design/omni_pot/` 为最高优先级，偏差登记到 `docs/design/demo_todo.md`，不直接修改设计稿文件。
 29. **自动检测中文后的 fallback 目标语言与 UI 方向不一致**: 自动检测到的源语言等于目标语言时，旧逻辑只在请求层使用第二语言 fallback，UI 仍显示原目标语言，可能出现方向显示与结果语言不一致。
    - 已改为在不中断当前请求的前提下同步有效目标语言到翻译窗口状态。
    - 第二语言默认值已为英文；检测到中文且目标同为中文时会切到英文方向。

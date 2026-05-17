@@ -43,7 +43,7 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 ## 项目背景
 
 - 本项目基于新技术栈（Electron + React + TypeScript）重写 pot-desktop，实现其全部功能。
-- `docs/old_pot/spec.md` 是 pot-desktop 3.0.7 的旧规格，原开发者已不再维护、技术老旧，
+- `docs/archive/old_pot/spec.md` 是 pot-desktop 3.0.7 的旧规格，原开发者已不再维护、技术老旧，
   仅作**功能蓝本**参考，代码无直接利用价值。
 - `~/karson_ubuntu/new_pot` 是修好 bug 的 clone 版本，作为**参考项目**；
   不知道某功能怎么实现时可以看它的代码。
@@ -55,14 +55,14 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 | 文档 | 作用 |
 |---|---|
 | `docs/spec.md` | **产品规格** — omni_pot 功能、窗口、UI、服务、配置的权威定义 |
-| `docs/design/example/` | UI 设计稿原型（HTML/JSX/CSS，最高优先级） |
-| `docs/design/example_todo.md` | example 设计稿与 spec 的已知偏差备忘 |
+| `docs/design/omni_pot/` | UI 设计稿原型（HTML/JSX/CSS，最高优先级） |
+| `docs/design/demo_todo.md` | omni_pot 设计稿与 spec 的已知偏差备忘 |
 | `docs/test.md` | 测试规范与总则（分层、原则、快捷键策略、运行命令） |
 | `docs/test_user_e2e.md` | 用户端到端测试设计（基础设施、文件规划、各 spec 内容） |
-| `docs/issues/issues.md` | 已知问题记录 |
-| `docs/issues/closed/` | 已关闭的问题记录 |
+| `docs/issues.md` | 已知问题记录 |
+| `docs/archive/closed_issues/` | 已关闭的问题记录 |
 | `docs/external_services/` | 外部服务 API 信息与连通性测试结果 |
-| `docs/old_pot/spec.md` | pot-desktop 3.0.7 旧规格（历史参考，不代表当前实现） |
+| `docs/archive/old_pot/spec.md` | pot-desktop 3.0.7 旧规格（历史参考，不代表当前实现） |
 | `docs/superpowers/` | 早期重写设计与分阶段计划（历史参考，不代表当前实现） |
 | `docs/code_quality_checks_plan.md` | 代码质量检查体系落地方案 |
 | `PLAN.md` | 开发待办与下一步 |
