@@ -15,6 +15,7 @@ export interface WindowOptions {
   height: number
   minWidth?: number
   minHeight?: number
+  maxHeight?: number
   resizable?: boolean
   alwaysOnTop?: boolean
   skipTaskbar?: boolean

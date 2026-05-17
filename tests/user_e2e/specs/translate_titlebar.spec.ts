@@ -7,10 +7,11 @@ test.describe('@ui translate titlebar', () => {
 
         await expect(translate.wordmark()).toContainText('Omni Pot')
         await expect(translate.modeLabel()).toHaveText('翻译')
-        expect(await translate.titlebarOrder()).toEqual(['pin', 'wordmark', 'mode', 'close'])
+        expect(await translate.titlebarOrder()).toEqual(['pin', 'topmost', 'wordmark', 'mode', 'close'])
         await expect.poll(async () => await translate.modeLabelHasPillBackground()).toBe(false)
         await expect.poll(async () => await translate.titlebarAppRegion()).toBe('drag')
         await expect.poll(async () => await translate.pinButtonAppRegion()).toBe('no-drag')
+        await expect.poll(async () => await translate.topmostButtonAppRegion()).toBe('no-drag')
         await expect.poll(async () => await translate.closeButtonAppRegion()).toBe('no-drag')
     })
 
@@ -36,10 +37,12 @@ test.describe('@ui translate titlebar', () => {
         await expect.poll(async () => (await omni.api.windowState('translate')).alwaysOnTop).toBe(false)
 
         await translate.clickPin()
-        await expect.poll(async () => (await omni.api.windowState('translate')).alwaysOnTop).toBe(true)
+        await expect.poll(async () => (await omni.api.getConfig()).translate_pinned).toBe(true)
+        await expect.poll(async () => (await omni.api.windowState('translate')).alwaysOnTop).toBe(false)
         await expect(translate.pinButton()).toHaveAttribute('aria-pressed', 'true')
 
         await translate.clickPin()
+        await expect.poll(async () => (await omni.api.getConfig()).translate_pinned).toBe(false)
         await expect.poll(async () => (await omni.api.windowState('translate')).alwaysOnTop).toBe(false)
 
         const closed = page.waitForEvent('close')

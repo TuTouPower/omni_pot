@@ -36,18 +36,15 @@ const DICT_OPTS = {
 } as const
 
 export function buildHotkeyAction(name: string, mgr: WindowManager): () => void {
-  const sendToTranslate = (channel: string): (() => void) => {
-    return () => {
-      mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-      mgr.sendWhenReady(WindowLabel.TRANSLATE, channel)
-    }
-  }
-
   switch (name) {
-    case 'hotkey_input_translate':
-      return sendToTranslate('translate:input-translate')
+    case 'translate':
     case 'hotkey_selection_translate':
-      return () => { triggerSelectionTranslate(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
+      return () => { triggerTranslateEntry(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
+    case 'hotkey_input_translate':
+      return () => {
+        mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
+      }
     case 'hotkey_ocr_recognize':
       return () => { start_screenshot_capture(mgr, 'recognize').catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_translate':
@@ -59,17 +56,18 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
   }
 }
 
-async function triggerSelectionTranslate(mgr: WindowManager): Promise<void> {
-    const result = await readSelectedText()
+export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: string): Promise<void> {
+    const result = textOverride === undefined
+        ? await readSelectedText()
+        : { text: textOverride, reason: textOverride.trim() ? undefined : 'empty' }
 
+    mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
     if (!result.text.trim()) {
-        log_hotkey.info('selection translate: no text, reason=%s', result.reason ?? 'empty')
-        mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-empty')
+        log_hotkey.info('translate entry: no text, reason=%s', result.reason ?? 'empty')
+        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
         return
     }
 
-    mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
     mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', result.text)
 }
 

@@ -43,6 +43,8 @@ export default function TranslateWindow(): React.ReactElement {
         [serviceList, serviceInstances]
     )
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
+    const configPinned = useConfigStore((s) => s.config.translate_pinned)
+    const pinned = configPinned || alwaysOnTop
     const secondLanguage = useConfigStore((s) => s.config.translate_second_language)
     const incrementalTranslate = useConfigStore((s) => s.config.incremental_translate)
     const deleteNewline = useConfigStore((s) => s.config.translate_delete_newline)
@@ -342,10 +344,17 @@ export default function TranslateWindow(): React.ReactElement {
 
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
 
+    const handleTogglePin = useCallback(() => {
+        setConfig('translate_pinned', !pinned)
+    }, [pinned, setConfig])
+
     const handleToggleAlwaysOnTop = useCallback(() => {
         const next = !alwaysOnTop
         window.electronAPI.window.setAlwaysOnTop(next).catch(console.error)
-            .then(() => { setConfig('translate_always_on_top', next); })
+            .then(() => {
+                setConfig('translate_always_on_top', next)
+                if (next) setConfig('translate_pinned', true)
+            })
             .catch(() => undefined)
     }, [alwaysOnTop, setConfig])
 
@@ -501,6 +510,13 @@ export default function TranslateWindow(): React.ReactElement {
         const service = translateServiceRegistry.get(serviceKey)
         if (!service) return
 
+        useTranslateStore.setState((state) => {
+            const results = Object.fromEntries(
+                Object.entries(state.results).filter(([key]) => key !== instanceKey)
+            )
+            return { results, isTranslating: true }
+        })
+
         const instanceConfig = get_service_config(serviceInstances, instanceKey)
         const detected = retrySourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
         if (!isCurrentRetry()) return
@@ -519,28 +535,42 @@ export default function TranslateWindow(): React.ReactElement {
             if (isCurrentRetry()) {
                 setResult(instanceKey, null)
             }
+        } finally {
+            if (isCurrentRetry()) {
+                setIsTranslating(false)
+            }
         }
-    }, [secondLanguage, serviceInstances, setResult])
+    }, [secondLanguage, serviceInstances, setIsTranslating, setResult])
 
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
+    const handle_source_translate = useCallback(() => { handleTranslate().catch(console.error); }, [handleTranslate])
 
     return (
         <div
             className="op-window"
             style={{ fontSize: appFontSize, fontFamily: appFont === 'default' ? undefined : appFont }}
         >
-            {/* Titlebar — Pin left, wordmark, mode, spacer, close */}
             <div className="op-titlebar" data-testid="titlebar">
                 <button
                     className="ic-btn"
-                    title="置顶"
+                    title="固定"
                     data-testid="titlebar-pin"
+                    aria-pressed={pinned}
+                    onClick={handleTogglePin}
+                    style={{ color: pinned ? 'var(--brand-primary)' : 'var(--text-mute)' }}
+                >
+                    <Icons.Pin size={18} fill={pinned} />
+                </button>
+                <button
+                    className="ic-btn"
+                    title="置顶"
+                    data-testid="titlebar-topmost"
                     aria-pressed={alwaysOnTop}
-                    onClick={() => { handleToggleAlwaysOnTop(); }}
+                    onClick={handleToggleAlwaysOnTop}
                     style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
                 >
-                    <Icons.Pin size={18} fill={alwaysOnTop} />
+                    <Icons.Max size={16} fill={alwaysOnTop} />
                 </button>
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     Omni Pot
@@ -556,7 +586,7 @@ export default function TranslateWindow(): React.ReactElement {
             <div style={{ flex: '0 1 auto', overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {showSource && !show_welcome_empty && (
                     <SourceArea
-                        onTranslate={() => { handleTranslate().catch(console.error); }}
+                        onTranslate={handle_source_translate}
                         onTts={() => { handleSourceTts().catch(console.error); }}
                         ttsAvailable={sourceTtsAvailable}
                         ttsBusy={sourceTtsBusy}
