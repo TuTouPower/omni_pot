@@ -153,10 +153,15 @@ export function registerChineseDictHandlers(): void {
 
     ipcMain.handle('chineseDict:check', () => {
         const state = get_service_state()
+        if (state !== 'ready') {
+            return { ready: false, status: state, entry_count: 0 }
+        }
+
+        const ready = is_ready()
         return {
-            ready: state === 'ready',
-            status: state,
-            entry_count: state === 'ready' ? get_entry_count() : 0,
+            ready,
+            status: ready ? state : 'failed',
+            entry_count: ready ? get_entry_count() : 0,
         }
     })
 

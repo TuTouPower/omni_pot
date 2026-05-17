@@ -913,10 +913,14 @@ E2E 测试专用端点（仅 `OMNI_POT_E2E` 环境变量启用）：
 | 项目 | 类型 | 操作 |
 |---|---|---|
 | Input Translate | 按钮 | 打开翻译窗口 |
+| OCR Recognize | 按钮 | 打开截图 OCR 识别 |
+| Screenshot Translate | 按钮 | 打开截图翻译 |
 | — | 分隔线 | — |
 | Clipboard Monitor | 复选框 | 切换剪贴板监听 |
 | — | 分隔线 | — |
 | Settings | 按钮 | 打开设置窗口 |
+| Check Updates | 按钮 | 立即检查更新 |
+| View Logs | 按钮 | 打开日志目录 |
 | — | 分隔线 | — |
 | Restart | 按钮 | 重启应用 |
 | Quit | 按钮 | 退出应用 |

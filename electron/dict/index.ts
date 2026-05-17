@@ -77,7 +77,7 @@ export function import_from_text(text: string): number {
 
     insert_many()
 
-    database.exec('INSERT INTO entries_fts(entries_fts) VALUES("rebuild")')
+    database.exec("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')")
 
     return count
 }

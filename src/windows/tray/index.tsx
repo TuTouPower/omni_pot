@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Icons } from '../../components/icons'
 
-type TrayAction = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'restart' | 'quit'
+type TrayAction = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'input_translate', icon: 'Translate' },
@@ -9,6 +9,8 @@ const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'screenshot_translate', icon: 'Image' },
     { action: 'clipboard_monitor', icon: 'Copy' },
     { action: 'config', icon: 'Settings' },
+    { action: 'check_update', icon: 'Cloud' },
+    { action: 'view_log', icon: 'Info' },
     { action: 'restart', icon: 'Cycle' },
     { action: 'quit', icon: 'Close' },
 ]
@@ -42,10 +44,10 @@ export default function TrayWindow(): React.ReactElement {
                 {ACTIONS.map(({ action, icon }, index) => {
                     const Icon = Icons[icon]
                     const active = action === 'clipboard_monitor' && clipboardMonitoring
-                    const separator = index === 3 || index === 4 || index === 5
+                    const separator = index === 4 || index === 5 || index === 7
                     return (
                         <React.Fragment key={action}>
-                            {separator && <div style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />}
+                            {separator && <div data-testid="tray-separator" style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />}
                             <button
                                 data-testid={`tray-action-${action}`}
                                 onClick={() => { run_action(action) }}

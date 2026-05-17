@@ -15,17 +15,18 @@ body,
     overflow: hidden;
 }
 
+html {
+    background: transparent;
+    border-radius: var(--r-lg);
+}
+
 body {
     margin: 0;
     font-family: var(--font-sans);
     font-size: var(--fs-base);
     color: var(--text);
-    background: var(--bg);
-    -webkit-font-smoothing: antialiased;
-}
-
-.transparent body {
     background: transparent;
+    -webkit-font-smoothing: antialiased;
 }
 
 .transparent .op-window {

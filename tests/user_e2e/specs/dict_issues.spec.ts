@@ -32,15 +32,13 @@ test.describe('@ui dict query and layout', () => {
 
         // Header card bounding box must fully contain pronunciation and POS
         // chips — none of them may overflow the card's bottom edge.
-        const card_box = await dict['page'].locator('[data-testid="dict-card"]').first().boundingBox()
-        if (!card_box) throw new Error('missing dictionary card box')
+        const card = dict['page'].locator('[data-testid="dict-card"]').first()
+        const meta_elements = card.locator('[data-testid="dict-pronunciation"], [data-testid="dict-pos-tag"]')
+        await expect(meta_elements.first(), '词典卡片应展示读音/词性 chip').toBeVisible({ timeout: 10_000 })
 
-        const meta_elements = dict['page'].locator(
-            '[data-testid="dict-card"]:first-of-type [data-testid="dict-pronunciation"], '
-            + '[data-testid="dict-card"]:first-of-type [data-testid="dict-pos-tag"]'
-        )
+        const card_box = await card.boundingBox()
+        if (!card_box) throw new Error('missing dictionary card box')
         const count = await meta_elements.count()
-        expect(count, '词典卡片应展示读音/词性 chip').toBeGreaterThan(0)
 
         for (let i = 0; i < count; i += 1) {
             const box = await meta_elements.nth(i).boundingBox()

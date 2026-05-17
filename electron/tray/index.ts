@@ -1,4 +1,4 @@
-import { Tray, Menu, nativeImage, app, screen } from 'electron'
+import { Tray, Menu, nativeImage, app, screen, shell } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { WindowLabel } from '../windows/types'
@@ -11,7 +11,8 @@ import {
 import { getConfig, setConfig } from '../config/store'
 import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
-import { log } from '../log'
+import { log, getLogDir } from '../log'
+import { checkForUpdate } from '../updater'
 
 let tray: Tray | null = null
 let windowManager: WindowManager | null = null
@@ -19,7 +20,7 @@ let last_tray_menu_labels: string[] = []
 
 const log_tray = log.scope('tray')
 
-type TrayLabelKey = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'restart' | 'quit'
+type TrayLabelKey = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   en: {
@@ -28,6 +29,8 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
     screenshot_translate: 'Screenshot Translate',
     clipboard_monitor: 'Clipboard Monitor',
     config: 'Settings',
+    check_update: 'Check Updates',
+    view_log: 'View Logs',
     restart: 'Restart',
     quit: 'Quit'
   },
@@ -37,6 +40,8 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
     screenshot_translate: '截图翻译',
     clipboard_monitor: '剪贴板监听',
     config: '设置',
+    check_update: '检查更新',
+    view_log: '查看日志',
     restart: '重启',
     quit: '退出'
   }
@@ -47,7 +52,7 @@ function get_tray_labels(): Record<TrayLabelKey, string> {
 }
 
 function tray_labels_to_array(labels: Record<TrayLabelKey, string>): string[] {
-  return [labels.input_translate, labels.ocr_recognize, labels.screenshot_translate, labels.clipboard_monitor, labels.config, labels.restart, labels.quit]
+  return [labels.input_translate, labels.ocr_recognize, labels.screenshot_translate, labels.clipboard_monitor, labels.config, labels.check_update, labels.view_log, labels.restart, labels.quit]
 }
 
 export function get_tray_menu_labels(): string[] {
@@ -90,9 +95,9 @@ export function show_tray_popup(): boolean {
   const popup = windowManager.focusOrCreate(WindowLabel.TRAY, {
     label: WindowLabel.TRAY,
     width: 260,
-    height: 318,
+    height: 460,
     minWidth: 260,
-    minHeight: 318,
+    minHeight: 460,
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
@@ -185,6 +190,15 @@ export function trigger_tray_action(action: string): boolean {
       open_config_window()
       close_tray_popup()
       return true
+    case 'check_update':
+      if (!windowManager) return false
+      checkForUpdate(windowManager, false).catch((err: unknown) => { log_tray.error(err) })
+      close_tray_popup()
+      return true
+    case 'view_log':
+      shell.openPath(getLogDir(app.getPath('userData'))).catch((err: unknown) => { log_tray.error(err) })
+      close_tray_popup()
+      return true
     case 'restart':
       app.relaunch()
       app.exit(0)
@@ -241,6 +255,9 @@ function install_linux_fallback_menu(): void {
     },
     { type: 'separator' },
     { label: labels.config, click: () => { trigger_tray_action('config') } },
+    { label: labels.check_update, click: () => { trigger_tray_action('check_update') } },
+    { label: labels.view_log, click: () => { trigger_tray_action('view_log') } },
+    { type: 'separator' },
     { label: labels.restart, click: () => { trigger_tray_action('restart') } },
     { label: labels.quit, click: () => { trigger_tray_action('quit') } }
   ])

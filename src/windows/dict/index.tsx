@@ -278,7 +278,7 @@ export default function DictWindow(): React.ReactElement {
 
             <div style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Word header card */}
-                <div className="card" style={{ padding: '14px 16px' }}>
+                <div className="card" data-testid="dict-card" style={{ padding: '16px 16px 18px', overflow: 'visible' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
@@ -307,7 +307,7 @@ export default function DictWindow(): React.ReactElement {
                             {firstResult && firstResult.definitions.length > 0 && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
                                     {firstResult.definitions.map((def, i) => (
-                                        <span key={i} className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
+                                        <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
                                     ))}
                                 </div>
                             )}
