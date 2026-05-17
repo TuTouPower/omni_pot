@@ -5,14 +5,14 @@
 
 本文档整合了以下来源，并**以当前代码实现为准**：
 
-- `docs/old_pot/spec.md` — Pot Desktop 3.0.7 原始产品规格（功能蓝本）
+- `docs/archive/old_pot/spec.md` — Pot Desktop 3.0.7 原始产品规格（功能蓝本）
 - `docs/superpowers/specs/2026-05-06-pot-desktop-rewrite-design.md` — 重写技术方案
 - `docs/superpowers/specs/2026-05-08-selection-text-extraction-design.md` — 跨平台选中文本提取设计
-- `docs/design/example/` — UI 设计稿（HTML/JSX/CSS 原型，最高优先级）
+- `docs/design/omni_pot/` — UI 设计稿（HTML/JSX/CSS 原型，最高优先级）
 
 相关文档：
 
-- `docs/design/example_todo.md` — example 设计稿与 spec 的已知偏差
+- `docs/design/demo_todo.md` — omni_pot 设计稿与 spec 的已知偏差
 - `docs/test.md` — 测试规范与总则
 - `docs/test_user_e2e.md` — 用户端到端测试设计
 

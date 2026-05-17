@@ -18,7 +18,7 @@
 ### P0: 已知产品缺陷与测试重审（重新打开）
 
 - [X] 全量重审当前 Playwright/Vitest 测试，改掉按当前错误实现补断言的用例（已重写源文本 TTS 按钮启用断言、收敛 OCR/TTS 默认期望、补 OCR 跨域 mock fetch override；再次审计并改写 daemon / `__initialized` / exact icon px / result-card key order / service key order 等内部实现断言，集成测试改为真实 config store 行为）
-- [X] 为 `docs/issues/issues.md` 中的开放问题补失败测试或人工验收步骤（剩余 2 条明确标为 Windows 实机 smoke）
+- [X] 为 `docs/issues.md` 中的开放问题补失败测试或人工验收步骤（剩余 2 条明确标为 Windows 实机 smoke）
 - [X] 先解决规格冲突：欢迎页（决策维持配置窗作首运行入口）、OCR/TTS 默认服务（已补 tesseract / edge_tts 默认）
 - [X] 修复通用窗口加载转圈（移除 React.lazy 改直接 import）、设置/识别窗口尺寸与拖动、下拉框裁剪等窗口基础问题
 - [X] 继续修复快捷键、OCR/TTS、服务管理、i18n 等功能闭环（托盘入口、主题/主色、透明背景、OCR/TTS 默认均已补齐）
@@ -61,11 +61,11 @@
 
 ### P2: 其他
 
-- [X] 对齐新版 `docs/design/example/` UI 设计 — 以 example 主体原型为最高优先级，核对当前实现、`docs/spec.md` 与 Playwright E2E；已知 example 偏差只记录到 `docs/design/example_todo.md`，不修改 example 文件
+- [X] 对齐新版 `docs/design/omni_pot/` UI 设计 — 以 omni_pot 主体原型为最高优先级，核对当前实现、`docs/spec.md` 与 Playwright E2E；已知偏差只记录到 `docs/design/demo_todo.md`，不修改设计稿文件
 - [X] CSP `connect-src` 放开 — 当前 `'self'` 阻止了所有外部翻译 API 请求，需改为允许外部连接
 - [X] 命名统一 — 给用户看的显示名用 **Omni Pot**，代码/文件名/package name 一律用 **omni_pot**
 - [X] 服务管理未实现功能：服务启停、编辑/测试保存、真实拖拽排序，并同步补规格与用户 E2E
-- [X] 重新修复已知产品缺陷 — 托盘自绘浅色 popover、翻译欢迎态/窗口布局/语言下拉与重译、OCR 截图裁剪/识别窗口尺寸已完成；剩余真实 Windows smoke 与延期项见 `docs/issues/issues.md`
+- [X] 重新修复已知产品缺陷 — 托盘自绘浅色 popover、翻译欢迎态/窗口布局/语言下拉与重译、OCR 截图裁剪/识别窗口尺寸已完成；剩余真实 Windows smoke 与延期项见 `docs/issues.md`
 - [X] 本地语言检测替换：cld3-asm WASM 已集成到主进程，IPC bridge 到渲染进程，配置项 `detect_cld3_enabled` 可运行时回退到正则；`npm run dist` 通过
 - [X] 接入真实中文字典数据源：mapull/chinese-dictionary JSON → SQLite 构建脚本（320K 词、16K 字、50K 成语），IPC bridge 到渲染进程，FTS5 前缀搜索，配置项 `dict_chinese_enabled`；`npm run dist` 通过
 - [X] 插件系统（`.potext` 格式）当前明确延期：本阶段不实现外部插件加载，仅保留内置服务接口
@@ -88,4 +88,4 @@
 - [X] 截图覆盖层修复
 - [X] 国际化（19 种语言）
 - [X] E2E 测试方向统一为 Playwright
-- [X] 文档审阅与清理 — 见 `docs/issues/closed/documentation_review.md`
+- [X] 文档审阅与清理 — 见 `docs/archive/closed_issues/documentation_review.md`

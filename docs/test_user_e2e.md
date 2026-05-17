@@ -4,7 +4,7 @@
 > 测试目录：`tests/user_e2e/`
 > 测试总则与分层职责见 `docs/test.md`；本文是 E2E 这一层的详细设计。
 > E2E 框架为 **Playwright**（`@playwright/test` + Electron）。
-> 功能与 UI 定义见 `docs/spec.md`；UI 设计稿原型见 `docs/design/example/`。
+> 功能与 UI 定义见 `docs/spec.md`；UI 设计稿原型见 `docs/design/omni_pot/`。
 
 ---
 
@@ -35,8 +35,8 @@
 
 ## 2. 设计目标与原则
 
-1. **覆盖完整**：覆盖 `docs/design/example/` 设计稿出现的每个 UI 元素与交互，
-   以及代码已实现的每个窗口与功能。设计稿与 spec 的差异处理见 `docs/design/example_todo.md`。
+1. **覆盖完整**：覆盖 `docs/design/omni_pot/` 设计稿出现的每个 UI 元素与交互，
+   以及代码已实现的每个窗口与功能。设计稿与 spec 的差异处理见 `docs/design/demo_todo.md`。
 2. **测真实交互**：用真实鼠标/键盘事件点击真实元素，而非调用 `electronAPI` 绕过 UI。
    按钮失效类 bug（issues #4 #5）只有点真按钮才能抓到。
    **不写脱离用户视角的冒烟测试或接口测试** —— 每个用例都是“用户做了某操作 → 看到某结果”。
@@ -454,7 +454,7 @@ class TranslatePage {
 
 备份页：
 
-- 备份目标切换 WebDAV / 本地；断言**无”阿里云盘”**选项（见 `docs/design/example_todo.md` A4）
+- 备份目标切换 WebDAV / 本地；断言**无”阿里云盘”**选项（见 `docs/design/demo_todo.md` A4）
 - 本地备份 → 生成 zip，列表列出
 - 恢复 → 配置与历史记录被覆盖
 - 备份内容含配置与 CC-CEDICT 数据库
