@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
 const SERVICE_CATEGORIES = [
-    ['translate_service_list', '翻译', ['Bing', 'Google', 'DeepL']],
+    ['translate_service_list', '翻译', ['Bing', 'DeepL', 'MyMemory']],
     ['dictionary_service_list', '字典', ['中文词典', 'Free Dictionary', 'ECDICT']],
     ['recognize_service_list', '识别', ['Tesseract']],
     ['tts_service_list', '语音合成', ['Edge TTS']],
