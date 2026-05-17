@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, session } from 'electron'
+import { app, Menu, session } from 'electron'
 import { basename, dirname } from 'path'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
@@ -139,9 +139,6 @@ if (!gotLock) {
             set_service_state('failed')
         } else {
             set_service_state('building')
-            for (const win of BrowserWindow.getAllWindows()) {
-                win.webContents.send('chineseDict:state-changed', 'building')
-            }
             const npm_cmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
             const build = spawn(npm_cmd, ['run', 'build:chinese-dict'], { cwd: app.getAppPath(), shell: false })
             build.stdout.on('data', (data: Buffer) => { log_main.info('build:chinese-dict: %s', data.toString().trimEnd()) })
@@ -150,16 +147,10 @@ if (!gotLock) {
                 if (code === 0) {
                     set_service_state('ready')
                     reload_db()
-                    for (const win of BrowserWindow.getAllWindows()) {
-                        win.webContents.send('chineseDict:state-changed', 'ready')
-                    }
                     const new_path = get_db_path()
                     if (new_path) register_db_watch(new_path)
                 } else {
                     set_service_state('failed')
-                    for (const win of BrowserWindow.getAllWindows()) {
-                        win.webContents.send('chineseDict:state-changed', 'failed')
-                    }
                     log_main.error('auto build:chinese-dict failed with code %d', code)
                 }
             })

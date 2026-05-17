@@ -1,6 +1,6 @@
 import { join } from 'path'
 import { existsSync } from 'fs'
-import { app } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import Database from 'better-sqlite3'
 import { log } from '../log'
 import type { ChineseDictServiceState } from '@shared/types/ipc'
@@ -105,7 +105,15 @@ export function get_service_state(): ChineseDictServiceState {
 }
 
 export function set_service_state(state: ChineseDictServiceState): void {
+    if (service_state === state) return
     service_state = state
+    // Broadcast to currently-open windows. Renderers mounted later see the
+    // current state via the `chineseDict:check` IPC on mount.
+    for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) {
+            win.webContents.send('chineseDict:state-changed', state)
+        }
+    }
 }
 
 export function get_entry_count(): number {
