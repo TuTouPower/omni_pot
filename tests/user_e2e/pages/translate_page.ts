@@ -4,11 +4,6 @@ function is_target_closed_error(error: unknown): boolean {
     return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
 }
 
-const cors_headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-}
-
 export class TranslatePage {
     constructor(private page: Page) {}
 
@@ -259,9 +254,9 @@ export class TranslatePage {
                 }, undefined, { timeout: 10_000 })
             },
             release_response: () => {
-                void this.page.evaluate(() => {
+                this.page.evaluate(() => {
                     ;(window as Window & { __e2e_lingva_release?: () => void }).__e2e_lingva_release?.()
-                })
+                }).catch(() => undefined)
             },
         }
     }
@@ -543,9 +538,9 @@ export class TranslatePage {
                 }
             },
             release_response: () => {
-                void this.page.evaluate(() => {
+                this.page.evaluate(() => {
                     ;(window as Window & { __e2e_lingva_tts_release?: () => void }).__e2e_lingva_tts_release?.()
-                })
+                }).catch(() => undefined)
             },
         }
     }

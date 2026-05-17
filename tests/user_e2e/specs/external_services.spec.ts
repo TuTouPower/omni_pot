@@ -9,7 +9,7 @@ import { freeDictionaryService } from '../../../src/services/free_dictionary'
 import { edgeTtsService } from '../../../src/services/tts/edge_tts'
 import { lingvaTtsService } from '../../../src/services/tts/lingva_tts'
 
-async function expect_result(value: unknown): Promise<void> {
+function expect_result(value: unknown): void {
     if (typeof value === 'string') {
         expect(value.trim()).not.toBe('')
         return
@@ -33,7 +33,7 @@ test.describe('@external external service health', () => {
     ] as const) {
         test(`${name} returns a real result`, async () => {
             test.setTimeout(120_000)
-            await expect_result(await run())
+            expect_result(await run())
         })
     }
 
