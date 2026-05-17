@@ -87,24 +87,24 @@
 
 | 服务 | 实现文件 | 需要什么 | 费用 |
 |------|----------|----------|------|
-| **Edge TTS** | `tts/edge_tts.ts` | 无（调用微软 Edge 浏览器 TTS 接口） | 免费，非官方 |
-| **Lingva TTS** | `tts/lingva_tts.ts` | 无（默认调用 `lingva.lunar.icu` 实例，可自建） | 免费 |
+| **Edge TTS** | `tts/edge_tts.ts` | 无（调用微软 Edge 浏览器 TTS 接口） | 免费，非官方；2026-05-18 当前测试环境 WebSocket 连接失败 |
+| **Lingva TTS** | `tts/lingva_tts.ts` | 无（默认调用 `lingva.lunar.icu` 实例，可自建） | 免费；2026-05-18 当前测试环境连接超时/重置 |
 
 ---
 
 ## 当前可用状态
 
-**默认配置中的服务**（`translate_service_list`）：bing, google, deepl
+**默认配置中的服务**（`translate_service_list`）：bing, deepl, mymemory
 
 **开箱即用（无需任何配置）**：
-- ✅ Google — 免费，非官方接口
+- ⚠️ Google — 免费，非官方接口；2026-05-18 在当前 Windows 测试环境连续连接超时，不再默认启用
 - ✅ Bing — 免费，非官方接口
 - ✅ MyMemory — 免费，匿名 5000 字符/天
 - ✅ 中文词典 — 免费，内置中文释义
 - ✅ Free Dictionary — 免费（dictionaryapi.dev）
 - ✅ ECDict（CC-CEDICT）— 免费，离线中英词典
 - ✅ Cambridge Dictionary — 免费
-- ✅ Lingva — 免费（依赖第三方实例）
+- ⚠️ Lingva — 免费（依赖第三方实例）；2026-05-18 当前测试环境连接超时/重置
 - ✅ Tesseract — 免费，本地 OCR
 - ✅ 系统 OCR — 免费，本地
 - ✅ QR Code — 免费，本地解析

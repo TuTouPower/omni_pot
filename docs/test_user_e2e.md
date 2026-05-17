@@ -81,6 +81,7 @@ tests/user_e2e/
 │   ├── config_settings.spec.ts
 │   ├── config_service_mgmt.spec.ts
 │   ├── config_history_backup.spec.ts
+│   ├── external_services.spec.ts
 │   ├── updater_and_tray.spec.ts
 │   └── i18n.spec.ts
 └── data/                    # 测试夹具数据（样例图片、OCR 语言包等）
@@ -304,9 +305,8 @@ class TranslatePage {
 - 外部脚本通过 HTTP API 发文本（`POST /translate`）
 - 用户复制文字、剪贴板监听自动翻译（`clipboard_monitor`）
 - 用户截图做 OCR 翻译（截图 → OCR → 翻译，CP4）
-- **全部免费翻译服务真实出结果**（覆盖 issue #3）：用户在设置页启用 bing / google /
-  deepl(free) / mymemory / lingva 实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都
-  显示真实译文，无“翻译失败”
+- **默认免费翻译服务真实出结果**（覆盖 issue #3）：用户启用 bing / deepl(free) / mymemory 实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都
+  显示真实译文，无“翻译失败”；所有无密钥外部服务的逐项连通性由 `external_services.spec.ts` 覆盖
 - 翻译成功写入历史；`history_disable=true` 时不写
 - `requestId`：用户连续两次翻译，旧结果不覆盖新结果
 - 流式服务（如已配置 openai 实例）结果卡片增量更新
@@ -462,7 +462,13 @@ class TranslatePage {
 - 恢复 → 配置与历史记录被覆盖
 - 备份内容含设置与 CC-CEDICT 数据库
 
-### 5.14 updater_and_tray.spec.ts — 更新器 + 托盘
+### 5.14 external_services.spec.ts — 外部服务真实连通性
+
+- 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查
+- 覆盖无密钥外部服务：Bing、Google、DeepL 免费模式、Lingva、MyMemory、Cambridge、Free Dictionary、Edge TTS、Lingva TTS
+- 不使用 route/mock；公共服务不可达时测试应失败并暴露具体服务
+
+### 5.15 updater_and_tray.spec.ts — 更新器 + 托盘
 
 更新器（用 `/e2e/mock-update` 注入假版本）：
 
@@ -476,7 +482,7 @@ class TranslatePage {
   `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 
-### 5.15 i18n.spec.ts — 国际化
+### 5.16 i18n.spec.ts — 国际化
 
 - 切换 `app_language`（en ↔ zh_cn）→ 所有已打开窗口 UI 文案即时切换，无需重启
 - 中文下关键文案正确：自动检测、简体中文、检测为英文、各设置页标签、托盘项

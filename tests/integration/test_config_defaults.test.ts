@@ -18,16 +18,16 @@ describe('Config defaults', () => {
         }
     })
 
-    it('defaults to bing/google/deepl services', () => {
+    it('defaults to bing/deepl/mymemory services', () => {
         expect(DEFAULT_CONFIG.translate_service_list).toEqual([
-            'bing@default', 'google@default', 'deepl@default'
+            'bing@default', 'deepl@default', 'mymemory@default'
         ])
     })
 
     it('default service instances have correct keys', () => {
         expect(DEFAULT_SERVICE_INSTANCES['bing@default'].serviceKey).toBe('bing')
-        expect(DEFAULT_SERVICE_INSTANCES['google@default'].serviceKey).toBe('google')
         expect(DEFAULT_SERVICE_INSTANCES['deepl@default'].serviceKey).toBe('deepl')
+        expect(DEFAULT_SERVICE_INSTANCES['mymemory@default'].serviceKey).toBe('mymemory')
     })
 
     it('server_port is a number in valid range', () => {

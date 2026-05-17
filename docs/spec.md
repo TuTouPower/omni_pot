@@ -136,8 +136,8 @@ enum WindowLabel {
 | 窗口 | Label | 默认尺寸 | 最小尺寸 | 特殊行为 |
 |---|---|---|---|---|
 | 守护进程 | `daemon` | 0×0（隐藏） | — | 后台 worker，不显示 |
-| 翻译 | `translate` | 350×420（可配置） | — | 失焦可关闭、可置顶、frameless |
-| 截图 | `screenshot` | 全屏 | — | 始终置顶，截图后自动关闭 |
+| 翻译 | `translate` | 430×360（可配置） | 430×320，最大高 400 | 失焦可关闭、可固定、可置顶、frameless |
+| 截图 | `screenshot` | 全屏 | — | 启动时隐藏预加载，触发后始终置顶显示，截图后自动关闭 |
 | 识别 | `recognize` | 800×400 | — | 可置顶 |
 | 词典 | `dict` | 400×500（快捷键）/ 350×420（HTTP） | — | 可置顶 |
 | 设置 | `config` | 800×600 | 800×400 | — |
@@ -163,7 +163,7 @@ enum WindowLabel {
 1. 单实例锁（E2E 模式下跳过）
 2. 移除原生应用菜单
 3. 初始化配置 store，检测首次运行
-4. 创建 `WindowManager`
+4. 创建 `WindowManager`，并预加载隐藏的截图窗口以降低截图 OCR 唤起延迟
 5. 注册全部 IPC handlers（config / window / hotkey / text / ocr / history / backup / dict）
 6. 创建系统托盘
 7. 从配置注册全局快捷键
@@ -202,11 +202,9 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 
 ### 4.3 通用顶部栏
 
-翻译 / 词典 / 识别窗口的顶部栏从左到右：
+翻译窗口的顶部栏从左到右：固定按钮、置顶按钮、显示名 `Omni Pot`、当前模式标签（如 `翻译`）。
 
-1. 置顶按钮（左上角，激活时为主色）
-2. 显示名 `Omni Pot`
-3. 当前模式标签（如 `翻译`）
+词典 / 识别窗口的顶部栏从左到右：置顶按钮、显示名 `Omni Pot`、当前模式标签。
 
 以上整体左对齐；右上角只保留关闭按钮。
 
@@ -227,7 +225,8 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 
 通用左对齐顶部栏（见 [4.3](#43-通用顶部栏)），模式标签为 `翻译`。
 
-- **置顶按钮**：切换 `translate_always_on_top`，激活时图标为主色
+- **固定按钮**：切换 `translate_pinned`，固定后失焦不自动关闭，但不改变系统置顶状态
+- **置顶按钮**：切换 `translate_always_on_top`，激活时图标为主色；开启置顶会自动开启固定
 - **关闭按钮**：关闭窗口
 
 ### 5.2 SourceArea — 源文本区域
@@ -377,12 +376,13 @@ CC-CEDICT 首次启动：`electron/main.ts` 调用 `auto_import_if_needed()`，
 ### 行为
 
 1. 窗口全屏打开，始终置顶
-2. 主进程通过 `desktopCapturer` 捕获屏幕，渲染为全屏背景
-3. **鼠标拖拽**创建选择矩形（主色描边 + 半透明遮罩，四角句柄，尺寸标签）
-4. **Enter / 鼠标释放**：裁剪选区，返回 base64 图片，关闭窗口
-5. **Esc / 右键**：取消，关闭窗口不执行操作
-6. 顶部提示条：拖动选取区域 · Enter 确认 · Esc 取消
-7. 主色仅用于选区描边与尺寸标签
+2. 主进程启动时预加载隐藏截图窗口；触发截图时先显示覆盖层，再异步捕获屏幕并发送背景图
+3. 主进程通过 `desktopCapturer` 捕获屏幕，渲染为全屏背景
+4. **鼠标拖拽**创建选择矩形（主色描边 + 半透明遮罩，四角句柄，尺寸标签）
+5. **Enter / 鼠标释放**：裁剪选区，返回 base64 图片，关闭窗口
+6. **Esc / 右键**：取消，关闭窗口不执行操作
+7. 顶部提示条：拖动选取区域 · Enter 确认 · Esc 取消
+8. 主色仅用于选区描边与尺寸标签
 
 ### 平台差异
 
@@ -636,8 +636,8 @@ interface DictResult {
 - `getServiceKey(instanceKey)` 提取裸 serviceKey；`createServiceInstanceKey(serviceKey)` 生成新实例 key
 
 **默认实例**（`DEFAULT_SERVICE_INSTANCES`）：
-`bing@default`、`google@default`、`baidu@default`、`tesseract@default`、
-`mymemory@default`、`free_dictionary@default`、`ecdict@default`。
+`bing@default`、`google@default`、`deepl@default`、`mymemory@default`、`tesseract@default`、
+`free_dictionary@default`、`ecdict@default`、`chinese_dictionary@default`、`edge_tts@default`。
 
 ---
 
@@ -802,7 +802,8 @@ interface DictResult {
 | `translate_window_position` | `'mouse'\|'pre_state'` | `'mouse'` | 窗口位置模式 |
 | `translate_remember_window_size` | boolean | `false` | 记住窗口大小 |
 | `translate_close_on_blur` | boolean | `false` | 失焦时关闭 |
-| `translate_always_on_top` | boolean | `false` | 始终置顶 |
+| `translate_pinned` | boolean | `false` | 固定翻译窗口，防止失焦自动关闭 |
+| `translate_always_on_top` | boolean | `false` | 始终置顶；开启后同时固定窗口 |
 | `hide_source` | boolean | `false` | 隐藏源文本区域 |
 | `hide_language` | boolean | `false` | 隐藏语言选择器 |
 | `translate_hide_window` | boolean | `false` | 翻译后隐藏窗口 |
@@ -840,7 +841,7 @@ interface DictResult {
 
 | 键 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
-| `translate_service_list` | string[] | `['bing@default','baidu@default','google@default']` | 翻译实例顺序 |
+| `translate_service_list` | string[] | `['bing@default','deepl@default','mymemory@default']` | 翻译实例顺序 |
 | `dictionary_service_list` | string[] | `['chinese_dictionary@default','free_dictionary@default','ecdict@default']` | 词典实例顺序 |
 | `recognize_service_list` | string[] | `['tesseract@default']` | OCR 实例顺序 |
 | `tts_service_list` | string[] | `['edge_tts@default']` | TTS 实例顺序 |
@@ -1068,7 +1069,7 @@ export async function getSelectedText(): Promise<string>
 - **单元测试（Vitest）**：服务接口、工具函数、状态管理逻辑
 - **集成测试（Vitest）**：IPC 通信、配置读写、数据库操作、选中文本提取的主方案/回退切换
 - **E2E 测试（Playwright）**：窗口行为、翻译流程、OCR 流程、字典流程、剪贴板流程
-- 免费服务（Bing、Google、系统 OCR）用真实 API 调用；付费服务用 mock
+- 无需密钥的外部服务（Bing、DeepL 免费模式、MyMemory、Google、Lingva、Free Dictionary、Cambridge、Edge TTS、Lingva TTS）需要真实连通性测试；需要密钥的服务使用契约测试和配置校验
 - 覆盖率目标：80%+
 - E2E 通过 HTTP server 的 `OMNI_POT_E2E` 专用端点注入文本、触发流程
 
@@ -1111,7 +1112,7 @@ export async function getSelectedText(): Promise<string>
 ### P1: 应用壳 + 翻译核心
 
 Electron 多窗口管理器、翻译窗口（SourceArea + LanguageArea + TargetArea）、
-3 个翻译服务（Bing / Google / DeepL）、设置窗口（通用 + 翻译 tab）、
+3 个默认启用翻译服务（Bing / DeepL / MyMemory）、设置窗口（通用 + 翻译 tab）、
 系统托盘、全局快捷键（划词 + 输入翻译）、配置持久化 + 变更广播。
 
 ### P2: OCR + 截图
