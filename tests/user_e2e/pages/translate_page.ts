@@ -532,7 +532,8 @@ export class TranslatePage {
                     if (request_count !== expected_count) {
                         throw new Error(`Expected ${String(expected_count)} Lingva TTS request(s), got ${String(request_count)}`)
                     }
-                    await this.page.waitForTimeout(Math.min(50, end - Date.now()))
+                    const delay = Math.min(50, end - Date.now())
+                    if (delay > 0) await this.page.waitForTimeout(delay)
                 }
             },
             release_response: () => this.page.evaluate(() => {
