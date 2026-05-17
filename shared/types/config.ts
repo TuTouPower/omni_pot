@@ -70,6 +70,9 @@ export interface AppConfig {
 
   auto_start: boolean
   tray_click_event: 'show_config' | 'show_translate' | 'none'
+
+  dict_chinese_enabled: boolean
+  detect_cld3_enabled: boolean
 }
 
 // service_instances: instance key -> instance config; main process builds default instances on first launch
@@ -155,7 +158,10 @@ export const DEFAULT_CONFIG: AppConfig = {
   webdav_password: '',
 
   auto_start: false,
-  tray_click_event: 'show_config'
+  tray_click_event: 'show_config',
+
+  dict_chinese_enabled: true,
+  detect_cld3_enabled: true
 }
 
 export type ConfigKey = keyof AppConfig

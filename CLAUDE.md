@@ -67,6 +67,10 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 | `docs/code_quality_checks_plan.md` | 代码质量检查体系落地方案 |
 | `PLAN.md` | 开发待办与下一步 |
 
+## 编码约定
+
+- `scripts/` 下的命令行构建脚本可以使用 `console.log` / `console.warn` / `console.error` 输出用户可见进度与错误；应用代码仍使用日志模块。
+
 ## 测试要求
 
 测试要做完好的单元测试、集成测试、端到端测试，尽量少用 mock，多用真实环境，

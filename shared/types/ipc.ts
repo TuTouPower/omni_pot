@@ -1,5 +1,8 @@
 import type { ConfigKey, AppConfig } from './config'
 import type { DictResult } from './service'
+import type { LanguageCode } from './language'
+
+export type ChineseDictServiceState = 'missing' | 'building' | 'ready' | 'failed'
 
 export interface HistoryRecord {
     id: number
@@ -80,6 +83,12 @@ export interface ElectronAPI {
     check(): Promise<{ ready: boolean; entry_count: number }>
     import(url?: string): Promise<{ success: boolean; entry_count?: number; error?: string }>
   }
+  chineseDict: {
+    lookup(text: string): Promise<DictResult | null>
+    check(): Promise<{ ready: boolean; status: ChineseDictServiceState; entry_count: number }>
+    reload(): Promise<{ success: boolean }>
+    onStateChanged(callback: (state: ChineseDictServiceState) => void): () => void
+  }
   update: {
     onRelease(callback: (release: {
       version: string
@@ -97,6 +106,9 @@ export interface ElectronAPI {
     action(action: string): Promise<boolean>
     labels(): Promise<string[]>
     clipboardMonitoring(): Promise<boolean>
+  }
+  detect: {
+    local(text: string): Promise<{ lang: LanguageCode; source: 'cld3' | 'regex' }>
   }
 }
 
