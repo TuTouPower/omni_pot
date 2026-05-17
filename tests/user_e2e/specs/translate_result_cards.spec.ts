@@ -68,7 +68,7 @@ test.describe('@ui translate result cards', () => {
             await expect(translate.resultCard('lingva@default').getByTestId('result-loading')).toContainText('翻译中')
             await expect(translate.resultCard('lingva@default')).not.toContainText('stream')
 
-            pending_translation.release_response()
+            await pending_translation.release_response()
             await expect(translate.resultBody('lingva@default')).toContainText('你好世界')
         } finally {
             await omni.stop()
@@ -95,7 +95,7 @@ test.describe('@ui translate result cards', () => {
             await translate.click_result_tts('lingva@default')
             await expect(translate.result_tts_button('lingva@default')).toHaveAttribute('aria-pressed', 'false')
             await tts.wait_for_request_count(1)
-            tts.release_response()
+            await tts.release_response()
         } finally {
             await omni.stop()
         }

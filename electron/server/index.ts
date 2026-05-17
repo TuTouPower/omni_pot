@@ -544,40 +544,48 @@ function handle_trigger_hotkey(
     const chunks: Buffer[] = []
     req.on('data', (chunk: Buffer) => chunks.push(chunk))
     req.on('end', () => {
-        try {
-            const body = parse_json_body(chunks)
-            const name = typeof body.name === 'string' ? body.name : ''
-            if (!name) {
-                res.writeHead(400)
-                res.end(JSON.stringify({ success: false, error: 'missing name' }))
-                return
-            }
-            const selectionText = typeof body.selectionText === 'string' ? body.selectionText : undefined
-            if (name === 'translate') {
-                triggerTranslateEntry(mgr, selectionText).catch((err: unknown) => { log_server.error(err) })
+        (async () => {
+            try {
+                const body = parse_json_body(chunks)
+                const name = typeof body.name === 'string' ? body.name : ''
+                if (!name) {
+                    res.writeHead(400)
+                    res.end(JSON.stringify({ success: false, error: 'missing name' }))
+                    return
+                }
+                const selectionText = typeof body.selectionText === 'string' ? body.selectionText : undefined
+                if (name === 'translate') {
+                    await triggerTranslateEntry(mgr, selectionText)
+                    res.writeHead(200)
+                    res.end(JSON.stringify({ success: true }))
+                    return
+                }
+                if (selectionText !== undefined) {
+                    setE2eSelectedTextResult({
+                        text: selectionText,
+                        method: 'none',
+                        reason: selectionText.trim() ? undefined : 'empty'
+                    })
+                }
+                if (!hasRegisteredHotkey(name)) {
+                    res.writeHead(404)
+                    res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
+                    return
+                }
+                triggerRegisteredHotkey(name)
                 res.writeHead(200)
                 res.end(JSON.stringify({ success: true }))
-                return
+            } catch (error: unknown) {
+                res.writeHead(500)
+                res.end(JSON.stringify({ success: false, error: String(error) }))
             }
-            if (selectionText !== undefined) {
-                setE2eSelectedTextResult({
-                    text: selectionText,
-                    method: 'none',
-                    reason: selectionText.trim() ? undefined : 'empty'
-                })
+        })().catch((error: unknown) => {
+            log_server.error(error)
+            if (!res.headersSent) {
+                res.writeHead(500)
+                res.end(JSON.stringify({ success: false, error: String(error) }))
             }
-            if (!hasRegisteredHotkey(name)) {
-                res.writeHead(404)
-                res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
-                return
-            }
-            triggerRegisteredHotkey(name)
-            res.writeHead(200)
-            res.end(JSON.stringify({ success: true }))
-        } catch (error: unknown) {
-            res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
-        }
+        })
     })
 }
 
