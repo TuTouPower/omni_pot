@@ -33,6 +33,7 @@ export interface AppConfig {
   translate_window_position: 'mouse' | 'pre_state'
   translate_remember_window_size: boolean
   translate_close_on_blur: boolean
+  translate_pinned: boolean
   translate_always_on_top: boolean
   hide_source: boolean
   hide_language: boolean
@@ -122,6 +123,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   translate_window_position: 'mouse',
   translate_remember_window_size: false,
   translate_close_on_blur: false,
+  translate_pinned: false,
   translate_always_on_top: false,
   hide_source: false,
   hide_language: false,
@@ -144,7 +146,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   hotkey_ocr_translate: '',
   hotkey_selection_dictionary: '',
 
-  translate_service_list: ['bing@default', 'google@default', 'deepl@default'],
+  translate_service_list: ['bing@default', 'deepl@default', 'mymemory@default'],
   dictionary_service_list: ['chinese_dictionary@default', 'free_dictionary@default', 'ecdict@default'],
   recognize_service_list: ['tesseract@default'],
   tts_service_list: ['edge_tts@default'],

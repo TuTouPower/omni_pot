@@ -1,20 +1,16 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
-const free_service_list = [
+const default_free_service_list = [
     'bing@default',
-    'google@default',
     'deepl@default',
     'mymemory@default',
-    'lingva@default',
 ]
 
-const free_service_instances = {
+const default_free_service_instances = {
     'bing@default': { serviceKey: 'bing', config: {} },
-    'google@default': { serviceKey: 'google', config: {} },
     'deepl@default': { serviceKey: 'deepl', config: { type: 'deeplx_free' } },
     'mymemory@default': { serviceKey: 'mymemory', config: {} },
-    'lingva@default': { serviceKey: 'lingva', config: {} },
 }
 
 test.describe('@core translate core', () => {
@@ -54,25 +50,23 @@ test.describe('@core translate core', () => {
         }, { timeout: 45_000 }).toBe(true)
     })
 
-    test('all free translation services return visible user results', async () => {
+    test('default free translation services return visible user results', async () => {
         const omni = await AppFixture.start({
             config: {
-                translate_service_list: free_service_list,
-                service_instances: free_service_instances,
+                translate_service_list: default_free_service_list,
+                service_instances: default_free_service_instances,
             },
         })
 
         try {
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('Lingva mocked result')
-            await translate.fulfill_mymemory_translation_once('MyMemory mocked result')
             await translate.typeSource('hello world')
             await translate.clickTranslate()
 
-            await translate.waitForResultCount(free_service_list.length, 60_000)
+            await translate.waitForResultCount(default_free_service_list.length, 60_000)
             await translate.waitAllResults(60_000)
 
-            for (const instanceKey of free_service_list) {
+            for (const instanceKey of default_free_service_list) {
                 await expect(translate.resultCard(instanceKey)).toBeVisible()
                 await expect(translate.resultCard(instanceKey).getByTestId('result-error')).toHaveCount(0)
                 await expect.poll(async () => {

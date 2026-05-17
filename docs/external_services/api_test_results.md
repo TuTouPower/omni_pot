@@ -10,8 +10,8 @@
 
 | # | 名称 | 状态 | 说明 |
 |---|------|------|------|
-| T1 | Google Translate (gtx) | ✅ 可用 | `client=gtx` 非官方端点，无需 key。英→中→英双向均正常。已有实现 `src/services/google.ts` |
-| T2 | Lingva Translate | ✅ 可用 | `GET https://lingva.lunar.icu/api/v1/{from}/{to}/{text}`，Google Translate 代理。`lingva.ml` 当前会返回 Cloudflare/403，不再作为默认实例。已有实现 `src/services/lingva.ts` |
+| T1 | Google Translate (gtx) | ⚠️ 当前环境不可达 | `client=gtx` 非官方端点，无需 key；2026-05-18 在当前 Windows 测试环境连续连接超时，不再作为默认启用服务。已有实现 `src/services/google.ts` |
+| T2 | Lingva Translate | ⚠️ 当前环境不可达 | `GET https://lingva.lunar.icu/api/v1/{from}/{to}/{text}`，Google Translate 代理。2026-05-18 当前测试环境连接超时/重置；`lingva.ml` 当前会返回 Cloudflare/403，不再作为默认实例。已有实现 `src/services/lingva.ts` |
 | T3 | MyMemory Translation | ✅ 可用 | `GET https://api.mymemory.translated.net/get?q={text}&langpair={from}|{to}`，无需 key，匿名 5000 字符/天。双向翻译正常 |
 | T4 | LibreTranslate (公共实例) | ❌ 不可用 | 官方 `libretranslate.com` 需要 API key。自托管可免费但需服务器 |
 | T5 | SimplyTranslate AI | ❌ 不可用 | 返回 403 "访问被拒绝：无效的来源" |
@@ -19,7 +19,7 @@
 | T7 | Apertium APy | ❌ 不可用 | `apertium.org/apy` 连接被拒，且仅支持少量欧洲语种，不支持中文 |
 | T8 | FunTranslations | ❌ 不可用 | 返回 403。免费版 5 次/小时，且是趣味翻译（Yoda 等），非正式用途 |
 
-**小结**: 免费可用的翻译 API 有 3 个：Google GTX、Lingva、MyMemory。其中 Google GTX 和 Lingva 本质都是走谷歌翻译。
+**小结**: 免费翻译 API 中 Bing、DeepL 免费模式和 MyMemory 更适合作为默认启用服务；Google GTX 与 Lingva 本质都依赖 Google 侧可达性，当前环境不再把它们当作默认强依赖。
 
 ---
 
@@ -49,8 +49,8 @@
 | E3 | Bing Dictionary | `src/services/bing_dict.ts` | ❌ 已移除 | API 返回 403 "Access disabled"，服务已停用，代码已删除 |
 | E4 | ECDICT | `src/services/ecdict.ts` | ✅ 已替换 | 已替换为 CC-CEDICT 离线方案（better-sqlite3 + FTS5），用于中英词典，不作为中文释义词典 |
 | E5 | Cambridge Dictionary | `src/services/cambridge_dict.ts` | ✅ 可用 | HTML 抓取验证通过，所有 CSS 选择器匹配正常 |
-| E6 | Lingva | `src/services/lingva.ts` | ✅ 可用 | 默认实例切换为 `https://lingva.lunar.icu`，使用 `/api/v1` JSON 端点 |
-| E7 | Google Translate | `src/services/google.ts` | ✅ 可用 | 已确认可用 |
+| E6 | Lingva | `src/services/lingva.ts` | ⚠️ 当前环境不可达 | 默认实例仍为 `https://lingva.lunar.icu`，但 2026-05-18 当前测试环境连接超时/重置；保留为可配置备用，不默认启用 |
+| E7 | Google Translate | `src/services/google.ts` | ⚠️ 当前环境不可达 | 2026-05-18 当前测试环境连续连接超时；保留为可配置服务，不默认启用 |
 | E8 | 中文词典 | `src/services/chinese_dictionary.ts` | ✅ 可用 | 内置中文单字/词语释义，用于中文输入的中文词典/中文字典结果 |
 
 ---
@@ -58,10 +58,11 @@
 ## 推荐方案
 
 ### 翻译服务（当前可用）
-1. **Google GTX** — 主力翻译，质量最好，已有实现
-2. **Bing Translate** — 已修复，辅助翻译，已有实现
-3. **Lingva** — Google 代理，备用，已有实现
-4. **MyMemory** — 独立引擎，已有实现 `src/services/mymemory.ts`
+1. **Bing Translate** — 默认启用，已有实现
+2. **DeepL 免费模式** — 默认启用，已有实现
+3. **MyMemory** — 默认启用，独立免费引擎，已有实现 `src/services/mymemory.ts`
+4. **Google GTX** — 质量好但当前环境连接超时，保留为可配置服务，不默认启用
+5. **Lingva** — Google 代理，备用，已有实现
 
 ### 词典服务（当前可用）
 1. **中文词典** — 当前内置中文单字/词语释义，用于中文查询（`src/services/chinese_dictionary.ts`）
