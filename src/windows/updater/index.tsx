@@ -170,7 +170,7 @@ export default function UpdaterWindow(): React.ReactElement {
                             <Icons.Info size={16} style={{ color: 'var(--danger)', marginTop: 1, flexShrink: 0 }} />
                             <div>
                                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--danger)', marginBottom: 4 }}>
-                                    {t('update_check_failed') || '检查更新失败'}
+                                    {t('update_check_failed', { defaultValue: '检查更新失败' })}
                                 </div>
                                 <div style={{ fontSize: 12.5, color: 'var(--text-dim)', lineHeight: 1.5 }}>{error}</div>
                             </div>
@@ -200,7 +200,7 @@ export default function UpdaterWindow(): React.ReactElement {
                             </div>
                             <div className="stack">
                                 <div style={{ fontSize: 15, fontWeight: 600 }}>
-                                    {t('update_available') || '有新版本可用'}
+                                    {t('update_available', { defaultValue: '有新版本可用' })}
                                 </div>
                                 <div className="hint mono">
                                     {release.current_version} → {release.version}
@@ -225,7 +225,7 @@ export default function UpdaterWindow(): React.ReactElement {
                         {release.assets.length > 0 && (
                             <div className="card" style={{ padding: 10 }}>
                                 <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8, padding: '0 4px' }}>
-                                    {t('downloads') || '下载'}
+                                    {t('downloads', { defaultValue: '下载' })}
                                 </div>
                                 {release.assets.map((asset) => (
                                     <a
@@ -257,10 +257,10 @@ export default function UpdaterWindow(): React.ReactElement {
                         {/* Actions */}
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                             <button className="btn" data-testid="updater-later" onClick={handleClose}>
-                                {t('update_later') || '稍后提醒'}
+                                {t('update_later', { defaultValue: '稍后提醒' })}
                             </button>
                             <button className="btn primary" data-testid="updater-confirm" onClick={handleOpenRelease}>
-                                {t('open_release_page') || '查看详情'}
+                                {t('open_release_page', { defaultValue: '查看详情' })}
                             </button>
                         </div>
                     </>
@@ -270,7 +270,7 @@ export default function UpdaterWindow(): React.ReactElement {
                 {!loading && !error && !release && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 8 }}>
                         <Icons.Check size={32} style={{ color: 'var(--brand-primary)' }} />
-                        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('up_to_date') || '已是最新版本'}</div>
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('up_to_date', { defaultValue: '已是最新版本' })}</div>
                         <div className="hint mono">v{'0.1.0'}</div>
                     </div>
                 )}

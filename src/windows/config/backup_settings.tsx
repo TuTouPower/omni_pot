@@ -67,7 +67,7 @@ export default function BackupSettings(): React.ReactElement {
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('backup.title') || '备份'}>
+            <ConfigCard title={t('backup.title', { defaultValue: '备份' })}>
                 <ConfigRow label="备份类型">
                     <ConfigSelect
                         value={backupType}
@@ -113,11 +113,11 @@ export default function BackupSettings(): React.ReactElement {
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button data-testid="backup-create" className="btn primary" onClick={() => { handle_backup().catch(console.error); }}>
                         <Icons.Cloud size={14} />
-                        {t('backup.create') || '立即备份'}
+                        {t('backup.create', { defaultValue: '立即备份' })}
                     </button>
                     <button data-testid="backup-restore-open" className="btn" onClick={() => { load_backups().catch(console.error); setRestoreModal(true) }}>
                         <Icons.Cycle size={14} />
-                        {t('backup.restore') || '从备份恢复'}
+                        {t('backup.restore', { defaultValue: '从备份恢复' })}
                     </button>
                 </div>
                 {status && <p data-testid="backup-status" style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
@@ -127,7 +127,7 @@ export default function BackupSettings(): React.ReactElement {
             {/* Recent backups */}
             <ConfigCard title="最近备份">
                 {backups.length === 0 && (
-                    <p data-testid="backup-empty" style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('backup.no_backups') || '暂无备份'}</p>
+                    <p data-testid="backup-empty" style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('backup.no_backups', { defaultValue: '暂无备份' })}</p>
                 )}
                 {backups.slice(0, 5).map((name, i) => (
                     <div key={name} data-testid="backup-row" data-backup-name={name} className="row" style={{ paddingBottom: 8, borderBottom: i < Math.min(backups.length, 5) - 1 ? '1px solid var(--line)' : 'none' }}>
