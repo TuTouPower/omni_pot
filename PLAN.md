@@ -137,13 +137,13 @@
 
 来源：`docs/frontend_spec_gap_analysis.md`（D1-D4）、`docs/design/demo_vs_implementation_diff.md`（三）。
 
-- [ ] **用户可见名称统一为"字典词典"**：窗口标题、快捷键页、托盘（D1）
-- [ ] **英文输入只查英文词典（free_dictionary）**：当前还查 ecdict、cambridge_dict（D2）
-- [ ] **移除"来源" chips**（D3）
-- [ ] **收藏按钮移到每个词卡右上角**：当前在顶部 header card（D4）
-- [ ] **单词头部添加朗读按钮**：英文/中文均需（demo diff 3.2）
-- [ ] **添加 CEFR 等级标签**（demo diff 3.2）
-- [ ] **结果卡片支持折叠**（demo diff 3.3, demo P2 #20）
+- [x] **用户可见名称统一为"字典词典"**：窗口标题、快捷键页、托盘（D1）
+- [ ] **英文输入只查英文词典（free_dictionary）**：当前还查 ecdict、cambridge_dict（D2）—— 保留多词典，用户确认不需要限制
+- [x] **移除"来源" chips**（D3）
+- [x] **收藏按钮移到每个词卡右上角**：当前在顶部 header card（D4）
+- [x] **单词头部添加朗读按钮**：英文/中文均需（demo diff 3.2）
+- [ ] **添加 CEFR 等级标签**（demo diff 3.2）—— free_dictionary API 不返回 CEFR 数据，暂无法实现
+- [x] **结果卡片支持折叠**（demo diff 3.3, demo P2 #20）
 
 ---
 
