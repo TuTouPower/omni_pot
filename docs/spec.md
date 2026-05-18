@@ -8,7 +8,7 @@
 - `docs/archive/old_pot/spec.md` — Pot Desktop 3.0.7 原始产品规格（功能蓝本）
 - `docs/superpowers/specs/2026-05-06-pot-desktop-rewrite-design.md` — 重写技术方案
 - `docs/superpowers/specs/2026-05-08-selection-text-extraction-design.md` — 跨平台选中文本提取设计
-- `docs/design/omni_pot/` — UI 设计稿（HTML/JSX/CSS 原型，最高优先级）
+- `docs/design/omni-pot/` — UI 设计稿（HTML/JSX/CSS 原型，最高优先级）
 
 相关文档：
 
