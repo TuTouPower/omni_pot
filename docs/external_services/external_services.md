@@ -1,6 +1,6 @@
 # 外部服务依赖清单
 
-> 更新日期：2026-05-18
+> 更新日期：2026-05-18（QR Code 覆盖补全）
 >
 > 代码以 [src/services/index.ts](../../src/services/index.ts)、[src/services/ocr/index.ts](../../src/services/ocr/index.ts)、[src/services/tts/index.ts](../../src/services/tts/index.ts)、[src/services/detect.ts](../../src/services/detect.ts) 为准。
 
@@ -25,11 +25,11 @@
 | ECDICT | 词典 | 否 | [dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts) | 通过 |
 | Tesseract | OCR | 否 | [recognize_window.spec.ts](../../tests/user_e2e/specs/recognize_window.spec.ts) | 通过 |
 | System OCR | OCR | 否 | [recognize_window.spec.ts](../../tests/user_e2e/specs/recognize_window.spec.ts) | 通过 |
-| QR Code | OCR | 否 | 未覆盖 | 待补 |
+| QR Code | OCR | 否 | [recognize_window.spec.ts](../../tests/user_e2e/specs/recognize_window.spec.ts) | 通过 |
 | Edge TTS | 语音合成 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 失败 |
 | Lingva TTS | 语音合成 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 失败 |
 
-结论：**按“无需用户配置”的口径，目前只有 QR Code 还没有测试覆盖；已经覆盖的服务里，当前失败的是 Google Translate、Lingva Translate、Edge TTS、Lingva TTS。**
+结论：**按”无需用户配置”的口径，所有服务均已有真实路径测试覆盖。已经覆盖的服务里，当前失败的是 Google Translate、Lingva Translate、Edge TTS、Lingva TTS。**
 
 ---
 
