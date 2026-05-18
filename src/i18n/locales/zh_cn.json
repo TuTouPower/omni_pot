@@ -2,7 +2,7 @@
     "app_name": "Pot",
     "translate": "翻译",
     "recognize": {
-        "title": "识别",
+        "title": "文字识别",
         "service": "服务",
         "language": "语言",
         "re_recognize": "重新识别",
@@ -50,9 +50,9 @@
         "selection_translate_sub": "选中文本自动翻译，未选中则手动输入",
         "input_translate": "输入翻译",
         "input_translate_sub": "呼出窗口手动输入要翻译的文本",
-        "ocr_recognize": "OCR 识别",
+        "ocr_recognize": "文字识别",
         "ocr_recognize_sub": "截图后将文字提取到识别窗口",
-        "ocr_translate": "OCR 翻译",
+        "ocr_translate": "截图翻译",
         "ocr_translate_sub": "截图、识别并直接翻译结果",
         "configure_hotkeys": "设置快捷键",
         "skip": "跳过",
@@ -179,7 +179,7 @@
         "selection_translate": "划词翻译",
         "input_translate": "输入翻译",
         "screenshot_translate": "截图翻译",
-        "screenshot_recognize": "截图识别",
+        "screenshot_recognize": "文字识别",
         "clipboard_translate": "剪贴板翻译",
         "selection_dictionary": "查询字典"
     },
@@ -245,5 +245,8 @@
         "close": "关闭",
         "press_shortcut": "按下快捷键...",
         "not_set": "未设置"
-    }
+    },
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "auto_detect_no_swap": "检测到源语言后才能交换"
 }

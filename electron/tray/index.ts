@@ -24,8 +24,8 @@ type TrayLabelKey = 'input_translate' | 'ocr_recognize' | 'screenshot_translate'
 
 const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   en: {
-    input_translate: 'Input Translate',
-    ocr_recognize: 'OCR Recognize',
+    input_translate: 'Translate',
+    ocr_recognize: 'Text Recognize',
     screenshot_translate: 'Screenshot Translate',
     clipboard_monitor: 'Clipboard Monitor',
     config: 'Settings',
@@ -35,8 +35,8 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
     quit: 'Quit'
   },
   zh_cn: {
-    input_translate: '输入翻译',
-    ocr_recognize: 'OCR 识别',
+    input_translate: '翻译',
+    ocr_recognize: '文字识别',
     screenshot_translate: '截图翻译',
     clipboard_monitor: '剪贴板监听',
     config: '设置',
@@ -101,7 +101,8 @@ export function show_tray_popup(): boolean {
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    transparent: false
+    transparent: false,
+    show: false
   })
   const tray_bounds = tray.getBounds()
   const current_bounds = popup.isDestroyed() ? null : popup.getBounds()
@@ -123,8 +124,15 @@ export function show_tray_popup(): boolean {
     width: bounds.width,
     height: bounds.height
   })
-  popup.show()
-  popup.focus()
+  if (popup.isVisible()) {
+    popup.focus()
+  } else {
+    popup.once('ready-to-show', () => {
+      if (popup.isDestroyed()) return
+      popup.show()
+      popup.focus()
+    })
+  }
   return true
 }
 

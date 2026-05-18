@@ -124,5 +124,8 @@
         "close": "Kapat",
         "press_shortcut": "Kısayol tuşuna basın...",
         "not_set": "Ayarlanmadı"
-    }
+    },
+    "minimize": "Küçült",
+    "maximize": "Büyüt",
+    "auto_detect_no_swap": "Değiştirmek için önce kaynak dili algılayın"
 }

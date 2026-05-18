@@ -124,5 +124,8 @@
         "close": "Schließen",
         "press_shortcut": "Tastenkürzel drücken...",
         "not_set": "Nicht festgelegt"
-    }
+    },
+    "minimize": "Minimieren",
+    "maximize": "Maximieren",
+    "auto_detect_no_swap": "Quellsprache zuerst erkennen, um zu tauschen"
 }

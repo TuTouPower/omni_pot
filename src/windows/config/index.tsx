@@ -21,13 +21,7 @@ interface NavItem {
 export default function ConfigWindow(): React.ReactElement {
     const { t } = useTranslation()
     const [activePage, setActivePage] = useState<ConfigPage>('general')
-    const [alwaysOnTop, setAlwaysOnTop] = useState(false)
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
-    const handlePin = useCallback(async () => {
-        const next = !alwaysOnTop
-        await window.electronAPI.window.setAlwaysOnTop(next)
-        setAlwaysOnTop(next)
-    }, [alwaysOnTop])
 
     useEffect(() => {
         window.electronAPI.ready('config')
@@ -68,6 +62,25 @@ export default function ConfigWindow(): React.ReactElement {
 
     return (
         <div className="op-window" data-testid="config-window" style={{ width: '100vw', height: '100vh' }}>
+            {/* Single titlebar spanning full width */}
+            <div className="op-titlebar" data-testid="config-titlebar">
+                <div className="op-wordmark" style={{ marginLeft: 4 }} data-testid="config-wordmark">
+                    Omni Pot
+                </div>
+                <span className="op-mode" data-testid="config-title">{t('config.title') || '设置'} · {cur?.label}</span>
+                <div style={{ flex: 1 }} />
+                <div className="op-wmctl" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    <button title={t('minimize')} data-testid="config-minimize" onClick={() => { window.electronAPI.window.minimize().catch(console.error); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                        <Icons.Min size={15} />
+                    </button>
+                    <button title={t('maximize')} data-testid="config-maximize" onClick={() => { window.electronAPI.window.maximize().catch(console.error); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                        <Icons.Max size={13} />
+                    </button>
+                    <button className="close" title={t('close')} data-testid="config-close" onClick={() => { handleClose().catch(console.error); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                        <Icons.Close size={15} />
+                    </button>
+                </div>
+            </div>
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
                 <div style={{
                     width: 184,
@@ -76,22 +89,7 @@ export default function ConfigWindow(): React.ReactElement {
                     display: 'flex',
                     flexDirection: 'column',
                 }}>
-                    <div className="drag-region" data-testid="config-sidebar-titlebar" style={{ height: 38, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <button
-                            className="ic-btn"
-                            title="置顶"
-                            data-testid="config-pin"
-                            aria-pressed={alwaysOnTop}
-                            onClick={() => { handlePin().catch(console.error); }}
-                            style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                        >
-                            <Icons.Pin size={13} />
-                        </button>
-                        <div className="op-wordmark" data-testid="config-wordmark">
-                            Omni Pot
-                        </div>
-                    </div>
-                    <div style={{ padding: 6, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                    <div style={{ padding: '8px 6px', display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
                         {pages.map((n) => (
                             <button
                                 key={n.key}
@@ -106,7 +104,7 @@ export default function ConfigWindow(): React.ReactElement {
                                     alignItems: 'center',
                                     gap: 10,
                                     background: activePage === n.key ? 'var(--bg-elev)' : 'transparent',
-                                    border: '1px solid ' + (activePage === n.key ? 'var(--line)' : 'transparent'),
+                                    border: '1px solid ' + (activePage === n.key ? 'var(--line-soft)' : 'transparent'),
                                     color: activePage === n.key ? 'var(--text)' : 'var(--text-dim)',
                                     fontSize: 13,
                                     fontWeight: activePage === n.key ? 500 : 400,
@@ -129,14 +127,7 @@ export default function ConfigWindow(): React.ReactElement {
 
                 {/* Content */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <div className="drag-region" data-testid="config-titlebar" style={{ height: 38, display: 'flex', alignItems: 'center', padding: '0 10px 0 14px', gap: 8 }}>
-                        <div data-testid="config-title" style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
-                        <div style={{ flex: 1 }} />
-                        <button className="ic-btn" title="关闭" data-testid="config-close" onClick={() => { handleClose().catch(console.error); }}>
-                            <Icons.Close size={14} />
-                        </button>
-                    </div>
-                    <div style={{ flex: 1, overflow: 'auto', padding: '4px 16px 16px' }}>
+                    <div style={{ flex: 1, overflow: 'auto', padding: '12px 16px 16px' }}>
                         {renderPage()}
                     </div>
                 </div>

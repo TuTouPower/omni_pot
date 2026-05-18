@@ -145,12 +145,12 @@ export default function HotkeySettings(): React.ReactElement {
                     configKey="hotkey_input_translate"
                 />
                 <HotkeyField
-                    label={t('hotkey.screenshot_recognize') || 'OCR 识别'}
+                    label={t('hotkey.screenshot_recognize') || '文字识别'}
                     sub="截图后将文字提取到识别窗口"
                     configKey="hotkey_ocr_recognize"
                 />
                 <HotkeyField
-                    label={t('hotkey.screenshot_translate') || 'OCR 翻译'}
+                    label={t('hotkey.screenshot_translate') || '截图翻译'}
                     sub="截图、识别并自动翻译"
                     configKey="hotkey_ocr_translate"
                 />

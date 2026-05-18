@@ -59,6 +59,14 @@ function wait_for_voices(timeout_ms = 1500): Promise<void> {
     })
 }
 
+function assign_voice(utterance: SpeechSynthesisUtterance, voice: SpeechSynthesisVoice): void {
+    try {
+        utterance.voice = voice
+    } catch {
+        // Some Web Speech implementations expose voice-like objects that cannot be assigned.
+    }
+}
+
 export const systemTtsService: TtsService = {
     key: 'system_tts',
     name: 'System TTS',
@@ -68,7 +76,7 @@ export const systemTtsService: TtsService = {
         const utterance = new SpeechSynthesisUtterance(text)
         utterance.lang = to_bcp47(language)
         const initial_voice = pick_voice(utterance.lang)
-        if (initial_voice) utterance.voice = initial_voice
+        if (initial_voice) assign_voice(utterance, initial_voice)
 
         let resolve_done: (() => void) | null = null
         const done = new Promise<void>((res) => { resolve_done = res })
@@ -85,7 +93,7 @@ export const systemTtsService: TtsService = {
         if (!initial_voice) {
             wait_for_voices().then(() => {
                 const v = pick_voice(utterance.lang)
-                if (v) utterance.voice = v
+                if (v) assign_voice(utterance, v)
                 window.speechSynthesis.cancel()
                 window.speechSynthesis.speak(utterance)
             }).catch(() => undefined)

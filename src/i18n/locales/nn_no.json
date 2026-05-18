@@ -124,5 +124,8 @@
         "close": "Lukk",
         "press_shortcut": "Trykk snøggtast...",
         "not_set": "Ikkje angitt"
-    }
+    },
+    "minimize": "Minimer",
+    "maximize": "Maksimer",
+    "auto_detect_no_swap": "Oppdag kjeldespråket først for å byte"
 }

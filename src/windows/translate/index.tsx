@@ -532,32 +532,56 @@ export default function TranslateWindow(): React.ReactElement {
             style={{ fontSize: appFontSize, fontFamily: appFont === 'default' ? undefined : appFont }}
         >
             <div className="op-titlebar" data-testid="titlebar">
-                <button
-                    className="ic-btn"
-                    title={t('pin')}
-                    data-testid="titlebar-pin"
-                    aria-pressed={pinned}
-                    onClick={handleTogglePin}
-                    style={{ color: pinned ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                >
-                    <Icons.Pin size={18} fill={pinned} />
-                </button>
-                <button
-                    className="ic-btn"
-                    title={t('translate_settings.always_on_top')}
-                    data-testid="titlebar-topmost"
-                    aria-pressed={alwaysOnTop}
-                    onClick={handleToggleAlwaysOnTop}
-                    style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                >
-                    <Icons.Max size={16} fill={alwaysOnTop} />
-                </button>
+                <div style={{ display: 'flex', gap: 2, WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    <button
+                        title={t('translate_settings.always_on_top')}
+                        data-testid="titlebar-topmost"
+                        aria-pressed={alwaysOnTop}
+                        onClick={handleToggleAlwaysOnTop}
+                        style={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: 6,
+                            display: 'grid',
+                            placeItems: 'center',
+                            color: 'var(--brand-primary)',
+                            background: 'transparent',
+                            border: 0,
+                            padding: 0,
+                            WebkitAppRegion: 'no-drag' as const,
+                            cursor: 'pointer'
+                        } as React.CSSProperties}
+                    >
+                        <Icons.Pin size={25} fill={alwaysOnTop} />
+                    </button>
+                    <button
+                        title={t('pin')}
+                        data-testid="titlebar-pin"
+                        aria-pressed={pinned}
+                        onClick={handleTogglePin}
+                        style={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: 6,
+                            display: 'grid',
+                            placeItems: 'center',
+                            color: 'var(--brand-primary)',
+                            background: 'transparent',
+                            border: 0,
+                            padding: 0,
+                            WebkitAppRegion: 'no-drag' as const,
+                            cursor: 'pointer'
+                        } as React.CSSProperties}
+                    >
+                        <Icons.Lock size={24} fill={pinned} />
+                    </button>
+                </div>
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     Omni Pot
                 </div>
-                <span className="op-mode" data-testid="titlebar-mode">翻译</span>
+                <span className="op-mode" data-testid="titlebar-mode">{t('translate')}</span>
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={() => { handleClose().catch(console.error); }}>
+                <button className="op-close" title={t('close')} data-testid="titlebar-close" onClick={() => { handleClose().catch(console.error); }}>
                     <Icons.Close size={18} />
                 </button>
             </div>

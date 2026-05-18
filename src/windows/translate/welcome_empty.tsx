@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
@@ -60,21 +60,6 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
     const hotkey_input_translate = useConfigStore((s) => s.config.hotkey_input_translate)
     const hotkey_ocr_recognize = useConfigStore((s) => s.config.hotkey_ocr_recognize)
     const hotkey_ocr_translate = useConfigStore((s) => s.config.hotkey_ocr_translate)
-    const root_ref = useRef<HTMLDivElement>(null)
-
-    // Resize the host window so the welcome panel shows fully without scrolling.
-    useEffect(() => {
-        const node = root_ref.current
-        if (!node) return
-        const set_height = (h: number): void => {
-            window.electronAPI.window.setContentHeight(Math.ceil(h)).catch(() => undefined)
-        }
-        const measure = (): number => Math.max(node.getBoundingClientRect().height + 32, 200)
-        set_height(measure())
-        const observer = new ResizeObserver(() => { set_height(measure()) })
-        observer.observe(node)
-        return () => { observer.disconnect() }
-    }, [])
 
     const items: HintItem[] = [
         {
@@ -91,7 +76,7 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
         {
             icon: 'camera',
             title_key: 'welcome.ocr_recognize',
-            title_fallback: 'OCR 识别',
+            title_fallback: '文字识别',
             sub_key: 'welcome.ocr_recognize_sub',
             sub_fallback: '截图后将文字提取到识别窗口',
             hotkey_value: hotkey_ocr_recognize,
@@ -100,7 +85,7 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
         {
             icon: 'image',
             title_key: 'welcome.ocr_translate',
-            title_fallback: 'OCR 翻译',
+            title_fallback: '截图翻译',
             sub_key: 'welcome.ocr_translate_sub',
             sub_fallback: '截图、识别并直接翻译结果',
             hotkey_value: hotkey_ocr_translate,
@@ -114,7 +99,7 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
     }
 
     return (
-        <div ref={root_ref} data-testid="welcome-empty" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div data-testid="welcome-empty" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ padding: '6px 4px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="svc-tile" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--brand-primary)', color: '#fff', borderColor: 'transparent', fontSize: 12 }}>op</div>
                 <div className="stack">

@@ -124,5 +124,8 @@
         "close": "Fermer",
         "press_shortcut": "Appuyez sur le raccourci...",
         "not_set": "Non défini"
-    }
+    },
+    "minimize": "Réduire",
+    "maximize": "Agrandir",
+    "auto_detect_no_swap": "Détectez d’abord la langue source pour permuter"
 }

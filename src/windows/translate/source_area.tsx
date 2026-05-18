@@ -70,11 +70,26 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
     const [dynamicTranslate] = useConfig('dynamic_translate')
+    const [appFont] = useConfig('app_font')
+    const [appFontSize] = useConfig('app_font_size')
 
     const internalRef = useRef<HTMLTextAreaElement>(null)
     const textAreaRef = inputRef ?? internalRef
     const isComposingRef = useRef(false)
     const dynamic_timer_ref = useRef<number | null>(null)
+
+    const resize_source_area = useCallback(() => {
+        const textarea = textAreaRef.current
+        if (!textarea) return
+        const line_height = Number.parseFloat(getComputedStyle(textarea).lineHeight)
+        const max_height = line_height * 8
+        textarea.style.maxHeight = `${max_height.toString()}px`
+        textarea.style.height = 'auto'
+        const scroll_height = textarea.scrollHeight
+        const height = Math.min(scroll_height, max_height)
+        textarea.style.height = `${height.toString()}px`
+        textarea.style.overflowY = scroll_height > max_height ? 'auto' : 'hidden'
+    }, [textAreaRef])
 
     const cancel_dynamic_translate = useCallback(() => {
         if (dynamic_timer_ref.current === null) return
@@ -124,10 +139,23 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         setSourceText(sourceText.replace(/-\s+/g, '').replace(/\s+/g, ' '))
     }, [sourceText, setSourceText])
 
+    const handleDeleteSpace = useCallback(() => {
+        setSourceText(sourceText.replace(/\s+/g, ''))
+    }, [sourceText, setSourceText])
+
     const handleClear = useCallback(() => {
         setSourceText('')
         setDetectedLanguage(null)
     }, [setSourceText, setDetectedLanguage])
+
+    useEffect(() => {
+        resize_source_area()
+    }, [sourceText, appFont, appFontSize, resize_source_area])
+
+    useEffect(() => {
+        window.addEventListener('resize', resize_source_area)
+        return () => { window.removeEventListener('resize', resize_source_area) }
+    }, [resize_source_area])
 
     useEffect(() => {
         if (!dynamicTranslate || !sourceText.trim()) return
@@ -137,9 +165,6 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         }, 1000)
         return () => { cancel_dynamic_translate(); }
     }, [sourceText, dynamicTranslate, onTranslate, cancel_dynamic_translate])
-
-    // Spec: input area shows a fixed 8-line area. Longer content scrolls inside; window height tracks layout via flex.
-    const sourceRows = 8
 
     return (
         <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '0 0 auto' }}>
@@ -156,18 +181,18 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                     data-testid="source-input"
                     style={{
                         width: '100%',
-                        fontSize: 13.5,
-                        lineHeight: '22px',
+                        fontSize: 'inherit',
+                        lineHeight: '1.6',
                         color: 'var(--text)',
                         background: 'transparent',
                         border: 'none',
                         outline: 'none',
                         resize: 'none',
                         fontFamily: 'inherit',
-                        maxHeight: 176,
-                        overflowY: 'auto',
+                        minHeight: '1.6em',
+                        overflowY: 'hidden',
                     }}
-                    rows={sourceRows}
+                    rows={1}
                 />
             </div>
             {/* Action bar */}
@@ -177,7 +202,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                         type="button"
                         data-testid="detected-lang"
                         onClick={onDetectedLanguageClick}
-                        style={{ fontSize: 10.5, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4, background: 'transparent', border: 0, cursor: onDetectedLanguageClick ? 'pointer' : 'default', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4, background: 'transparent', border: 0, cursor: onDetectedLanguageClick ? 'pointer' : 'default', whiteSpace: 'nowrap' }}
                     >
                         {t('detected_language_prefix')} <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{native_language_name(t, detectedLanguage)}</span>
                     </button>
@@ -186,16 +211,23 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 <button className="ic-btn" title={t('delete_newline') || '去除换行'} data-testid="source-newline-btn" onClick={handleDeleteNewline}>
                     <Icons.Newline size={16} />
                 </button>
+                <button className="ic-btn" title={t('delete_spaces')} data-testid="source-space-btn" onClick={handleDeleteSpace}>
+                    <Icons.Space size={16} />
+                </button>
                 <button
-                    className="ic-btn"
+                    className={'ic-btn' + (ttsPlaying ? ' brand' : '')}
                     title={ttsBusy ? t('tts_cancel') : (ttsPlaying ? t('tts_stop') : t('tts_read'))}
                     data-testid="source-tts-btn"
                     aria-pressed={ttsBusy || ttsPlaying}
                     onClick={onTts}
                     disabled={!ttsAvailable || (!sourceText.trim() && !ttsBusy && !ttsPlaying)}
-                    style={{ color: ttsBusy || ttsPlaying ? 'var(--brand-primary)' : undefined }}
+                    style={ttsPlaying ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
                 >
-                    <Icons.Volume size={16} />
+                    {ttsBusy ? (
+                        <span className="dots" aria-label="加载中"><span /><span /><span /></span>
+                    ) : (
+                        <Icons.Volume size={16} fill={ttsPlaying} />
+                    )}
                 </button>
                 <button className="ic-btn" title={t('copy') || '复制原文'} data-testid="source-copy-btn" onClick={handleCopy}>
                     <Icons.Copy size={16} />

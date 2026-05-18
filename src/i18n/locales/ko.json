@@ -124,5 +124,8 @@
         "close": "닫기",
         "press_shortcut": "단축키를 누르세요...",
         "not_set": "설정 안 됨"
-    }
+    },
+    "minimize": "최소화",
+    "maximize": "최대화",
+    "auto_detect_no_swap": "원본 언어를 감지한 후 교체할 수 있습니다"
 }

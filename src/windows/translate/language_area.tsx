@@ -7,8 +7,8 @@ import { native_language_name } from '../../i18n/language_names'
 import { LANGUAGE_CODES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
 
-const SOURCE_LANGUAGES = ['auto', ...LANGUAGE_CODES.filter((c) => c !== 'auto')]
-const TARGET_LANGUAGES = LANGUAGE_CODES.filter((c) => c !== 'auto')
+const SOURCE_LANGUAGES: LanguageCode[] = ['auto', ...LANGUAGE_CODES.filter((c) => c !== 'auto')]
+const TARGET_LANGUAGES: LanguageCode[] = LANGUAGE_CODES.filter((c) => c !== 'auto')
 
 function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
     value: LanguageCode
@@ -19,35 +19,63 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
 }): React.ReactElement {
     const { t } = useTranslation()
     const [open, setOpen] = React.useState(false)
-    const [menuRect, setMenuRect] = React.useState<{ top: number; left: number; width: number } | null>(null)
-    const ref = React.useRef<HTMLDivElement>(null)
+    const POP_W = 180
+    const triggerRef = React.useRef<HTMLButtonElement>(null)
+    const popRef = React.useRef<HTMLDivElement>(null)
+    const [coords, setCoords] = React.useState({ left: 0, top: 0, maxH: 280 })
+
+    const measure = React.useCallback(() => {
+        const el = triggerRef.current
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        const popH = Math.min(320, options.length * 30 + 8)
+        const spaceBelow = window.innerHeight - r.bottom
+        const above = spaceBelow < popH + 12 && r.top > popH + 12
+        // Center horizontally under the trigger.
+        const wantLeft = r.left + r.width / 2 - POP_W / 2
+        const left = Math.min(Math.max(8, wantLeft), window.innerWidth - POP_W - 8)
+        setCoords({
+            left,
+            top: above ? r.top - popH - 6 : r.bottom + 6,
+            maxH: popH
+        })
+    }, [options.length])
 
     const toggle_open = () => {
-        const rect = ref.current?.getBoundingClientRect()
-        if (rect) setMenuRect({ top: rect.bottom + 4, left: rect.left, width: Math.max(140, rect.width) })
         setOpen((o) => !o)
     }
 
     React.useEffect(() => {
+        if (!open) return
+        measure()
+        const onScroll = () => { measure() }
         const handleClickOutside = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
-                setOpen(false)
-            }
+            if (popRef.current?.contains(e.target as Node)) return
+            if (triggerRef.current?.contains(e.target as Node)) return
+            setOpen(false)
         }
+        window.addEventListener('scroll', onScroll, true)
+        window.addEventListener('resize', onScroll)
         document.addEventListener('mousedown', handleClickOutside)
-        return () => { document.removeEventListener('mousedown', handleClickOutside); }
-    }, [])
+        return () => {
+            window.removeEventListener('scroll', onScroll, true)
+            window.removeEventListener('resize', onScroll)
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [open, measure])
 
     return (
-        <div ref={ref} style={{ position: 'relative' }}>
+        <React.Fragment>
             <button
+                ref={triggerRef}
                 data-testid={testId}
-                onClick={toggle_open}
+                onClick={(e) => { e.stopPropagation(); toggle_open() }}
                 style={{
                     height: 28,
                     padding: '0 6px',
-                    background: 'transparent',
+                    background: open ? 'var(--brand-primary-soft)' : 'transparent',
                     border: 0,
+                    borderRadius: 6,
                     color: 'var(--text)',
                     fontSize: 13.5,
                     fontWeight: 500,
@@ -59,23 +87,24 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                 }}
             >
                 {native_language_name(t, value)}
-                <Icons.Chev size={12} style={{ color: 'var(--text-mute)', marginTop: 1 }} />
+                <Icons.Chev size={12} style={{ color: 'var(--text-mute)', marginTop: 1, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
             </button>
-            {open && menuRect && createPortal(
+            {open && createPortal(
                 <div
+                    ref={popRef}
                     onMouseDown={(e) => { e.stopPropagation(); }}
                     style={{
                     position: 'fixed',
-                    top: menuRect.top,
-                    left: menuRect.left,
-                    minWidth: menuRect.width,
+                    top: coords.top,
+                    left: coords.left,
+                    width: POP_W,
                     background: 'var(--bg-elev)',
                     border: '1px solid var(--line)',
                     borderRadius: 'var(--r-md)',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
+                    boxShadow: '0 10px 28px rgba(0,0,0,0.14)',
                     padding: 4,
-                    zIndex: 1000,
-                    maxHeight: 280,
+                    zIndex: 10000,
+                    maxHeight: coords.maxH,
                     overflowY: 'auto',
                 }}>
                     {options.map((code) => (
@@ -110,7 +139,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                 </div>,
                 document.body
             )}
-        </div>
+        </React.Fragment>
     )
 }
 
@@ -125,13 +154,15 @@ export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement 
     const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
     const setSourceLanguage = useTranslateStore((s) => s.setSourceLanguage)
     const setTargetLanguage = useTranslateStore((s) => s.setTargetLanguage)
+    const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
+    const autoNoDetect = sourceLanguage === 'auto' && !detectedLanguage
 
     return (
         <div className="card" style={{ padding: '4px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flex: '0 0 auto' }}>
             <div data-testid="lang-source">
                 <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} testId="lang-source-button" optionTestIdPrefix="lang-source-option" />
             </div>
-            <button className="ic-btn" style={{ color: 'var(--text)' }} title={t('swap_languages')} data-testid="lang-swap" onClick={onSwap}>
+            <button className="ic-btn" style={{ color: autoNoDetect ? 'var(--text-mute)' : 'var(--text)', cursor: autoNoDetect ? 'not-allowed' : 'pointer' }} title={autoNoDetect ? t('auto_detect_no_swap') : t('swap_languages')} data-testid="lang-swap" onClick={onSwap} disabled={autoNoDetect}>
                 <Icons.Swap size={18} />
             </button>
             <div data-testid="lang-target">

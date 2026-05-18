@@ -124,5 +124,8 @@
         "close": "關閉",
         "press_shortcut": "按下快捷鍵...",
         "not_set": "未設定"
-    }
+    },
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "auto_detect_no_swap": "偵測到來源語言後才能交換"
 }

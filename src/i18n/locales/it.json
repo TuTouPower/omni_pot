@@ -124,5 +124,8 @@
         "close": "Chiudi",
         "press_shortcut": "Premi la scorciatoia...",
         "not_set": "Non impostato"
-    }
+    },
+    "minimize": "Riduci",
+    "maximize": "Ingrandisci",
+    "auto_detect_no_swap": "Rileva prima la lingua di origine per scambiarle"
 }

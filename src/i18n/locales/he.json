@@ -124,5 +124,8 @@
         "close": "סגור",
         "press_shortcut": "לחץ קיצור...",
         "not_set": "לא הוגדר"
-    }
+    },
+    "minimize": "מזער",
+    "maximize": "הגדל",
+    "auto_detect_no_swap": "זהה קודם את שפת המקור כדי להחליף"
 }
