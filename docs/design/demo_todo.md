@@ -1,6 +1,6 @@
 # omni_pot 设计稿已知偏差
 
-> 记录 `docs/design/omni_pot/` 设计稿与 `docs/spec.md` 不一致的地方。
+> 记录 `docs/design/omni-pot/` 设计稿与 `docs/spec.md` 不一致的地方。
 > **设计稿文件本身不修改** —— 本文件仅作备忘，便于阅读设计稿时知道哪些点是已知偏差，
 > 不要把这些偏差照抄到代码或 spec 里。
 > 设计稿原型文件：`design-canvas.jsx`、`shared.jsx`、`windows/translate.jsx`、
