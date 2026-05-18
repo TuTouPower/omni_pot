@@ -10,6 +10,7 @@ import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
 import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures, triggerTranslateEntry } from '../hotkey'
 import { readSelectedText, setE2eSelectedTextResult } from '../selection'
+import { get_history_page, get_history_count } from '../history'
 import { log } from '../log'
 
 const log_server = log.scope('server')
@@ -66,9 +67,20 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
+            if (req.method === 'POST' && url.pathname === '/dict') {
+                handleDictLookup(mgr, req, res)
+                return
+            }
+
             if (req.method === 'GET' && url.pathname === '/history') {
+                const page = Number(url.searchParams.get('page') ?? '1')
+                const page_size = Number(url.searchParams.get('page_size') ?? '20')
+                const safe_page = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
+                const safe_size = Number.isFinite(page_size) && page_size > 0 ? Math.min(Math.floor(page_size), 200) : 20
+                const data = get_history_page(safe_page, safe_size)
+                const total = get_history_count()
                 res.writeHead(200)
-                res.end(JSON.stringify({ success: true, message: 'history stub', data: [] }))
+                res.end(JSON.stringify({ success: true, data, page: safe_page, page_size: safe_size, total }))
                 return
             }
 
@@ -197,6 +209,35 @@ function handleTranslate(
         mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
 
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true }))
+    })
+}
+
+function handleDictLookup(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        const body = Buffer.concat(chunks).toString('utf-8').trim()
+        let text = body
+        if (body.startsWith('{')) {
+            try {
+                const json = JSON.parse(body) as { text?: unknown }
+                if (typeof json.text === 'string') text = json.text
+            } catch { /* fall through */ }
+        }
+        const trimmed = text.trim()
+        if (!trimmed) {
+            res.writeHead(400)
+            res.end(JSON.stringify({ success: false, error: 'empty body' }))
+            return
+        }
+        mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+        mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', trimmed)
         res.writeHead(200)
         res.end(JSON.stringify({ success: true }))
     })

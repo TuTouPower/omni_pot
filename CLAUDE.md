@@ -59,6 +59,7 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 | `docs/design/demo_todo.md` | omni_pot 设计稿与 spec 的已知偏差备忘 |
 | `docs/test.md` | 测试规范与总则（分层、原则、快捷键策略、运行命令） |
 | `docs/test_user_e2e.md` | 用户端到端测试设计（基础设施、文件规划、各 spec 内容） |
+| `docs/external_api.md` | 主进程对外暴露的 HTTP API（`server_port`，默认 20202） |
 | `docs/issues.md` | 已知问题记录 |
 | `docs/archive/closed_issues/` | 已关闭的问题记录 |
 | `docs/external_services/` | 外部服务 API 信息与连通性测试结果 |
