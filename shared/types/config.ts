@@ -15,10 +15,6 @@ export interface AppConfig {
   server_port: number
   clipboard_monitor: boolean
 
-  proxy_enable: boolean
-  proxy_host: string
-  proxy_port: string
-
   translate_source_language: string
   translate_target_language: string
   translate_second_language: string
@@ -102,10 +98,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   check_update: true,
   server_port: 20202,
   clipboard_monitor: false,
-
-  proxy_enable: false,
-  proxy_host: '',
-  proxy_port: '',
 
   translate_source_language: 'auto',
   translate_target_language: 'zh_cn',

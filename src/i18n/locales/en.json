@@ -133,11 +133,7 @@
         "font_family": "Font Family",
         "font_default": "System Default",
         "transparent": "Transparent background",
-        "transparent_sub": "Acrylic effect; may affect performance on some platforms",
-        "proxy": "Proxy",
-        "proxy_enable": "Enable proxy (requires restart)",
-        "proxy_host": "Host",
-        "proxy_port": "Port"
+        "transparent_sub": "Acrylic effect; may affect performance on some platforms"
     },
     "translate_settings": {
         "title": "Translate",
@@ -157,7 +153,6 @@
         "delete_newline": "Auto delete newlines",
         "incremental_translate": "Incremental translate",
         "incremental_translate_sub": "Append newly selected text to existing source instead of replacing",
-        "close_on_blur": "Close on blur",
         "always_on_top": "Always on top",
         "hide_source": "Hide source text",
         "hide_language": "Hide language selector",

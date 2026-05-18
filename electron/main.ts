@@ -33,7 +33,6 @@ import { spawn } from 'child_process'
 import { registerTrayHandlers } from './ipc/tray_handlers'
 import { close_history } from './history'
 import { close_dict, auto_import_if_needed } from './dict'
-import { applyProxy } from './proxy'
 import { checkForUpdate } from './updater'
 import { startServer, stopServer } from './server'
 import { preload_screenshot_window } from './screenshot'
@@ -203,9 +202,6 @@ if (!gotLock) {
       }
     }
     startHttpServer().catch((err: unknown) => { log_main.error(err) })
-
-    applyProxy()
-    log_main.info('proxy applied')
 
     if (getConfig('clipboard_monitor')) {
       startClipboardMonitor(manager)
