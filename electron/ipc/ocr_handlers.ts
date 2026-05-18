@@ -9,24 +9,49 @@ import { start_screenshot_capture } from '../screenshot'
 import { get_translate_window_options, attach_translate_resize_persistence } from '../windows/translate_options'
 import { get_recognize_window_options } from '../windows/recognize_options'
 
+const SYSTEM_OCR_LANGUAGES = new Set([
+    'en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'ko-KR', 'fr-FR', 'es-ES', 'ru-RU',
+    'de-DE', 'it-IT', 'tr-TR', 'pt-PT', 'pt-BR', 'vi-VN', 'id-ID', 'th-TH',
+    'ms-MY', 'ar-SA', 'hi-IN', 'fa-IR', 'pl-PL', 'nl-NL', 'uk-UA',
+])
+
+export function normalize_system_ocr_language(lang: string): string {
+    if (!lang) return 'en-US'
+    if (!SYSTEM_OCR_LANGUAGES.has(lang)) throw new Error('Unsupported OCR language')
+    return lang
+}
+
 async function windows_ocr(image_path: string, lang: string): Promise<string> {
-    const bcp47 = lang || 'en-US'
+    const bcp47 = normalize_system_ocr_language(lang)
     const ps_script = `
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
 [Windows.Graphics.Imaging.BitmapDecoder, Windows.Graphics.Imaging, ContentType = WindowsRuntime] | Out-Null
+[Windows.Graphics.Imaging.SoftwareBitmap, Windows.Graphics.Imaging, ContentType = WindowsRuntime] | Out-Null
 [Windows.Media.Ocr.OcrEngine, Windows.Media.Ocr, ContentType = WindowsRuntime] | Out-Null
+[Windows.Media.Ocr.OcrResult, Windows.Media.Ocr, ContentType = WindowsRuntime] | Out-Null
 [Windows.Globalization.Language, Windows.Globalization, ContentType = WindowsRuntime] | Out-Null
+[Windows.Storage.StorageFile, Windows.Storage, ContentType = WindowsRuntime] | Out-Null
+[Windows.Storage.FileAccessMode, Windows.Storage, ContentType = WindowsRuntime] | Out-Null
+[Windows.Storage.Streams.IRandomAccessStream, Windows.Storage.Streams, ContentType = WindowsRuntime] | Out-Null
 
-$file = [Windows.Storage.StorageFile]::GetFileFromPathAsync('${image_path.replace(/'/g, "''")}').AsTask().GetAwaiter().GetResult()
-$stream = $file.OpenAsync([Windows.Storage.FileAccessMode]::Read).AsTask().GetAwaiter().GetResult()
-$decoder = [Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream).AsTask().GetAwaiter().GetResult()
-$bitmap = $decoder.GetSoftwareBitmapAsync().AsTask().GetAwaiter().GetResult()
+function AwaitOp($op, [type]$resultType) {
+    $method = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
+        $_.Name -eq 'AsTask' -and $_.IsGenericMethodDefinition -and $_.GetGenericArguments().Count -eq 1 -and $_.GetParameters().Count -eq 1
+    })[0]
+    $task = $method.MakeGenericMethod($resultType).Invoke($null, @($op))
+    return $task.GetAwaiter().GetResult()
+}
+
+$file = AwaitOp ([Windows.Storage.StorageFile]::GetFileFromPathAsync('${image_path.replace(/'/g, "''")}')) ([Windows.Storage.StorageFile])
+$stream = AwaitOp ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
+$decoder = AwaitOp ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
+$bitmap = AwaitOp ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
 
 $lang = [Windows.Globalization.Language]::new('${bcp47}')
 $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromLanguage($lang)
 if ($null -eq $engine) { $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages() }
 if ($null -eq $engine) { Write-Error 'No OCR engine available'; exit 1 }
-$result = $engine.RecognizeAsync($bitmap).AsTask().GetAwaiter().GetResult()
+$result = AwaitOp ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult])
 $result.Text
 `
     return new Promise((resolve, reject) => {
