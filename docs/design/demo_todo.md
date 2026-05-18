@@ -27,19 +27,17 @@ spec §17 是 6 项（`bing / google / baidu / tencent / niutrans / local`），
 
 `windows/other.jsx` `TrayMenu` 包含以下菜单项：输入翻译、OCR 识别、OCR 翻译、剪贴板监听（勾选）、自动复制（子菜单）、设置、检查更新、查看日志、重启、退出。
 
-当前 `electron/tray/index.ts` 实际实现的菜单项为：输入翻译、OCR 识别、截图翻译、剪贴板监听（checkbox）、设置、检查更新、查看日志、重启、退出。
+当前 `electron/tray/index.ts` 实际实现的菜单项为：翻译、文字识别、截图翻译、剪贴板监听（checkbox）、设置、检查更新、查看日志、重启、退出。
 
 差异：
 
-- example 用”OCR 翻译”，代码用”截图翻译”——名称不同。
+- example 用“输入翻译 / OCR 识别 / OCR 翻译”，代码用“翻译 / 文字识别 / 截图翻译”。
 - example 有”自动复制”子菜单入口，代码没有。
 - example 有快捷键标注（⌥ Q、⌥ ⇧ S 等），代码没有。
 
-## 5. 设置窗口 pin/close 按钮尺寸偏小
+## 5. 设置窗口标题栏与原型不同
 
-以 `windows/translate.jsx` 为准：pin/close 按钮为 28×28px、图标 size={18}。
-
-`windows/config.jsx` 的 pin/close 按钮使用 `.ic-btn` 样式（24×24px）、图标 size={15}/size={14}，比翻译窗口小，需要对齐到 28×28px、size={18}。
+按当前 spec 决策，设置窗口使用普通最小化 / 最大化 / 关闭按钮，不提供固定或置顶按钮；`windows/config.jsx` 中的 pin/close 组合不作为实现依据。
 
 ## 6. Wayland 提示仍保留在 example 快捷键页
 

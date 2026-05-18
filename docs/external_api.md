@@ -36,10 +36,10 @@ curl -X POST -d "hello world" http://127.0.0.1:20202/translate
 curl -X POST -d '{"text":"australia"}' -H 'Content-Type: application/json' http://127.0.0.1:20202/dict
 ```
 
-### `POST /recognize` — OCR 识别（占位）
+### `POST /recognize` — 文字识别（占位）
 
 - 当前为占位实现，返回 `{ "success": true, "message": "recognize stub" }`。
-- 真实 OCR 触发请使用全局快捷键或托盘菜单；后续会替换为实际实现。
+- 真实文字识别触发请使用全局快捷键或托盘菜单；后续会替换为实际实现。
 
 ### `GET /config` — 读取全部配置
 
