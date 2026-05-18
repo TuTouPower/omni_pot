@@ -4,7 +4,7 @@ const { useState: useStateC } = React;
 const NAV = [
   { id: 'general', label: '通用', icon: <Icons.Grid /> },
   { id: 'translate', label: '翻译', icon: <Icons.Translate /> },
-  { id: 'recognize', label: '识别', icon: <Icons.Image /> },
+  { id: 'recognize', label: '文字识别', icon: <Icons.Image /> },
   { id: 'hotkey', label: '快捷键', icon: <Icons.Kbd /> },
   { id: 'service', label: '服务', icon: <Icons.Layers /> },
   { id: 'history', label: '历史', icon: <Icons.Clock /> },
@@ -74,6 +74,9 @@ const PageGeneral = () => {
       <Card title="应用">
         <Row label="开机自启" sub="登录系统后在后台启动 Omni Pot"><Switch on={autostart} onChange={setAutostart}/></Row>
         <Row label="启动时检查更新"><Switch on={check} onChange={setCheck}/></Row>
+        <Row label="界面语言">
+          <Select value="zh_CN" options={[{value:'zh_CN',label:'简体中文'},{value:'zh_TW',label:'繁體中文'},{value:'en',label:'English'},{value:'ja_JP',label:'日本語'},{value:'ko_KR',label:'한국어'},{value:'fr_FR',label:'Français'},{value:'de_DE',label:'Deutsch'}]} style={{minWidth:160}}/>
+        </Row>
         <Row label="本地 API 端口" sub="供外部脚本调用，修改后需重启">
           <div className="field" style={{ width: 140 }}><input className="mono" defaultValue="20202" /></div>
         </Row>
@@ -83,13 +86,10 @@ const PageGeneral = () => {
         <Row label="主题">
           <Select value="auto" options={[{value:'auto',label:'跟随系统'},{value:'light',label:'浅色'},{value:'dark',label:'深色'}]} style={{minWidth:160}}/>
         </Row>
-        <Row label="界面语言">
-          <Select value="zh_CN" options={[{value:'zh_CN',label:'简体中文'},{value:'en',label:'English'},{value:'ja_JP',label:'日本語'}]} style={{minWidth:160}}/>
-        </Row>
-        <Row label="字体">
+        <Row label="文字">
           <div style={{ display:'flex', gap: 6 }}>
-            <Select value="default" options={[{value:'default',label:'系统默认'},{value:'geist',label:'Geist'},{value:'inter',label:'Inter'}]} style={{minWidth:140}}/>
-            <Select value="size" options={[{value:'size',label:'字号 13px'}]} style={{width:110}}/>
+            <Select value="default" options={[{value:'default',label:'字体：系统默认'},{value:'geist',label:'字体：Geist'},{value:'inter',label:'字体：Inter'},{value:'sf',label:'字体：SF Pro'},{value:'noto',label:'字体：Noto Sans CJK'}]} style={{minWidth:170}}/>
+            <Select value="13" options={[{value:'12',label:'字号：12px'},{value:'13',label:'字号：13px'},{value:'14',label:'字号：14px'},{value:'15',label:'字号：15px'},{value:'16',label:'字号：16px'}]} style={{minWidth:130}}/>
           </div>
         </Row>
         <Row label="主色调" sub="应用于按钮、链接与高亮等强调元素"><PrimaryPicker/></Row>
@@ -116,8 +116,15 @@ const PageTranslate = () => {
         <Row label="源语言"><LangSelect value="auto" codes={['auto','en','zh_cn','ja','ko']} style={{minWidth:180}}/></Row>
         <Row label="目标语言"><LangSelect value="zh_cn" codes={['zh_cn','en','ja','ko','fr']} style={{minWidth:180}}/></Row>
         <Row label="第二语言" sub="检测到目标语言相同时切换到此语言"><LangSelect value="en" codes={['en','zh_cn','ja']} style={{minWidth:180}}/></Row>
-        <Row label="检测引擎">
-          <Select value="local" options={[{value:'local',label:'本地 (Lingua)'},{value:'google',label:'Google'},{value:'baidu',label:'百度'}]} style={{minWidth:180}}/>
+        <Row label="检测引擎" sub="失败时按选项顺序依次回退">
+          <Select value="bing" options={[
+            {value:'bing',label:'Bing'},
+            {value:'google',label:'Google'},
+            {value:'baidu',label:'百度'},
+            {value:'tencent',label:'腾讯'},
+            {value:'niutrans',label:'小牛'},
+            {value:'local',label:'本地 (Lingua)'},
+          ]} style={{minWidth:180}}/>
         </Row>
       </Card>
 
@@ -149,46 +156,79 @@ const PageTranslate = () => {
   );
 };
 
-const PageRecognize = () => (
-  <div className="stack gap-12">
-    <Card title="识别">
-      <Row label="默认识别语言"><LangSelect value="auto" codes={['auto','en','zh_cn','ja','ko']} style={{minWidth:180}}/></Row>
-      <Row label="自动去除换行"><Switch on={false}/></Row>
-      <Row label="自动复制结果"><Switch on={true}/></Row>
-      <Row label="失焦时关闭"><Switch on={false}/></Row>
-      <Row label="识别后隐藏窗口"><Switch on={false}/></Row>
-    </Card>
-  </div>
-);
+const PageRecognize = () => {
+  const [s, setS] = useStateC({ rmNL:false, copy:true, blur:false, hide:false, dyn:false });
+  const set = (k,v) => setS(p => ({...p, [k]:v}));
+  return (
+    <div className="stack gap-12">
+      <Card title="识别">
+        <Row label="默认识别引擎">
+          <Select value="system" options={[
+            {value:'system',label:'系统识别'},
+            {value:'tesseract',label:'Tesseract'},
+            {value:'openai_compatible',label:'AI 视觉 · Qwen2.5-VL'},
+            {value:'baidu_accurate_ocr',label:'百度高精度'},
+          ]} style={{minWidth:220}}/>
+        </Row>
+        <Row label="默认识别语言"><LangSelect value="auto" codes={['auto','en','zh_cn','zh_tw','ja','ko','fr','de','es']} style={{minWidth:180}}/></Row>
+        <Row label="自动去除换行" sub="识别后合并被物理换行打断的段落"><Switch on={s.rmNL} onChange={v=>set('rmNL',v)}/></Row>
+        <Row label="自动复制结果"><Switch on={s.copy} onChange={v=>set('copy',v)}/></Row>
+        <Row label="动态识别" sub="截图选区变化时重新识别"><Switch on={s.dyn} onChange={v=>set('dyn',v)}/></Row>
+      </Card>
+
+      <Card title="窗口">
+        <Row label="失焦时关闭"><Switch on={s.blur} onChange={v=>set('blur',v)}/></Row>
+        <Row label="识别后隐藏窗口" sub="后台完成识别并通过通知告知"><Switch on={s.hide} onChange={v=>set('hide',v)}/></Row>
+        <Row label="默认导出格式">
+          <Select value="md" options={[{value:'md',label:'Markdown (.md)'},{value:'txt',label:'纯文本 (.txt)'},{value:'docx',label:'Word (.docx)'},{value:'doc',label:'Word 97-2003 (.doc)'}]} style={{minWidth:200}}/>
+        </Row>
+      </Card>
+
+      <Card title="截图">
+        <Row label="截图后动作">
+          <Select value="recognize" options={[
+            {value:'recognize',label:'识别文本'},
+            {value:'recognize_translate',label:'识别并翻译'},
+            {value:'clipboard',label:'只复制图片'},
+          ]} style={{minWidth:200}}/>
+        </Row>
+        <Row label="提示条" sub="在选区上方显示快捷键提示"><Switch on={true}/></Row>
+        <Row label="选区描边颜色">
+          <Select value="primary" options={[{value:'primary',label:'跟随主色调'},{value:'red',label:'红色'},{value:'green',label:'绿色'},{value:'white',label:'白色'}]} style={{minWidth:160}}/>
+        </Row>
+      </Card>
+    </div>
+  );
+};
 
 const PageHotkey = () => {
-  const HK = ({label, sub, value, valid}) => (
-    <Row label={label} sub={sub}>
-      <div style={{ display:'flex', gap: 6 }}>
-        <div className="field" style={{ minWidth: 200, gap: 4 }}>
-          {value ? value.split('+').map((k,i,a) => <React.Fragment key={i}><kbd>{k}</kbd>{i<a.length-1 && <span className="hint">+</span>}</React.Fragment>) : <span className="hint">点击输入快捷键…</span>}
+  const HK = ({label, sub, value}) => {
+    const valid = !!value;
+    const subs = Array.isArray(sub) ? sub : (sub ? [sub] : []);
+    return (
+      <div className="row" style={{ minHeight: 44, alignItems: 'flex-start', paddingTop: 4, paddingBottom: 4 }}>
+        <div className="label" style={{ paddingTop: 6 }}>{label}{subs.map((s, i) => <span key={i} className="sub">{s}</span>)}</div>
+        <div style={{ display:'flex', gap: 8, alignItems:'center', flex:'0 0 auto' }}>
+          <div className="field" style={{ width: 240, height: 32, gap: 4, justifyContent: 'flex-start', cursor:'pointer', padding: '0 10px' }}>
+            {valid
+              ? value.split('+').map((k,i,a) => <React.Fragment key={i}><kbd>{k}</kbd>{i<a.length-1 && <span className="hint" style={{ margin: '0 2px' }}>+</span>}</React.Fragment>)
+              : <span className="hint">点击输入快捷键…</span>}
+          </div>
+          <button className="btn sm" style={{ height: 32, width: 64, justifyContent:'center', color: valid ? 'var(--danger)' : undefined }}>
+            {valid ? '解绑' : '绑定'}
+          </button>
         </div>
-        <button className="btn sm">{valid ? <><Icons.Check size={12}/>已绑定</> : '绑定'}</button>
       </div>
-    </Row>
-  );
+    );
+  };
   return (
     <div className="stack gap-12">
       <Card title="全局快捷键" hint="按下组合键以录入 · Backspace 清除">
-        <HK label="划词翻译" sub="选中文本后按下快捷键即翻译" value="Ctrl+Alt+T" valid />
-        <HK label="划词字典" sub="选中单词查询词典释义" value="Ctrl+Alt+D" valid />
-        <HK label="输入翻译" sub="呼出翻译窗口并清空源文本" value="Ctrl+Alt+I" valid />
-        <HK label="OCR 识别" sub="截图后将文字提取到识别窗口" value="Ctrl+Alt+S" valid />
-        <HK label="OCR 翻译" sub="截图、识别并自动翻译" value="" />
+        <HK label="翻译" sub={['选中文本时翻译该文本；','未选中时弹出空翻译窗口供输入；','剪贴板监听时，自动翻译剪贴板。']} value="Ctrl+Alt+T" />
+        <HK label="划词字典" sub="选中单词查询词典释义" value="Ctrl+Alt+D" />
+        <HK label="文字识别" sub="截图后将文字提取到识别窗口" value="Ctrl+Alt+S" />
+        <HK label="截图翻译" sub="截图、识别并自动翻译" value="" />
       </Card>
-      <div className="card" style={{ background: 'var(--brand-primary-soft)', borderColor:'transparent' }}>
-        <div style={{ padding: 14, display:'flex', gap: 12, alignItems:'flex-start' }}>
-          <Icons.Info size={16} style={{ color:'var(--brand-primary)', marginTop: 1 }}/>
-          <div style={{ fontSize: 12.5, color:'var(--brand-primary)', lineHeight: 1.55 }}>
-            Wayland 用户：系统级快捷键可能不可用。你可以在桌面环境的快捷键设置中调用 <span className="mono">curl localhost:20202/selection_translate</span> 作为替代方案。
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
@@ -196,10 +236,10 @@ const PageHotkey = () => {
 const PageService = () => {
   const [tab, setTab] = useStateC('translate');
   const tabs = [
-    { id:'translate', label:'翻译', count: 7 },
-    { id:'dictionary', label:'字典', count: 3 },
-    { id:'recognize', label:'识别', count: 2 },
-    { id:'tts', label:'朗读', count: 1 },
+    { id:'translate', label:'翻译', count: 5 },
+    { id:'dictionary', label:'字典词典', count: 3 },
+    { id:'recognize', label:'文字识别', count: 2 },
+    { id:'tts', label:'语音朗读', count: 1 },
     { id:'collection', label:'收藏', count: 1 },
   ];
   const data = {
@@ -209,8 +249,6 @@ const PageService = () => {
       { key:'google', enabled: true },
       { key:'lingva', enabled: true },
       { key:'mymemory', enabled: true },
-      { key:'openai@xb12', name:'openai', label:'OpenAI · GPT-4o', enabled: true, tag:'STREAM' },
-      { key:'geminipro@kk', name:'geminipro', label:'Gemini Pro · Personal', enabled: false },
     ],
     dictionary: [
       { key:'free_dictionary', enabled: true },
@@ -219,7 +257,7 @@ const PageService = () => {
     ],
     recognize: [
       { key:'system', enabled: true, tag:'PLATFORM' },
-      { key:'openai_compatible@v', name:'openai_compatible', label:'Qwen2.5-VL · SiliconFlow', enabled: true, tag:'STREAM' },
+      { key:'openai_compatible@v', name:'openai_compatible', label:'Qwen2.5-VL · SiliconFlow', enabled: true },
     ],
     tts: [
       { key:'edge_tts', enabled: true },
@@ -261,8 +299,8 @@ const PageService = () => {
                 </div>
                 {s.tag && <span className="chip mono" style={{fontSize:9.5}}>{s.tag}</span>}
                 <Switch on={s.enabled} />
-                <button className="btn ghost icon sm"><Icons.Edit size={13}/></button>
-                <button className="btn ghost icon sm" style={{color:'var(--danger)'}}><Icons.Trash size={13}/></button>
+                <button className="btn ghost sm" title="编辑"><Icons.Edit size={14}/><span>编辑</span></button>
+                <button className="btn ghost sm" style={{color:'var(--danger)'}} title="删除"><Icons.Trash size={14}/><span>删除</span></button>
               </div>
             );
           })}
@@ -369,7 +407,7 @@ const PageBackup = () => {
           <button className="btn primary"><Icons.Cloud size={14}/>立即备份</button>
           <button className="btn"><Icons.Cycle size={14}/>从备份恢复</button>
         </div>
-        <div className="hint">备份内容：配置、历史记录数据库、CC-CEDICT 词典数据库</div>
+        <div className="hint">备份内容：设置、历史记录数据库、CC-CEDICT 词典数据库</div>
       </Card>
 
       <Card title="最近备份">
@@ -399,7 +437,7 @@ const PageAbout = () => (
       <div className="svc-tile" style={{ width: 64, height: 64, borderRadius: 16, background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', fontSize: 22, fontWeight: 700 }}>op</div>
       <div style={{ fontSize: 22, fontWeight: 600, letterSpacing:'-0.01em' }}>Omni Pot</div>
       <div className="hint mono">version 3.1.0 · darwin-arm64</div>
-      <div className="hint" style={{ maxWidth: 360 }}>一个面向日常使用的桌面翻译与识别工具，覆盖主流在线翻译、离线词典与 OCR 服务，开箱即用。</div>
+      <div className="hint" style={{ maxWidth: 360 }}>一个面向日常使用的桌面翻译与识别工具，覆盖主流在线翻译、离线词典与文字识别服务，开箱即用。</div>
       <div style={{ display:'flex', gap: 6, marginTop: 4 }}>
         <button className="btn sm">官网</button>
         <button className="btn sm">文档</button>
@@ -410,7 +448,7 @@ const PageAbout = () => (
 
     <Card title="诊断">
       <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/OmniPot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
-      <Row label="配置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/OmniPot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+      <Row label="设置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/OmniPot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
       <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:20202</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
     </Card>
   </div>
@@ -424,14 +462,13 @@ const ConfigWindow = ({ initial = 'translate' }) => {
   const cur = NAV.find(n => n.id === page);
   return (
     <div className="op-window" style={{ width: '100%', height: '100%' }}>
+      {/* Settings has no pin/lock — it's a regular app window with the
+         standard min/max/close trio in the top-right. */}
+      <TitlebarLeft mode={'设置 · ' + (cur?.label || '')} noPin chrome="wmctl" />
       <div style={{ display:'flex', flex:1, minHeight: 0 }}>
-        {/* Sidebar — narrower */}
+        {/* Sidebar — narrower (no pin row anymore, content starts at the top) */}
         <div style={{ width: 184, background: 'var(--bg-card)', borderRight: '1px solid var(--line-soft)', display:'flex', flexDirection:'column' }}>
-          <div style={{ height: 38, padding: '0 10px', display:'flex', alignItems:'center', gap: 6 }}>
-            <button className="ic-btn" title="置顶" style={{ color:'var(--text-mute)' }}><Icons.Pin size={15}/></button>
-            <div className="op-wordmark">Omni Pot</div>
-          </div>
-          <div style={{ padding: 6, display:'flex', flexDirection:'column', gap: 2, flex:1 }}>
+          <div style={{ padding: '8px 6px', display:'flex', flexDirection:'column', gap: 2, flex:1 }}>
             {NAV.map(n => (
               <button key={n.id} onClick={()=>setPage(n.id)}
                 style={{ height: 30, padding: '0 10px', borderRadius: 8, display:'flex', alignItems:'center', gap: 10,
@@ -450,12 +487,7 @@ const ConfigWindow = ({ initial = 'translate' }) => {
         </div>
         {/* Content */}
         <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth: 0 }}>
-          <div style={{ height: 38, display:'flex', alignItems:'center', padding:'0 10px 0 16px', gap: 8 }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{cur?.label}</div>
-            <div style={{flex:1}}/>
-            <button className="ic-btn" title="关闭"><Icons.Close size={14}/></button>
-          </div>
-          <div style={{ flex:1, overflow:'auto', padding: '4px 16px 16px' }}>
+          <div style={{ flex:1, overflow:'auto', padding: '12px 16px 16px' }}>
             <Page />
           </div>
         </div>
