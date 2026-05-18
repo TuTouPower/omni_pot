@@ -167,6 +167,30 @@ test.describe('@ui recognize window', () => {
         }
     })
 
+    test('user reruns OCR with system engine after switching engines', async () => {
+        test.setTimeout(120_000)
+        const omni = await AppFixture.start({ config: recognize_config })
+
+        try {
+            const recognize = await open_recognize_with_sample(omni, '')
+
+            await recognize.clickLanguageSelect()
+            await recognize.languageOption('en').click()
+
+            await recognize.setText('')
+            await recognize.clickEngineSelect()
+            await recognize.engineOption('tesseract@default').click()
+            await expect(recognize.engineSelect()).toContainText('Tesseract')
+
+            await recognize.clickEngineSelect()
+            await recognize.engineOption('system@default').click()
+            await recognize.clickReRecognize()
+            await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: 90_000 }).toContain('OCR')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user reruns OCR with tesseract after switching engines', async () => {
         test.setTimeout(120_000)
         const omni = await AppFixture.start({ config: recognize_config })
