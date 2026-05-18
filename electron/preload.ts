@@ -107,7 +107,8 @@ const api: Omit<ElectronAPI, 'ready'> = {
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),
     list: () => ipcRenderer.invoke('backup:list'),
-    restore: (name) => ipcRenderer.invoke('backup:restore', name)
+    restore: (name) => ipcRenderer.invoke('backup:restore', name),
+    import: () => ipcRenderer.invoke('backup:import')
   },
   dict: {
     lookup: (text, from, to) => ipcRenderer.invoke('dict:lookup', text, from, to),
