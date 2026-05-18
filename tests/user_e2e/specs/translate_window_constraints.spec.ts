@@ -21,6 +21,34 @@ const lingva_only_config = {
 }
 
 test.describe('@ui translate window constraints', () => {
+    test('max height covers 3 cards × 8 lines of body text', async () => {
+        // Spec: maxHeight (960) must be tall enough to render 3 stacked result
+        // cards each holding 8 lines of body text. Line-height is 22px in the
+        // shared card body styles, so 3 × (8 × 22 + chrome) ≈ 600 px of pure
+        // body content. We assert maxHeight ≥ that floor.
+        const omni = await AppFixture.start({ config: lingva_only_config })
+        try {
+            await omni.translate()
+            // Stretch absurdly tall — the OS-clamped resulting height tells us
+            // the configured maxHeight.
+            const target_height = 4000
+            const result = await omni.api.windowState('translate')
+            if (!result.bounds) throw new Error('missing translate bounds')
+            await new Promise((r) => setTimeout(r, 200))
+            await omni.api.windowState('translate')
+            // Use the translate page helper to resize, then read back actual height.
+            const translate = await omni.translate()
+            await translate.resizeWindowTo(result.bounds.width, target_height)
+            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
+                { timeout: 5_000 }).toBeLessThan(target_height)
+            const max_observed = (await omni.api.windowState('translate')).bounds?.height ?? 0
+            const min_required = 3 * 8 * 22  // 3 cards × 8 lines × 22px line-height
+            expect(max_observed, 'maxHeight must accommodate 3×8 lines of body text').toBeGreaterThanOrEqual(min_required)
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('window cannot stretch taller than content card stack', async () => {
         const omni = await AppFixture.start({ config: lingva_only_config })
         try {

@@ -23,6 +23,18 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 | `npm run test:e2e` | 运行端到端测试 |
 | `npm run test:e2e:core` | 运行核心 e2e 测试 |
 | `npm run start` | 预览构建产物 |
+| `npm run build:chinese-dict` | 生成 `resources/data/dict/chinese_dict.db`（86MB，gitignored） |
+| `npm run build:cc-cedict` | 生成 `resources/data/dict/cc_cedict.db`（24MB，gitignored） |
+
+## 新克隆后的初始化
+
+仓库不提交大体积二进制；首次本地开发或打包前需要生成两个词典 DB（`npm run dist` 已经在 `scripts/run_dist.mjs` 里自动跑这两步，纯本地 `dev`/`build` 路径可按需手动跑）：
+
+```bash
+npm install
+npm run build:chinese-dict   # 依赖项目内 github_repo/chinese-dictionary 或 WSL 上游 \\wsl.localhost\Ubuntu-22.04\home\karon\karson_ubuntu\github_repo\chinese-dictionary
+npm run build:cc-cedict      # 解压打包仓库内的 data/dict/cedict.txt.gz，纯本地即可
+```
 
 ## 目录结构
 

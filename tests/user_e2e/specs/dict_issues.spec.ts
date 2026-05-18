@@ -48,4 +48,22 @@ test.describe('@ui dict query and layout', () => {
                 .toBeLessThanOrEqual(card_box.y + card_box.height)
         }
     })
+
+    test('dict cards do not impose a max-height that would clip body content', async ({ omni }) => {
+        // Spec: dictionary cards grow to fit content; only the outer window
+        // scrolls when the combined content exceeds the viewport. No card may
+        // declare a fixed max-height (or it must be 'none'/'auto').
+        await omni.api.triggerDict('hello')
+        const dict = await omni.dict()
+        const page = dict['page']
+        await expect(page.getByTestId('dict-word')).toHaveText('hello', { timeout: 10_000 })
+        await expect(page.locator('[data-testid="dict-card"]').first()).toBeVisible({ timeout: 30_000 })
+
+        const max_heights = await page.locator('[data-testid="dict-card"]').evaluateAll(
+            (cards) => cards.map((c) => window.getComputedStyle(c).maxHeight),
+        )
+        for (const max_h of max_heights) {
+            expect(['none', '', 'auto'], `dict-card has a clipping max-height: ${max_h}`).toContain(max_h)
+        }
+    })
 })

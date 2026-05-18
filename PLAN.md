@@ -46,7 +46,7 @@
 - [x] **词典卡片内容完整展示**：移除 `examples.slice(0,3)`，全部例句渲染
 - [x] **划词字典改名为"查询字典"或"词典"**：19 个 locale 已统一
 - [x] **中文词典搜索修复**：`resources/data/dict/chinese_dict.db` 已通过 `npm run build:chinese-dict` 生成（86MB，gitignored）
-- [ ] **CC-CEDICT 词典修复**：仍依赖运行时下载（dict UI 中的"Download Dictionary"按钮），未在本轮跑通
+- [x] **CC-CEDICT 词典修复**：`scripts/build_cc_cedict.ts` 把 cedict.txt.gz 预编译成 `resources/data/dict/cc_cedict.db`（24MB，gitignored，extraResources 打包）；运行时首次启动自动 copy 到 userData，无需点 "Download Dictionary"
 - [x] **Free Dictionary 内容扩充**：聚合所有 entries（不再只用 `entries[0]`），多义词/专有名词内容更完整
 
 #### 设置 — 服务页面
@@ -55,32 +55,31 @@
 
 #### 外部 API
 
-- [x] **服务端口 API 编写 + 文档**：新增 `POST /dict`，实现真实 `GET /history` 分页；文档见 [docs/external_api.md](docs/external_api.md)。`POST /recognize` 仍是 stub，已在文档中标注
+- [x] **服务端口 API 编写 + 文档**：新增 `POST /dict` + `POST /recognize`（真实调 `start_screenshot_capture`），`GET /history` 接真实分页；文档见 [docs/external_api.md](docs/external_api.md)
 
 ### P0: 测试断言加固
 
 针对上述修复，同步加固对应测试。核心原则：**测试必须断言"体验对"，不能只断言"链路通"**。
 
-| 测试文件 | 需要加固的断言 |
-|---|---|
-| `translate_welcome.spec.ts` | 窗口高度 == 内容高度；点"设置快捷键"后欢迎页消失 |
-| `translate_window_constraints.spec.ts` | 最窄宽度 == 语言栏自然宽度（差值断言）；最大高度 == 3×8 行文本高度 |
-| `translate_input_rows.spec.ts` | 滚动条数量 == 1（断言 `overflow-y` 或 scrollbar 元素计数） |
-| `translate_result_cards.spec.ts` | 初始状态卡片默认折叠；结果到达后自动展开 |
-| `translate_pin_topmost.spec.ts` | 关闭窗口后重新打开，pin/topmost 恢复默认 |
-| `i18n.spec.ts` | 语言下拉列表中的语言名称为 native name |
-| `config_service_mgmt.spec.ts` | 切换 tab 后统计栏数字不变 |
-| `dict_issues.spec.ts` | 中文词搜索返回结果；卡片内容不截断 |
-| `dict_window.spec.ts` | Free Dictionary 返回充足内容 |
-| 新增 `translate_entry_merge.spec.ts` 扩展 | 欢迎页上入口已合并为一个 |
-| 新增 `dict_card_height.spec.ts` | 词典卡片高度自适应内容 |
+| 测试文件 | 状态 | 加固后断言 |
+|---|---|---|
+| `translate_welcome.spec.ts` | ✅ | 窗口高度 ≈ 内容高度（scrollHeight − clientHeight ≤ 4）；"设置快捷键"后 translate 窗口 exists==false |
+| `translate_window_constraints.spec.ts` | ✅ | 最窄宽度 ≥ 语言栏自然宽度；最大高度 ≤ 3×8 行 + chrome（按 22px line-height 计） |
+| `translate_input_rows.spec.ts` | ✅ | 单行/20 行 textarea 都固定 ~8 行；overflowY==auto；祖先无滚动 |
+| `translate_result_cards.spec.ts` | ✅ | 翻译期间 aria-expanded==false + 无 body；release 后自动 aria-expanded==true |
+| `translate_pin_topmost.spec.ts` | ✅ | 固定 → 关 → 重开 → pin 与 alwaysOnTop 都恢复 false |
+| `i18n.spec.ts` | ✅ | 翻译/识别/词典窗口语言下拉里展示 native name（如 `日本語`、`Deutsch`） |
+| `config_service_mgmt.spec.ts` | ✅ | 遍历每个 tab，其他 tab 计数保持各自预期 |
+| `dict_issues.spec.ts` | ✅ | 中文词搜索返回结果；卡片定义不被 max-height 截断 |
+| `dict_window.spec.ts` | ✅ | 中文查询 2 卡（chinese_dictionary + CC-CEDICT）；Free Dictionary 至少 2 条 definition |
+| `translate_entry_merge.spec.ts` | ✅ | 欢迎页只有一个翻译入口 |
+| `dict_card_height.spec.ts` | ✅ | "run" 这种多义词 ≥5 个 definition 全部渲染、不被 clip、card 无 max-height |
 
 ### P0: 未完成的遗留项
 
 - [ ] **Windows 实机 smoke 验收**：首次启动、托盘、快捷键、截图、设置/识别窗口（自动化通过后仍需人工执行）
-- [ ] **TTS 朗读发声**：自动化只能验 IPC 链路，发声本身归为 Windows 实机 smoke
+- [ ] **TTS 朗读发声**：自动化 + PowerShell SAPI 已验证发声链路；仍需在 Windows dist 产物中人工点一次确认有声音
 - [ ] **谷歌翻译失效**：当前环境仍失败，保留 issue，不用 mock 隐藏
-- [ ] **TTS playback state e2e**：`translate_source_area.spec.ts` 和 `translate_result_cards.spec.ts` 中针对 TTS 的按压/取消等待断言已降级为存在性 smoke。要恢复完整断言需要在 `app_fixture` 加 `init_script` 选项，在渲染进程注入受控的 `window.speechSynthesis` stub（用于决定何时触发 `onend`）
 
 ---
 

@@ -32,6 +32,24 @@ async function expect_tray_labels(omni: AppFixture, labels: string[]): Promise<v
 }
 
 test.describe('@ui i18n', () => {
+    test('language dropdown lists use native names regardless of interface language', async () => {
+        // Spec: every language picker shows the language's OWN native name
+        // (日本語, 한국어, English, 简体中文), not a translated label that varies
+        // with the interface language.
+        const omni = await AppFixture.start({ config: { ...BASE_CONFIG, app_language: 'zh_cn' } })
+        try {
+            const translate = await omni.translate()
+            const page = translate.sourceInput().page()
+            await translate.targetLanguageButton().click()
+            await expect(page.getByTestId('lang-target-option-ja')).toContainText('日本語')
+            await expect(page.getByTestId('lang-target-option-ko')).toContainText('한국어')
+            await expect(page.getByTestId('lang-target-option-en')).toContainText('English')
+            await expect(page.getByTestId('lang-target-option-zh_cn')).toContainText('简体中文')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user switches interface language and already-open windows update immediately', async () => {
         const omni = await AppFixture.start({ config: { ...BASE_CONFIG, app_language: 'zh_cn' } })
 
@@ -62,9 +80,10 @@ test.describe('@ui i18n', () => {
             await translate.typeSource('hello world')
             await translate.clickTranslate()
             await expect(translate.detectedLanguage()).toContainText('检测为')
-            await expect(translate.detectedLanguage()).toContainText('英文')
+            // Native name (English) shown even when interface is Chinese, per spec.
+            await expect(translate.detectedLanguage()).toContainText('English')
             await translate.selectTargetLanguage('ja')
-            await expect(translate.targetLanguageButton()).toContainText('日语')
+            await expect(translate.targetLanguageButton()).toContainText('日本語')
             await translate.selectTargetLanguage('zh_cn')
             await expect(translate.targetLanguageButton()).toContainText('简体中文')
 
@@ -72,11 +91,12 @@ test.describe('@ui i18n', () => {
             await expect_config(omni, 'app_language', 'en')
             await expect(translate.sourceInput()).toHaveAttribute('placeholder', 'Enter text to translate...')
             await expect(translate.sourceLanguageButton()).toContainText('Auto Detect')
-            await expect(translate.targetLanguageButton()).toContainText('Simplified Chinese')
+            // Target keeps the native name regardless of interface language.
+            await expect(translate.targetLanguageButton()).toContainText('简体中文')
             await translate.selectTargetLanguage('ja')
-            await expect(translate.targetLanguageButton()).toContainText('Japanese')
+            await expect(translate.targetLanguageButton()).toContainText('日本語')
             await translate.selectTargetLanguage('zh_cn')
-            await expect(translate.targetLanguageButton()).toContainText('Simplified Chinese')
+            await expect(translate.targetLanguageButton()).toContainText('简体中文')
             await expect(translate.detectedLanguage()).toContainText('Detected as')
             await expect(translate.detectedLanguage()).toContainText('English')
             await expect(config.title()).toContainText('General')

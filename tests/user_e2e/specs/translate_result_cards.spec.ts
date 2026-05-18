@@ -104,12 +104,26 @@ test.describe('@ui translate result cards', () => {
         }
     })
 
-    test('result TTS button is rendered for translated results', async () => {
-        // The cancel-during-loading test previously held a fake Lingva TTS
-        // response. After migrating to system_tts (Web Speech API) there is no
-        // network request to hold; covering the press state requires a
-        // fixture-level window.speechSynthesis stub — tracked in PLAN.md.
-        const omni = await AppFixture.start({ config: lingva_config })
+    test('user stops result TTS while audio is still loading', async () => {
+        const omni = await AppFixture.start({
+            config: lingva_config,
+            init_script: `
+                const fake_voice = { lang: 'zh-CN', name: 'Fake-zh', default: true, localService: true, voiceURI: 'fake' };
+                window.__last_utterance = null;
+                window.__keep_speaking = true;
+                Object.defineProperty(window, 'speechSynthesis', {
+                    configurable: true,
+                    value: {
+                        speaking: false, paused: false, pending: false,
+                        getVoices: () => [fake_voice],
+                        speak: (u) => { window.__last_utterance = u; if (!window.__keep_speaking) setTimeout(() => u.onend && u.onend(new Event('end')), 30) },
+                        cancel: () => { const u = window.__last_utterance; if (u && u.onend) u.onend(new Event('end')) },
+                        addEventListener: () => {},
+                        removeEventListener: () => {},
+                    },
+                });
+            `,
+        })
 
         try {
             const translate = await omni.translate()
@@ -117,7 +131,12 @@ test.describe('@ui translate result cards', () => {
             await translate.typeSource('hello world')
             await translate.clickTranslate()
             await expect(translate.resultBody('lingva@default')).toContainText('你好世界')
-            await expect(translate.result_tts_button('lingva@default')).toBeVisible()
+
+            await expect(translate.result_tts_button('lingva@default')).toHaveAttribute('aria-pressed', 'false')
+            await translate.click_result_tts('lingva@default')
+            await expect(translate.result_tts_button('lingva@default')).toHaveAttribute('aria-pressed', 'true')
+
+            await translate.click_result_tts('lingva@default')
             await expect(translate.result_tts_button('lingva@default')).toHaveAttribute('aria-pressed', 'false')
         } finally {
             await omni.stop()
