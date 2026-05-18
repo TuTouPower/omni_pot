@@ -20,6 +20,7 @@ try {
     const steps = [
         [npm_cmd, ['run', 'dist:check-locks']],
         [npm_cmd, ['run', 'build:chinese-dict']],
+        [npm_cmd, ['run', 'build:cc-cedict']],
         [npm_cmd, ['run', 'build']],
         [npm_cmd, ['run', 'dist:check-locks']],
         [npx_cmd, ['electron-builder', ...(is_dir ? ['--dir'] : []), '-c.win.signAndEditExecutable=false']],

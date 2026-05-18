@@ -56,8 +56,24 @@ export function startServer(mgr: WindowManager): Promise<void> {
             }
 
             if (req.method === 'POST' && url.pathname === '/recognize') {
-                res.writeHead(200)
-                res.end(JSON.stringify({ success: true, message: 'recognize stub' }))
+                // Reads optional JSON body { mode?: 'recognize' | 'translate' }. Default 'recognize'.
+                const chunks: Buffer[] = []
+                req.on('data', (chunk: Buffer) => chunks.push(chunk))
+                req.on('end', () => {
+                    let mode: 'recognize' | 'translate' = 'recognize'
+                    const body = Buffer.concat(chunks).toString('utf-8').trim()
+                    if (body.startsWith('{')) {
+                        try {
+                            const json = JSON.parse(body) as { mode?: unknown }
+                            if (json.mode === 'translate') mode = 'translate'
+                        } catch { /* keep default */ }
+                    }
+                    start_screenshot_capture(mgr, mode).catch((err: unknown) => {
+                        log_server.error('recognize via HTTP failed: %s', err)
+                    })
+                    res.writeHead(200)
+                    res.end(JSON.stringify({ success: true, mode }))
+                })
                 return
             }
 
