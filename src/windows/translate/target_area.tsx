@@ -301,7 +301,29 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         setPlayingKey(key)
         try {
             const instanceConfig = get_service_config(serviceInstances, instanceKey)
-            const audioBuffer = await ttsService.synthesize(text, effectiveTargetLanguage ?? targetLanguage, instanceConfig)
+            const language = effectiveTargetLanguage ?? targetLanguage
+
+            // Direct-playback services (e.g. system_tts via Web Speech API) cannot
+            // expose a decoded audio buffer — call play() and treat the returned
+            // handle's stop() the same way we treat audio.pause().
+            if (ttsService.play) {
+                const handle = ttsService.play(text, language, instanceConfig)
+                const reset = (): void => {
+                    if (playingRequestRef.current === request_id) {
+                        playingActiveRef.current = false
+                        setPlayingKey(null)
+                    }
+                    if (playingCleanupRef.current === reset) {
+                        playingCleanupRef.current = null
+                    }
+                }
+                playingCleanupRef.current = () => { handle.stop(); reset() }
+                handle.done.then(reset, reset)
+                return
+            }
+
+            if (!ttsService.synthesize) return
+            const audioBuffer = await ttsService.synthesize(text, language, instanceConfig)
             if (playingRequestRef.current !== request_id) return
 
             const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
