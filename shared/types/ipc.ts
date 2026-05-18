@@ -27,6 +27,7 @@ export interface ElectronAPI {
     maximize(): Promise<void>
     setAlwaysOnTop(flag: boolean): Promise<void>
     setContentSize(width: number, height: number): Promise<void>
+    setContentHeight(height: number): Promise<void>
     getLabel(): Promise<string>
     openConfig(section?: string): Promise<void>
     onConfigNavigate(callback: (section: string) => void): () => void

@@ -66,14 +66,12 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
     useEffect(() => {
         const node = root_ref.current
         if (!node) return
-        const set_size = (h: number): void => {
-            const width = Math.max(window.innerWidth, 280)
-            window.electronAPI.window.setContentSize(width, Math.ceil(h)).catch(() => undefined)
+        const set_height = (h: number): void => {
+            window.electronAPI.window.setContentHeight(Math.ceil(h)).catch(() => undefined)
         }
-        // Pad for outer container padding (top 6, between cards 10 each, etc. — measured via getBoundingClientRect of body).
         const measure = (): number => Math.max(node.getBoundingClientRect().height + 32, 200)
-        set_size(measure())
-        const observer = new ResizeObserver(() => { set_size(measure()) })
+        set_height(measure())
+        const observer = new ResizeObserver(() => { set_height(measure()) })
         observer.observe(node)
         return () => { observer.disconnect() }
     }, [])
