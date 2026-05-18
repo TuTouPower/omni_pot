@@ -136,7 +136,8 @@ const api: Omit<ElectronAPI, 'ready'> = {
     close: () => ipcRenderer.invoke('tray:close'),
     action: (action) => ipcRenderer.invoke('tray:action', action),
     labels: () => ipcRenderer.invoke('tray:labels'),
-    clipboardMonitoring: () => ipcRenderer.invoke('tray:clipboard-monitoring')
+    clipboardMonitoring: () => ipcRenderer.invoke('tray:clipboard-monitoring'),
+    popupReady: (width, height) => ipcRenderer.invoke('tray:popup-ready', width, height)
   },
   detect: {
     local: (text: string) => ipcRenderer.invoke('detect:local', text),

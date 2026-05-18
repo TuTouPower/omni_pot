@@ -26,6 +26,8 @@ function normalize_source_text(text: string): string {
 export default function TranslateWindow(): React.ReactElement {
     const { t } = useTranslation()
     const sourceText = useTranslateStore((s) => s.sourceText)
+    const results = useTranslateStore((s) => s.results)
+    const isTranslating = useTranslateStore((s) => s.isTranslating)
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
     const setIsTranslating = useTranslateStore((s) => s.setIsTranslating)
@@ -119,8 +121,19 @@ export default function TranslateWindow(): React.ReactElement {
     const sourceTtsTextRef = useRef('')
     const sourceTtsLanguageRef = useRef<LanguageCode | null>(null)
     const retryRequestRef = useRef<Record<string, number>>({})
+    const root_ref = useRef<HTMLDivElement>(null)
+    const titlebar_ref = useRef<HTMLDivElement>(null)
+    const content_ref = useRef<HTMLDivElement>(null)
     const translate_timer_ref = useRef<number | null>(null)
     const previousLanguagesRef = useRef({ sourceLanguage, targetLanguage })
+    const result_fit_key = useMemo(
+        () => Object.entries(results).map(([key, result]) => {
+            if (result === null) return `${key}:error`
+            if (typeof result === 'string') return `${key}:text:${result.length.toString()}`
+            return `${key}:dict:${result.definitions.length.toString()}:${result.examples.length.toString()}`
+        }).join('|'),
+        [results]
+    )
 
     const handleTranslate = useCallback(async (textOverride?: string) => {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
@@ -522,16 +535,44 @@ export default function TranslateWindow(): React.ReactElement {
         }
     }, [secondLanguage, serviceInstances, setIsTranslating, setResult])
 
+    useEffect(() => {
+        const root = root_ref.current
+        const titlebar = titlebar_ref.current
+        const content = content_ref.current
+        if (!root || !titlebar || !content) return
+
+        let frame_id = 0
+        const fit_height = (): void => {
+            window.cancelAnimationFrame(frame_id)
+            frame_id = window.requestAnimationFrame(() => {
+                const root_style = getComputedStyle(root)
+                const root_padding = (Number.parseFloat(root_style.paddingTop) || 0) + (Number.parseFloat(root_style.paddingBottom) || 0)
+                const height = titlebar.getBoundingClientRect().height + content.scrollHeight + root_padding
+                window.electronAPI.window.setContentHeight(Math.ceil(height)).catch(() => undefined)
+            })
+        }
+
+        fit_height()
+        const observer = new ResizeObserver(fit_height)
+        observer.observe(titlebar)
+        observer.observe(content)
+        return () => {
+            window.cancelAnimationFrame(frame_id)
+            observer.disconnect()
+        }
+    }, [show_welcome_empty, showSource, hideLanguage, enabledServiceList.length, sourceText, result_fit_key, isTranslating, appFont, appFontSize])
+
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
     const handle_source_translate = useCallback(() => { handleTranslate().catch(console.error); }, [handleTranslate])
 
     return (
         <div
+            ref={root_ref}
             className="op-window"
             style={{ fontSize: appFontSize, fontFamily: appFont === 'default' ? undefined : appFont }}
         >
-            <div className="op-titlebar" data-testid="titlebar">
+            <div ref={titlebar_ref} className="op-titlebar" data-testid="titlebar">
                 <div style={{ display: 'flex', gap: 2, WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                     <button
                         title={t('translate_settings.always_on_top')}
@@ -587,7 +628,7 @@ export default function TranslateWindow(): React.ReactElement {
             </div>
 
             {/* Content */}
-            <div style={{ flex: '0 1 auto', overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div ref={content_ref} style={{ flex: '0 1 auto', overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {showSource && !show_welcome_empty && (
                     <SourceArea
                         onTranslate={handle_source_translate}

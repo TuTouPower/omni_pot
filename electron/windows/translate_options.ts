@@ -2,14 +2,19 @@ import type { BrowserWindow } from 'electron'
 import { getConfig, setConfig } from '../config/store'
 import { WindowLabel, type WindowOptions } from './types'
 
+const TRANSLATE_MIN_WIDTH = 280
+const TRANSLATE_MIN_HEIGHT = 320
+
 export function get_translate_window_options(): WindowOptions {
     const remember_size = getConfig('translate_remember_window_size') as boolean
+    const width = remember_size ? (getConfig('translate_window_width') as number) : 430
+    const height = remember_size ? (getConfig('translate_window_height') as number) : 360
     return {
         label: WindowLabel.TRANSLATE,
-        width: remember_size ? (getConfig('translate_window_width') as number) : 430,
-        height: remember_size ? (getConfig('translate_window_height') as number) : 360,
-        minWidth: 280,
-        minHeight: 320,
+        width: Math.max(width, TRANSLATE_MIN_WIDTH),
+        height: Math.max(height, TRANSLATE_MIN_HEIGHT),
+        minWidth: TRANSLATE_MIN_WIDTH,
+        minHeight: TRANSLATE_MIN_HEIGHT,
         maxHeight: 960,
         alwaysOnTop: getConfig('translate_always_on_top') as boolean,
     }
