@@ -63,14 +63,14 @@ export default function GeneralPage(): React.ReactElement {
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('general.app_settings') || '应用'}>
-                <ConfigRow label={t('general.auto_start') || '开机自启'} sub={t('general.auto_start_sub')}>
+            <ConfigCard title={t('general.app_settings', { defaultValue: '应用' })}>
+                <ConfigRow label={t('general.auto_start', { defaultValue: '开机自启' })} sub={t('general.auto_start_sub')}>
                     <ConfigSwitch on={autoStart} onChange={setAutoStart} testId="cfg-auto_start" />
                 </ConfigRow>
-                <ConfigRow label={t('general.check_update') || '启动时检查更新'}>
+                <ConfigRow label={t('general.check_update', { defaultValue: '启动时检查更新' })}>
                     <ConfigSwitch on={checkUpdate} onChange={setCheckUpdate} testId="cfg-check_update" />
                 </ConfigRow>
-                <ConfigRow label={t('general.app_language') || '界面语言'}>
+                <ConfigRow label={t('general.app_language', { defaultValue: '界面语言' })}>
                     <ConfigSelect
                         value={appLanguage as 'zh_cn' | 'en'}
                         onChange={setAppLanguage}
@@ -79,7 +79,7 @@ export default function GeneralPage(): React.ReactElement {
                         style={{ minWidth: 160 }}
                     />
                 </ConfigRow>
-                <ConfigRow label={t('general.server_port') || '本地 API 端口'} sub={t('general.server_port_sub')}>
+                <ConfigRow label={t('general.server_port', { defaultValue: '本地 API 端口' })} sub={t('general.server_port_sub')}>
                     <ConfigField
                         mono
                         defaultValue={String(serverPort)}
@@ -90,8 +90,8 @@ export default function GeneralPage(): React.ReactElement {
                 </ConfigRow>
             </ConfigCard>
 
-            <ConfigCard title={t('general.appearance') || '外观'}>
-                <ConfigRow label={t('general.theme') || '主题'}>
+            <ConfigCard title={t('general.appearance', { defaultValue: '外观' })}>
+                <ConfigRow label={t('general.theme', { defaultValue: '主题' })}>
                     <ConfigSelect
                         value={appTheme}
                         onChange={setAppTheme}
@@ -100,7 +100,7 @@ export default function GeneralPage(): React.ReactElement {
                         style={{ minWidth: 160 }}
                     />
                 </ConfigRow>
-                <ConfigRow label={t('general.primary_color') || '主色'}>
+                <ConfigRow label={t('general.primary_color', { defaultValue: '主色' })}>
                     <div style={{ display: 'flex', gap: 8 }}>
                         {PRIMARY_COLOR_VALUES.map((color) => (
                             <button
@@ -122,7 +122,7 @@ export default function GeneralPage(): React.ReactElement {
                         ))}
                     </div>
                 </ConfigRow>
-                <ConfigRow label={t('general.font_family') || '字体'}>
+                <ConfigRow label={t('general.font_family', { defaultValue: '字体' })}>
                     <div style={{ display: 'flex', gap: 6 }}>
                         <ConfigSelect
                             value={appFont}

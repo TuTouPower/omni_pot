@@ -50,8 +50,8 @@ export default function HistorySettings(): React.ReactElement {
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('history.title') || '历史记录'}>
-                <ConfigRow label={t('history.disable') || '禁用历史记录'}>
+            <ConfigCard title={t('history.title', { defaultValue: '历史记录' })}>
+                <ConfigRow label={t('history.disable', { defaultValue: '禁用历史记录' })}>
                     <ConfigSwitch on={historyDisable} onChange={setHistoryDisable} testId="cfg-history_disable" />
                 </ConfigRow>
             </ConfigCard>
@@ -60,7 +60,7 @@ export default function HistorySettings(): React.ReactElement {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button data-testid="history-clear" className="btn sm danger" onClick={() => { handle_clear().catch(console.error); }}>
                     <Icons.Trash size={12} />
-                    {t('history.clear') || '清空'}
+                    {t('history.clear', { defaultValue: '清空' })}
                 </button>
             </div>
 
@@ -177,8 +177,8 @@ export default function HistorySettings(): React.ReactElement {
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                                <button data-testid="history-edit-cancel" className="btn ghost" onClick={() => { setSelected(null); }}>{t('ui.cancel') || '取消'}</button>
-                                <button data-testid="history-edit-save" className="btn primary" onClick={() => { handle_save().catch(console.error); }}>{t('ui.save') || '保存'}</button>
+                                <button data-testid="history-edit-cancel" className="btn ghost" onClick={() => { setSelected(null); }}>{t('ui.cancel', { defaultValue: '取消' })}</button>
+                                <button data-testid="history-edit-save" className="btn primary" onClick={() => { handle_save().catch(console.error); }}>{t('ui.save', { defaultValue: '保存' })}</button>
                             </div>
                         </div>
                     </div>
