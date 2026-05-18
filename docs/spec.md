@@ -637,7 +637,7 @@ interface DictResult {
 
 **默认实例**（`DEFAULT_SERVICE_INSTANCES`）：
 `bing@default`、`google@default`、`deepl@default`、`mymemory@default`、`tesseract@default`、
-`free_dictionary@default`、`ecdict@default`、`chinese_dictionary@default`、`edge_tts@default`。
+`free_dictionary@default`、`ecdict@default`、`chinese_dictionary@default`、`system_tts@default`。
 
 ---
 
@@ -702,12 +702,11 @@ interface DictResult {
 
 ## 15. TTS 服务
 
-`src/services/tts/` 注册 2 个 TTS 服务：
+`src/services/tts/` 注册 1 个 TTS 服务：
 
 | 服务 | Key | 说明 |
 |---|---|---|
-| Edge TTS | `edge_tts` | 微软 Edge 在线 TTS |
-| Lingva TTS | `lingva_tts` | 代理谷歌翻译 TTS |
+| System TTS | `system_tts` | 调用渲染进程的 Web Speech API → Windows SAPI / macOS NSSpeechSynthesizer / Linux espeak。完全离线、零密钥、零配置 |
 
 行为：点击播放，相同文本再次点击停止，不同文本替换。
 
@@ -844,7 +843,7 @@ interface DictResult {
 | `translate_service_list` | string[] | `['bing@default','deepl@default','mymemory@default']` | 翻译实例顺序 |
 | `dictionary_service_list` | string[] | `['chinese_dictionary@default','free_dictionary@default','ecdict@default']` | 词典实例顺序 |
 | `recognize_service_list` | string[] | `['tesseract@default']` | OCR 实例顺序 |
-| `tts_service_list` | string[] | `['edge_tts@default']` | TTS 实例顺序 |
+| `tts_service_list` | string[] | `['system_tts@default']` | TTS 实例顺序 |
 | `collection_service_list` | string[] | `[]` | 收藏实例顺序 |
 | `service_instances` | ServiceInstancesMap | `DEFAULT_SERVICE_INSTANCES` | 实例配置；`config.instanceName` 为显示名，`config.enable=false` 表示停用 |
 

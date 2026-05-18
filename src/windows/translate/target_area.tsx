@@ -57,8 +57,7 @@ const SVC_META: Partial<Record<string, { name: string; mono: string; tone: strin
     iflytek_latex_ocr: { name: '讯飞 LaTeX', mono: 'TX', tone: 'oklch(60% 0.13 220)' },
     openai_compatible: { name: 'AI 视觉', mono: 'VL', tone: 'oklch(58% 0.02 180)' },
     qrcode: { name: '二维码', mono: 'QR', tone: 'oklch(50% 0.01 70)' },
-    edge_tts: { name: 'Edge TTS', mono: 'ED', tone: 'oklch(60% 0.13 230)' },
-    lingva_tts: { name: 'Lingva TTS', mono: 'LV', tone: 'oklch(65% 0.10 170)' },
+    system_tts: { name: 'System TTS', mono: 'SY', tone: 'oklch(60% 0.08 250)' },
     anki: { name: 'Anki', mono: 'AK', tone: 'oklch(58% 0.13 25)' },
     eudic: { name: '欧路词典', mono: 'EU', tone: 'oklch(60% 0.13 145)' },
 }
@@ -244,7 +243,6 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         [collectionServiceList, serviceInstances]
     )
 
-    const playingRef = useRef<HTMLAudioElement | null>(null)
     const playingCleanupRef = useRef<(() => void) | null>(null)
     const playingRequestRef = useRef(0)
     const playingActiveRef = useRef(false)
@@ -278,11 +276,10 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         setSourceText(text)
     }, [setSourceText])
 
-    const handleTts = useCallback(async (text: string, key: string) => {
+    const handleTts = useCallback((text: string, key: string) => {
         if (playingActiveRef.current) {
             playingRequestRef.current += 1
             playingActiveRef.current = false
-            playingRef.current?.pause()
             playingCleanupRef.current?.()
             playingCleanupRef.current = null
             setPlayingKey(null)
@@ -303,53 +300,18 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
             const instanceConfig = get_service_config(serviceInstances, instanceKey)
             const language = effectiveTargetLanguage ?? targetLanguage
 
-            // Direct-playback services (e.g. system_tts via Web Speech API) cannot
-            // expose a decoded audio buffer — call play() and treat the returned
-            // handle's stop() the same way we treat audio.pause().
-            if (ttsService.play) {
-                const handle = ttsService.play(text, language, instanceConfig)
-                const reset = (): void => {
-                    if (playingRequestRef.current === request_id) {
-                        playingActiveRef.current = false
-                        setPlayingKey(null)
-                    }
-                    if (playingCleanupRef.current === reset) {
-                        playingCleanupRef.current = null
-                    }
-                }
-                playingCleanupRef.current = () => { handle.stop(); reset() }
-                handle.done.then(reset, reset)
-                return
-            }
-
-            if (!ttsService.synthesize) return
-            const audioBuffer = await ttsService.synthesize(text, language, instanceConfig)
-            if (playingRequestRef.current !== request_id) return
-
-            const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
-            const url = URL.createObjectURL(blob)
-            const audio = new Audio(url)
-            let cleaned = false
-            const reset_audio = (): void => {
-                if (cleaned) return
-                cleaned = true
-                if (playingRef.current === audio) {
-                    playingRef.current = null
-                }
-                if (playingCleanupRef.current === reset_audio) {
-                    playingCleanupRef.current = null
-                }
+            const handle = ttsService.play(text, language, instanceConfig)
+            const reset = (): void => {
                 if (playingRequestRef.current === request_id) {
                     playingActiveRef.current = false
                     setPlayingKey(null)
                 }
-                URL.revokeObjectURL(url)
+                if (playingCleanupRef.current === reset) {
+                    playingCleanupRef.current = null
+                }
             }
-            playingRef.current = audio
-            playingCleanupRef.current = reset_audio
-            audio.onended = reset_audio
-            audio.onerror = reset_audio
-            await audio.play().catch(() => { reset_audio(); })
+            playingCleanupRef.current = () => { handle.stop(); reset() }
+            handle.done.then(reset, reset)
         } catch {
             if (playingRequestRef.current === request_id) {
                 playingActiveRef.current = false
@@ -362,11 +324,8 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         return () => {
             playingRequestRef.current += 1
             playingActiveRef.current = false
-            const audio = playingRef.current
             const cleanup = playingCleanupRef.current
-            playingRef.current = null
             playingCleanupRef.current = null
-            audio?.pause()
             cleanup?.()
         }
     }, [])
@@ -446,7 +405,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                             onToggleCollapse={toggleCollapse}
                             onRetry={onRetry}
                             onCopy={handleCopy}
-                            onTts={(text, key) => { handleTts(text, key).catch(console.error); }}
+                            onTts={(text, key) => { handleTts(text, key) }}
                             onCollect={(key) => { handleCollect(key).catch(console.error); }}
                             onReverseTranslate={handleReverseTranslate}
                             playingKey={playingKey}

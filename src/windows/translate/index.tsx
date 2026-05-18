@@ -112,7 +112,6 @@ export default function TranslateWindow(): React.ReactElement {
     const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
     const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
-    const sourceAudioRef = useRef<HTMLAudioElement | null>(null)
     const sourceAudioCleanupRef = useRef<(() => void) | null>(null)
     const sourceTtsBusyRef = useRef(false)
     const sourceTtsMountedRef = useRef(true)
@@ -363,9 +362,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     const cancelSourceTts = useCallback(() => {
         sourceTtsRequestRef.current += 1
-        sourceAudioRef.current?.pause()
         sourceAudioCleanupRef.current?.()
-        sourceAudioRef.current = null
         sourceAudioCleanupRef.current = null
         sourceTtsTextRef.current = ''
         sourceTtsLanguageRef.current = null
@@ -378,7 +375,7 @@ export default function TranslateWindow(): React.ReactElement {
         const text = useTranslateStore.getState().sourceText.trim()
         if (!text) return
 
-        if (sourceTtsPlaying || sourceTtsBusyRef.current || sourceAudioRef.current) {
+        if (sourceTtsPlaying || sourceTtsBusyRef.current || sourceAudioCleanupRef.current) {
             cancelSourceTts()
             return
         }
@@ -415,63 +412,23 @@ export default function TranslateWindow(): React.ReactElement {
             if (!isCurrentSourceTtsRequest()) return
             const instanceConfig = get_service_config(config.service_instances, instanceKey)
 
-            // Direct-playback TTS (system_tts/Web Speech API) doesn't go through
-            // an HTMLAudio element — we call play() and treat its stop()/done as
-            // the playback handle.
-            if (ttsService.play) {
-                const handle = ttsService.play(text, language, instanceConfig)
-                const cleanup = (): void => {
-                    if (sourceAudioCleanupRef.current === cleanup) {
-                        sourceAudioCleanupRef.current = null
-                    }
-                    if (sourceTtsTextRef.current === text) sourceTtsTextRef.current = ''
-                    if (sourceTtsLanguageRef.current === currentSourceLanguage) sourceTtsLanguageRef.current = null
-                    if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
-                        setSourceTtsPlaying(false)
-                    }
-                }
-                sourceAudioCleanupRef.current = () => { handle.stop(); cleanup() }
-                setSourceTtsBusy(false)
-                setSourceTtsPlaying(true)
-                handle.done.then(cleanup, cleanup)
-                return
-            }
-
-            if (!ttsService.synthesize) return
-            const audioBuffer = await ttsService.synthesize(text, language, instanceConfig)
-            if (!isCurrentSourceTtsRequest()) return
-
-            const blob = new Blob([audioBuffer], { type: 'audio/mp3' })
-            const url = URL.createObjectURL(blob)
-            const audio = new Audio(url)
-            const cleanup = () => {
-                if (sourceAudioRef.current === audio) {
-                    sourceAudioRef.current = null
-                }
+            const handle = ttsService.play(text, language, instanceConfig)
+            const cleanup = (): void => {
                 if (sourceAudioCleanupRef.current === cleanup) {
                     sourceAudioCleanupRef.current = null
                 }
-                if (sourceTtsTextRef.current === text) {
-                    sourceTtsTextRef.current = ''
-                }
-                if (sourceTtsLanguageRef.current === currentSourceLanguage) {
-                    sourceTtsLanguageRef.current = null
-                }
+                if (sourceTtsTextRef.current === text) sourceTtsTextRef.current = ''
+                if (sourceTtsLanguageRef.current === currentSourceLanguage) sourceTtsLanguageRef.current = null
                 if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
                     setSourceTtsPlaying(false)
                 }
-                URL.revokeObjectURL(url)
             }
-            sourceAudioRef.current = audio
-            sourceAudioCleanupRef.current = cleanup
-            audio.onended = cleanup
-            audio.onerror = cleanup
+            sourceAudioCleanupRef.current = () => { handle.stop(); cleanup() }
             setSourceTtsBusy(false)
             setSourceTtsPlaying(true)
-            audio.play().catch(cleanup)
+            handle.done.then(cleanup, cleanup)
         } catch {
             if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
-                sourceAudioRef.current = null
                 sourceTtsTextRef.current = ''
                 sourceTtsLanguageRef.current = null
                 setSourceTtsPlaying(false)
@@ -500,7 +457,6 @@ export default function TranslateWindow(): React.ReactElement {
             sourceTtsTextRef.current = ''
             sourceTtsLanguageRef.current = null
             cancel_scheduled_translate()
-            sourceAudioRef.current?.pause()
             sourceAudioCleanupRef.current?.()
         }
     }, [cancel_scheduled_translate])
