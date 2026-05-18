@@ -138,7 +138,8 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         return () => { cancel_dynamic_translate(); }
     }, [sourceText, dynamicTranslate, onTranslate, cancel_dynamic_translate])
 
-    const sourceRows = Math.min(8, Math.max(1, (sourceText || '').split('\n').length))
+    // Spec: input area shows a fixed 8-line area. Longer content scrolls inside; window height tracks layout via flex.
+    const sourceRows = 8
 
     return (
         <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '0 0 auto' }}>

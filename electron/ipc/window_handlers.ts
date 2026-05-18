@@ -18,6 +18,15 @@ export function registerWindowHandlers(manager: WindowManager): void {
   ipcMain.handle('window:setAlwaysOnTop', (event, flag: boolean) => {
     BrowserWindow.fromWebContents(event.sender)?.setAlwaysOnTop(flag)
   })
+  ipcMain.handle('window:setContentSize', (event, width: number, height: number) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    const [min_w = 0, min_h = 0] = win.getMinimumSize()
+    const [max_w = 0, max_h = 0] = win.getMaximumSize()
+    const w = Math.max(min_w, max_w > 0 ? Math.min(max_w, Math.round(width)) : Math.round(width))
+    const h = Math.max(min_h, max_h > 0 ? Math.min(max_h, Math.round(height)) : Math.round(height))
+    win.setContentSize(w, h)
+  })
   ipcMain.handle('window:getLabel', (event): string => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return ''

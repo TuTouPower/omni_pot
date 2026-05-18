@@ -45,39 +45,39 @@ export const freeDictionaryService: TranslateService = {
             throw new Error('Word not found')
         }
 
-        const entry = entries[0]
         const pronunciations: DictResult['pronunciations'] = []
         const definitions: DictResult['definitions'] = []
         const examples: DictResult['examples'] = []
 
-        if (entry.phonetic) {
-            pronunciations.push({ region: 'US', phonetic: entry.phonetic })
-        }
-        if (entry.phonetics) {
-            for (const p of entry.phonetics) {
-                if (p.text && !pronunciations.some(pr => pr.phonetic === p.text)) {
-                    const region = p.audio?.includes('-us') ? 'US' : p.audio?.includes('-uk') ? 'UK' : ''
-                    pronunciations.push({ region, phonetic: p.text })
-                }
+        for (const entry of entries) {
+            if (entry.phonetic && !pronunciations.some((pr) => pr.phonetic === entry.phonetic)) {
+                pronunciations.push({ region: 'US', phonetic: entry.phonetic })
             }
-        }
-
-        if (entry.meanings) {
-            for (const meaning of entry.meanings) {
-                const meanings: string[] = []
-                if (meaning.definitions) {
-                    for (const def of meaning.definitions) {
-                        meanings.push(def.definition)
-                        if (def.example) {
-                            examples.push({ source: def.example, target: '' })
-                        }
+            if (entry.phonetics) {
+                for (const p of entry.phonetics) {
+                    if (p.text && !pronunciations.some((pr) => pr.phonetic === p.text)) {
+                        const region = p.audio?.includes('-us') ? 'US' : p.audio?.includes('-uk') ? 'UK' : ''
+                        pronunciations.push({ region, phonetic: p.text })
                     }
                 }
-                if (meanings.length > 0) {
-                    definitions.push({
-                        partOfSpeech: meaning.partOfSpeech,
-                        meanings
-                    })
+            }
+            if (entry.meanings) {
+                for (const meaning of entry.meanings) {
+                    const meanings: string[] = []
+                    if (meaning.definitions) {
+                        for (const def of meaning.definitions) {
+                            meanings.push(def.definition)
+                            if (def.example) {
+                                examples.push({ source: def.example, target: '' })
+                            }
+                        }
+                    }
+                    if (meanings.length > 0) {
+                        definitions.push({
+                            partOfSpeech: meaning.partOfSpeech,
+                            meanings,
+                        })
+                    }
                 }
             }
         }
@@ -86,7 +86,7 @@ export const freeDictionaryService: TranslateService = {
             type: 'dict',
             pronunciations,
             definitions,
-            examples
+            examples,
         }
     },
 
