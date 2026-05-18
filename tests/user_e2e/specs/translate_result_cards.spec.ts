@@ -18,6 +18,35 @@ const lingva_config = {
 }
 
 test.describe('@ui translate result cards', () => {
+    test('cards stay collapsed while translating and auto-expand when the result arrives', async () => {
+        const omni = await AppFixture.start({ config: lingva_config })
+
+        try {
+            const translate = await omni.translate()
+            const pending = await translate.hold_lingva_translation_once('你好世界')
+
+            await translate.typeSource('hello world')
+            await translate.clickTranslate()
+            await pending.wait_for_request()
+
+            // While in-flight: the card exists, but its body content is collapsed
+            // (loading indicator visible, translated body absent).
+            await expect(translate.resultCard('lingva@default')).toBeVisible()
+            await expect(translate.resultCard('lingva@default').getByTestId('result-loading')).toBeVisible()
+            await expect(translate.resultBody('lingva@default')).toHaveCount(0)
+            await expect(translate.resultAction('lingva@default', 'result-collapse'))
+                .toHaveAttribute('aria-expanded', 'false')
+
+            // Release the response. The card must auto-expand without user clicks.
+            await pending.release_response()
+            await expect(translate.resultBody('lingva@default')).toContainText('你好世界')
+            await expect(translate.resultAction('lingva@default', 'result-collapse'))
+                .toHaveAttribute('aria-expanded', 'true')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user copies, collects, collapses, expands, and retries a result card', async () => {
         const omni = await AppFixture.start({ config: lingva_config })
 

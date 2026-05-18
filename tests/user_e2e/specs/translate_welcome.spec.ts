@@ -24,15 +24,29 @@ test.describe('@ui translate welcome empty state', () => {
             await expect(translate.targetLanguage()).toHaveCount(0)
             await expect(translate.resultCards()).toHaveCount(0)
             await expect(page.getByTestId('welcome-title')).toContainText('欢迎使用 Omni Pot')
-            await expect(page.getByTestId('welcome-selection-translate')).toContainText('划词翻译')
-            await expect(page.getByTestId('welcome-input-translate')).toContainText('输入翻译')
+
+            // Translate entry is merged into one (selection + input combined).
+            await expect(page.getByTestId('welcome-translate')).toBeVisible()
+            await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
+            await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
             await expect(page.getByTestId('welcome-ocr-recognize')).toContainText('OCR 识别')
             await expect(page.getByTestId('welcome-ocr-translate')).toContainText('OCR 翻译')
 
-            const selection_kbd = page.getByTestId('welcome-selection-translate').locator('kbd')
-            await expect(selection_kbd).toHaveCount(3)
-            await expect(selection_kbd.first()).toContainText('CommandOrControl')
-            await expect(selection_kbd.last()).toContainText('T')
+            const translate_kbd = page.getByTestId('welcome-translate').locator('kbd')
+            await expect(translate_kbd).toHaveCount(3)
+            await expect(translate_kbd.first()).toContainText('CommandOrControl')
+            await expect(translate_kbd.last()).toContainText('T')
+
+            // Window height auto-fits the welcome content — no scrollbar should appear.
+            const overflow_state = await welcome.evaluate((node) => {
+                const scrollable = node.closest('.op-window') ?? document.body
+                return {
+                    scroll_h: scrollable.scrollHeight,
+                    client_h: scrollable.clientHeight,
+                }
+            })
+            // Allow 4px slack for sub-pixel rounding between CSS layout and OS chrome.
+            expect(overflow_state.scroll_h - overflow_state.client_h).toBeLessThanOrEqual(4)
         } finally {
             await omni.stop()
         }
@@ -90,14 +104,14 @@ test.describe('@ui translate welcome empty state', () => {
             const page = translate.sourceInput().page()
 
             await expect(page.getByTestId('welcome-empty')).toBeVisible()
-            await expect(page.getByTestId('welcome-selection-translate-unset')).toContainText('未设置')
-            await expect(page.getByTestId('welcome-selection-translate').locator('kbd')).toHaveCount(0)
+            await expect(page.getByTestId('welcome-translate-unset')).toContainText('未设置')
+            await expect(page.getByTestId('welcome-translate').locator('kbd')).toHaveCount(0)
         } finally {
             await omni.stop()
         }
     })
 
-    test('configure shortcuts button opens config window on hotkey section', async () => {
+    test('configure shortcuts button opens config and closes welcome window', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
 
         try {
@@ -107,6 +121,10 @@ test.describe('@ui translate welcome empty state', () => {
             await page.getByTestId('welcome-configure-hotkeys').click()
             const config = await omni.config()
             await expect(config.title()).toContainText('快捷键')
+
+            // The translate (welcome) window must close after navigating to the config window.
+            await expect.poll(async () => (await omni.api.windowState('translate')).exists,
+                { timeout: 5_000 }).toBe(false)
         } finally {
             await omni.stop()
         }
