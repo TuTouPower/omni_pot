@@ -40,13 +40,27 @@ export const Icons = {
             <path d="M12 15v3" stroke={fill ? 'var(--bg)' : 'currentColor'} />
         </svg>
     ),
-    Space: (p: IconProps) => <Icon {...p} d={["M5 5v6", "M19 5v6", "M5 11h14"]} />,
+    // MdSmartButton: rounded rect + 3 lines + arrow
+    Newline: ({ size = 17, strokeWidth = 1.65, style, className }: IconProps) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
+            <rect x="2" y="2" width="20" height="20" rx="4" />
+            <path d="M7 8h10M7 12h6" />
+            <path d="M15 14v4M13 16l2 2 2-2" />
+        </svg>
+    ),
+    // CgSpaceBetween: 2 vertical bars + 3 horizontal lines
+    Space: ({ size = 17, strokeWidth = 1.65, style, className }: IconProps) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
+            <rect x="2" y="4" width="4" height="16" rx="1" />
+            <rect x="18" y="4" width="4" height="16" rx="1" />
+            <path d="M8 9h8M8 12h8M8 15h8" />
+        </svg>
+    ),
     Bell: (p: IconProps) => <Icon {...p} d={["M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9", "M14 21a2 2 0 01-4 0"]} />,
     Translate: (p: IconProps) => <Icon {...p} d={["M4 5h10", "M9 4v2c0 4-3 8-7 8", "M14 19l3-8 3 8", "M15 16h4", "M5 8c0 3 4 7 8 7"]} />,
     Volume: (p: IconProps) => <Icon {...p} d={["M11 5L6 9H3v6h3l5 4V5z", "M15 9a4 4 0 010 6", "M18 6a8 8 0 010 12"]} />,
     Copy: (p: IconProps) => <Icon {...p} d={["M8 8h11v11H8z", "M5 5h11v3", "M5 5v11h3"]} />,
     Trash: (p: IconProps) => <Icon {...p} d={["M4 7h16", "M9 7V4h6v3", "M6 7l1 13h10l1-13"]} />,
-    Newline: (p: IconProps) => <Icon {...p} d={["M20 6v6a3 3 0 01-3 3H5", "M9 11l-4 4 4 4"]} />,
     Swap: (p: IconProps) => <Icon {...p} d={["M4 9h14", "M15 6l3 3-3 3", "M20 15H6", "M9 12l-3 3 3 3"]} />,
     Chev: (p: IconProps) => <Icon {...p} d="M6 9l6 6 6-6" />,
     ChevUp: (p: IconProps) => <Icon {...p} d="M6 15l6-6 6 6" />,
