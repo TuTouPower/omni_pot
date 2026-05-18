@@ -415,6 +415,29 @@ export default function TranslateWindow(): React.ReactElement {
             if (!isCurrentSourceTtsRequest()) return
             const instanceConfig = get_service_config(config.service_instances, instanceKey)
 
+            // Direct-playback TTS (system_tts/Web Speech API) doesn't go through
+            // an HTMLAudio element — we call play() and treat its stop()/done as
+            // the playback handle.
+            if (ttsService.play) {
+                const handle = ttsService.play(text, language, instanceConfig)
+                const cleanup = (): void => {
+                    if (sourceAudioCleanupRef.current === cleanup) {
+                        sourceAudioCleanupRef.current = null
+                    }
+                    if (sourceTtsTextRef.current === text) sourceTtsTextRef.current = ''
+                    if (sourceTtsLanguageRef.current === currentSourceLanguage) sourceTtsLanguageRef.current = null
+                    if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
+                        setSourceTtsPlaying(false)
+                    }
+                }
+                sourceAudioCleanupRef.current = () => { handle.stop(); cleanup() }
+                setSourceTtsBusy(false)
+                setSourceTtsPlaying(true)
+                handle.done.then(cleanup, cleanup)
+                return
+            }
+
+            if (!ttsService.synthesize) return
             const audioBuffer = await ttsService.synthesize(text, language, instanceConfig)
             if (!isCurrentSourceTtsRequest()) return
 

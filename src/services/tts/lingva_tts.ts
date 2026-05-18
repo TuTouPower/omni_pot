@@ -72,8 +72,8 @@ export const lingvaTtsService: TtsService = {
 
     async testConfig(config: Record<string, unknown>): Promise<boolean> {
         try {
-            const result = await this.synthesize('hello', 'en', config)
-            return result.byteLength > 0
+            const result = await lingvaTtsService.synthesize?.('hello', 'en', config)
+            return !!result && result.byteLength > 0
         } catch {
             return false
         }
