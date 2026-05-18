@@ -83,7 +83,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
                         {t('dict.examples') || '例句'}
                     </div>
                     <div className="stack" style={{ gap: 10 }}>
-                        {result.examples.slice(0, 3).map((ex, i) => (
+                        {result.examples.map((ex, i) => (
                             <div key={i} data-testid="dict-example" style={{ borderLeft: '2px solid var(--line-strong)', paddingLeft: 10 }}>
                                 <div style={{ fontSize: 13, lineHeight: 1.55 }}>{ex.source}</div>
                             </div>

@@ -39,12 +39,10 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
   switch (name) {
     case 'translate':
     case 'hotkey_selection_translate':
-      return () => { triggerTranslateEntry(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_input_translate':
-      return () => {
-        mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
-      }
+      // Spec: one unified translate hotkey — if there is selected text, translate it; otherwise open the
+      // input window. Both legacy hotkey keys map to this same behavior.
+      return () => { triggerTranslateEntry(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_recognize':
       return () => { start_screenshot_capture(mgr, 'recognize').catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_translate':

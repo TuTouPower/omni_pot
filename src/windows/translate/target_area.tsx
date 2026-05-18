@@ -219,7 +219,7 @@ function DictResultInline({ result }: { result: DictResult }): React.ReactElemen
             ))}
             {result.examples.length > 0 && (
                 <div style={{ marginTop: 8, borderTop: '1px solid var(--line)', paddingTop: 8 }}>
-                    {result.examples.slice(0, 3).map((ex, i) => (
+                    {result.examples.map((ex, i) => (
                         <p key={i} style={{ fontSize: 12.5, color: 'var(--text-dim)', fontStyle: 'italic', marginBottom: 4 }}>{ex.source}</p>
                     ))}
                 </div>

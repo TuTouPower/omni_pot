@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
@@ -60,25 +60,35 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
     const hotkey_input_translate = useConfigStore((s) => s.config.hotkey_input_translate)
     const hotkey_ocr_recognize = useConfigStore((s) => s.config.hotkey_ocr_recognize)
     const hotkey_ocr_translate = useConfigStore((s) => s.config.hotkey_ocr_translate)
+    const root_ref = useRef<HTMLDivElement>(null)
+
+    // Resize the host window so the welcome panel shows fully without scrolling.
+    useEffect(() => {
+        const node = root_ref.current
+        if (!node) return
+        const set_size = (h: number): void => {
+            const width = Math.max(window.innerWidth, 280)
+            window.electronAPI.window.setContentSize(width, Math.ceil(h)).catch(() => undefined)
+        }
+        // Pad for outer container padding (top 6, between cards 10 each, etc. — measured via getBoundingClientRect of body).
+        const measure = (): number => Math.max(node.getBoundingClientRect().height + 32, 200)
+        set_size(measure())
+        const observer = new ResizeObserver(() => { set_size(measure()) })
+        observer.observe(node)
+        return () => { observer.disconnect() }
+    }, [])
 
     const items: HintItem[] = [
         {
             icon: 'translate',
-            title_key: 'welcome.selection_translate',
-            title_fallback: '划词翻译',
-            sub_key: 'welcome.selection_translate_sub',
-            sub_fallback: '选中文本后按下快捷键即翻译',
-            hotkey_value: hotkey_selection_translate,
-            test_id: 'welcome-selection-translate',
-        },
-        {
-            icon: 'type',
-            title_key: 'welcome.input_translate',
-            title_fallback: '输入翻译',
-            sub_key: 'welcome.input_translate_sub',
-            sub_fallback: '呼出窗口手动输入要翻译的文本',
-            hotkey_value: hotkey_input_translate,
-            test_id: 'welcome-input-translate',
+            title_key: 'welcome.translate',
+            title_fallback: '翻译',
+            sub_key: 'welcome.translate_sub',
+            sub_fallback: '已选中文本则直接翻译，否则呼出窗口手动输入',
+            // Both legacy hotkeys now trigger the unified entry; prefer the explicit "selection" one but
+            // fall back to "input" so users who only set one of them still see a hotkey here.
+            hotkey_value: hotkey_selection_translate || hotkey_input_translate,
+            test_id: 'welcome-translate',
         },
         {
             icon: 'camera',
@@ -106,7 +116,7 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
     }
 
     return (
-        <div data-testid="welcome-empty" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div ref={root_ref} data-testid="welcome-empty" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ padding: '6px 4px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="svc-tile" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--brand-primary)', color: '#fff', borderColor: 'transparent', fontSize: 12 }}>op</div>
                 <div className="stack">
