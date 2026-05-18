@@ -70,8 +70,7 @@
     },
     "hotkey": {
         "title": "快捷鍵",
-        "selection_translate": "劃詞翻譯",
-        "input_translate": "輸入翻譯",
+        "translate": "翻譯",
         "screenshot_translate": "截圖翻譯",
         "screenshot_recognize": "截圖辨識",
         "clipboard_translate": "剪貼簿翻譯",

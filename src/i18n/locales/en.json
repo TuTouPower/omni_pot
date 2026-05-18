@@ -46,10 +46,8 @@
     "welcome": {
         "title": "Welcome to Omni Pot",
         "subtitle": "The shortcuts below are preset for you; change them anytime under Settings.",
-        "selection_translate": "Selection translate",
-        "selection_translate_sub": "Select text, press the shortcut to translate it",
-        "input_translate": "Input translate",
-        "input_translate_sub": "Open the window to type text manually",
+        "translate": "Translate",
+        "translate_sub": "Translate selected text, or open input window if nothing selected",
         "ocr_recognize": "OCR recognize",
         "ocr_recognize_sub": "Capture a region and lift the text into recognize",
         "ocr_translate": "OCR translate",
@@ -176,8 +174,7 @@
     },
     "hotkey": {
         "title": "Hotkeys",
-        "selection_translate": "Selection Translate",
-        "input_translate": "Input Translate",
+        "translate": "Translate",
         "screenshot_translate": "Screenshot Translate",
         "screenshot_recognize": "Screenshot Recognize",
         "clipboard_translate": "Clipboard Translate",
