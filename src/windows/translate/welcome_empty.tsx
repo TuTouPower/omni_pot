@@ -37,12 +37,12 @@ function HintRow({ item }: { item: HintItem }): React.ReactElement {
                 <IconComp size={16} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{t(item.title_key) || item.title_fallback}</div>
-                <div className="hint" style={{ marginTop: 1 }}>{t(item.sub_key) || item.sub_fallback}</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{t(item.title_key, { defaultValue: item.title_fallback })}</div>
+                <div className="hint" style={{ marginTop: 1 }}>{t(item.sub_key, { defaultValue: item.sub_fallback })}</div>
             </div>
             <div style={{ display: 'flex', gap: 2 }}>
                 {keys.length === 0 && (
-                    <span className="hint mono" data-testid={`${item.test_id}-unset`}>{t('welcome.not_set') || '未设置'}</span>
+                    <span className="hint mono" data-testid={`${item.test_id}-unset`}>{t('welcome.not_set', { defaultValue: '未设置' })}</span>
                 )}
                 {keys.map((k, i) => <kbd key={i} style={{ fontSize: 10.5 }}>{k}</kbd>)}
             </div>
@@ -64,9 +64,9 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
     const items: HintItem[] = [
         {
             icon: 'translate',
-            title_key: 'welcome.translate',
+            title_key: 'welcome.selection_translate',
             title_fallback: '翻译',
-            sub_key: 'welcome.translate_sub',
+            sub_key: 'welcome.selection_translate_sub',
             sub_fallback: '已选中文本则直接翻译，否则呼出窗口手动输入',
             // Both legacy hotkeys now trigger the unified entry; prefer the explicit "selection" one but
             // fall back to "input" so users who only set one of them still see a hotkey here.
@@ -103,18 +103,18 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
             <div style={{ padding: '6px 4px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="svc-tile" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--brand-primary)', color: '#fff', borderColor: 'transparent', fontSize: 12 }}>op</div>
                 <div className="stack">
-                    <div style={{ fontSize: 14, fontWeight: 600 }} data-testid="welcome-title">{t('welcome.title') || '欢迎使用 Omni Pot'}</div>
-                    <div className="hint">{t('welcome.subtitle') || '下面的快捷键已为你预设，随时可在「设置」中修改'}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }} data-testid="welcome-title">{t('welcome.title', { defaultValue: '欢迎使用 Omni Pot' })}</div>
+                    <div className="hint">{t('welcome.subtitle', { defaultValue: '下面的快捷键已为你预设，随时可在「设置」中修改' })}</div>
                 </div>
             </div>
             {items.map((it) => <HintRow key={it.test_id} item={it} />)}
             <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 4 }}>
                 <button className="btn sm" data-testid="welcome-configure-hotkeys" onClick={handle_open_hotkey}>
                     <Icons.Settings size={13} />
-                    {t('welcome.configure_hotkeys') || '设置快捷键'}
+                    {t('welcome.configure_hotkeys', { defaultValue: '设置快捷键' })}
                 </button>
                 <button className="btn sm" data-testid="welcome-skip" style={{ color: 'var(--brand-primary)' }} onClick={onSkip}>
-                    {t('welcome.skip') || '跳过'}
+                    {t('welcome.skip', { defaultValue: '跳过' })}
                 </button>
             </div>
         </div>

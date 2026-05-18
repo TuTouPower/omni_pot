@@ -24,9 +24,10 @@ test.describe('@ui translate welcome empty state', () => {
             await expect(translate.targetLanguage()).toHaveCount(0)
             await expect(translate.resultCards()).toHaveCount(0)
             await expect(page.getByTestId('welcome-title')).toContainText('欢迎使用 Omni Pot')
+            await expect(welcome).not.toContainText(/welcome\./)
 
             // Translate entry is merged into one (selection + input combined).
-            await expect(page.getByTestId('welcome-translate')).toBeVisible()
+            await expect(page.getByTestId('welcome-translate')).toContainText('翻译')
             await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
             await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
             await expect(page.getByTestId('welcome-ocr-recognize')).toContainText('文字识别')
