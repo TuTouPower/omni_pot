@@ -2,17 +2,22 @@
 const { useState: useStateR } = React;
 
 const OCR_ENGINES = [
-  { value:'system', label: '系统 OCR', mono:'system' },
+  { value:'system', label: '系统识别', mono:'system' },
   { value:'tesseract', label: 'Tesseract', mono:'tesseract' },
   { value:'openai_compatible', label: 'AI 视觉 · Qwen2.5-VL', mono:'openai_compatible' },
   { value:'baidu_accurate_ocr', label: '百度高精度', mono:'baidu_accurate_ocr' },
 ];
 const OCR_LANGS = [
   { value:'auto', label:'自动检测' },
-  { value:'en', label:'英文' },
+  { value:'en', label:'English' },
   { value:'zh_cn', label:'简体中文' },
-  { value:'ja', label:'日文' },
-  { value:'ko', label:'韩文' },
+  { value:'zh_tw', label:'繁體中文' },
+  { value:'ja', label:'日本語' },
+  { value:'ko', label:'한국어' },
+  { value:'fr', label:'Français' },
+  { value:'de', label:'Deutsch' },
+  { value:'es', label:'Español' },
+  { value:'ru', label:'Русский' },
 ];
 const EXPORT_FORMATS = [
   { value:'md',   label:'Markdown',     ext:'.md' },
@@ -21,17 +26,83 @@ const EXPORT_FORMATS = [
   { value:'doc',  label:'Word 97-2003',  ext:'.doc' },
 ];
 
-// Compact pill-style select used in the OCR action bar
+// Compact pill-style select used in the OCR action bar.
+// Popup is portaled to body and opens UP (the action bar sits at the window
+// bottom) so it isn't clipped by the artboard / canvas transform.
 const PillSelect = ({ value, options, leading, style, onChange }) => {
   const [open, setOpen] = useStateR(false);
+  const [coords, setCoords] = useStateR({ left: 0, top: 0, maxH: 280 });
+  const triggerRef = React.useRef(null);
+  const popRef = React.useRef(null);
+  const POP_W = 220;
+
+  const measure = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const popH = Math.min(280, options.length * 32 + 8);
+    const spaceAbove = r.top;
+    const above = spaceAbove > popH + 12; // action bar is at the bottom — prefer up
+    setCoords({
+      left: Math.min(Math.max(8, r.left), window.innerWidth - POP_W - 8),
+      top: above ? r.top - popH - 6 : r.bottom + 6,
+      maxH: popH,
+    });
+  };
+
+  React.useEffect(() => {
+    if (!open) return;
+    measure();
+    const onS = () => measure();
+    const onD = (e) => {
+      if (popRef.current?.contains(e.target)) return;
+      if (triggerRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
+    window.addEventListener('scroll', onS, true);
+    window.addEventListener('resize', onS);
+    document.addEventListener('mousedown', onD);
+    return () => {
+      window.removeEventListener('scroll', onS, true);
+      window.removeEventListener('resize', onS);
+      document.removeEventListener('mousedown', onD);
+    };
+  }, [open]);
+
   const cur = options.find(o => o.value === value);
+  const pop = open && ReactDOM.createPortal(
+    <div ref={popRef} style={{
+      position:'fixed', left: coords.left, top: coords.top,
+      width: POP_W, maxHeight: coords.maxH, overflowY:'auto',
+      background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 8,
+      boxShadow:'0 10px 28px rgba(0,0,0,0.14)', padding: 4, zIndex: 10000,
+    }}>
+      {options.map(o => (
+        <div key={o.value}
+          onClick={(e) => { e.stopPropagation(); onChange && onChange(o.value); setOpen(false); }}
+          style={{
+            padding: '6px 10px', borderRadius: 6, fontSize: 12.5, cursor:'pointer',
+            display:'flex', alignItems:'center', gap: 6, whiteSpace:'nowrap',
+            background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent',
+            color: o.value === value ? 'var(--brand-primary)' : 'var(--text)',
+          }}>
+          {o.mono && <SvcTile name={o.mono} />}
+          <span>{o.label}</span>
+          {o.ext && <span className="hint mono" style={{ marginLeft:'auto' }}>{o.ext}</span>}
+        </div>
+      ))}
+    </div>,
+    document.body
+  );
+
   return (
     <div style={{ position:'relative', ...style }}>
       <button
+        ref={triggerRef}
         onClick={() => setOpen(o => !o)}
         style={{
           height: 30, padding: '0 10px', borderRadius: 8,
-          background: 'var(--bg-card)', border: '1px solid var(--line-soft)',
+          background: open ? 'var(--bg-elev)' : 'var(--bg-card)', border: '1px solid var(--line-soft)',
           color: 'var(--text)', fontSize: 12.5, fontWeight: 500,
           display: 'inline-flex', alignItems:'center', gap: 6, cursor:'pointer',
         }}>
@@ -39,24 +110,7 @@ const PillSelect = ({ value, options, leading, style, onChange }) => {
         <span>{cur?.label || value}</span>
         <Icons.Chev size={11} style={{ color:'var(--text-mute)' }}/>
       </button>
-      {open && (
-        <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, minWidth:'100%', background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 8, boxShadow:'0 8px 24px rgba(0,0,0,0.08)', padding: 4, zIndex: 50 }}>
-          {options.map(o => (
-            <div key={o.value}
-              onClick={() => { onChange && onChange(o.value); setOpen(false); }}
-              style={{
-                padding: '6px 10px', borderRadius: 6, fontSize: 12.5, cursor:'pointer',
-                display:'flex', alignItems:'center', gap: 6, whiteSpace:'nowrap',
-                background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent',
-                color: o.value === value ? 'var(--brand-primary)' : 'var(--text)',
-              }}>
-              {o.mono && <SvcTile name={o.mono} />}
-              <span>{o.label}</span>
-              {o.ext && <span className="hint mono" style={{ marginLeft:'auto' }}>{o.ext}</span>}
-            </div>
-          ))}
-        </div>
-      )}
+      {pop}
     </div>
   );
 };
@@ -99,13 +153,14 @@ const ExportButton = () => {
   );
 };
 
-const RecognizeWindow = () => {
+const RecognizeWindow = ({ translate = false }) => {
+  const [tgt, setTgt] = useStateR('zh_cn');
   return (
-    <div className="op-window" style={{ width: 860, height: 520 }}>
+    <div className="op-window" style={{ width: '100%', height: '100%' }}>
       {/* Row 1 — titlebar */}
-      <TitlebarLeft mode="识别" pinned={true} />
+      <TitlebarLeft mode={translate ? '截图翻译' : '文字识别'} pinned={true} />
 
-      {/* Row 2 — image | text */}
+      {/* Row 2 — image | text(s) */}
       <div style={{ flex:1, display:'grid', gridTemplateColumns: '1fr 1fr', minHeight: 0, gap: 10, padding: '4px 10px 8px' }}>
         {/* Image card */}
         <div className="card" style={{ padding: 6, display:'flex', flexDirection:'column', minHeight: 0 }}>
@@ -122,39 +177,85 @@ const RecognizeWindow = () => {
           </div>
         </div>
 
-        {/* Text card */}
-        <div className="card" style={{ padding: '12px 14px', overflow:'auto', minHeight: 0 }}>
-          <div style={{ fontSize: 13.5, lineHeight: 1.65, color:'var(--text)', whiteSpace:'pre-wrap' }}>
-            {`Reconciling Distributed State
+        {/* Text card(s) — translate state is just a transition from recognize,
+           so the two cards share visual language. No special bg / no special
+           label color — the only differentiator is a small mono label. */}
+        {translate ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0 }}>
+            <div className="card" style={{ padding: '12px 14px', flex: 1, overflow:'auto', minHeight: 0 }}>
+              <div className="mono" style={{ fontSize: 10.5, color:'var(--text-mute)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom: 6 }}>识别 · English</div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.65, color:'var(--text)', whiteSpace:'pre-wrap' }}>
+                {`Reconciling Distributed State
+
+When two replicas diverge after a partition, the merge function must be associative and commutative — otherwise the order of arriving operations matters and the result is no longer a CRDT.`}
+              </div>
+            </div>
+            <div className="card" style={{ padding: '12px 14px', flex: 1, overflow:'auto', minHeight: 0 }}>
+              <div className="mono" style={{ fontSize: 10.5, color:'var(--text-mute)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom: 6 }}>翻译 · {window.LANG_NAME[tgt] || tgt}</div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.65, color:'var(--text)', whiteSpace:'pre-wrap' }}>
+                {`调和分布式状态
+
+当两个副本在分区后产生分歧时，合并函数必须满足结合律和交换律——否则到达操作的顺序就会影响结果，从而不再是一个 CRDT。`}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="card" style={{ padding: '12px 14px', overflow:'auto', minHeight: 0 }}>
+            <div style={{ fontSize: 13.5, lineHeight: 1.65, color:'var(--text)', whiteSpace:'pre-wrap' }}>
+              {`Reconciling Distributed State
 
 When two replicas diverge after a partition, the merge function must be
 associative and commutative — otherwise the order of arriving operations
 matters and the result is no longer a CRDT.
 
 fig 3.2 — eventual consistency`}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Row 3 — action bar */}
+      {/* Row 3 — action bar
+         Recognize:  复制图片 | 系统 OCR | 重新识别 | 自动检测 | (spacer) | 翻译 | 去除换行 | 去除空格 | 复制文本 | 导出
+         Translate:  复制图片 | 系统 OCR | 重新识别 | 自动检测 | swap | 简体中文 | 重新翻译 | (spacer) | 去除换行 | 去除空格 | 复制文本 | 导出
+         All language pickers use the SAME pill style as 重新识别 / 重新翻译
+         (background + 1px border) — no transparent dropdowns here. */}
       <div style={{
-        display:'flex', alignItems:'center', gap: 8,
+        display:'flex', alignItems:'center', gap: 6,
         padding: '8px 10px 10px',
         borderTop: '1px solid var(--line-soft)',
       }}>
+        <button className="ic-btn" title="复制图片"><Icons.Image size={16}/></button>
         <PillSelect value="system" options={OCR_ENGINES} leading={<SvcTile name="system" />} />
-        <PillSelect value="auto" options={OCR_LANGS} leading={<Icons.Globe size={13} style={{ color:'var(--text-mute)' }}/>} />
         <PillButton icon={<Icons.Cycle size={14}/>} label="重新识别" />
+        <PillSelect value="auto" options={OCR_LANGS} />
+        {translate && (
+          <>
+            <Icons.Swap size={18} style={{ color:'var(--text)' }}/>
+            <PillSelect value={tgt} onChange={setTgt} options={[
+              { value:'zh_cn', label:'简体中文' },
+              { value:'zh_tw', label:'繁體中文' },
+              { value:'en',    label:'English' },
+              { value:'ja',    label:'日本語' },
+              { value:'ko',    label:'한국어' },
+              { value:'fr',    label:'Français' },
+              { value:'de',    label:'Deutsch' },
+              { value:'es',    label:'Español' },
+            ]} />
+            <PillButton icon={<Icons.Cycle size={14}/>} label="重新翻译" />
+          </>
+        )}
 
         <div style={{ flex:1 }} />
 
-        <button className="ic-btn" title="去除换行"><Icons.Newline size={16}/></button>
-        <button className="ic-btn" title="去除空格"><Icons.Hash size={16}/></button>
+        {!translate && (
+          <button className="ic-btn brand" title="翻译" style={{ color:'var(--brand-primary)' }}>
+            <Icons.Translate size={18}/>
+          </button>
+        )}
+        <button className="ic-btn" title="去除换行"><ReactIcon name="MdSmartButton" size={17}/></button>
+        <button className="ic-btn" title="去除空格"><ReactIcon name="CgSpaceBetween" size={17}/></button>
         <button className="ic-btn" title="复制文本"><Icons.Copy size={16}/></button>
         <ExportButton />
-        <button className="ic-btn brand" title="翻译" style={{ color:'var(--brand-primary)' }}>
-          <Icons.Translate size={18}/>
-        </button>
       </div>
     </div>
   );
@@ -202,7 +303,7 @@ const UpdaterWindow = () => {
   const progress = 64;
   return (
     <div className="op-window" style={{ width: 600, height: 420 }}>
-      <TitlebarLeft mode="更新" pinned={false} />
+      <TitlebarLeft mode="更新" pinned={false} noPin />
       <div style={{ padding: '8px 16px 18px', display:'flex', flexDirection:'column', gap: 12, flex:1, overflow:'auto' }}>
         <div style={{ display:'flex', alignItems:'center', gap: 12 }}>
           <div className="svc-tile lg" style={{ background:'var(--brand-primary)', color:'#fff', width: 40, height: 40, borderRadius: 10, borderColor:'transparent', fontSize: 14 }}>op</div>
@@ -217,7 +318,7 @@ const UpdaterWindow = () => {
           <div style={{ fontSize: 13, lineHeight: 1.65 }}>
             <div style={{fontWeight:600}}>新功能</div>
             <ul style={{margin:'4px 0 10px', paddingLeft: 18, color:'var(--text-dim)'}}>
-              <li>新增 <span className="mono">openai_compatible</span> 视觉 OCR，支持流式输出</li>
+              <li>新增 <span className="mono">openai_compatible</span> 视觉识别，支持流式输出</li>
               <li>词典窗口支持自定义来源排序</li>
               <li>剪贴板监听新增过滤规则（正则）</li>
             </ul>
@@ -260,29 +361,29 @@ const TrayMenu = () => {
       )}
       <span style={{ flex:1, fontSize: 13 }}>{label}</span>
       {sub && <Icons.ChevR size={11} style={{color:'var(--text-mute)'}}/>}
-      {kbd && <span className="mono" style={{fontSize: 10.5, color:'var(--text-mute)'}}>{kbd}</span>}
+      {kbd && <span className="mono" style={{fontSize: 11.5, color:'var(--text-mute)', whiteSpace:'nowrap'}}>{kbd}</span>}
     </div>
   );
   return (
-    <div style={{ width: 260, background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 10, padding: 4, boxShadow:'0 12px 32px rgba(0,0,0,0.12)' }}>
+    <div style={{ width: 296, background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 10, padding: 4, boxShadow:'0 12px 32px rgba(0,0,0,0.12)' }}>
       <div style={{ padding:'8px 12px', display:'flex', alignItems:'center', gap:8, borderBottom:'1px solid var(--line)', marginBottom: 4 }}>
         <div className="op-wordmark">Omni Pot</div>
         <div style={{flex:1}}/>
         <span className="hint mono">3.1.0</span>
       </div>
-      <Item icon={<Icons.Type/>} label="输入翻译" kbd="⌥ Q"/>
-      <Item icon={<Icons.Camera/>} label="OCR 识别" kbd="⌥ ⇧ S"/>
-      <Item icon={<Icons.Image/>} label="OCR 翻译" kbd="⌥ ⇧ T"/>
+      <Item icon={<Icons.Translate/>} label="翻译" kbd="Ctrl+Alt+T"/>
+      <Item icon={<Icons.Type/>} label="字典词典" kbd="Ctrl+Alt+D"/>
+      <Item icon={<Icons.Camera/>} label="文字识别" kbd="Ctrl+Alt+S"/>
+      <Item icon={<Icons.Image/>} label="截图翻译" kbd="Ctrl+Alt+Shift+S"/>
       <div className="div" style={{margin:'4px 8px'}}/>
       <Item check={true} label="剪贴板监听"/>
-      <Item icon={<Icons.Copy/>} label="自动复制" sub/>
       <div className="div" style={{margin:'4px 8px'}}/>
-      <Item icon={<Icons.Settings/>} label="设置" kbd="⌘ ,"/>
+      <Item icon={<Icons.Settings/>} label="设置" kbd="Ctrl+Alt+,"/>
       <Item icon={<Icons.Cloud/>} label="检查更新"/>
       <Item icon={<Icons.Info/>} label="查看日志"/>
       <div className="div" style={{margin:'4px 8px'}}/>
       <Item icon={<Icons.Cycle/>} label="重启"/>
-      <Item icon={<Icons.Close/>} label="退出" danger kbd="⌘ Q"/>
+      <Item icon={<Icons.Close/>} label="退出" danger/>
     </div>
   );
 };

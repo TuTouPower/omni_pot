@@ -14,6 +14,7 @@ const Icons = {
   Max: (p) => <Icon {...p} d="M5 5h14v14H5z" />,
   Restore: (p) => <Icon {...p} d={["M8 8h11v11H8z","M5 5h11v3","M5 5v11h3"]} />,
   Pin: (p) => <Icon {...p} d={["M12 16v6","M8 3h8l-1.5 6 2.5 4H7l2.5-4L8 3z"]} />,
+  Lock: (p) => <Icon {...p} d={["M5 11h14v10H5z","M8 11V7a4 4 0 018 0v4","M12 15v3"]} />,
   Translate: (p) => <Icon {...p} d={["M4 5h10","M9 4v2c0 4-3 8-7 8","M14 19l3-8 3 8","M15 16h4","M5 8c0 3 4 7 8 7"]} />,
   Volume: (p) => <Icon {...p} d={["M11 5L6 9H3v6h3l5 4V5z","M15 9a4 4 0 010 6","M18 6a8 8 0 010 12"]} />,
   Copy: (p) => <Icon {...p} d={["M8 8h11v11H8z","M5 5h11v3","M5 5v11h3"]} />,
@@ -136,32 +137,86 @@ const Switch = ({ on, onChange }) => (
   <div className={'switch' + (on ? ' on' : '')} onClick={() => onChange && onChange(!on)} />
 );
 
+// Select with a FIXED-position popup, PORTALED to document.body so it isn't
+// trapped by either card overflow:hidden or any CSS transform on ancestors
+// (the DesignCanvas pans/zooms via transform — `position:fixed` inside it is
+// NOT viewport-fixed without a portal). Recomputes coords on open / scroll /
+// resize.
 const Select = ({ value, label, options, onChange, style }) => {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ left: 0, top: 0, width: 0, maxHeight: 280 });
+  const triggerRef = useRef(null);
+  const popRef = useRef(null);
+
+  const measure = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const popH = Math.min(280, (options?.length || 0) * 30 + 8);
+    const spaceBelow = window.innerHeight - r.bottom;
+    const above = spaceBelow < popH + 12 && r.top > popH + 12;
+    setCoords({
+      left: r.left,
+      top: above ? r.top - popH - 6 : r.bottom + 6,
+      width: r.width,
+      maxHeight: popH,
+    });
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    measure();
+    const onScroll = () => measure();
+    const onClick = (e) => {
+      if (popRef.current?.contains(e.target)) return;
+      if (triggerRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
+    document.addEventListener('mousedown', onClick);
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onScroll);
+      document.removeEventListener('mousedown', onClick);
+    };
+  }, [open]);
+
   const cur = options?.find(o => o.value === value);
-  return (
-    <div className="select" style={style} onClick={() => setOpen(o => !o)}>
-      {label && <span style={{ color: 'var(--text-mute)' }}>{label}</span>}
-      <span>{cur?.label || value}</span>
-      <Icons.Chev className="chev" size={12} />
-      {open && options && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, minWidth: '100%', background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--r-md)', boxShadow: '0 6px 20px rgba(0,0,0,0.08)', padding: 4, zIndex: 50, maxHeight: 280, overflowY: 'auto' }}>
-          {options.map(o => (
-            <div key={o.value} onClick={(e) => { e.stopPropagation(); onChange && onChange(o.value); setOpen(false); }}
-              style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent', color: o.value === value ? 'var(--brand-primary)' : 'var(--text)' }}
-              onMouseEnter={e => { if (o.value !== value) e.currentTarget.style.background = 'var(--bg-sunk)'; }}
-              onMouseLeave={e => { if (o.value !== value) e.currentTarget.style.background = 'transparent'; }}>
-              {o.icon}{o.label}
-            </div>
-          ))}
+  const pop = open && options && ReactDOM.createPortal(
+    <div ref={popRef} style={{
+      position: 'fixed', left: coords.left, top: coords.top,
+      minWidth: coords.width, maxHeight: coords.maxHeight, overflowY: 'auto',
+      background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 'var(--r-md)',
+      boxShadow: '0 10px 28px rgba(0,0,0,0.14)', padding: 4, zIndex: 10000,
+    }}>
+      {options.map(o => (
+        <div key={o.value} onClick={(e) => { e.stopPropagation(); onChange && onChange(o.value); setOpen(false); }}
+          style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent', color: o.value === value ? 'var(--brand-primary)' : 'var(--text)', whiteSpace: 'nowrap', fontSize: 13 }}
+          onMouseEnter={e => { if (o.value !== value) e.currentTarget.style.background = 'var(--bg-sunk)'; }}
+          onMouseLeave={e => { if (o.value !== value) e.currentTarget.style.background = 'transparent'; }}>
+          {o.icon}{o.label}
         </div>
-      )}
-    </div>
+      ))}
+    </div>,
+    document.body
+  );
+
+  return (
+    <>
+      <div ref={triggerRef} className="select" style={style} onClick={() => setOpen(o => !o)}>
+        {label && <span style={{ color: 'var(--text-mute)' }}>{label}</span>}
+        <span>{cur?.label || value}</span>
+        <Icons.Chev className="chev" size={12} />
+      </div>
+      {pop}
+    </>
   );
 };
 
+// Lang select — uses each language's NATIVE name (LANG_NAME), no AUTO/ZH chip.
 const LangSelect = ({ value, onChange, codes, style }) => {
-  const opts = codes.map(c => ({ value: c, label: <span style={{display:'flex',alignItems:'center',gap:8}}><Flag code={c}/>{LANG_NAME[c] || c}</span> }));
+  const opts = codes.map(c => ({ value: c, label: LANG_NAME[c] || c }));
   return <Select value={value} onChange={onChange} options={opts} style={style} />;
 };
 
