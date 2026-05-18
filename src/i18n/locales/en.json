@@ -23,6 +23,7 @@
     "pin": "Pin",
     "clear": "Clear",
     "delete_newline": "Remove newlines",
+    "delete_spaces": "Remove spaces",
     "swap_languages": "Swap languages",
     "detected_language_prefix": "Detected as",
     "tts_read": "Read aloud",

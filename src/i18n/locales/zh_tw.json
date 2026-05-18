@@ -11,6 +11,8 @@
         "delete_spaces": "刪除空格"
     },
     "close": "關閉",
+    "delete_newline": "刪除換行",
+    "delete_spaces": "刪除空格",
     "copy": "複製",
     "retry": "重試",
     "pin": "釘選",

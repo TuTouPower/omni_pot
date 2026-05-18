@@ -211,7 +211,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 <button className="ic-btn" title={t('delete_newline', { defaultValue: '去除换行' })} data-testid="source-newline-btn" onClick={handleDeleteNewline}>
                     <Icons.Newline size={16} />
                 </button>
-                <button className="ic-btn" title={t('delete_spaces')} data-testid="source-space-btn" onClick={handleDeleteSpace}>
+                <button className="ic-btn" title={t('delete_spaces', { defaultValue: '去除空格' })} data-testid="source-space-btn" onClick={handleDeleteSpace}>
                     <Icons.Space size={16} />
                 </button>
                 <button

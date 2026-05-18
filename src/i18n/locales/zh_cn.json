@@ -23,6 +23,7 @@
     "pin": "固定",
     "clear": "清空",
     "delete_newline": "去除换行",
+    "delete_spaces": "去除空格",
     "swap_languages": "交换语言",
     "detected_language_prefix": "检测为",
     "tts_read": "朗读",

@@ -198,6 +198,12 @@ function SortableCard({
                                 : <DictResultInline result={result} />
                             }
                         </div>
+                    ) : is_loading ? (
+                        <div data-testid="result-shimmer" style={{ marginTop: 8, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
+                            <div className="shimmer" style={{ height: 13, width: '70%' }} />
+                            <div className="shimmer" style={{ height: 13, width: '90%' }} />
+                            <div className="shimmer" style={{ height: 13, width: '50%' }} />
+                        </div>
                     ) : null
                 )}
             </div>
