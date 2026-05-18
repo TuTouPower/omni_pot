@@ -647,7 +647,7 @@ export default function TranslateWindow(): React.ReactElement {
                 )}
                 {!hideLanguage && !show_welcome_empty && <LanguageArea onSwap={handleSwapLanguages} />}
                 {show_welcome_empty && (
-                    <WelcomeEmpty onSkip={() => { setWelcomeDismissed(true); }} />
+                    <WelcomeEmpty onSkip={() => { setWelcomeDismissed(true); window.electronAPI.window.close().catch(console.error); }} />
                 )}
                 {!show_welcome_empty && (
                     <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />
