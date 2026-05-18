@@ -98,8 +98,8 @@ const api: Omit<ElectronAPI, 'ready'> = {
   },
   history: {
     add: (record) => ipcRenderer.invoke('history:add', record),
-    list: (page, pageSize) => ipcRenderer.invoke('history:list', page, pageSize),
-    count: () => ipcRenderer.invoke('history:count'),
+    list: (page, pageSize, filters) => ipcRenderer.invoke('history:list', page, pageSize, filters),
+    count: (filters) => ipcRenderer.invoke('history:count', filters),
     update: (id, sourceText, targetText) => ipcRenderer.invoke('history:update', id, sourceText, targetText),
     delete: (id) => ipcRenderer.invoke('history:delete', id),
     clear: () => ipcRenderer.invoke('history:clear')

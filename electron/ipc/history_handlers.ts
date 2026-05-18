@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import type { HistoryRecord } from '../history'
+import type { HistoryRecord, HistoryQueryFilters } from '../history'
 import {
     add_history,
     get_history_page,
@@ -27,12 +27,12 @@ export function registerHistoryHandlers(): void {
         add_history(record)
     })
 
-    ipcMain.handle('history:list', (_event, page: number, page_size: number) => {
-        return get_history_page(page, page_size)
+    ipcMain.handle('history:list', (_event, page: number, page_size: number, filters?: HistoryQueryFilters) => {
+        return get_history_page(page, page_size, filters)
     })
 
-    ipcMain.handle('history:count', () => {
-        return get_history_count()
+    ipcMain.handle('history:count', (_event, filters?: HistoryQueryFilters) => {
+        return get_history_count(filters)
     })
 
     ipcMain.handle('history:update', (_event, id: number, source_text: string, target_text: string) => {

@@ -44,15 +44,43 @@ export function add_history(record: Omit<HistoryRecord, 'id' | 'created_at'>): v
     ).run(record.service_key, record.source_text, record.source_lang, record.target_text, record.target_lang)
 }
 
-export function get_history_page(page: number, page_size: number): HistoryRecord[] {
-    const offset = (page - 1) * page_size
-    return get_db().prepare(
-        'SELECT * FROM history ORDER BY id DESC LIMIT ? OFFSET ?'
-    ).all(page_size, offset) as HistoryRecord[]
+export interface HistoryQueryFilters {
+    search?: string
+    service_key?: string
+    days?: number
 }
 
-export function get_history_count(): number {
-    const row = get_db().prepare('SELECT COUNT(*) as count FROM history').get() as { count: number }
+function build_where_clause(filters?: HistoryQueryFilters): { clause: string; params: unknown[] } {
+    const conditions: string[] = []
+    const params: unknown[] = []
+    if (filters?.search) {
+        conditions.push('(source_text LIKE ? OR target_text LIKE ?)')
+        const pattern = `%${filters.search}%`
+        params.push(pattern, pattern)
+    }
+    if (filters?.service_key) {
+        conditions.push('service_key = ?')
+        params.push(filters.service_key)
+    }
+    if (filters?.days && filters.days > 0) {
+        conditions.push("created_at >= datetime('now', 'localtime', ?)")
+        params.push(`-${filters.days} days`)
+    }
+    const clause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : ''
+    return { clause, params }
+}
+
+export function get_history_page(page: number, page_size: number, filters?: HistoryQueryFilters): HistoryRecord[] {
+    const offset = (page - 1) * page_size
+    const { clause, params } = build_where_clause(filters)
+    return get_db().prepare(
+        `SELECT * FROM history${clause} ORDER BY id DESC LIMIT ? OFFSET ?`
+    ).all(...params, page_size, offset) as HistoryRecord[]
+}
+
+export function get_history_count(filters?: HistoryQueryFilters): number {
+    const { clause, params } = build_where_clause(filters)
+    const row = get_db().prepare(`SELECT COUNT(*) as count FROM history${clause}`).get(...params) as { count: number }
     return row.count
 }
 
