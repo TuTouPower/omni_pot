@@ -49,7 +49,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
             <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
                 <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{service.name}</div>
                 <div data-testid="dict-definitions" className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
-                    {t('dict.definitions') || '释义'}
+                    {t('dict.definitions', { defaultValue: '释义' })}
                 </div>
                 <div className="stack" style={{ gap: 12 }}>
                     {result.definitions.map((def, i) => (
@@ -70,7 +70,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
                     ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                    <button className="ic-btn" data-testid="dict-copy-btn" title={copied ? (t('dict.copied') || '已复制') : (t('result.copy') || '复制')} onClick={handleCopy}>
+                    <button className="ic-btn" data-testid="dict-copy-btn" title={copied ? (t('dict.copied', { defaultValue: '已复制' })) : (t('result.copy', { defaultValue: '复制' }))} onClick={handleCopy}>
                         <Icons.Copy size={14} />
                     </button>
                 </div>
@@ -80,7 +80,7 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
             {result.examples.length > 0 && (
                 <div className="card" data-testid="dict-examples" style={{ padding: '12px 14px' }}>
                     <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
-                        {t('dict.examples') || '例句'}
+                        {t('dict.examples', { defaultValue: '例句' })}
                     </div>
                     <div className="stack" style={{ gap: 10 }}>
                         {result.examples.map((ex, i) => (
