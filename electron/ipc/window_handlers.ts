@@ -27,6 +27,15 @@ export function registerWindowHandlers(manager: WindowManager): void {
     const h = Math.max(min_h, max_h > 0 ? Math.min(max_h, Math.round(height)) : Math.round(height))
     win.setContentSize(w, h)
   })
+  ipcMain.handle('window:setContentHeight', (event, height: number) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    const current_w = win.getContentSize()[0] ?? win.getBounds().width
+    const [, min_h = 0] = win.getMinimumSize()
+    const [, max_h = 0] = win.getMaximumSize()
+    const h = Math.max(min_h, max_h > 0 ? Math.min(max_h, Math.round(height)) : Math.round(height))
+    win.setContentSize(current_w, h)
+  })
   ipcMain.handle('window:getLabel', (event): string => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return ''

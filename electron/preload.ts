@@ -9,6 +9,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
     maximize: () => ipcRenderer.invoke('window:maximize'),
     setAlwaysOnTop: (flag) => ipcRenderer.invoke('window:setAlwaysOnTop', flag),
     setContentSize: (width, height) => ipcRenderer.invoke('window:setContentSize', width, height),
+    setContentHeight: (height) => ipcRenderer.invoke('window:setContentHeight', height),
     getLabel: () => ipcRenderer.invoke('window:getLabel'),
     openConfig: (section) => ipcRenderer.invoke('window:openConfig', section),
     onConfigNavigate: (callback) => {

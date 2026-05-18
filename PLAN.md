@@ -30,7 +30,7 @@
 
 #### 欢迎页
 
-- [x] **窗口大小适配内容**：欢迎页 mount 时通过 `window:setContentSize` IPC 让主进程把翻译窗口高度调到内容高度
+- [x] **窗口大小适配内容**：欢迎页 mount 时通过 `window:setContentHeight` IPC 只调整翻译窗口内容高度，不改宽度
 - [x] **点"设置快捷键"后自动关闭**：调用 `window.close()`
 
 #### 语言名称

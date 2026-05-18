@@ -52,6 +52,21 @@ test.describe('@ui translate welcome empty state', () => {
         }
     })
 
+    test('empty welcome auto-fit uses height-only window resize', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+
+        try {
+            const translate = await omni.translate()
+            const page = translate.sourceInput().page()
+
+            await expect(page.getByTestId('welcome-empty')).toBeVisible()
+            await expect.poll(async () => page.evaluate(() => typeof window.electronAPI.window.setContentHeight),
+                { timeout: 2_000 }).toBe('function')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('incoming source hides welcome and clearing source shows it again', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn', dynamic_translate: false, translate_service_list: [] } })
 
