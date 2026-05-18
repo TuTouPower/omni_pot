@@ -12,7 +12,6 @@ export default function RecognizeSettings(): React.ReactElement {
     const [language, setLanguage] = useConfig('recognize_language')
     const [deleteNewline, setDeleteNewline] = useConfig('recognize_delete_newline')
     const [autoCopy, setAutoCopy] = useConfig('recognize_auto_copy')
-    const [closeOnBlur, setCloseOnBlur] = useConfig('recognize_close_on_blur')
     const [hideWindow, setHideWindow] = useConfig('recognize_hide_window')
     const allLangOpts = native_language_options(t, ALL_LANGUAGES)
 
@@ -27,9 +26,6 @@ export default function RecognizeSettings(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label={t('copy') || '自动复制结果'}>
                     <ConfigSwitch on={autoCopy} onChange={setAutoCopy} testId="cfg-recognize_auto_copy" />
-                </ConfigRow>
-                <ConfigRow label={t('translate_settings.close_on_blur') || '失焦时关闭'}>
-                    <ConfigSwitch on={closeOnBlur} onChange={setCloseOnBlur} testId="cfg-recognize_close_on_blur" />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.hide_source') || '识别后隐藏窗口'}>
                     <ConfigSwitch on={hideWindow} onChange={setHideWindow} testId="cfg-recognize_hide_window" />

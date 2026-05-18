@@ -41,10 +41,10 @@ test.describe('@ui translate pin/topmost split', () => {
     })
 
     test('unpinned window auto-closes on blur; pinned window stays open', async () => {
-        // Unpinned: default config has translate_close_on_blur=true, so opening
-        // config (focus loss) must hide the translate window.
+        // Unpinned: blur-close is now always-on, so opening config (focus loss)
+        // must hide the translate window.
         const omni_unpinned = await AppFixture.start({
-            config: { translate_close_on_blur: true, translate_always_on_top: false },
+            config: { translate_always_on_top: false },
         })
         try {
             await omni_unpinned.translate()
@@ -58,7 +58,7 @@ test.describe('@ui translate pin/topmost split', () => {
         // Pinned (固定): focus loss must NOT hide the translate window even
         // when always-on-top is off.
         const omni_pinned = await AppFixture.start({
-            config: { translate_close_on_blur: true, translate_always_on_top: false },
+            config: { translate_always_on_top: false },
         })
         try {
             const translate = await omni_pinned.translate()
@@ -73,7 +73,7 @@ test.describe('@ui translate pin/topmost split', () => {
 
     test('pin/topmost reset to default after closing and reopening the window', async () => {
         const omni = await AppFixture.start({
-            config: { translate_close_on_blur: false, translate_always_on_top: false },
+            config: { translate_always_on_top: false },
         })
         try {
             const translate = await omni.translate()

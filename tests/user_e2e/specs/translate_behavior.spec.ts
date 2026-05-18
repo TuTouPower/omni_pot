@@ -47,7 +47,6 @@ test.describe('@ui translate behavior settings', () => {
         const pinned_app = await AppFixture.start({
             config: no_service_config({
                 translate_always_on_top: true,
-                translate_close_on_blur: false,
             }),
         })
 
@@ -69,18 +68,19 @@ test.describe('@ui translate behavior settings', () => {
             await pinned_app.stop()
         }
 
-        const close_on_blur_app = await AppFixture.start({
-            config: no_service_config({ translate_close_on_blur: true }),
+        // Unpinned translate window auto-closes on blur (always-on behavior)
+        const blur_app = await AppFixture.start({
+            config: no_service_config({}),
         })
 
         try {
-            await expect((await close_on_blur_app.translate()).wordmark()).toBeVisible()
+            await expect((await blur_app.translate()).wordmark()).toBeVisible()
 
-            const close_config = await close_on_blur_app.openConfig()
+            const close_config = await blur_app.openConfig()
             await close_config.wordmark().click()
-            await expect.poll(async () => (await close_on_blur_app.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await blur_app.api.windowState('translate')).exists).toBe(false)
         } finally {
-            await close_on_blur_app.stop()
+            await blur_app.stop()
         }
     })
 
