@@ -8,9 +8,9 @@ export function get_translate_window_options(): WindowOptions {
         label: WindowLabel.TRANSLATE,
         width: remember_size ? (getConfig('translate_window_width') as number) : 430,
         height: remember_size ? (getConfig('translate_window_height') as number) : 360,
-        minWidth: 430,
+        minWidth: 280,
         minHeight: 320,
-        maxHeight: 400,
+        maxHeight: 960,
         alwaysOnTop: getConfig('translate_always_on_top') as boolean,
     }
 }

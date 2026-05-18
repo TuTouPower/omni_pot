@@ -102,6 +102,7 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
 
     const handle_open_hotkey = (): void => {
         window.electronAPI.window.openConfig('hotkey').catch(console.error)
+        window.electronAPI.window.close().catch(console.error)
     }
 
     return (

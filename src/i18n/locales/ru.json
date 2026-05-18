@@ -75,7 +75,7 @@
         "screenshot_translate": "Перевод скриншота",
         "screenshot_recognize": "Распознавание скриншота",
         "clipboard_translate": "Перевод из буфера обмена",
-        "selection_dictionary": "Словарь выделенного"
+        "selection_dictionary": "Словарь"
     },
     "service": {
         "title": "Сервисы",

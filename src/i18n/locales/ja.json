@@ -75,7 +75,7 @@
         "screenshot_translate": "スクリーンショットを翻訳",
         "screenshot_recognize": "スクリーンショットを認識",
         "clipboard_translate": "クリップボードから翻訳",
-        "selection_dictionary": "選択範囲の辞書"
+        "selection_dictionary": "辞書検索"
     },
     "service": {
         "title": "サービス",

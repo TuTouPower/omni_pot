@@ -250,10 +250,19 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     const playingActiveRef = useRef(false)
     const [playingKey, setPlayingKey] = useState<string | null>(null)
     const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
-    const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
+    const [manuallyCollapsedKeys, setManuallyCollapsedKeys] = useState<Set<string>>(new Set())
+
+    // Clear manual collapse state when a new translation starts so that
+    // arriving results auto-expand. (Cards default to collapsed when their
+    // key is not yet present in `results`.)
+    useEffect(() => {
+        if (isTranslating) {
+            setManuallyCollapsedKeys(new Set())
+        }
+    }, [isTranslating])
 
     const toggleCollapse = useCallback((key: string) => {
-        setCollapsedKeys((prev) => {
+        setManuallyCollapsedKeys((prev) => {
             const next = new Set(prev)
             if (next.has(key)) next.delete(key)
             else next.add(key)
@@ -411,7 +420,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                             instanceKey={instanceKey}
                             results={results}
                             isTranslating={isTranslating}
-                            collapsed={collapsedKeys.has(instanceKey)}
+                            collapsed={!(instanceKey in results) || manuallyCollapsedKeys.has(instanceKey)}
                             onToggleCollapse={toggleCollapse}
                             onRetry={onRetry}
                             onCopy={handleCopy}

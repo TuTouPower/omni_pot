@@ -156,6 +156,14 @@ export default function ServiceSettings(): React.ReactElement {
     const serviceList = useConfigStore((s) => s.config[activeTab])
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
 
+    const categoryCounts = {
+        translate_service_list: useConfigStore((s) => s.config.translate_service_list.length),
+        dictionary_service_list: useConfigStore((s) => s.config.dictionary_service_list.length),
+        recognize_service_list: useConfigStore((s) => s.config.recognize_service_list.length),
+        tts_service_list: useConfigStore((s) => s.config.tts_service_list.length),
+        collection_service_list: useConfigStore((s) => s.config.collection_service_list.length),
+    }
+
     const registry = getRegistryForCategory(activeTab)
     const availableServices = registry.getAll()
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -327,7 +335,7 @@ export default function ServiceSettings(): React.ReactElement {
                     >
                         {t(tab.labelKey) || tab.label}
                         <span className="mono" style={{ fontSize: 10, color: 'var(--text-mute)', marginLeft: 2 }}>
-                            {serviceList.length}
+                            {categoryCounts[tab.key]}
                         </span>
                     </button>
                 ))}

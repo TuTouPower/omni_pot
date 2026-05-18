@@ -12,7 +12,7 @@ export const LANGUAGE_NAMES: Record<LanguageCode, string> = {
   zh_cn: '简体中文',
   zh_tw: '繁體中文',
   yue: '粤语',
-  en: '英文',
+  en: 'English',
   ja: '日本語',
   ko: '한국어',
   fr: 'Français',
