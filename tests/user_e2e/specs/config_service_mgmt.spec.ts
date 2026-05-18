@@ -56,6 +56,37 @@ test.describe('@ui config service management', () => {
         }
     })
 
+    test('tab counts stay independent when switching categories', async () => {
+        // Regression guard: the service page tabs each used to render `{serviceList.length}`,
+        // which is the *currently selected* tab's list — switching tabs caused all
+        // counts to show the same number. Each tab must report its own enabled count
+        // regardless of which one is active.
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('service')
+
+            const expected_counts: Record<string, number> = {}
+            for (const [category, , service_names] of SERVICE_CATEGORIES) {
+                expected_counts[category] = service_names.length
+            }
+
+            // Visit each tab and record what every other tab reports.
+            for (const [active, ,] of SERVICE_CATEGORIES) {
+                await config.openServiceCategory(active)
+                for (const [other, ,] of SERVICE_CATEGORIES) {
+                    await expect(
+                        config.serviceTab(other),
+                        `tab ${other} should show ${String(expected_counts[other])} while ${active} is active`
+                    ).toContainText(String(expected_counts[other]))
+                }
+            }
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user adds and deletes a built-in translation service instance', async () => {
         const omni = await AppFixture.start({
             config: {

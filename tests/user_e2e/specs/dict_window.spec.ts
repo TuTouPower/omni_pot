@@ -85,12 +85,23 @@ test.describe('@ui dict window', () => {
             await expect(dict.sourceTags()).toHaveCount(3)
             await expect.poll(async () => await dict.definitions().count(), { timeout: 60_000 }).toBeGreaterThanOrEqual(3)
 
+            // Free Dictionary now aggregates all returned entries; "hello" must
+            // surface at least two distinct definitions in its own card.
+            const free_dict_card = dict['page'].locator('[data-result-key="free_dictionary@default"]')
+            await expect.poll(
+                async () => await free_dict_card.locator('[data-testid="dict-definition"]').count(),
+                { timeout: 30_000 },
+            ).toBeGreaterThanOrEqual(2)
+
             const chinese_result = await omni.api.triggerDict('谢谢')
             expect(chinese_result.success).toBe(true)
             await expect(dict.word()).toContainText('谢谢')
-            await dict.waitForCards(1, 10_000)
-            await expect(dict.sourceTags()).toHaveCount(1)
-            await expect(dict.sourceTags().first()).toContainText('中文词典')
+            // Both chinese_dictionary AND CC-CEDICT (ecdict) now serve zh queries.
+            await dict.waitForCards(2, 30_000)
+            await expect(dict.sourceTags()).toHaveCount(2)
+            const source_text = (await dict.sourceTags().allTextContents()).join(' ')
+            expect(source_text).toContain('中文词典')
+            expect(source_text).toContain('CC-CEDICT')
             await expect(dict.definitions().first()).toContainText('对别人表示感谢')
             const card_text = (await dict.dictCards().allTextContents()).join('\n')
             expect(card_text).not.toContain('hello')

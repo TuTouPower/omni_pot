@@ -12,6 +12,14 @@
 import { test, expect } from '../fixtures/test'
 
 test.describe('@ui translate entry merge', () => {
+    test('welcome page shows a single merged translate entry, not two separate ones', async ({ omni }) => {
+        const translate = await omni.translate()
+        const page = translate.sourceInput().page()
+        await expect(page.getByTestId('welcome-translate')).toBeVisible()
+        await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
+        await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
+    })
+
     test('hotkey with a selection performs selection-translate (source filled)', async ({ omni }) => {
         const translate = await omni.translate()
         const result = await omni.api.triggerHotkey('translate', 'merged selection text')

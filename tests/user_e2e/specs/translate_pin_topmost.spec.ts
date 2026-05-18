@@ -70,4 +70,30 @@ test.describe('@ui translate pin/topmost split', () => {
             await omni_pinned.stop()
         }
     })
+
+    test('pin/topmost reset to default after closing and reopening the window', async () => {
+        const omni = await AppFixture.start({
+            config: { translate_close_on_blur: false, translate_always_on_top: false },
+        })
+        try {
+            const translate = await omni.translate()
+            await translate.clickPin()
+            await expect.poll(async () => (await omni.api.windowState('translate')).alwaysOnTop,
+                { timeout: 3_000 }).toBe(true)
+
+            // Close the translate window through the titlebar close button.
+            await translate.clickClose()
+            await expect.poll(async () => (await omni.api.windowState('translate')).exists,
+                { timeout: 5_000 }).toBe(false)
+
+            // Reopen — both pin and topmost must be off again, regardless of the
+            // previous session's pin state.
+            const reopened = await omni.translate()
+            await expect(reopened.pinButton()).toHaveAttribute('aria-pressed', 'false')
+            const fresh_state = await omni.api.windowState('translate')
+            expect(fresh_state.alwaysOnTop).toBe(false)
+        } finally {
+            await omni.stop()
+        }
+    })
 })

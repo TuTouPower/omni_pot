@@ -1,50 +1,65 @@
-// Covers docs/issues.md "输入框动态行数限制":
-//   - <= 8 rows: source area grows with content (no scroll)
-//   - >  8 rows: textarea is capped at 8 rows and scrolls internally
+// Covers docs/issues.md "输入框固定 8 行 + 单滚动条":
+//   - The textarea is always rendered at ~8 lines of visible height regardless of
+//     content (default == max == 8 lines).
+//   - Long content scrolls inside the textarea, and ONLY the textarea — no
+//     duplicate scrollbar on the outer wrapper.
 //
-// We assert the rendered visible height of the textarea against the line-height
-// (22px per line in src/windows/translate/source_area.tsx), not the row attribute,
-// to catch silent regressions in CSS / wrapper max-height.
+// Line-height is 22px (src/windows/translate/source_area.tsx), so 8 lines ≈ 176px.
 
 import { test, expect } from '../fixtures/test'
 
 const LINE_HEIGHT_PX = 22
-const PADDING_TOLERANCE_PX = 6
+const TARGET_LINES = 8
+const HEIGHT_TOLERANCE_PX = 12
 
 test.describe('@ui translate input row cap', () => {
-    test('textarea grows with content up to 8 lines, then caps and scrolls', async ({ omni }) => {
+    test('textarea stays at 8 lines for short and long content, with single inner scrollbar', async ({ omni }) => {
         const translate = await omni.translate()
         await translate.ensureSourceVisible()
         const textarea = translate.sourceInput()
 
-        // 1) Single line: textarea height ~= 1 line.
+        // 1) Single line — textarea must still occupy ~8 lines (default == 8).
         await translate.typeSource('one line')
         const one_line_box = await textarea.boundingBox()
         if (!one_line_box) throw new Error('missing one-line textarea box')
-        expect(one_line_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX + PADDING_TOLERANCE_PX)
+        expect(one_line_box.height).toBeGreaterThanOrEqual(LINE_HEIGHT_PX * TARGET_LINES - HEIGHT_TOLERANCE_PX)
+        expect(one_line_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * TARGET_LINES + HEIGHT_TOLERANCE_PX)
 
-        // 2) Five lines: textarea grows roughly linearly.
-        await translate.typeSource(Array.from({ length: 5 }, (_, i) => `line ${String(i + 1)}`).join('\n'))
-        const five_line_box = await textarea.boundingBox()
-        if (!five_line_box) throw new Error('missing five-line textarea box')
-        expect(five_line_box.height).toBeGreaterThanOrEqual(LINE_HEIGHT_PX * 4)
-        expect(five_line_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * 6)
-
-        // 3) Twenty lines: textarea caps at 8 visible lines and becomes scrollable.
+        // 2) Twenty lines — height is still capped at ~8 lines, scroll is internal.
         await translate.typeSource(Array.from({ length: 20 }, (_, i) => `line ${String(i + 1)}`).join('\n'))
         const big_box = await textarea.boundingBox()
         if (!big_box) throw new Error('missing twenty-line textarea box')
-        expect(big_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * 8 + PADDING_TOLERANCE_PX * 2)
+        expect(big_box.height).toBeLessThanOrEqual(LINE_HEIGHT_PX * TARGET_LINES + HEIGHT_TOLERANCE_PX)
 
-        // Internal scroll must be enabled — scrollHeight should exceed clientHeight.
+        // The textarea itself must scroll, not its wrapper.
         const scroll_state = await textarea.evaluate((el) => {
             const t = el as HTMLTextAreaElement
-            return { scrollHeight: t.scrollHeight, clientHeight: t.clientHeight }
+            const style = window.getComputedStyle(t)
+            return {
+                scroll_h: t.scrollHeight,
+                client_h: t.clientHeight,
+                overflow_y: style.overflowY,
+            }
         })
-        expect(scroll_state.scrollHeight).toBeGreaterThan(scroll_state.clientHeight)
+        expect(scroll_state.scroll_h).toBeGreaterThan(scroll_state.client_h)
+        expect(scroll_state.overflow_y).toBe('auto')
 
-        // Action buttons must still be reachable (not pushed off-screen by the
-        // oversized textarea).
+        // No ancestor wrapper of the textarea (up to the action row) may itself scroll.
+        const ancestor_scroll = await textarea.evaluate((el) => {
+            const offenders: string[] = []
+            let node: HTMLElement | null = el.parentElement
+            while (node && !node.hasAttribute('data-testid')) {
+                const o = window.getComputedStyle(node).overflowY
+                if ((o === 'auto' || o === 'scroll') && node.scrollHeight > node.clientHeight) {
+                    offenders.push(node.tagName + (node.className ? `.${node.className.replace(/\s+/g, '.')}` : ''))
+                }
+                node = node.parentElement
+            }
+            return offenders
+        })
+        expect(ancestor_scroll, 'duplicate scrollbar on ancestor wrapper').toEqual([])
+
+        // Action buttons must still be reachable below the (large) textarea.
         await expect(translate.translateButton()).toBeVisible()
         await expect(translate.clearSourceButton()).toBeVisible()
     })
