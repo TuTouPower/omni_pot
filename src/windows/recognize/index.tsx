@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
 import { ocrServiceRegistry } from '../../services/registry'
-import { language_name } from '../../i18n/language_names'
+import { native_language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
 import { LANGUAGE_CODES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
@@ -322,7 +322,7 @@ export default function RecognizeWindow(): React.ReactElement {
     // Build language options
     const lang_options = LANGUAGE_CODES.map((code) => ({
         value: code,
-        label: language_name(t, code),
+        label: native_language_name(t, code),
     }))
 
     const effectiveService = selectedService && service_list.includes(selectedService) ? selectedService : service_list[0] || ''

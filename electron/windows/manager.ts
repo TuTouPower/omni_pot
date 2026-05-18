@@ -3,7 +3,7 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
-import { getConfig } from '../config/store'
+import { getConfig, setConfig } from '../config/store'
 import { log } from '../log'
 
 const log_wm = log.scope('wm')
@@ -143,6 +143,12 @@ export class WindowManager {
       this.transparentById.delete(win.id)
       this.readyLabels.delete(opts.label)
       this.pendingQueue.delete(opts.label)
+
+      // Reset per-window pin/topmost state so next open starts fresh
+      if (opts.label === WindowLabel.TRANSLATE) {
+        setConfig('translate_pinned', false)
+        setConfig('translate_always_on_top', false)
+      }
     })
 
     this.byLabel.set(opts.label, win)

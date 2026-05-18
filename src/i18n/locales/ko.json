@@ -75,7 +75,7 @@
         "screenshot_translate": "스크린샷 번역",
         "screenshot_recognize": "스크린샷 인식",
         "clipboard_translate": "클립보드 번역",
-        "selection_dictionary": "선택 영역 사전"
+        "selection_dictionary": "사전 검색"
     },
     "service": {
         "title": "서비스",

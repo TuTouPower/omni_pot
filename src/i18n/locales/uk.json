@@ -75,7 +75,7 @@
         "screenshot_translate": "Переклад зображення",
         "screenshot_recognize": "Розпізнавання зображення",
         "clipboard_translate": "Переклад з буфера обміну",
-        "selection_dictionary": "Словник виділеного"
+        "selection_dictionary": "Словник"
     },
     "service": {
         "title": "Сервіси",

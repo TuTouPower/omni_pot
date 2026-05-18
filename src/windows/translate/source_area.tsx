@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfig } from '../../hooks/use_config'
-import { language_name } from '../../i18n/language_names'
+import { native_language_name } from '../../i18n/language_names'
 
 interface SourceAreaProps {
     onTranslate: () => void
@@ -143,7 +143,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     return (
         <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '0 0 auto' }}>
             {/* Text area */}
-            <div style={{ maxHeight: 176, overflow: 'auto', padding: '12px 14px 4px' }}>
+            <div style={{ padding: '12px 14px 4px' }}>
                 <textarea
                     ref={textAreaRef}
                     value={sourceText}
@@ -163,13 +163,14 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                         outline: 'none',
                         resize: 'none',
                         fontFamily: 'inherit',
+                        maxHeight: 176,
                         overflowY: 'auto',
                     }}
                     rows={sourceRows}
                 />
             </div>
             {/* Action bar */}
-            <div data-testid="source-action-row" style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px 8px', minWidth: 390 }}>
+            <div data-testid="source-action-row" style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px 8px' }}>
                 {detectedLanguage && sourceLanguage === 'auto' && (
                     <button
                         type="button"
@@ -177,7 +178,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                         onClick={onDetectedLanguageClick}
                         style={{ fontSize: 10.5, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4, background: 'transparent', border: 0, cursor: onDetectedLanguageClick ? 'pointer' : 'default', whiteSpace: 'nowrap' }}
                     >
-                        {t('detected_language_prefix')} <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{language_name(t, detectedLanguage)}</span>
+                        {t('detected_language_prefix')} <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{native_language_name(t, detectedLanguage)}</span>
                     </button>
                 )}
                 <div style={{ flex: 1 }} />

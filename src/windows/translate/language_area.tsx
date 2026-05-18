@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useTranslateStore } from '../../stores/translate_store'
-import { language_name } from '../../i18n/language_names'
+import { native_language_name } from '../../i18n/language_names'
 import { LANGUAGE_CODES } from '@shared/types/language'
 import type { LanguageCode } from '@shared/types/language'
 
@@ -58,7 +58,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                     fontFamily: 'inherit',
                 }}
             >
-                {language_name(t, value)}
+                {native_language_name(t, value)}
                 <Icons.Chev size={12} style={{ color: 'var(--text-mute)', marginTop: 1 }} />
             </button>
             {open && menuRect && createPortal(
@@ -104,7 +104,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
                                 if (code !== value) e.currentTarget.style.background = 'transparent'
                             }}
                         >
-                            {language_name(t, code as LanguageCode)}
+                            {native_language_name(t, code as LanguageCode)}
                         </div>
                     ))}
                 </div>,

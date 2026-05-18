@@ -75,7 +75,7 @@
         "screenshot_translate": "Traduire la capture d'écran",
         "screenshot_recognize": "Reconnaître la capture d'écran",
         "clipboard_translate": "Traduire le presse-papiers",
-        "selection_dictionary": "Dictionnaire de la sélection"
+        "selection_dictionary": "Dictionnaire"
     },
     "service": {
         "title": "Services",
