@@ -44,6 +44,8 @@ const DEEPL_FREE_HEADERS: Record<string, string> = {
   'X-App-Version': '25.1'
 }
 
+const DEEPL_FREE_BASE_LANG_CODES = new Set(['PT-BR', 'PT-PT'])
+
 function get_i_count(text: string): number {
   return (text.match(/i/g) || []).length
 }
@@ -77,44 +79,37 @@ function get_lang_code(lang: LanguageCode): string {
   return upper
 }
 
+function get_free_lang_code(lang: LanguageCode): string {
+  if (lang === 'auto') return 'auto'
+
+  const code = get_lang_code(lang)
+  if (!DEEPL_FREE_BASE_LANG_CODES.has(code)) return code
+
+  return code.split('-')[0] ?? code
+}
+
 async function translate_free(
   text: string,
   from: LanguageCode,
   to: LanguageCode
 ): Promise<string> {
-  const source_lang = from === 'auto' ? 'auto' : get_lang_code(from)
-  const target_lang = get_lang_code(to)
+  const source_lang = get_free_lang_code(from)
+  const target_lang = get_free_lang_code(to)
 
   const i_count = get_i_count(text)
   const id = get_random_id()
 
   const post_data = {
     jsonrpc: '2.0',
-    method: 'LMT_handle_jobs',
+    method: 'LMT_handle_texts',
     id,
     params: {
-      commonJobParams: {
-        mode: 'translate',
-        formality: 'undefined',
-        transcribe_as: 'romanize',
-        advancedMode: false,
-        textType: 'plaintext',
-        wasSpoken: false
-      },
+      splitting: 'newlines',
       lang: {
-        source_lang_user_selected: 'auto',
-        target_lang: target_lang,
-        ...(source_lang !== 'auto' && { source_lang_computed: source_lang })
+        source_lang_user_selected: source_lang,
+        target_lang: target_lang
       },
-      jobs: [
-        {
-          kind: 'default',
-          preferred_num_beams: 4,
-          raw_en_context_before: [],
-          raw_en_context_after: [],
-          sentences: [{ prefix: '', text, id: 0 }]
-        }
-      ],
+      texts: [{ text, requestAlternatives: 3 }],
       timestamp: get_timestamp(i_count)
     }
   }
@@ -131,11 +126,7 @@ async function translate_free(
 
   const data = (await resp.json()) as {
     result?: {
-      translations?: Array<{
-        beams?: Array<{
-          sentences?: Array<{ text: string }>
-        }>
-      }>
+      texts?: Array<{ text: string }>
     }
     error?: { message: string }
   }
@@ -144,11 +135,11 @@ async function translate_free(
     throw new Error(`DeepL free API error: ${data.error.message}`)
   }
 
-  const translation = data.result?.translations?.[0]?.beams?.[0]?.sentences?.[0]?.text
+  const translation = data.result?.texts?.[0]?.text
   if (!translation) {
     throw new Error('DeepL free API: no translation returned')
   }
-  return translation
+  return translation.trim()
 }
 
 function getApiUrl(type: string, customUrl?: string): string {
