@@ -23,6 +23,7 @@
     "test:e2e:core": "npx playwright test --project=core",
     "test:e2e:ui": "npx playwright test --project=ui --pass-with-no-tests",
     "build:chinese-dict": "npx tsx scripts/build_chinese_dict.ts",
+    "build:cc-cedict": "npx tsx scripts/build_cc_cedict.ts",
     "start": "electron-vite preview"
   },
   "dependencies": {

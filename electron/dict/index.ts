@@ -1,6 +1,6 @@
 import { app } from 'electron'
 import { join } from 'path'
-import { existsSync, createReadStream } from 'fs'
+import { copyFileSync, existsSync, createReadStream } from 'fs'
 import { createGunzip } from 'zlib'
 import Database from 'better-sqlite3'
 import { getUserDataDir } from '../config/store'
@@ -10,11 +10,36 @@ const log_dict = log.scope('dict')
 
 let db: Database.Database | undefined
 
+function find_bundled_db(): string | null {
+    const candidates = [
+        join(process.resourcesPath, 'data', 'dict', 'cc_cedict.db'),
+        join(app.getAppPath(), 'resources', 'data', 'dict', 'cc_cedict.db'),
+        join(app.getAppPath(), '..', 'resources', 'data', 'dict', 'cc_cedict.db'),
+        join(process.cwd(), 'resources', 'data', 'dict', 'cc_cedict.db'),
+    ]
+    return candidates.find((path) => existsSync(path)) ?? null
+}
+
 function get_dict_db(): Database.Database {
     if (db) return db
 
     const dir = getUserDataDir()
     const db_path = join(dir, 'cc_cedict.db')
+
+    // If the user dir has no DB yet, prefer copying the pre-built one shipped with
+    // the app over rebuilding from the .gz at runtime. This makes first-launch
+    // queries succeed immediately instead of after a multi-second import.
+    if (!existsSync(db_path)) {
+        const bundled = find_bundled_db()
+        if (bundled) {
+            try {
+                copyFileSync(bundled, db_path)
+                log_dict.info('seeded user CC-CEDICT db from bundled copy: %s', bundled)
+            } catch (err) {
+                log_dict.warn('failed to seed bundled CC-CEDICT db: %s', err)
+            }
+        }
+    }
 
     db = new Database(db_path)
     db.pragma('journal_mode = WAL')

@@ -97,9 +97,13 @@ function DictResultCard({ instanceKey, result }: { instanceKey: string; result: 
 
 function service_supports_dictionary_query(service_key: string, source_language: LanguageCode): boolean {
     if (source_language === 'en') {
+        // English source → English dictionaries. CC-CEDICT also indexes English glosses,
+        // so it can find Chinese translations for English headwords.
         return ['free_dictionary', 'ecdict', 'cambridge_dict'].includes(service_key)
     }
-    return service_key === 'chinese_dictionary'
+    // Chinese (or auto-detected as zh) source → Chinese dictionaries. Both the local
+    // chinese-dictionary DB and CC-CEDICT have Chinese headwords.
+    return service_key === 'chinese_dictionary' || service_key === 'ecdict'
 }
 
 export default function DictWindow(): React.ReactElement {
