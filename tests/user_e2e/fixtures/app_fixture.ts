@@ -15,14 +15,17 @@ export class AppFixture {
     private userDataDir: string
     private e2eToken: string
     private cleanupUserDataDir: boolean
+    private init_script: string | undefined
+    private init_script_applied_to_first_window = false
 
-    private constructor(launched: LaunchedApp) {
+    private constructor(launched: LaunchedApp, init_script?: string) {
         this.app = launched.app
         this.httpPort = launched.httpPort
         this.userDataDir = launched.userDataDir
         this.e2eToken = launched.e2eToken
         this.cleanupUserDataDir = launched.cleanupUserDataDir
         this.api = new E2eApi(launched.httpPort, launched.e2eToken)
+        this.init_script = init_script
     }
 
     static async start(opts: {
@@ -30,9 +33,21 @@ export class AppFixture {
         firstRun?: boolean
         userDataDir?: string
         cleanupUserDataDir?: boolean
+        /**
+         * JavaScript source executed in every renderer before app code runs.
+         * Used by TTS tests to stub `window.speechSynthesis`. Applied via
+         * Playwright's `electronApp.context().addInitScript`; the first
+         * already-opened translate window is reloaded once so it also picks
+         * up the script.
+         */
+        init_script?: string
     } = {}): Promise<AppFixture> {
         const launched = await launchApp(opts)
-        return new AppFixture(launched)
+        const fixture = new AppFixture(launched, opts.init_script)
+        if (opts.init_script) {
+            await launched.app.context().addInitScript({ content: opts.init_script })
+        }
+        return fixture
     }
 
     async stop(options: { preserveUserData?: boolean } = {}): Promise<void> {
@@ -64,7 +79,15 @@ export class AppFixture {
     }
 
     async firstWindow(): Promise<Page> {
-        return this.waitForWindow(/#translate/)
+        const page = await this.waitForWindow(/#translate/)
+        if (this.init_script && !this.init_script_applied_to_first_window) {
+            // The first window was created during app startup, before
+            // addInitScript was registered on the context. Reload it once so
+            // the script runs in this window too.
+            await page.reload()
+            this.init_script_applied_to_first_window = true
+        }
+        return page
     }
 
     async waitForWindow(urlPattern: RegExp, timeout = 10_000): Promise<Page> {

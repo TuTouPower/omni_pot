@@ -1,0 +1,16 @@
+Hello,
+
+I’d like to request an escalation and manual review of this case.
+
+This is not a standard cancellation request. My ChatGPT Business workspace was suspended, which means I cannot access or use the service I paid for. I am requesting a refund or prorated refund for the period during which the Business workspace is unavailable.
+
+Please clarify the exact reason why the purchase is considered “not eligible” under the refund policy, and please escalate this to the appropriate Billing / Trust & Safety team for review.
+
+Case number: 08960691
+Plan: ChatGPT Business
+Issue: Business workspace suspended and service unavailable
+Request: Refund or prorated refund for the unusable subscription period
+
+If the suspension was applied in error, please also provide the steps to appeal or restore the workspace. If the workspace cannot be restored, please confirm that no further charges will occur and reconsider the refund request based on inability to access the paid Business service.
+
+Thank you.

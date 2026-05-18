@@ -90,12 +90,6 @@ test.describe('@ui translate source area', () => {
         })
 
         test('source TTS button is enabled with text and disabled when cleared', async ({ omni }) => {
-            // Detailed TTS playback assertions (aria-pressed transitions, language
-            // routing) previously relied on intercepting Edge/Lingva HTTP traffic.
-            // After the switch to system_tts (Web Speech API → OS engine) we no
-            // longer have a network round-trip to intercept; covering the press
-            // state would require a fixture-level window.speechSynthesis stub
-            // that does not exist yet. Tracked in PLAN.md.
             const translate = await omni.translate()
             await translate.typeSource('hello world')
             await expect(translate.sourceTtsButton()).toBeEnabled()
@@ -103,6 +97,120 @@ test.describe('@ui translate source area', () => {
 
             await translate.clickClearSource()
             await expect(translate.sourceTtsButton()).toBeDisabled()
+        })
+
+        test('user clicks source TTS and sees playback state', async () => {
+            test.setTimeout(120_000)
+
+            // system_tts uses the renderer Web Speech API. We stub it via
+            // init_script so the test deterministically controls when playback
+            // "ends" by holding back `onend` until cancel is invoked.
+            const omni = await AppFixture.start({
+                config: {
+                    app_language: 'zh_cn',
+                    tts_service_list: ['system_tts@default'],
+                    service_instances: {
+                        'system_tts@default': { serviceKey: 'system_tts', config: {} },
+                    },
+                },
+                init_script: `
+                    const fake_voice = { lang: 'zh-CN', name: 'Fake-zh', default: true, localService: true, voiceURI: 'fake' };
+                    window.__last_utterance = null;
+                    window.__keep_speaking = true;
+                    Object.defineProperty(window, 'speechSynthesis', {
+                        configurable: true,
+                        value: {
+                            speaking: false, paused: false, pending: false,
+                            getVoices: () => [fake_voice],
+                            speak: (u) => {
+                                window.__last_utterance = u;
+                                if (!window.__keep_speaking) setTimeout(() => u.onend && u.onend(new Event('end')), 30);
+                            },
+                            cancel: () => { const u = window.__last_utterance; if (u && u.onend) u.onend(new Event('end')) },
+                            addEventListener: () => {},
+                            removeEventListener: () => {},
+                        },
+                    });
+                `,
+            })
+
+            try {
+                const translate = await omni.translate()
+                const source_text = '你好世界。你好世界。你好世界。你好世界。'
+
+                await translate.typeSource(source_text)
+                await expect(translate.sourceTtsButton()).toBeEnabled()
+                await expect(translate.sourceTtsButton()).toHaveAttribute('aria-pressed', 'false')
+
+                await translate.clickSourceTts()
+                await expect(translate.sourceTtsButton()).toHaveAttribute('aria-pressed', 'true', { timeout: 10_000 })
+                await expect(translate.sourceTtsButton()).toHaveAttribute('title', '取消朗读')
+                await expect(translate.sourceInput()).toHaveValue(source_text)
+
+                await translate.clickSourceTts()
+                await expect(translate.sourceTtsButton()).toHaveAttribute('aria-pressed', 'false')
+
+                await translate.clickSourceTts()
+                await expect(translate.sourceTtsButton()).toHaveAttribute('aria-pressed', 'true', { timeout: 10_000 })
+                await translate.clickClearSource()
+                await expect(translate.sourceInput()).toHaveValue('')
+                await expect(translate.sourceTtsButton()).toHaveAttribute('aria-pressed', 'false')
+                await expect(translate.sourceTtsButton()).toBeDisabled()
+            } finally {
+                await omni.stop()
+            }
+        })
+
+        test('source TTS uses the current text language, not the previously detected one', async () => {
+            const omni = await AppFixture.start({
+                config: {
+                    dynamic_translate: false,
+                    translate_service_list: [],
+                    translate_detect_engine: 'local',
+                    tts_service_list: ['system_tts@default'],
+                    service_instances: {
+                        'system_tts@default': { serviceKey: 'system_tts', config: {} },
+                    },
+                },
+                init_script: `
+                    const voices = [
+                        { lang: 'en-US', name: 'Fake-en', default: false, localService: true, voiceURI: 'fake_en' },
+                        { lang: 'zh-CN', name: 'Fake-zh', default: false, localService: true, voiceURI: 'fake_zh' },
+                    ];
+                    window.__spoken_langs = [];
+                    Object.defineProperty(window, 'speechSynthesis', {
+                        configurable: true,
+                        value: {
+                            speaking: false, paused: false, pending: false,
+                            getVoices: () => voices,
+                            speak: (u) => { window.__spoken_langs.push(u.lang); setTimeout(() => u.onend && u.onend(new Event('end')), 30) },
+                            cancel: () => {},
+                            addEventListener: () => {},
+                            removeEventListener: () => {},
+                        },
+                    });
+                `,
+            })
+
+            try {
+                const translate = await omni.translate()
+
+                await translate.typeSource('hello world')
+                await translate.clickTranslate()
+                await expect(translate.detectedLanguage()).toBeVisible()
+
+                await translate.typeSource('你好世界')
+                await translate.clickSourceTts()
+
+                await expect.poll(
+                    async () => translate.sourceInput().page().evaluate(
+                        () => (window as unknown as { __spoken_langs: string[] }).__spoken_langs.at(-1),
+                    ),
+                    { timeout: 10_000 },
+                ).toBe('zh-CN')
+            } finally {
+                await omni.stop()
+            }
         })
 
         test('user clicks translate and sees a real result body', async ({ omni }) => {
