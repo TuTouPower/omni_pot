@@ -27,6 +27,16 @@ const recognize_disable_config = {
     },
 }
 
+const qrcode_config = {
+    app_language: 'zh_cn',
+    recognize_service_list: ['qrcode@default'],
+    service_instances: {
+        'qrcode@default': { serviceKey: 'qrcode', config: {} },
+    },
+}
+
+const qrcode_image = 'iVBORw0KGgoAAAANSUhEUgAAASIAAAEiCAIAAADS3EjhAAAEgUlEQVR4nO3dSW7DMBAAQSvI/7+s/IAIoHS4qOqexZYbc/CAvO77/gClr/S3AzKD/2CaQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQe77M8l1XZ+z3Pc95b0a/93uZ3d0Z89ozDSDnMwgJzPIyQxyMoOczCAnM8jJDHIyg3O3QNb8tn5s1lbEmrsantHvmWaQkxnkZAY5mUFOZpCTGeRkBjmZQU5m8NYtkLFu72HWZsOTEzt2fEXnbZ+MmWaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkNtyC2RHa97qsuNGxY5MM8jJDHIyg5zMICczyMkMcjKDnMwgJzPI2QLZ3qwbYfg90wxyMoOczCAnM8jJDHIyg5zMICczyMkMcltugex4gsWO//MTb3u9Y6YZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGbx1C+S88y26m1me3AjzxHnPqGOaQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUHucmbDCmZtVHj6/8M0g5zMICczyMkMcjKDnMwgJzPIyQxyMoNzzwJ5svfQ7S502xg7nvZx3vOdxTSDnMwgJzPIyQxyMoOczCAnM8jJDHIyg7eeBTJrG6O7t2XWzsSaOyJjT97nWU9wzDSDnMwgJzPIyQxyMoOczCAnM8jJDHIyg9yBWyBr7mqsuckx6+lfx72iMdMMcjKDnMwgJzPIyQxyMoOczCAnM8jJDN66BdLpzoqYdZ5Ht0HilJG/YppBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQe77s6Ru72HWzsTYrHtbZt2Pcy151kvHNIOczCAnM8jJDHIyg5zMICczyMkMcjKD3OvOApll1m5Kp9sCuY/7TJpmkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZnDuWSBrbjbsuBWx4zt5v2yDxDSDnMwgJzPIyQxyMoOczCAnM5AZ7M80g7feCLPmd/ndvsWse2q6V7Tme3VP+lyZZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmbw1i2QNTcMut+85nkes/YtrmzrZRbTDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyW26BnKfbEVnzbIzzTvsYM80gJzPIyQxyMoOczCAnM8jJDHIyg5zMIGcLZHtrbpB0Pzu25o6IaQY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGuS23QNY872HNW0523NU47+mbZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmbw1i2QJ1sCO1pzV2Ns1t+9ljztY8w0g5zMICczyMkMcjKDnMwgJzPIyQxyMoPctea35nAS0wxyMoOczCAnM8jJDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyMoOczCAnM8jJDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyMoOczCAnM8jJDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyMoOczOBT+wFmUwFSAjkJ1wAAAABJRU5ErkJggg=='
+
 async function sample_ocr_image(page: Page): Promise<string> {
     return page.evaluate(() => {
         const canvas = document.createElement('canvas')
@@ -162,6 +172,20 @@ test.describe('@ui recognize window', () => {
             await expect(recognize.engineSelect()).toContainText('Baidu Accurate OCR')
             await recognize.clickReRecognize()
             await expect(recognize.text()).toHaveValue('启用服务结果')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user reruns OCR with local QR Code engine', async () => {
+        const omni = await AppFixture.start({ config: qrcode_config })
+
+        try {
+            const recognize = await open_recognize_with_image(omni, qrcode_image, '')
+            await expect(recognize.engineSelect()).toContainText('QR Code')
+
+            await recognize.clickReRecognize()
+            await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
         } finally {
             await omni.stop()
         }
