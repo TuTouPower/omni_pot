@@ -106,6 +106,14 @@ export function initConfigStore(): void {
         data.app_primary_color = DEFAULT_CONFIG.app_primary_color
         saveToDisk()
     }
+
+    if (!data.hotkey_translate) {
+        const legacy = (data.hotkey_selection_translate as string) || (data.hotkey_input_translate as string)
+        if (legacy) {
+            data.hotkey_translate = legacy
+            saveToDisk()
+        }
+    }
 }
 
 export function isFirstRun(): boolean {

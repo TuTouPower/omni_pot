@@ -2,6 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
+import { format_hotkey } from '../../utils/format_hotkey'
 
 type HintIcon = 'translate' | 'type' | 'camera' | 'image'
 
@@ -15,14 +16,9 @@ interface HintItem {
     test_id: string
 }
 
-function render_hotkey(value: string): string[] {
-    if (!value) return []
-    return value.split('+').map((seg) => seg.trim()).filter(Boolean)
-}
-
 function HintRow({ item }: { item: HintItem }): React.ReactElement {
     const { t } = useTranslation()
-    const keys = render_hotkey(item.hotkey_value)
+    const keys = format_hotkey(item.hotkey_value)
     const IconComp = item.icon === 'translate' ? Icons.Translate
         : item.icon === 'type' ? Icons.Type
         : item.icon === 'camera' ? Icons.Camera
@@ -56,21 +52,18 @@ interface WelcomeEmptyProps {
 
 export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.ReactElement {
     const { t } = useTranslation()
-    const hotkey_selection_translate = useConfigStore((s) => s.config.hotkey_selection_translate)
-    const hotkey_input_translate = useConfigStore((s) => s.config.hotkey_input_translate)
+    const hotkey_translate = useConfigStore((s) => s.config.hotkey_translate)
     const hotkey_ocr_recognize = useConfigStore((s) => s.config.hotkey_ocr_recognize)
     const hotkey_ocr_translate = useConfigStore((s) => s.config.hotkey_ocr_translate)
 
     const items: HintItem[] = [
         {
             icon: 'translate',
-            title_key: 'welcome.selection_translate',
+            title_key: 'welcome.translate',
             title_fallback: '翻译',
-            sub_key: 'welcome.selection_translate_sub',
-            sub_fallback: '已选中文本则直接翻译，否则呼出窗口手动输入',
-            // Both legacy hotkeys now trigger the unified entry; prefer the explicit "selection" one but
-            // fall back to "input" so users who only set one of them still see a hotkey here.
-            hotkey_value: hotkey_selection_translate || hotkey_input_translate,
+            sub_key: 'welcome.translate_sub',
+            sub_fallback: '选中文本自动翻译，未选中则打开输入窗口',
+            hotkey_value: hotkey_translate,
             test_id: 'welcome-translate',
         },
         {

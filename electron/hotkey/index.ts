@@ -38,10 +38,9 @@ const DICT_OPTS = {
 export function buildHotkeyAction(name: string, mgr: WindowManager): () => void {
   switch (name) {
     case 'translate':
+    case 'hotkey_translate':
     case 'hotkey_selection_translate':
     case 'hotkey_input_translate':
-      // Spec: one unified translate hotkey — if there is selected text, translate it; otherwise open the
-      // input window. Both legacy hotkey keys map to this same behavior.
       return () => { triggerTranslateEntry(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_recognize':
       return () => { start_screenshot_capture(mgr, 'recognize').catch((err: unknown) => { log_hotkey.error(err) }) }
@@ -142,8 +141,7 @@ export function unregisterAll(): void {
 }
 
 const HOTKEY_KEYS: ConfigKey[] = [
-  'hotkey_selection_translate',
-  'hotkey_input_translate',
+  'hotkey_translate',
   'hotkey_ocr_recognize',
   'hotkey_ocr_translate',
   'hotkey_selection_dictionary'
