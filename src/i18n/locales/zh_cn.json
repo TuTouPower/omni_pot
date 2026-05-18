@@ -133,11 +133,7 @@
         "font_family": "文字",
         "font_default": "系统默认",
         "transparent": "透明背景",
-        "transparent_sub": "毛玻璃效果，部分平台可能影响性能",
-        "proxy": "代理",
-        "proxy_enable": "启用代理（需重启）",
-        "proxy_host": "主机",
-        "proxy_port": "端口"
+        "transparent_sub": "毛玻璃效果，部分平台可能影响性能"
     },
     "translate_settings": {
         "title": "翻译",
@@ -157,7 +153,6 @@
         "delete_newline": "自动去除换行",
         "incremental_translate": "增量翻译",
         "incremental_translate_sub": "新选取的文本追加到现有源文本而非替换",
-        "close_on_blur": "失焦时关闭",
         "always_on_top": "始终置顶",
         "hide_source": "隐藏源文本",
         "hide_language": "隐藏语言选择",

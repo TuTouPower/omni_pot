@@ -6,9 +6,8 @@ describe('Config defaults', () => {
     it('has all required keys', () => {
         const required_keys: (keyof AppConfig)[] = [
             'app_language', 'app_theme', 'app_primary_color', 'server_port',
-            'proxy_enable', 'proxy_host', 'proxy_port',
             'translate_source_language', 'translate_target_language',
-            'hotkey_selection_translate', 'hotkey_input_translate',
+            'hotkey_translate',
             'translate_service_list', 'dictionary_service_list', 'recognize_service_list', 'tts_service_list',
             'collection_service_list', 'service_instances',
             'backup_type', 'webdav_url'

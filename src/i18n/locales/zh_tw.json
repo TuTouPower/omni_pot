@@ -42,11 +42,7 @@
         "font_size": "字型大小",
         "font_family": "文字",
         "font_default": "系統預設",
-        "transparent": "透明背景",
-        "proxy": "代理",
-        "proxy_enable": "啟用代理（需重啟）",
-        "proxy_host": "主機",
-        "proxy_port": "連接埠"
+        "transparent": "透明背景"
     },
     "translate_settings": {
         "title": "翻譯",
@@ -61,7 +57,6 @@
         "auto_copy_both": "都複製",
         "delete_newline": "輸入時刪除換行",
         "incremental_translate": "增量翻譯",
-        "close_on_blur": "失焦關閉",
         "always_on_top": "永遠置頂",
         "hide_source": "隱藏來源文字",
         "hide_language": "隱藏語言選擇器",

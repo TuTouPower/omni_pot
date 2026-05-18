@@ -51,11 +51,7 @@ export default function GeneralPage(): React.ReactElement {
     const [transparent, setTransparent] = useConfig('transparent')
     const [checkUpdate, setCheckUpdate] = useConfig('check_update')
     const [serverPort, setServerPort] = useConfig('server_port')
-    const [proxyEnable, setProxyEnable] = useConfig('proxy_enable')
-    const [proxyHost, setProxyHost] = useConfig('proxy_host')
-    const [proxyPort, setProxyPort] = useConfig('proxy_port')
     const [autoStart, setAutoStart] = useConfig('auto_start')
-    const themeOptions = THEME_VALUES.map((value) => ({ value, label: t(`general.theme_${value}`) }))
     const languageOptions = LANGUAGE_VALUES.map((value) => ({ value, label: t(`general.app_language_${value}`) }))
     const fontOptions = FONT_OPTIONS.map((option) => option.value === 'default'
         ? { ...option, label: t('general.font_default') }
@@ -80,25 +76,51 @@ export default function GeneralPage(): React.ReactElement {
                     />
                 </ConfigRow>
                 <ConfigRow label={t('general.server_port', { defaultValue: '本地 API 端口' })} sub={t('general.server_port_sub')}>
-                    <ConfigField
-                        mono
-                        defaultValue={String(serverPort)}
-                        onChange={(v) => { setServerPort(Number(v)); }}
-                        testId="cfg-server_port"
-                        style={{ width: 140 }}
-                    />
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <ConfigField
+                            mono
+                            defaultValue={String(serverPort)}
+                            onChange={(v) => { setServerPort(Number(v)); }}
+                            testId="cfg-server_port"
+                            style={{ width: 140 }}
+                        />
+                        <a
+                            href="https://github.com/TuTouPower/omni_pot/blob/main/docs/external_api.md"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="API 文档"
+                            style={{ color: 'var(--text-mute)', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}
+                        >?</a>
+                    </div>
                 </ConfigRow>
             </ConfigCard>
 
             <ConfigCard title={t('general.appearance', { defaultValue: '外观' })}>
                 <ConfigRow label={t('general.theme', { defaultValue: '主题' })}>
-                    <ConfigSelect
-                        value={appTheme}
-                        onChange={setAppTheme}
-                        options={themeOptions}
-                        testId="cfg-app_theme"
-                        style={{ minWidth: 160 }}
-                    />
+                    <div style={{ display: 'flex', gap: 0, background: 'var(--bg-card)', border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden' }}>
+                        {THEME_VALUES.map((value) => (
+                            <button
+                                key={value}
+                                type="button"
+                                data-testid={`cfg-app_theme-${value}`}
+                                onClick={() => { setAppTheme(value); }}
+                                style={{
+                                    padding: '5px 14px',
+                                    fontSize: 12,
+                                    fontWeight: appTheme === value ? 600 : 400,
+                                    background: appTheme === value ? 'var(--bg-elev)' : 'transparent',
+                                    color: appTheme === value ? 'var(--text)' : 'var(--text-dim)',
+                                    border: 'none',
+                                    borderRight: value !== 'dark' ? '1px solid var(--line)' : 'none',
+                                    cursor: 'pointer',
+                                    fontFamily: 'inherit',
+                                    transition: 'background .12s, color .12s',
+                                }}
+                            >
+                                {t(`general.theme_${value}`)}
+                            </button>
+                        ))}
+                    </div>
                 </ConfigRow>
                 <ConfigRow label={t('general.primary_color', { defaultValue: '主色' })}>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -122,7 +144,7 @@ export default function GeneralPage(): React.ReactElement {
                         ))}
                     </div>
                 </ConfigRow>
-                <ConfigRow label={t('general.font_family', { defaultValue: '字体' })}>
+                <ConfigRow label={t('general.font_family', { defaultValue: '文字' })}>
                     <div style={{ display: 'flex', gap: 6 }}>
                         <ConfigSelect
                             value={appFont}
@@ -140,41 +162,9 @@ export default function GeneralPage(): React.ReactElement {
                         />
                     </div>
                 </ConfigRow>
-                <div
-                    className="card"
-                    style={{
-                        padding: 10,
-                        fontFamily: appFont === 'default' ? undefined : (appFont),
-                        fontSize,
-                        color: 'var(--text-dim)',
-                    }}
-                >
-                    {t('preview')}: Hello World 你好世界 こんにちは 안녕하세요
-                </div>
                 <ConfigRow label={t('general.transparent', { defaultValue: '透明背景' })} sub={t('general.transparent_sub')}>
                     <ConfigSwitch on={transparent} onChange={setTransparent} testId="cfg-transparent" />
                 </ConfigRow>
-            </ConfigCard>
-
-            <ConfigCard title={t('general.proxy', { defaultValue: '网络代理' })}>
-                <ConfigRow label={t('general.proxy_enable', { defaultValue: '启用代理' })}>
-                    <ConfigSwitch on={proxyEnable} onChange={setProxyEnable} testId="cfg-proxy_enable" />
-                </ConfigRow>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 8, opacity: proxyEnable ? 1 : 0.5 }}>
-                    <ConfigField
-                        placeholder="http://127.0.0.1"
-                        defaultValue={proxyHost}
-                        onChange={setProxyHost}
-                        testId="cfg-proxy_host"
-                    />
-                    <ConfigField
-                        mono
-                        placeholder={t('general.proxy_port')}
-                        defaultValue={proxyPort}
-                        onChange={setProxyPort}
-                        testId="cfg-proxy_port"
-                    />
-                </div>
             </ConfigCard>
         </div>
     )
