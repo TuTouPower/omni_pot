@@ -215,9 +215,9 @@ fig 3.2 — eventual consistency`}
       </div>
 
       {/* Row 3 — action bar
-         Recognize:  复制图片 | 系统 OCR | 重新识别 | 自动检测 | (spacer) | 翻译 | 去除换行 | 去除空格 | 复制文本 | 导出
-         Translate:  复制图片 | 系统 OCR | 重新识别 | 自动检测 | swap | 简体中文 | 重新翻译 | (spacer) | 去除换行 | 去除空格 | 复制文本 | 导出
-         All language pickers use the SAME pill style as 重新识别 / 重新翻译
+         Recognize:  复制图片 | 系统 OCR | 自动检测 | (spacer) | 翻译 | 去除换行 | 去除空格 | 复制文本 | 导出
+         Translate:  复制图片 | 系统 OCR | 自动检测 | swap | 简体中文 | (spacer) | 去除换行 | 去除空格 | 复制文本 | 导出
+         All language pickers use a unified pill style
          (background + 1px border) — no transparent dropdowns here. */}
       <div style={{
         display:'flex', alignItems:'center', gap: 6,
@@ -226,7 +226,6 @@ fig 3.2 — eventual consistency`}
       }}>
         <button className="ic-btn" title="复制图片"><Icons.Image size={16}/></button>
         <PillSelect value="system" options={OCR_ENGINES} leading={<SvcTile name="system" />} />
-        <PillButton icon={<Icons.Cycle size={14}/>} label="重新识别" />
         <PillSelect value="auto" options={OCR_LANGS} />
         {translate && (
           <>
@@ -241,7 +240,6 @@ fig 3.2 — eventual consistency`}
               { value:'de',    label:'Deutsch' },
               { value:'es',    label:'Español' },
             ]} />
-            <PillButton icon={<Icons.Cycle size={14}/>} label="重新翻译" />
           </>
         )}
 

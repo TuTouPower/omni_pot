@@ -64,11 +64,52 @@ const PrimaryPicker = () => {
   );
 };
 
+const FONT_OPTIONS = [
+  { value:'default', label:'系统默认', stack:'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
+  { value:'geist',   label:'Geist',     stack:'"Geist", system-ui, sans-serif' },
+  { value:'inter',   label:'Inter',     stack:'"Inter", system-ui, sans-serif' },
+  { value:'sf',      label:'SF Pro',    stack:'-apple-system, "SF Pro Text", system-ui, sans-serif' },
+  { value:'noto',    label:'Noto Sans CJK', stack:'"Noto Sans CJK SC", "Noto Sans SC", system-ui, sans-serif' },
+];
+
+const ThemeSeg = ({ value, onChange }) => {
+  const opts = [
+    { v:'auto',  l:'跟随系统' },
+    { v:'light', l:'浅色' },
+    { v:'dark',  l:'深色' },
+  ];
+  return (
+    <div style={{ display:'flex', gap: 4, padding: 3, background:'var(--bg-card)', borderRadius: 8, border:'1px solid var(--line-soft)' }}>
+      {opts.map(o => {
+        const active = value === o.v;
+        return (
+          <button key={o.v} onClick={()=>onChange && onChange(o.v)}
+            style={{
+              height: 26, padding: '0 14px', display:'flex', alignItems:'center', gap: 6,
+              borderRadius: 6, cursor:'pointer',
+              background: active ? 'var(--bg-elev)' : 'transparent',
+              border: '1px solid '+(active ? 'var(--line)' : 'transparent'),
+              boxShadow: active ? '0 1px 2px rgba(0,0,0,0.04)' : 'none',
+              color: active ? 'var(--text)' : 'var(--text-dim)',
+              fontSize: 12.5, fontWeight: active ? 500 : 400,
+            }}>
+            {o.l}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 const PageGeneral = () => {
   const [autostart, setAutostart] = useStateC(true);
   const [check, setCheck] = useStateC(true);
   const [transparent, setTransparent] = useStateC(true);
   const [proxy, setProxy] = useStateC(false);
+  const [theme, setTheme] = useStateC('auto');
+  const [fontFamily, setFontFamily] = useStateC('default');
+  const [fontSize, setFontSize] = useStateC('13');
+  const fontMeta = FONT_OPTIONS.find(f => f.value === fontFamily) || FONT_OPTIONS[0];
   return (
     <div className="stack gap-12">
       <Card title="应用">
@@ -77,19 +118,50 @@ const PageGeneral = () => {
         <Row label="界面语言">
           <Select value="zh_CN" options={[{value:'zh_CN',label:'简体中文'},{value:'zh_TW',label:'繁體中文'},{value:'en',label:'English'},{value:'ja_JP',label:'日本語'},{value:'ko_KR',label:'한국어'},{value:'fr_FR',label:'Français'},{value:'de_DE',label:'Deutsch'}]} style={{minWidth:160}}/>
         </Row>
-        <Row label="本地 API 端口" sub="供外部脚本调用，修改后需重启">
+        <div className="row" style={{ minHeight: 36 }}>
+          <div className="label">
+            <span style={{ display:'inline-flex', alignItems:'center', gap: 6 }}>
+              本地 API 端口
+              <a href="https://omnipot.example.com/docs/api" target="_blank" rel="noopener" title="查看 API 文档"
+                style={{
+                  width: 14, height: 14, borderRadius: 99,
+                  display:'inline-flex', alignItems:'center', justifyContent:'center',
+                  border: '1px solid var(--line)',
+                  color: 'var(--text-mute)',
+                  background: 'transparent',
+                  fontSize: 9.5, fontWeight: 600, lineHeight: 1,
+                  fontFamily: 'var(--font-mono)',
+                  cursor: 'pointer', textDecoration:'none',
+                  transition: 'color .12s, border-color .12s',
+                  flex: '0 0 14px',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color='var(--brand-primary)'; e.currentTarget.style.borderColor='var(--brand-primary)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color='var(--text-mute)'; e.currentTarget.style.borderColor='var(--line)'; }}>
+                ?
+              </a>
+            </span>
+            <span className="sub">供外部脚本调用，修改后需重启</span>
+          </div>
           <div className="field" style={{ width: 140 }}><input className="mono" defaultValue="20202" /></div>
-        </Row>
+        </div>
       </Card>
 
       <Card title="外观">
         <Row label="主题">
-          <Select value="auto" options={[{value:'auto',label:'跟随系统'},{value:'light',label:'浅色'},{value:'dark',label:'深色'}]} style={{minWidth:160}}/>
+          <ThemeSeg value={theme} onChange={setTheme}/>
         </Row>
         <Row label="文字">
           <div style={{ display:'flex', gap: 6 }}>
-            <Select value="default" options={[{value:'default',label:'字体：系统默认'},{value:'geist',label:'字体：Geist'},{value:'inter',label:'字体：Inter'},{value:'sf',label:'字体：SF Pro'},{value:'noto',label:'字体：Noto Sans CJK'}]} style={{minWidth:170}}/>
-            <Select value="13" options={[{value:'12',label:'字号：12px'},{value:'13',label:'字号：13px'},{value:'14',label:'字号：14px'},{value:'15',label:'字号：15px'},{value:'16',label:'字号：16px'}]} style={{minWidth:130}}/>
+            <Select
+              value={fontFamily}
+              onChange={setFontFamily}
+              options={FONT_OPTIONS.map(f => ({ value: f.value, label: f.label }))}
+              style={{minWidth:180}}/>
+            <Select
+              value={fontSize}
+              onChange={setFontSize}
+              options={[{value:'12',label:'12 px'},{value:'13',label:'13 px'},{value:'14',label:'14 px'},{value:'15',label:'15 px'},{value:'16',label:'16 px'}]}
+              style={{minWidth:110}}/>
           </div>
         </Row>
         <Row label="主色调" sub="应用于按钮、链接与高亮等强调元素"><PrimaryPicker/></Row>
@@ -315,6 +387,7 @@ const PageService = () => {
 };
 
 const PageHistory = () => {
+  const [enabled, setEnabled] = useStateC(true);
   const rows = [
     { svc:'deepl', src:'reconcile', from:'en', to:'zh_cn', dst:'调和；使一致', t:'2 分钟前' },
     { svc:'openai', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
@@ -327,13 +400,28 @@ const PageHistory = () => {
   return (
     <div className="stack gap-12">
       <div style={{ display:'flex', gap: 8, alignItems:'center' }}>
-        <div className="field" style={{ flex:1 }}>
-          <Icons.Search size={13} style={{ color:'var(--text-mute)' }}/>
-          <input placeholder="搜索源文本或译文…"/>
+        <div style={{
+          display:'flex', alignItems:'center', gap: 8,
+          height: 32, padding: '0 10px',
+          background:'var(--bg-card)',
+          border:'1px solid var(--line-soft)',
+          borderRadius: 'var(--r-md)',
+          flex: '0 0 auto',
+        }} title="关闭后不再写入新记录">
+          <span style={{ fontSize: 12.5, color: enabled ? 'var(--text)' : 'var(--text-dim)', fontWeight: 500 }}>启用</span>
+          <Switch on={enabled} onChange={setEnabled}/>
         </div>
-        <Select value="all" options={[{value:'all',label:'全部服务'},{value:'deepl',label:'DeepL'}]} style={{minWidth:120}}/>
-        <Select value="month" options={[{value:'today',label:'今天'},{value:'week',label:'本周'},{value:'month',label:'本月'}]} style={{minWidth:100}}/>
-        <button className="btn sm danger"><Icons.Trash size={12}/>清空</button>
+        <div className="field" style={{ flex:1, minWidth: 0, opacity: enabled ? 1 : 0.5 }}>
+          <Icons.Search size={13} style={{ color:'var(--text-mute)' }}/>
+          <input placeholder="搜索…" disabled={!enabled}/>
+        </div>
+        <div style={{ opacity: enabled ? 1 : 0.5, pointerEvents: enabled ? 'auto' : 'none', flex:'0 0 auto' }}>
+          <Select value="all" options={[{value:'all',label:'全部服务'},{value:'deepl',label:'DeepL'}]} style={{minWidth:110}}/>
+        </div>
+        <div style={{ opacity: enabled ? 1 : 0.5, pointerEvents: enabled ? 'auto' : 'none', flex:'0 0 auto' }}>
+          <Select value="month" options={[{value:'today',label:'今天'},{value:'week',label:'本周'},{value:'month',label:'本月'}]} style={{minWidth:90}}/>
+        </div>
+        <button className="btn sm danger" disabled={!enabled} style={{ opacity: enabled ? 1 : 0.5, flex:'0 0 auto' }}><Icons.Trash size={12}/>清空</button>
       </div>
       <div className="card" style={{ padding: 0 }}>
         <div style={{ display:'grid', gridTemplateColumns:'32px 1fr 80px 1fr 100px', alignItems:'center', padding:'10px 14px', borderBottom:'1px solid var(--line-soft)', background:'var(--bg-card)', fontSize: 11, color:'var(--text-mute)', fontFamily:'var(--font-mono)', textTransform:'uppercase', letterSpacing:'.05em' }}>
