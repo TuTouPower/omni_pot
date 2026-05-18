@@ -16,4 +16,4 @@ data/
 resources/data/dict/chinese_dict.db
 *.db-shm
 *.db-wal
-github_repo/
+github_repo/1.txt
