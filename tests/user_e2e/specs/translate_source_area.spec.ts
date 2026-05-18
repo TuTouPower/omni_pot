@@ -7,12 +7,13 @@ test.describe('@ui translate source area', () => {
         await translate.dismissWelcome()
 
         await expect(translate.sourceInput()).toHaveAttribute('rows', '1')
+        const initial_height = await translate.sourceInput().evaluate((el) => (el as HTMLTextAreaElement).clientHeight)
         await expect(translate.clearSourceButton()).toBeDisabled()
         await expect(translate.sourceTtsButton()).toBeDisabled()
 
         await translate.typeSource('hello\nworld')
         await expect(translate.sourceInput()).toHaveValue('hello\nworld')
-        await expect(translate.sourceInput()).toHaveAttribute('rows', '2')
+        await expect.poll(async () => await translate.sourceInput().evaluate((el) => (el as HTMLTextAreaElement).clientHeight)).toBeGreaterThan(initial_height)
         await expect(translate.clearSourceButton()).toBeEnabled()
         await expect(translate.sourceTtsButton()).toBeEnabled()
 
@@ -26,6 +27,26 @@ test.describe('@ui translate source area', () => {
         await expect(translate.sourceInput()).toHaveValue('')
         await expect(translate.clearSourceButton()).toBeDisabled()
         await expect(translate.sourceTtsButton()).toBeDisabled()
+    })
+
+    test('source input caps growth at eight lines and scrolls internally', async ({ omni }) => {
+        const translate = await omni.translate()
+        await translate.dismissWelcome()
+
+        await translate.typeSource(Array.from({ length: 12 }, (_, i) => `line ${(i + 1).toString()}`).join('\n'))
+
+        const metrics = await translate.sourceInput().evaluate((el) => {
+            const textarea = el as HTMLTextAreaElement
+            const style = getComputedStyle(textarea)
+            return {
+                client_height: textarea.clientHeight,
+                scroll_height: textarea.scrollHeight,
+                max_height: Number.parseFloat(style.maxHeight),
+            }
+        })
+
+        expect(metrics.client_height).toBeLessThanOrEqual(metrics.max_height + 1)
+        expect(metrics.scroll_height).toBeGreaterThan(metrics.client_height)
     })
 
     test('IME composition enter does not submit translation', async () => {

@@ -29,30 +29,19 @@ test.describe('@ui translate welcome empty state', () => {
             await expect(page.getByTestId('welcome-translate')).toBeVisible()
             await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
             await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
-            await expect(page.getByTestId('welcome-ocr-recognize')).toContainText('OCR 识别')
-            await expect(page.getByTestId('welcome-ocr-translate')).toContainText('OCR 翻译')
+            await expect(page.getByTestId('welcome-ocr-recognize')).toContainText('文字识别')
+            await expect(page.getByTestId('welcome-ocr-translate')).toContainText('截图翻译')
 
             const translate_kbd = page.getByTestId('welcome-translate').locator('kbd')
             await expect(translate_kbd).toHaveCount(3)
             await expect(translate_kbd.first()).toContainText('CommandOrControl')
             await expect(translate_kbd.last()).toContainText('T')
-
-            // Window height auto-fits the welcome content — no scrollbar should appear.
-            const overflow_state = await welcome.evaluate((node) => {
-                const scrollable = node.closest('.op-window') ?? document.body
-                return {
-                    scroll_h: scrollable.scrollHeight,
-                    client_h: scrollable.clientHeight,
-                }
-            })
-            // Allow 4px slack for sub-pixel rounding between CSS layout and OS chrome.
-            expect(overflow_state.scroll_h - overflow_state.client_h).toBeLessThanOrEqual(4)
         } finally {
             await omni.stop()
         }
     })
 
-    test('empty welcome auto-fit uses height-only window resize', async () => {
+    test('empty welcome does not resize the host window after startup', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
 
         try {
@@ -60,8 +49,11 @@ test.describe('@ui translate welcome empty state', () => {
             const page = translate.sourceInput().page()
 
             await expect(page.getByTestId('welcome-empty')).toBeVisible()
-            await expect.poll(async () => page.evaluate(() => typeof window.electronAPI.window.setContentHeight),
-                { timeout: 2_000 }).toBe('function')
+            const initial_bounds = (await omni.api.windowState('translate')).bounds
+            if (!initial_bounds) throw new Error('missing translate bounds')
+            await page.waitForTimeout(500)
+            const final_bounds = (await omni.api.windowState('translate')).bounds
+            expect(final_bounds).toEqual(initial_bounds)
         } finally {
             await omni.stop()
         }

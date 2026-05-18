@@ -95,8 +95,8 @@ test.describe('@ui updater and tray', () => {
             await expect_window_visible(omni, 'tray')
             const tray_page = await omni.waitForWindow(/#tray/)
             await expect(tray_page.getByTestId('tray-popover')).toBeVisible()
-            await expect(tray_page.getByTestId('tray-action-input_translate')).toContainText('输入翻译')
-            await expect(tray_page.getByTestId('tray-action-ocr_recognize')).toContainText('OCR 识别')
+            await expect(tray_page.getByTestId('tray-action-input_translate')).toContainText('翻译')
+            await expect(tray_page.getByTestId('tray-action-ocr_recognize')).toContainText('文字识别')
             await expect(tray_page.getByTestId('tray-action-clipboard_monitor')).toContainText('剪贴板监听')
             await expect(tray_page.getByTestId('tray-popover')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
         } finally {

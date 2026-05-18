@@ -87,7 +87,7 @@ test.describe('@ui recognize window', () => {
             await expect(recognize.text()).toHaveValue('Line one\nLine two with spaces')
 
             await recognize.clickEngineSelect()
-            await expect(recognize.engineOption('system@default')).toContainText('System OCR')
+            await expect(recognize.engineOption('system@default')).toContainText('系统文字识别')
             await expect(recognize.engineOption('tesseract@default')).toContainText('Tesseract')
             await recognize.engineOption('tesseract@default').click()
             await expect(recognize.engineSelect()).toContainText('Tesseract')
@@ -95,7 +95,7 @@ test.describe('@ui recognize window', () => {
             await recognize.clickLanguageSelect()
             await expect(recognize.languageOption('auto')).toContainText('自动检测')
             await recognize.languageOption('en').click()
-            await expect(recognize.languageSelect()).toContainText('英文')
+            await expect(recognize.languageSelect()).toContainText('English')
             await expect(recognize.reRecognizeButton()).toContainText('重新识别')
 
             await recognize.setText('Line one\nLine two with spaces')
@@ -160,7 +160,7 @@ test.describe('@ui recognize window', () => {
 
             await recognize.clickEngineSelect()
             await recognize.engineOption('baidu_ocr@disabled').click()
-            await expect(recognize.engineSelect()).toContainText('Baidu OCR')
+            await expect(recognize.engineSelect()).toContainText('百度文字识别')
 
             const config = await omni.openConfig()
             await config.openSection('service')
@@ -169,7 +169,7 @@ test.describe('@ui recognize window', () => {
             await expect(config.serviceToggle('baidu_ocr@disabled')).toHaveAttribute('aria-checked', 'false')
             await config.clickClose()
 
-            await expect(recognize.engineSelect()).toContainText('Baidu Accurate OCR')
+            await expect(recognize.engineSelect()).toContainText('百度高精度')
             await recognize.clickReRecognize()
             await expect(recognize.text()).toHaveValue('启用服务结果')
         } finally {
@@ -182,7 +182,7 @@ test.describe('@ui recognize window', () => {
 
         try {
             const recognize = await open_recognize_with_image(omni, qrcode_image, '')
-            await expect(recognize.engineSelect()).toContainText('QR Code')
+            await expect(recognize.engineSelect()).toContainText('二维码')
 
             await recognize.clickReRecognize()
             await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
@@ -228,7 +228,7 @@ test.describe('@ui recognize window', () => {
             await recognize.setText('')
             await recognize.clickEngineSelect()
             await recognize.engineOption('system@default').click()
-            await expect(recognize.engineSelect()).toContainText('System OCR')
+            await expect(recognize.engineSelect()).toContainText('系统文字识别')
 
             await recognize.clickEngineSelect()
             await recognize.engineOption('tesseract@default').click()

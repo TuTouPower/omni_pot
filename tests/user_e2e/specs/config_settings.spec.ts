@@ -32,9 +32,8 @@ test.describe('@ui config settings window', () => {
             await expect(config.wordmark()).toContainText('Omni Pot')
             await expect.poll(async () => await config.hasHorizontalOverflow()).toBe(false)
             await expect.poll(async () => await config.appRegion('config-titlebar')).toBe('drag')
-            await expect.poll(async () => await config.appRegion('config-pin')).toBe('no-drag')
             await expect.poll(async () => await config.appRegion('config-close')).toBe('no-drag')
-            await expect(config.pinButton()).toBeVisible()
+            await expect(config.pinButton()).toHaveCount(0)
             await expect(config.version()).toContainText(/^v\d+\.\d+\.\d+$/)
             await expect(config.navItems()).toHaveCount(8)
 
@@ -43,9 +42,6 @@ test.describe('@ui config settings window', () => {
                 await expect(config.title()).toContainText(title)
                 await expect(config.nav(key)).toHaveAttribute('aria-current', 'page')
             }
-
-            await config.clickPin()
-            await expect.poll(async () => (await omni.api.windowState('config')).alwaysOnTop).toBe(true)
 
             await config.clickClose()
             await expect.poll(async () => (await omni.api.windowState('config')).visible).toBe(false)
