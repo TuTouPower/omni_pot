@@ -1,4 +1,5 @@
 import { Tray, Menu, nativeImage, app, screen, shell } from 'electron'
+import type { Rectangle } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { WindowLabel } from '../windows/types'
@@ -90,50 +91,57 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), Math.max(min, max))
 }
 
+function get_tray_popup_bounds(width: number, height: number): Rectangle | null {
+  if (!tray) return null
+  const tray_bounds = tray.getBounds()
+  const display = screen.getDisplayNearestPoint({
+    x: Math.round(tray_bounds.x + tray_bounds.width / 2),
+    y: Math.round(tray_bounds.y + tray_bounds.height / 2)
+  })
+  const work_area = display.workArea
+  const safe_width = Math.min(Math.max(1, Math.ceil(width)), work_area.width)
+  const safe_height = Math.min(Math.max(1, Math.ceil(height)), work_area.height)
+  const gap = 6
+  const below_y = tray_bounds.y + tray_bounds.height + gap
+  const above_y = tray_bounds.y - safe_height - gap
+  const fits_below = below_y + safe_height <= work_area.y + work_area.height
+  const preferred_y = fits_below ? below_y : above_y
+
+  return {
+    x: Math.round(clamp(tray_bounds.x + tray_bounds.width - safe_width, work_area.x, work_area.x + work_area.width - safe_width)),
+    y: Math.round(clamp(preferred_y, work_area.y, work_area.y + work_area.height - safe_height)),
+    width: safe_width,
+    height: safe_height
+  }
+}
+
 export function show_tray_popup(): boolean {
   if (!tray || !windowManager) return false
   const popup = windowManager.focusOrCreate(WindowLabel.TRAY, {
     label: WindowLabel.TRAY,
-    width: 260,
-    height: 460,
-    minWidth: 260,
-    minHeight: 460,
+    width: 220,
+    height: 320,
+    minWidth: 1,
+    minHeight: 1,
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     transparent: false,
     show: false
   })
-  const tray_bounds = tray.getBounds()
-  const current_bounds = popup.isDestroyed() ? null : popup.getBounds()
-  const bounds = current_bounds ?? { width: 260, height: 318 }
-  const display = screen.getDisplayNearestPoint({
-    x: Math.round(tray_bounds.x + tray_bounds.width / 2),
-    y: Math.round(tray_bounds.y + tray_bounds.height / 2)
-  })
-  const work_area = display.workArea
-  const gap = 6
-  const below_y = tray_bounds.y + tray_bounds.height + gap
-  const above_y = tray_bounds.y - bounds.height - gap
-  const fits_below = below_y + bounds.height <= work_area.y + work_area.height
-  const preferred_y = fits_below ? below_y : above_y
-
-  popup.setBounds({
-    x: Math.round(clamp(tray_bounds.x + tray_bounds.width - bounds.width, work_area.x, work_area.x + work_area.width - bounds.width)),
-    y: Math.round(clamp(preferred_y, work_area.y, work_area.y + work_area.height - bounds.height)),
-    width: bounds.width,
-    height: bounds.height
-  })
-  if (popup.isVisible()) {
-    popup.focus()
-  } else {
-    popup.once('ready-to-show', () => {
-      if (popup.isDestroyed()) return
-      popup.show()
-      popup.focus()
-    })
-  }
+  if (popup.isVisible()) popup.focus()
   return true
+}
+
+export function show_tray_popup_when_ready(width: number, height: number): void {
+  if (!Number.isFinite(width) || !Number.isFinite(height)) return
+  const popup = windowManager?.getWindow(WindowLabel.TRAY)
+  if (!popup || popup.isDestroyed()) return
+  const bounds = get_tray_popup_bounds(width, height)
+  if (!bounds) return
+  popup.setBounds(bounds)
+  popup.show()
+  popup.focus()
 }
 
 export function close_tray_popup(): void {

@@ -41,8 +41,15 @@ test.describe('@ui translate welcome empty state', () => {
         }
     })
 
-    test('empty welcome does not resize the host window after startup', async () => {
-        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+    test('empty welcome fits height without changing window width', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                app_language: 'zh_cn',
+                translate_remember_window_size: true,
+                translate_window_width: 300,
+                translate_window_height: 360,
+            },
+        })
 
         try {
             const translate = await omni.translate()
@@ -51,9 +58,16 @@ test.describe('@ui translate welcome empty state', () => {
             await expect(page.getByTestId('welcome-empty')).toBeVisible()
             const initial_bounds = (await omni.api.windowState('translate')).bounds
             if (!initial_bounds) throw new Error('missing translate bounds')
-            await page.waitForTimeout(500)
-            const final_bounds = (await omni.api.windowState('translate')).bounds
-            expect(final_bounds).toEqual(initial_bounds)
+            expect(initial_bounds.width).toBeLessThan(430)
+            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.width).toBe(initial_bounds.width)
+
+            const metrics = await page.getByTestId('welcome-empty').evaluate((el) => {
+                const window_height = window.innerHeight
+                const rect = el.getBoundingClientRect()
+                return { window_height, content_bottom: Math.ceil(rect.bottom) }
+            })
+            expect(metrics.window_height).toBeGreaterThanOrEqual(metrics.content_bottom)
+            expect(metrics.window_height - metrics.content_bottom).toBeLessThanOrEqual(80)
         } finally {
             await omni.stop()
         }

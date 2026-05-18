@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
 
 type TrayAction = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
@@ -16,14 +16,36 @@ const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
 ]
 
 export default function TrayWindow(): React.ReactElement {
-    const [labels, setLabels] = useState<string[]>([])
+    const root_ref = useRef<HTMLDivElement>(null)
+    const [labels, setLabels] = useState<string[] | null>(null)
+    const [shortcuts, setShortcuts] = useState<Record<string, string>>({})
     const [clipboardMonitoring, setClipboardMonitoring] = useState(false)
 
     useEffect(() => {
-        window.electronAPI.tray.labels().then(setLabels).catch(() => undefined)
-        window.electronAPI.tray.clipboardMonitoring().then(setClipboardMonitoring).catch(() => undefined)
-        window.electronAPI.ready('tray')
+        Promise.all([
+            window.electronAPI.tray.labels(),
+            window.electronAPI.tray.clipboardMonitoring(),
+            window.electronAPI.config.getAll(),
+        ]).then(([next_labels, monitoring, config]) => {
+            setLabels(next_labels)
+            setClipboardMonitoring(monitoring)
+            setShortcuts({
+                input_translate: config.hotkey_selection_translate || config.hotkey_input_translate,
+                ocr_recognize: config.hotkey_ocr_recognize,
+                screenshot_translate: config.hotkey_ocr_translate,
+            })
+        }).catch(() => undefined)
     }, [])
+
+    useLayoutEffect(() => {
+        const root = root_ref.current
+        if (!root || labels === null) return
+        const width = root.scrollWidth
+        const height = root.scrollHeight
+        window.electronAPI.tray.popupReady(width, height).then(() => {
+            window.electronAPI.ready('tray')
+        }).catch(() => undefined)
+    }, [labels, shortcuts, clipboardMonitoring])
 
     const run_action = (action: TrayAction): void => {
         window.electronAPI.tray.action(action).then(() => {
@@ -34,9 +56,13 @@ export default function TrayWindow(): React.ReactElement {
         }).catch(() => undefined)
     }
 
+    if (labels === null) {
+        return <div ref={root_ref} data-testid="tray-popover" />
+    }
+
     return (
-        <div className="op-window" data-testid="tray-popover" style={{ width: '100%', height: '100%', background: 'var(--bg)', padding: 10, boxSizing: 'border-box' }}>
-            <div className="card" style={{ height: '100%', padding: 8, borderRadius: 14, boxShadow: '0 10px 34px rgba(17, 24, 39, 0.14)', display: 'flex', flexDirection: 'column', gap: 4, background: 'var(--bg-elev)' }}>
+        <div ref={root_ref} className="op-window" data-testid="tray-popover" style={{ width: 'max-content', height: 'max-content', background: 'var(--bg)', padding: 10, boxSizing: 'border-box' }}>
+            <div className="card" style={{ width: 'max-content', padding: 8, borderRadius: 14, boxShadow: '0 10px 34px rgba(17, 24, 39, 0.14)', display: 'flex', flexDirection: 'column', gap: 4, background: 'var(--bg-elev)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px 10px' }}>
                     <div style={{ width: 24, height: 24, borderRadius: 8, background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)', display: 'grid', placeItems: 'center', fontWeight: 700 }}>O</div>
                     <div style={{ fontWeight: 700, color: 'var(--text)' }}>Omni Pot</div>
@@ -57,6 +83,8 @@ export default function TrayWindow(): React.ReactElement {
                                     background: active ? 'var(--brand-primary-soft)' : 'transparent',
                                     color: active ? 'var(--brand-primary)' : 'var(--text)',
                                     minHeight: 34,
+                                    width: '100%',
+                                    minWidth: 0,
                                     padding: '0 10px',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -73,8 +101,9 @@ export default function TrayWindow(): React.ReactElement {
                                 }}
                             >
                                 <Icon size={15} />
-                                <span style={{ flex: 1 }}>{labels[index] ?? action}</span>
-                                {active && <span className="chip" style={{ fontSize: 10 }}>ON</span>}
+                                <span style={{ flex: 1, whiteSpace: 'nowrap' }}>{labels[index] ?? action}</span>
+                                {shortcuts[action] && <span className="hint mono" style={{ fontSize: 11, whiteSpace: 'nowrap', marginLeft: 14 }}>{shortcuts[action]}</span>}
+                                {active && <span className="chip" style={{ fontSize: 10, marginLeft: 14 }}>ON</span>}
                             </button>
                         </React.Fragment>
                     )

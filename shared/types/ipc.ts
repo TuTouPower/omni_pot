@@ -108,6 +108,7 @@ export interface ElectronAPI {
     action(action: string): Promise<boolean>
     labels(): Promise<string[]>
     clipboardMonitoring(): Promise<boolean>
+    popupReady(width: number, height: number): Promise<void>
   }
   detect: {
     local(text: string): Promise<{ lang: LanguageCode; source: 'cld3' | 'regex' }>

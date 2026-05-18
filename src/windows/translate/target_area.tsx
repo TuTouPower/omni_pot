@@ -138,7 +138,10 @@ function SortableCard({
                     <SvcTile name={serviceKey} />
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{svcLabel(serviceKey)}</div>
                     {is_loading && (
-                        <span className="dots" aria-label="翻译中" title="翻译中…"><span /><span /><span /></span>
+                        <span className="dots" data-testid="result-loading" aria-label="翻译中" title="翻译中…">
+                            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>翻译中…</span>
+                            <span /><span /><span />
+                        </span>
                     )}
                     <div style={{ flex: 1 }} />
                     {result === null && onRetry && (
@@ -183,16 +186,10 @@ function SortableCard({
                 </div>
 
                 {/* Content */}
-                {(is_loading || !collapsed) && (
+                {!collapsed && (
                     result === null ? (
                         <div data-testid="result-error" data-result-error style={{ marginTop: 8, marginLeft: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed') || '翻译失败'}</span>
-                        </div>
-                    ) : is_loading ? (
-                        <div data-testid="result-loading" style={{ marginTop: 8, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>翻译中…</span>
-                            <div className="shimmer" style={{ height: 8, width: '90%' }} />
-                            <div className="shimmer" style={{ height: 8, width: '65%' }} />
                         </div>
                     ) : result !== undefined ? (
                         <div data-testid="result-body" data-result-content style={{ marginTop: 8, marginLeft: 22, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
