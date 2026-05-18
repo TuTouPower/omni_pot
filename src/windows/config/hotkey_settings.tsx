@@ -107,17 +107,17 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
                             </React.Fragment>
                         ))
                     ) : (
-                        <span className="hint">{capturing ? (t('ui.press_shortcut') || '按下组合键…') : (t('ui.not_set') || '未设置')}</span>
+                        <span className="hint">{capturing ? t('ui.press_shortcut', { defaultValue: '按下组合键…' }) : t('ui.not_set', { defaultValue: '未设置' })}</span>
                     )}
                 </div>
                 {!capturing ? (
                     <button className="btn sm" data-testid={`cfg-${configKey}-bind`} onClick={() => { setCapturing(true); setTempValue(''); setStatus('') }}>
-                        {currentValue ? <><Icons.Check size={12} /> {t('ui.set') || '已绑定'}</> : (t('ui.set') || '绑定')}
+                        {currentValue ? <><Icons.Check size={12} /> {t('ui.unbind', { defaultValue: '解绑' })}</> : t('ui.set', { defaultValue: '绑定' })}
                     </button>
                 ) : (
                     <>
-                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={() => { handleConfirm().catch(console.error); }}>{t('ui.ok') || '确认'}</button>
-                        <button className="btn sm ghost" data-testid={`cfg-${configKey}-cancel`} onClick={handleCancel}>{t('ui.cancel') || '取消'}</button>
+                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={() => { handleConfirm().catch(console.error); }}>{t('ui.ok', { defaultValue: '确认' })}</button>
+                        <button className="btn sm ghost" data-testid={`cfg-${configKey}-cancel`} onClick={handleCancel}>{t('ui.cancel', { defaultValue: '取消' })}</button>
                     </>
                 )}
                 {status && <span className="hint" data-testid={`cfg-${configKey}-status`}>{status}</span>}
@@ -130,24 +130,24 @@ export default function HotkeySettings(): React.ReactElement {
     const { t } = useTranslation()
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('hotkey.title') || '全局快捷键'} hint="按下组合键以录入 · Backspace 清除">
+            <ConfigCard title={t('hotkey.title', { defaultValue: '快捷键' })} hint="按下组合键以录入 · Backspace 清除">
                 <HotkeyField
-                    label={t('hotkey.translate') || '翻译'}
+                    label={t('hotkey.translate', { defaultValue: '翻译' })}
                     sub="选中文本则直接翻译，无选中则打开输入窗口"
                     configKey="hotkey_translate"
                 />
                 <HotkeyField
-                    label={t('hotkey.screenshot_recognize') || '文字识别'}
+                    label={t('hotkey.screenshot_recognize', { defaultValue: '文字识别' })}
                     sub="截图后将文字提取到识别窗口"
                     configKey="hotkey_ocr_recognize"
                 />
                 <HotkeyField
-                    label={t('hotkey.screenshot_translate') || '截图翻译'}
+                    label={t('hotkey.screenshot_translate', { defaultValue: '截图翻译' })}
                     sub="截图、识别并自动翻译"
                     configKey="hotkey_ocr_translate"
                 />
                 <HotkeyField
-                    label={t('hotkey.selection_dictionary') || '划词词典'}
+                    label={t('hotkey.selection_dictionary', { defaultValue: '划词词典' })}
                     sub="选中文本后按下快捷键查词典"
                     configKey="hotkey_selection_dictionary"
                 />

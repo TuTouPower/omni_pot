@@ -17,17 +17,17 @@ export default function RecognizeSettings(): React.ReactElement {
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('recognize.title') || '识别'}>
-                <ConfigRow label={t('recognize.language') || '默认识别语言'}>
+            <ConfigCard title={t('recognize.title', { defaultValue: '识别' })}>
+                <ConfigRow label={t('recognize.language', { defaultValue: '默认识别语言' })}>
                     <ConfigSelect value={language} onChange={setLanguage} options={allLangOpts} testId="cfg-recognize_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('recognize.delete_newline') || '自动去除换行'}>
+                <ConfigRow label={t('recognize.delete_newline', { defaultValue: '自动去除换行' })}>
                     <ConfigSwitch on={deleteNewline} onChange={setDeleteNewline} testId="cfg-recognize_delete_newline" />
                 </ConfigRow>
-                <ConfigRow label={t('copy') || '自动复制结果'}>
+                <ConfigRow label={t('copy', { defaultValue: '自动复制结果' })}>
                     <ConfigSwitch on={autoCopy} onChange={setAutoCopy} testId="cfg-recognize_auto_copy" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.hide_source') || '识别后隐藏窗口'}>
+                <ConfigRow label={t('translate_settings.hide_source', { defaultValue: '识别后隐藏窗口' })}>
                     <ConfigSwitch on={hideWindow} onChange={setHideWindow} testId="cfg-recognize_hide_window" />
                 </ConfigRow>
             </ConfigCard>

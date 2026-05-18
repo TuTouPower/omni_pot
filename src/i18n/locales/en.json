@@ -229,11 +229,15 @@
         "definitions": "Definitions",
         "copied": "Copied"
     },
+    "config": {
+        "title": "Settings"
+    },
     "ui": {
         "cancel": "Cancel",
         "save": "Save",
         "delete": "Delete",
-        "set": "Set",
+        "set": "Bind",
+        "unbind": "Unbind",
         "ok": "OK",
         "prev": "Prev",
         "next": "Next",

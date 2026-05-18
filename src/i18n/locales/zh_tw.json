@@ -40,7 +40,7 @@
         "theme_light": "淺色",
         "theme_dark": "深色",
         "font_size": "字型大小",
-        "font_family": "字型",
+        "font_family": "文字",
         "font_default": "系統預設",
         "transparent": "透明背景",
         "proxy": "代理",
@@ -110,11 +110,15 @@
         "lookup_failed": "查詢失敗",
         "examples": "例句"
     },
+    "config": {
+        "title": "設定"
+    },
     "ui": {
         "cancel": "取消",
         "save": "儲存",
         "delete": "刪除",
-        "set": "設定",
+        "set": "綁定",
+        "unbind": "解綁",
         "ok": "確定",
         "prev": "上一頁",
         "next": "下一頁",

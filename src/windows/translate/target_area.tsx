@@ -145,14 +145,14 @@ function SortableCard({
                     )}
                     <div style={{ flex: 1 }} />
                     {result === null && onRetry && (
-                        <button data-testid="result-retry" className="ic-btn" title={t('result.retry') || '重试'} onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
+                        <button data-testid="result-retry" className="ic-btn" title={t('result.retry', { defaultValue: '重试' })} onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
                             <Icons.Cycle size={14} />
                         </button>
                     )}
                     <button
                         data-testid="result-tts"
                         className={'ic-btn' + (is_playing ? ' brand' : '')}
-                        title={is_playing ? (t('tts_stop') || '停止朗读') : (t('result.tts') || '朗读')}
+                        title={is_playing ? t('tts_stop', { defaultValue: '停止朗读' }) : t('result.tts', { defaultValue: '朗读' })}
                         aria-pressed={is_playing}
                         disabled={!ttsAvailable || !result_text}
                         style={is_playing ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
@@ -162,7 +162,7 @@ function SortableCard({
                     >
                         <Icons.Volume size={16} fill={is_playing} />
                     </button>
-                    <button data-testid="result-copy" className="ic-btn" title={t('result.copy') || '复制'} disabled={!result_text} onClick={() => {
+                    <button data-testid="result-copy" className="ic-btn" title={t('result.copy', { defaultValue: '复制' })} disabled={!result_text} onClick={() => {
                         if (result_text) onCopy(result_text)
                     }}>
                         <Icons.Copy size={16} />
@@ -170,7 +170,7 @@ function SortableCard({
                     <button
                         data-testid="result-collect"
                         className="ic-btn"
-                        title={t('result.collect') || '收藏'}
+                        title={t('result.collect', { defaultValue: '收藏' })}
                         aria-pressed={is_collected}
                         disabled={!collectionAvailable || !result_text}
                         onClick={() => {
@@ -180,7 +180,7 @@ function SortableCard({
                     >
                         <Icons.Heart size={16} fill={is_collected} />
                     </button>
-                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? (t('result.expand') || '展开') : (t('result.collapse') || '收起')} aria-expanded={!collapsed} onClick={() => { onToggleCollapse(instanceKey); }}>
+                    <button data-testid="result-collapse" className="ic-btn" title={collapsed ? t('result.expand', { defaultValue: '展开' }) : t('result.collapse', { defaultValue: '收起' })} aria-expanded={!collapsed} onClick={() => { onToggleCollapse(instanceKey); }}>
                         <Icons.Chev size={17} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
                     </button>
                 </div>
@@ -189,7 +189,7 @@ function SortableCard({
                 {!collapsed && (
                     result === null ? (
                         <div data-testid="result-error" data-result-error style={{ marginTop: 8, marginLeft: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed') || '翻译失败'}</span>
+                            <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed', { defaultValue: '翻译失败' })}</span>
                         </div>
                     ) : result !== undefined ? (
                         <div data-testid="result-body" data-result-content style={{ marginTop: 8, marginLeft: 22, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>

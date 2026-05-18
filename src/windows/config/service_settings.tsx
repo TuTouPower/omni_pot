@@ -333,7 +333,7 @@ export default function ServiceSettings(): React.ReactElement {
                             height: 26,
                         }}
                     >
-                        {t(tab.labelKey) || tab.label}
+                        {t(tab.labelKey, { defaultValue: tab.label })}
                         <span className="mono" style={{ fontSize: 10, color: 'var(--text-mute)', marginLeft: 2 }}>
                             {categoryCounts[tab.key]}
                         </span>
@@ -373,7 +373,7 @@ export default function ServiceSettings(): React.ReactElement {
                 <div style={{ padding: 10, display: 'flex', gap: 8 }}>
                     <button className="btn sm" data-testid="svc-add-btn" onClick={() => { setShowAddModal(true); }}>
                         <Icons.Plus size={12} />
-                        {t('service.add') || '添加服务'}
+                        {t('service.add', { defaultValue: '添加服务' })}
                     </button>
                 </div>
             </div>
@@ -397,7 +397,7 @@ export default function ServiceSettings(): React.ReactElement {
                         onClick={(e) => { e.stopPropagation(); }}
                     >
                         <div className="card-head">
-                            <span>{t('service.add') || '添加服务'}</span>
+                            <span>{t('service.add', { defaultValue: '添加服务' })}</span>
                             <button className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => { setShowAddModal(false); }}>
                                 <Icons.Close size={13} />
                             </button>
