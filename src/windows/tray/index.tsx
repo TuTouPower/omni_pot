@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
+import { format_hotkey } from '../../utils/format_hotkey'
 
 type TrayAction = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
@@ -102,7 +103,7 @@ export default function TrayWindow(): React.ReactElement {
                             >
                                 <Icon size={15} />
                                 <span style={{ flex: 1, whiteSpace: 'nowrap' }}>{labels[index] ?? action}</span>
-                                {shortcuts[action] && <span className="hint mono" style={{ fontSize: 11, whiteSpace: 'nowrap', marginLeft: 14 }}>{shortcuts[action]}</span>}
+                                {shortcuts[action] && <span className="hint mono" style={{ fontSize: 11, whiteSpace: 'nowrap', marginLeft: 14 }}>{format_hotkey(shortcuts[action]).join('+')}</span>}
                                 {active && <span className="chip" style={{ fontSize: 10, marginLeft: 14 }}>ON</span>}
                             </button>
                         </React.Fragment>
