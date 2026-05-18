@@ -49,6 +49,7 @@ export const Icons = {
     Newline: (p: IconProps) => <Icon {...p} d={["M20 6v6a3 3 0 01-3 3H5", "M9 11l-4 4 4 4"]} />,
     Swap: (p: IconProps) => <Icon {...p} d={["M4 9h14", "M15 6l3 3-3 3", "M20 15H6", "M9 12l-3 3 3 3"]} />,
     Chev: (p: IconProps) => <Icon {...p} d="M6 9l6 6 6-6" />,
+    ChevUp: (p: IconProps) => <Icon {...p} d="M6 15l6-6 6 6" />,
     ChevR: (p: IconProps) => <Icon {...p} d="M9 6l6 6-6 6" />,
     Plus: (p: IconProps) => <Icon {...p} d="M12 5v14M5 12h14" />,
     Search: (p: IconProps) => <Icon {...p} d={["M11 19a8 8 0 100-16 8 8 0 000 16z", "M21 21l-4.3-4.3"]} />,

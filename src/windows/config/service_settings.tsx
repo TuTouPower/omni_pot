@@ -69,22 +69,30 @@ interface ServiceItemRowProps {
     instanceKey: string
     isEnabled: boolean
     canDelete: boolean
+    canMoveUp: boolean
+    canMoveDown: boolean
     name: string
     svcKey: string
     onToggle: (instanceKey: string) => void
     onEdit: (instanceKey: string) => void
     onRemove: (instanceKey: string) => void
+    onMoveUp: (instanceKey: string) => void
+    onMoveDown: (instanceKey: string) => void
 }
 
 function ServiceItemRow({
     instanceKey,
     isEnabled,
     canDelete,
+    canMoveUp,
+    canMoveDown,
     name,
     svcKey,
     onToggle,
     onEdit,
     onRemove,
+    onMoveUp,
+    onMoveDown,
 }: ServiceItemRowProps): React.ReactElement {
     const { t } = useTranslation()
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
@@ -122,21 +130,42 @@ function ServiceItemRow({
             </div>
             <ConfigSwitch on={isEnabled} onChange={() => { onToggle(instanceKey); }} testId="svc-toggle" />
             <button
-                data-testid="svc-edit"
+                data-testid="svc-move-up"
                 className="btn ghost icon"
-                title={t('service.edit')}
+                disabled={!canMoveUp}
+                title={t('ui.up')}
+                onClick={() => { onMoveUp(instanceKey); }}
+                style={{ color: canMoveUp ? 'var(--text-dim)' : 'var(--text-mute)' }}
+            >
+                <Icons.ChevUp size={14} />
+            </button>
+            <button
+                data-testid="svc-move-down"
+                className="btn ghost icon"
+                disabled={!canMoveDown}
+                title={t('ui.down')}
+                onClick={() => { onMoveDown(instanceKey); }}
+                style={{ color: canMoveDown ? 'var(--text-dim)' : 'var(--text-mute)' }}
+            >
+                <Icons.Chev size={14} />
+            </button>
+            <button
+                data-testid="svc-edit"
+                className="btn ghost sm"
                 onClick={() => { onEdit(instanceKey); }}
             >
-                <Icons.Settings size={16} />
+                <Icons.Settings size={14} />
+                <span>{t('service.edit')}</span>
             </button>
             <button
                 data-testid="svc-delete"
-                className="btn ghost icon"
+                className="btn ghost sm"
                 style={{ color: canDelete ? 'var(--danger)' : 'var(--text-mute)' }}
                 disabled={!canDelete}
                 onClick={() => { onRemove(instanceKey); }}
             >
-                <Icons.Trash size={16} />
+                <Icons.Trash size={14} />
+                <span>{t('service.remove')}</span>
             </button>
         </div>
     )
@@ -229,6 +258,26 @@ export default function ServiceSettings(): React.ReactElement {
         const newList = [...serviceList]
         const [moved] = newList.splice(oldIndex, 1) as [string]
         newList.splice(newIndex, 0, moved)
+        useConfigStore.getState().set(activeTab, newList)
+    }
+
+    const moveUp = (instanceKey: string): void => {
+        const idx = serviceList.indexOf(instanceKey)
+        if (idx <= 0) return
+        const newList = [...serviceList]
+        const tmp = newList[idx]!
+        newList[idx] = newList[idx - 1]!
+        newList[idx - 1] = tmp
+        useConfigStore.getState().set(activeTab, newList)
+    }
+
+    const moveDown = (instanceKey: string): void => {
+        const idx = serviceList.indexOf(instanceKey)
+        if (idx < 0 || idx >= serviceList.length - 1) return
+        const newList = [...serviceList]
+        const tmp = newList[idx]!
+        newList[idx] = newList[idx + 1]!
+        newList[idx + 1] = tmp
         useConfigStore.getState().set(activeTab, newList)
     }
 
@@ -358,11 +407,15 @@ export default function ServiceSettings(): React.ReactElement {
                                         instanceKey={instanceKey}
                                         isEnabled={isEnabled}
                                         canDelete={serviceList.length > 1}
+                                        canMoveUp={serviceList.indexOf(instanceKey) > 0}
+                                        canMoveDown={serviceList.indexOf(instanceKey) < serviceList.length - 1}
                                         name={getInstanceName(instanceKey)}
                                         svcKey={svcKey}
                                         onToggle={toggleService}
                                         onEdit={openEdit}
                                         onRemove={removeService}
+                                        onMoveUp={moveUp}
+                                        onMoveDown={moveDown}
                                     />
                                 )
                             })}

@@ -74,8 +74,8 @@
     "service": {
         "title": "服務",
         "translate": "翻譯",
-        "dictionary": "字典",
-        "tts": "語音合成",
+        "dictionary": "字典詞典",
+        "tts": "語音朗讀",
         "ocr": "文字辨識",
         "collection": "收藏",
         "add": "新增",

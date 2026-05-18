@@ -178,8 +178,8 @@
     "service": {
         "title": "服务",
         "translate": "翻译",
-        "dictionary": "字典",
-        "tts": "语音合成",
+        "dictionary": "字典词典",
+        "tts": "语音朗读",
         "ocr": "文字识别",
         "collection": "收藏",
         "add": "添加",
