@@ -48,6 +48,8 @@
 - [ ] **备份功能缺少完整验证**：需要测试导出备份 zip 后能否成功再导入，并验证导入后的配置/数据是否恢复正确。
 - [ ] **备份页面未和 demo 对齐**：备份/恢复页面需要按前端 demo 重新核对布局、文案、按钮和状态展示。
 
+- [ ] **设置界面出现原始翻译 key**：例如显示 `config.title`；需要系统检查设置窗口及其他界面是否还有未正确翻译出来的 key，并修复 fallback / locale 覆盖。
+
 ## 测试
 
 - [ ] **TTS playback state e2e**：fixture 已支持 `init_script`，`translate_source_area` 和 `translate_result_cards` 已恢复完整按压/取消等待断言。如发现新的 TTS 状态分支没覆盖，仍在此跟踪。
