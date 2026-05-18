@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
 import { Icons } from '../../components/icons'
 import { ConfigCard, ConfigRow } from './config_components'
+import { format_hotkey } from '../../utils/format_hotkey'
 
 interface HotkeyFieldProps {
     label: string
     sub?: string
-    configKey: 'hotkey_selection_translate' | 'hotkey_input_translate' | 'hotkey_ocr_recognize' | 'hotkey_ocr_translate' | 'hotkey_selection_dictionary'
+    configKey: 'hotkey_translate' | 'hotkey_ocr_recognize' | 'hotkey_ocr_translate' | 'hotkey_selection_dictionary'
 }
 
 function buildAccelerator(e: React.KeyboardEvent): string {
@@ -26,10 +27,6 @@ function buildAccelerator(e: React.KeyboardEvent): string {
     }
 
     return parts.join('+')
-}
-
-function formatHotkey(acc: string): string[] {
-    return acc.split('+')
 }
 
 function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactElement {
@@ -103,7 +100,7 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
                     onKeyDown={capturing ? handleKeyDown : undefined}
                 >
                     {displayValue ? (
-                        formatHotkey(displayValue).map((k, i, a) => (
+                        format_hotkey(displayValue).map((k, i, a) => (
                             <React.Fragment key={i}>
                                 <kbd>{k}</kbd>
                                 {i < a.length - 1 && <span className="hint">+</span>}
@@ -135,14 +132,9 @@ export default function HotkeySettings(): React.ReactElement {
         <div className="stack gap-12">
             <ConfigCard title={t('hotkey.title') || '全局快捷键'} hint="按下组合键以录入 · Backspace 清除">
                 <HotkeyField
-                    label={t('hotkey.selection_translate') || '划词翻译'}
-                    sub="选中文本后按下快捷键即翻译"
-                    configKey="hotkey_selection_translate"
-                />
-                <HotkeyField
-                    label={t('hotkey.input_translate') || '输入翻译'}
-                    sub="呼出翻译窗口并清空源文本"
-                    configKey="hotkey_input_translate"
+                    label={t('hotkey.translate') || '翻译'}
+                    sub="选中文本则直接翻译，无选中则打开输入窗口"
+                    configKey="hotkey_translate"
                 />
                 <HotkeyField
                     label={t('hotkey.screenshot_recognize') || '文字识别'}
