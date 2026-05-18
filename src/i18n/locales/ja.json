@@ -124,5 +124,8 @@
         "close": "閉じる",
         "press_shortcut": "ショートカットキーを押してください...",
         "not_set": "未設定"
-    }
+    },
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "auto_detect_no_swap": "元の言語を検出してから交換できます"
 }

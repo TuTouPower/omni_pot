@@ -245,5 +245,8 @@
         "close": "Close",
         "press_shortcut": "Press shortcut...",
         "not_set": "Not set"
-    }
+    },
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "auto_detect_no_swap": "Detect a source language before swapping"
 }

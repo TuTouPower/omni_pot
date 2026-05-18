@@ -124,5 +124,8 @@
         "close": "إغلاق",
         "press_shortcut": "اضغط الاختصار...",
         "not_set": "غير معين"
-    }
+    },
+    "minimize": "تصغير",
+    "maximize": "تكبير",
+    "auto_detect_no_swap": "اكتشف لغة المصدر أولاً للتبديل"
 }

@@ -32,13 +32,22 @@ export const Icons = {
     Close: (p: IconProps) => <Icon {...p} d="M6 6l12 12M18 6L6 18" />,
     Min: (p: IconProps) => <Icon {...p} d="M5 12h14" />,
     Max: (p: IconProps) => <Icon {...p} d="M5 5h14v14H5z" />,
-    Pin: (p: IconProps) => <Icon {...p} d={["M12 17v5", "M9 3h6l-1 6 3 3H7l3-3-1-6z"]} />,
+    Pin: (p: IconProps) => <Icon {...p} d={["M12 16v6", "M8 3h8l-1.5 6 2.5 4H7l2.5-4L8 3z"]} />,
+    Lock: ({ size = 15, strokeWidth = 1.85, fill = false, style, className }: IconProps) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
+            <path d="M5 11h14v10H5z" fill={fill ? 'currentColor' : 'none'} />
+            <path d="M8 11V7a4 4 0 018 0v4" />
+            <path d="M12 15v3" stroke={fill ? 'var(--bg)' : 'currentColor'} />
+        </svg>
+    ),
+    Space: (p: IconProps) => <Icon {...p} d={["M5 5v6", "M19 5v6", "M5 11h14"]} />,
+    Bell: (p: IconProps) => <Icon {...p} d={["M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9", "M14 21a2 2 0 01-4 0"]} />,
     Translate: (p: IconProps) => <Icon {...p} d={["M4 5h10", "M9 4v2c0 4-3 8-7 8", "M14 19l3-8 3 8", "M15 16h4", "M5 8c0 3 4 7 8 7"]} />,
     Volume: (p: IconProps) => <Icon {...p} d={["M11 5L6 9H3v6h3l5 4V5z", "M15 9a4 4 0 010 6", "M18 6a8 8 0 010 12"]} />,
     Copy: (p: IconProps) => <Icon {...p} d={["M8 8h11v11H8z", "M5 5h11v3", "M5 5v11h3"]} />,
     Trash: (p: IconProps) => <Icon {...p} d={["M4 7h16", "M9 7V4h6v3", "M6 7l1 13h10l1-13"]} />,
     Newline: (p: IconProps) => <Icon {...p} d={["M20 6v6a3 3 0 01-3 3H5", "M9 11l-4 4 4 4"]} />,
-    Swap: (p: IconProps) => <Icon {...p} d={["M7 7h13l-3-3", "M17 17H4l3 3"]} />,
+    Swap: (p: IconProps) => <Icon {...p} d={["M4 9h14", "M15 6l3 3-3 3", "M20 15H6", "M9 12l-3 3 3 3"]} />,
     Chev: (p: IconProps) => <Icon {...p} d="M6 9l6 6 6-6" />,
     ChevR: (p: IconProps) => <Icon {...p} d="M9 6l6 6-6 6" />,
     Plus: (p: IconProps) => <Icon {...p} d="M12 5v14M5 12h14" />,

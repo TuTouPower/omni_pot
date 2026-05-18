@@ -137,11 +137,27 @@ function SortableCard({
                     </span>
                     <SvcTile name={serviceKey} />
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{svcLabel(serviceKey)}</div>
+                    {is_loading && (
+                        <span className="dots" aria-label="翻译中" title="翻译中…"><span /><span /><span /></span>
+                    )}
                     <div style={{ flex: 1 }} />
-                    <button data-testid="result-tts" className="ic-btn" title={t('result.tts') || '朗读'} aria-pressed={is_playing} disabled={!ttsAvailable || !result_text} style={{ color: is_playing ? 'var(--brand-primary)' : undefined }} onClick={() => {
-                        if (result_text) onTts(result_text, instanceKey)
-                    }}>
-                        <Icons.Volume size={16} />
+                    {result === null && onRetry && (
+                        <button data-testid="result-retry" className="ic-btn" title={t('result.retry') || '重试'} onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
+                            <Icons.Cycle size={14} />
+                        </button>
+                    )}
+                    <button
+                        data-testid="result-tts"
+                        className={'ic-btn' + (is_playing ? ' brand' : '')}
+                        title={is_playing ? (t('tts_stop') || '停止朗读') : (t('result.tts') || '朗读')}
+                        aria-pressed={is_playing}
+                        disabled={!ttsAvailable || !result_text}
+                        style={is_playing ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
+                        onClick={() => {
+                            if (result_text) onTts(result_text, instanceKey)
+                        }}
+                    >
+                        <Icons.Volume size={16} fill={is_playing} />
                     </button>
                     <button data-testid="result-copy" className="ic-btn" title={t('result.copy') || '复制'} disabled={!result_text} onClick={() => {
                         if (result_text) onCopy(result_text)
@@ -167,32 +183,26 @@ function SortableCard({
                 </div>
 
                 {/* Content */}
-                {result === null ? (
-                    <div data-testid="result-error" data-result-error style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed') || '翻译失败'}</span>
-                        {onRetry && (
-                            <button data-testid="result-retry" className="ic-btn" title={t('result.retry') || '重试'} onClick={() => { onRetry(instanceKey); }} style={{ color: 'var(--danger)' }}>
-                                <Icons.Cycle size={14} />
-                            </button>
-                        )}
-                    </div>
-                ) : is_loading ? (
-                    <div data-testid="result-loading" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-mute)', fontSize: 13 }}>
-                        <span data-testid="result-loading-dots" aria-hidden="true" style={{ display: 'inline-flex', gap: 3 }}>
-                            <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.45 }} />
-                            <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor', opacity: 0.7 }} />
-                            <span style={{ width: 4, height: 4, borderRadius: 99, background: 'currentColor' }} />
-                        </span>
-                        <span>{t('result.translating', { defaultValue: '翻译中…' })}</span>
-                    </div>
-                ) : !collapsed && result !== undefined ? (
-                    <div data-testid="result-body" data-result-content style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
-                        {typeof result === 'string'
-                            ? (result || <span style={{ color: 'var(--text-mute)' }}>…</span>)
-                            : <DictResultInline result={result} />
-                        }
-                    </div>
-                ) : null}
+                {(is_loading || !collapsed) && (
+                    result === null ? (
+                        <div data-testid="result-error" data-result-error style={{ marginTop: 8, marginLeft: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed') || '翻译失败'}</span>
+                        </div>
+                    ) : is_loading ? (
+                        <div data-testid="result-loading" style={{ marginTop: 8, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>翻译中…</span>
+                            <div className="shimmer" style={{ height: 8, width: '90%' }} />
+                            <div className="shimmer" style={{ height: 8, width: '65%' }} />
+                        </div>
+                    ) : result !== undefined ? (
+                        <div data-testid="result-body" data-result-content style={{ marginTop: 8, marginLeft: 22, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
+                            {typeof result === 'string'
+                                ? (result || <span style={{ color: 'var(--text-mute)' }}>…</span>)
+                                : <DictResultInline result={result} />
+                            }
+                        </div>
+                    ) : null
+                )}
             </div>
         </div>
     )
