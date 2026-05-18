@@ -31,7 +31,7 @@ export default function TrayWindow(): React.ReactElement {
             setLabels(next_labels)
             setClipboardMonitoring(monitoring)
             setShortcuts({
-                input_translate: config.hotkey_selection_translate || config.hotkey_input_translate,
+                input_translate: config.hotkey_translate,
                 ocr_recognize: config.hotkey_ocr_recognize,
                 screenshot_translate: config.hotkey_ocr_translate,
             })
