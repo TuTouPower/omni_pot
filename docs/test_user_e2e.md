@@ -245,8 +245,8 @@ class TranslatePage {
   `ocr-lang-select`、`ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、
   `ocr-copy-btn`、`ocr-export-btn`、`ocr-translate-btn`
 - 截图：`shot-overlay`、`shot-selection`、`shot-size-label`、`shot-hint`
-- 设置：`config-wordmark`、`config-pin`、`config-version`、
-  `config-nav-{page}`、`config-title`、`config-close`、各设置项
+- 设置：`config-wordmark`、`config-titlebar`、`config-minimize`、`config-maximize`,
+  `config-version`、`config-nav-{page}`、`config-title`、`config-close`、各设置项
   `cfg-{key}`、服务项 `svc-item`、服务 tab `svc-tab-{listKey}`、`svc-add-btn`、
   `svc-add-option`、`svc-delete`、`svc-move-up`、`svc-move-down`、`svc-drag-handle`、
   `svc-toggle`、`svc-edit`、`svc-edit-modal`、`svc-edit-name`、`svc-edit-config`、
@@ -304,7 +304,7 @@ class TranslatePage {
 - 用户在翻译窗口输入框打字后按 Enter
 - 外部脚本通过 HTTP API 发文本（`POST /translate`）
 - 用户复制文字、剪贴板监听自动翻译（`clipboard_monitor`）
-- 用户截图做 OCR 翻译（截图 → OCR → 翻译，CP4）
+- 用户截图做截图翻译（截图 → 文字识别 → 翻译，CP4）
 - **默认免费翻译服务真实出结果**（覆盖 issue #3）：用户启用 bing / deepl(free) / mymemory 实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都
   显示真实译文，无“翻译失败”；所有无密钥外部服务的逐项连通性由 `external_services.spec.ts` 覆盖
 - 翻译成功写入历史；`history_disable=true` 时不写
@@ -313,7 +313,7 @@ class TranslatePage {
 
 ### 5.3 translate_titlebar.spec.ts — 翻译窗口标题栏 · issues #4 #8
 
-- 布局：左对齐顺序为 固定按钮 → 置顶按钮 → wordmark → 模式标签；右上角只有关闭按钮
+- 布局：左对齐顺序为 置顶按钮 → 固定按钮 → wordmark → 模式标签；右上角只有关闭按钮
 - wordmark 文本为 `Omni Pot`，使用常规字标样式（issue #8）
 - 模式标签文本为 `翻译`，无胶囊背景，渲染正常（issue #8）
 - **点击固定按钮** → `translate_pinned` 翻转；固定只阻止失焦关闭，不让窗口实际置顶
@@ -324,7 +324,7 @@ class TranslatePage {
 
 ### 5.4 translate_source_area.spec.ts — 源文本区 · issue #5
 
-- 卡片样式渲染；输入框从 1 行起随内容自动增长，最多显示约 8 行
+- 卡片样式渲染；输入框从 1 行起随内容自动增长，单行高度随用户字号计算，最多显示约 8 行
 - 输入超长文本：操作按钮仍可见、不被遮挡，输入框内部滚动出现
 - **点击翻译按钮** → 触发翻译、产出结果卡片（issue #5）
 - 翻译按钮只有翻译符号、无“翻译”文字、无独立背景，颜色为主色
@@ -377,34 +377,36 @@ class TranslatePage {
 - `translate_remember_language`：重开窗口语言被记住
 - 第二语言回退：检测语言 == 目标语言时改用 `translate_second_language`
 
-### 5.8 dict_window.spec.ts — 词典窗口
+### 5.8 dict_window.spec.ts — 字典词典窗口
 
-- `/trigger-dict` 打开词典窗口
-- 标题栏：置顶 → wordmark → 模式标签 `词典`，右上角关闭按钮
-- 查英文词（`hello`）：渲染词典卡片，含发音/词性/释义/例句
-- 查中文词：CC-CEDICT 离线词典返回结果
-- 多词典并行真实出结果：用户启用 free_dictionary / ecdict / cambridge_dict，
-  查词后每个返回 `DictResult` 的服务渲染一张含真实内容的卡片
+- `/trigger-dict` 打开字典词典窗口
+- 标题栏：置顶 → wordmark → 模式标签 `字典词典`，右上角关闭按钮
+- 查英文词（`hello`）：**只渲染英文词典**（free_dictionary），断言**不渲染任何中文词典卡片**
+- 查中文词：**只渲染中文词典**（chinese_dictionary / ecdict 中文释义），断言**不渲染任何英文词典卡片**
+- 多词典并行真实出结果：用户启用 free_dictionary / ecdict / cambridge_dict，查英文词后所有英文词典服务渲染含真实内容的卡片
 - **无搜索框**：断言窗口内不存在搜索输入框
 - **无换行符号**：断言不存在去换行按钮
+- **无词形变化卡片**：断言不存在词形变化区块
+- **无来源 chips**：断言卡片底部不渲染来源 chips 段
+- 窗口高度自适应内容，不留多余空白
 - 每个词右上角收藏按钮，**点击** → 触发收藏
-- 卡片高度足够，内容完整
 - 置顶/关闭按钮可用
 
-### 5.9 recognize_window.spec.ts — OCR 识别窗口
+### 5.9 recognize_window.spec.ts — 文字识别 / 截图翻译窗口
 
-- 通过截图或 `open-window` 打开识别窗口
-- 第一排：标题栏 `识别`，置顶/关闭可用
-- 第二排：左图右文 —— 左侧图片卡片显示截图，右侧文本卡片显示识别结果且可编辑
-- 第三排操作区交互：
-  - OCR 方法下拉 → 切换服务
-  - 识别语言下拉 → 含“自动检测”，可切换
-  - **重新识别按钮**为带文字的大按钮 → 点击重跑 OCR
+- 通过截图或 `open-window` 打开窗口；分别覆盖 `recognize` 与 `translate` 两种模式
+- 第一排：标题栏模式标签分别为 `文字识别` / `截图翻译`，置顶/关闭可用；**断言整页不出现 "OCR" 字面量**
+- 第二排：左图右文 —— 左侧图片卡片显示截图，右侧文本卡片显示识别结果且可编辑；`translate` 模式右侧多一张翻译卡片，与识别卡背景/字色/标签视觉一致
+- 第三排操作区交互（文字识别模式按钮顺序：`复制图片 → 识别引擎下拉 → 重新识别 → 自动检测 | 翻译 → 去除换行 → 去除空格 → 复制 → 导出`；截图翻译模式按钮顺序：`复制图片 → 识别引擎下拉 → 重新识别 → 自动检测 → 转换符号 → 简体中文 → 重新翻译 | 去除换行 → 去除空格 → 复制 → 导出`）：
+  - **复制图片** → 剪贴板包含图片
+  - 识别引擎下拉 → 切换服务
+  - 语言下拉（自动检测 / 简体中文）使用 pill 样式，下拉项**不带 AUTO/ZH 字母前缀**，可切换
+  - **重新识别 / 重新翻译**为**带文字 pill 按钮**（非纯图标） → 点击重跑
   - **去除换行** → 结果换行被去除
   - **去除空格** → 结果空格被去除
   - **复制** → 剪贴板为识别文本
   - **导出**为导出符号（非云符号），下拉含 md/txt/docx/doc
-  - **翻译按钮** → 文字送到翻译窗口并触发翻译
+  - **翻译按钮**（仅文字识别模式，位于"去除换行"左侧） → 文字送到翻译窗口并触发翻译
 - 信息精简：断言**不显示**图片尺寸、类型、识别字数、耗时
 - 服务真实覆盖：用户切换 system / tesseract 引擎；Tesseract 重新识别得到真实识别文本
 - `recognize_delete_newline` / `recognize_auto_copy` 配置联动
@@ -421,23 +423,22 @@ class TranslatePage {
 - 截图完成后衔接识别（mode=recognize）/ 翻译（mode=translate）流程
 - CI 无显示器时：跳过真实截屏断言，保留窗口创建与 Esc 取消路径
 
-### 5.11 config_settings.spec.ts — 设置：通用/翻译/识别/快捷键/关于
+### 5.11 config_settings.spec.ts — 设置：通用/翻译/文字识别/快捷键/关于
 
-- 侧栏：logo + 置顶按钮 + 8 个导航项 + 版本号
+- 侧栏：logo + 8 个导航项 + 版本号；**侧栏不含置顶 / 固定按钮**
+- 顶栏：软件名 + 当前页面名 + 最小化/最大化/关闭三件套，**无置顶 / 固定按钮**
 - 点击各导航项切换页面，激活项高亮、图标主色
-- 内容区顶栏：页面名 + 路由 + 关闭按钮
-- **通用页**：主题/主色/界面语言/字体/字号/透明/API 端口/开机自启/检查更新
+- **通用页**：界面语言归"应用"卡片；外观卡片含主题/主色/文字（字体+字号）/透明/托盘点击行为；应用卡片含 API 端口/开机自启/检查更新
   逐项读写 → 断言 `config.json` 持久化
-- **翻译页**：语言、行为、窗口三组卡片逐项读写持久化
-- **识别页**：识别语言、去换行、自动复制、失焦关闭、隐藏窗口读写
-- **快捷键页**：5 个录入框（含“划词字典”）；录入组合键、Backspace 清除、
-  绑定按钮注册成功/失败提示
+- **翻译页**：语言、行为、窗口三组卡片逐项读写持久化；语言下拉项以**该语言自身文字**显示（English / 日本語 / ...），不带 AUTO/ZH 字母前缀
+- **文字识别页**：识别语言、去换行、自动复制、失焦关闭、隐藏窗口读写
+- **快捷键页**：**4 个录入框**（翻译 / 字典词典 / 文字识别 / 截图翻译）；翻译行 UI 上同时绑定 `hotkey_selection_translate` 与 `hotkey_input_translate`；按钮在未绑定时显示"绑定"、已绑定显示"解绑"（**不出现 × 清除按钮**）；录入组合键、Backspace 清除、绑定按钮注册成功/失败提示；快捷键冲突提示出现在状态细节区域而非常驻在本页
 - **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/设置目录、API 地址）
 - **config:changed 广播**：设置窗口改 `app_theme` → 翻译窗口主题同步变化
 
 ### 5.12 config_service_mgmt.spec.ts — 服务管理页
 
-- Tabs 切换翻译/字典/识别/语音合成/收藏五类
+- Tabs 切换**翻译 / 字典词典 / 文字识别 / 语音朗读 / 收藏** 五类
 - 服务实例列表项渲染：拖拽手柄、图标、实例名、key、启停、编辑、上移/下移、删除
 - **添加内置服务** → 创建新实例（key 形如 `bing@xxxx`），出现在列表与 `*_service_list`
 - **删除实例** → 从列表与 `*_service_list` 移除，并同步删除 `service_instances` 项
