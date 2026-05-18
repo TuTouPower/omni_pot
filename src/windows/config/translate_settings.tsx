@@ -39,7 +39,6 @@ export default function TranslatePage(): React.ReactElement {
     const [rememberLanguage, setRememberLanguage] = useConfig('translate_remember_language')
     const [historyDisable, setHistoryDisable] = useConfig('history_disable')
     const [windowPosition, setWindowPosition] = useConfig('translate_window_position')
-    const [closeOnBlur, setCloseOnBlur] = useConfig('translate_close_on_blur')
     const [alwaysOnTop, setAlwaysOnTop] = useConfig('translate_always_on_top')
     const [hideSource, setHideSource] = useConfig('hide_source')
     const [hideLanguage, setHideLanguage] = useConfig('hide_language')
@@ -98,9 +97,6 @@ export default function TranslatePage(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.remember_window_size') || '记住窗口大小'}>
                     <ConfigSwitch on={rememberWindowSize} onChange={setRememberWindowSize} testId="cfg-translate_remember_window_size" />
-                </ConfigRow>
-                <ConfigRow label={t('translate_settings.close_on_blur') || '失焦时关闭'}>
-                    <ConfigSwitch on={closeOnBlur} onChange={setCloseOnBlur} testId="cfg-translate_close_on_blur" />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.always_on_top') || '始终置顶'}>
                     <ConfigSwitch on={alwaysOnTop} onChange={setAlwaysOnTop} testId="cfg-translate_always_on_top" />

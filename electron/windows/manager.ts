@@ -107,13 +107,16 @@ export class WindowManager {
     })
 
     win.on('blur', () => {
-      if (opts.label === WindowLabel.TRANSLATE
-        && getConfig('translate_close_on_blur')
-        && !getConfig('translate_pinned')
-        && !getConfig('translate_always_on_top')) {
-        win.close()
-      }
       if (opts.label === WindowLabel.TRAY) {
+        win.close()
+        return
+      }
+      // Settings window never auto-closes on blur
+      if (opts.label === WindowLabel.CONFIG) return
+      // Other windows auto-close unless pinned / always-on-top
+      const pinned = win.isAlwaysOnTop()
+        || (opts.label === WindowLabel.TRANSLATE && getConfig('translate_pinned'))
+      if (!pinned) {
         win.close()
       }
     })

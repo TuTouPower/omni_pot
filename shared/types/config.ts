@@ -32,7 +32,6 @@ export interface AppConfig {
 
   translate_window_position: 'mouse' | 'pre_state'
   translate_remember_window_size: boolean
-  translate_close_on_blur: boolean
   translate_pinned: boolean
   translate_always_on_top: boolean
   hide_source: boolean
@@ -47,7 +46,6 @@ export interface AppConfig {
   recognize_language: string
   recognize_delete_newline: boolean
   recognize_auto_copy: boolean
-  recognize_close_on_blur: boolean
   recognize_hide_window: boolean
 
   hotkey_selection_translate: string
@@ -121,7 +119,6 @@ export const DEFAULT_CONFIG: AppConfig = {
 
   translate_window_position: 'mouse',
   translate_remember_window_size: false,
-  translate_close_on_blur: false,
   translate_pinned: false,
   translate_always_on_top: false,
   hide_source: false,
@@ -131,7 +128,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   recognize_language: 'auto',
   recognize_delete_newline: false,
   recognize_auto_copy: false,
-  recognize_close_on_blur: false,
   recognize_hide_window: false,
 
   translate_window_width: 350,
