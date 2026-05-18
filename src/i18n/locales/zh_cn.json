@@ -130,7 +130,7 @@
         "primary_color_mustard": "芥末",
         "primary_color_sky": "天蓝",
         "font_size": "字号",
-        "font_family": "字体",
+        "font_family": "文字",
         "font_default": "系统默认",
         "transparent": "透明背景",
         "transparent_sub": "毛玻璃效果，部分平台可能影响性能",
@@ -229,11 +229,15 @@
         "definitions": "释义",
         "copied": "已复制"
     },
+    "config": {
+        "title": "设置"
+    },
     "ui": {
         "cancel": "取消",
         "save": "保存",
         "delete": "删除",
-        "set": "设置",
+        "set": "绑定",
+        "unbind": "解绑",
         "ok": "确定",
         "prev": "上一页",
         "next": "下一页",

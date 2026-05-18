@@ -151,13 +151,13 @@ export default function GeneralPage(): React.ReactElement {
                 >
                     {t('preview')}: Hello World 你好世界 こんにちは 안녕하세요
                 </div>
-                <ConfigRow label={t('general.transparent') || '透明背景'} sub={t('general.transparent_sub')}>
+                <ConfigRow label={t('general.transparent', { defaultValue: '透明背景' })} sub={t('general.transparent_sub')}>
                     <ConfigSwitch on={transparent} onChange={setTransparent} testId="cfg-transparent" />
                 </ConfigRow>
             </ConfigCard>
 
-            <ConfigCard title={t('general.proxy') || '网络代理'}>
-                <ConfigRow label={t('general.proxy_enable') || '启用代理'}>
+            <ConfigCard title={t('general.proxy', { defaultValue: '网络代理' })}>
+                <ConfigRow label={t('general.proxy_enable', { defaultValue: '启用代理' })}>
                     <ConfigSwitch on={proxyEnable} onChange={setProxyEnable} testId="cfg-proxy_enable" />
                 </ConfigRow>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 8, opacity: proxyEnable ? 1 : 0.5 }}>

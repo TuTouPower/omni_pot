@@ -208,7 +208,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                     </button>
                 )}
                 <div style={{ flex: 1 }} />
-                <button className="ic-btn" title={t('delete_newline') || '去除换行'} data-testid="source-newline-btn" onClick={handleDeleteNewline}>
+                <button className="ic-btn" title={t('delete_newline', { defaultValue: '去除换行' })} data-testid="source-newline-btn" onClick={handleDeleteNewline}>
                     <Icons.Newline size={16} />
                 </button>
                 <button className="ic-btn" title={t('delete_spaces')} data-testid="source-space-btn" onClick={handleDeleteSpace}>
@@ -229,13 +229,13 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                         <Icons.Volume size={16} fill={ttsPlaying} />
                     )}
                 </button>
-                <button className="ic-btn" title={t('copy') || '复制原文'} data-testid="source-copy-btn" onClick={handleCopy}>
+                <button className="ic-btn" title={t('copy', { defaultValue: '复制' })} data-testid="source-copy-btn" onClick={handleCopy}>
                     <Icons.Copy size={16} />
                 </button>
-                <button className="ic-btn" title={t('clear') || '清空'} data-testid="source-clear-btn" onClick={handleClear} disabled={!sourceText.trim()}>
+                <button className="ic-btn" title={t('clear', { defaultValue: '清空' })} data-testid="source-clear-btn" onClick={handleClear} disabled={!sourceText.trim()}>
                     <Icons.Trash size={16} />
                 </button>
-                <button className="ic-btn brand" title={t('translate') || '翻译'} data-testid="source-translate-btn" onClick={handle_translate_now} style={{ color: 'var(--brand-primary)' }}>
+                <button className="ic-btn brand" title={t('translate', { defaultValue: '翻译' })} data-testid="source-translate-btn" onClick={handle_translate_now} style={{ color: 'var(--brand-primary)' }}>
                     <Icons.Translate size={18} />
                 </button>
             </div>

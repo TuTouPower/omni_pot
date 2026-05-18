@@ -35,14 +35,14 @@ export default function ConfigWindow(): React.ReactElement {
     }, [])
 
     const pages: NavItem[] = [
-        { key: 'general', label: t('general.title') || '通用', icon: <Icons.Grid size={15} /> },
-        { key: 'translate', label: t('translate_settings.title') || '翻译', icon: <Icons.Translate size={15} /> },
-        { key: 'recognize', label: t('recognize.title') || '识别', icon: <Icons.Image size={15} /> },
-        { key: 'hotkey', label: t('hotkey.title') || '快捷键', icon: <Icons.Kbd size={15} /> },
-        { key: 'service', label: t('service.title') || '服务', icon: <Icons.Layers size={15} /> },
-        { key: 'history', label: t('history.title') || '历史', icon: <Icons.Clock size={15} /> },
-        { key: 'backup', label: t('backup.title') || '备份', icon: <Icons.Cloud size={15} /> },
-        { key: 'about', label: t('about.title') || '关于', icon: <Icons.Info size={15} /> },
+        { key: 'general', label: t('general.title', { defaultValue: '通用' }), icon: <Icons.Grid size={15} /> },
+        { key: 'translate', label: t('translate_settings.title', { defaultValue: '翻译' }), icon: <Icons.Translate size={15} /> },
+        { key: 'recognize', label: t('recognize.title', { defaultValue: '识别' }), icon: <Icons.Image size={15} /> },
+        { key: 'hotkey', label: t('hotkey.title', { defaultValue: '快捷键' }), icon: <Icons.Kbd size={15} /> },
+        { key: 'service', label: t('service.title', { defaultValue: '服务' }), icon: <Icons.Layers size={15} /> },
+        { key: 'history', label: t('history.title', { defaultValue: '历史' }), icon: <Icons.Clock size={15} /> },
+        { key: 'backup', label: t('backup.title', { defaultValue: '备份' }), icon: <Icons.Cloud size={15} /> },
+        { key: 'about', label: t('about.title', { defaultValue: '关于' }), icon: <Icons.Info size={15} /> },
     ]
 
     const renderPage = (): React.ReactElement => {
@@ -67,7 +67,7 @@ export default function ConfigWindow(): React.ReactElement {
                 <div className="op-wordmark" style={{ marginLeft: 4 }} data-testid="config-wordmark">
                     Omni Pot
                 </div>
-                <span className="op-mode" data-testid="config-title">{t('config.title') || '设置'} · {cur?.label}</span>
+                <span className="op-mode" data-testid="config-title">{t('config.title', { defaultValue: '设置' })} · {cur?.label}</span>
                 <div style={{ flex: 1 }} />
                 <div className="op-wmctl" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                     <button title={t('minimize')} data-testid="config-minimize" onClick={() => { window.electronAPI.window.minimize().catch(console.error); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>

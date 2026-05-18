@@ -55,32 +55,32 @@ export default function TranslatePage(): React.ReactElement {
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('translate_settings.language') || '语言'}>
-                <ConfigRow label={t('translate_settings.source_language') || '源语言'}>
+            <ConfigCard title={t('translate_settings.language', { defaultValue: '语言' })}>
+                <ConfigRow label={t('translate_settings.source_language', { defaultValue: '源语言' })}>
                     <ConfigSelect value={sourceLang} onChange={setSourceLang} options={allLangOpts} testId="cfg-translate_source_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.target_language') || '目标语言'}>
+                <ConfigRow label={t('translate_settings.target_language', { defaultValue: '目标语言' })}>
                     <ConfigSelect value={targetLang} onChange={setTargetLang} options={targetLangOpts} testId="cfg-translate_target_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.second_language') || '第二语言'} sub={t('translate_settings.second_language_sub')}>
+                <ConfigRow label={t('translate_settings.second_language', { defaultValue: '第二语言' })} sub={t('translate_settings.second_language_sub')}>
                     <ConfigSelect value={secondLang} onChange={setSecondLang} options={targetLangOpts} testId="cfg-translate_second_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.detect_engine') || '检测引擎'}>
+                <ConfigRow label={t('translate_settings.detect_engine', { defaultValue: '检测引擎' })}>
                     <ConfigSelect value={detectEngine} onChange={setDetectEngine} options={DETECT_ENGINES} testId="cfg-translate_detect_engine" style={{ minWidth: 180 }} />
                 </ConfigRow>
             </ConfigCard>
 
-            <ConfigCard title={t('translate_settings.behavior') || '行为'}>
-                <ConfigRow label={t('translate_settings.auto_copy') || '自动复制'}>
+            <ConfigCard title={t('translate_settings.behavior', { defaultValue: '行为' })}>
+                <ConfigRow label={t('translate_settings.auto_copy', { defaultValue: '自动复制' })}>
                     <ConfigSelect value={autoCopy} onChange={setAutoCopy} options={autoCopyOpts} testId="cfg-translate_auto_copy" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.incremental_translate') || '增量翻译'} sub={t('translate_settings.incremental_translate_sub')}>
+                <ConfigRow label={t('translate_settings.incremental_translate', { defaultValue: '增量翻译' })} sub={t('translate_settings.incremental_translate_sub')}>
                     <ConfigSwitch on={incremental} onChange={setIncremental} testId="cfg-incremental_translate" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.dynamic_translate') || '动态翻译'} sub={t('translate_settings.dynamic_translate_sub')}>
+                <ConfigRow label={t('translate_settings.dynamic_translate', { defaultValue: '动态翻译' })} sub={t('translate_settings.dynamic_translate_sub')}>
                     <ConfigSwitch on={dynamicTranslate} onChange={setDynamicTranslate} testId="cfg-dynamic_translate" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.delete_newline') || '自动去除换行'}>
+                <ConfigRow label={t('translate_settings.delete_newline', { defaultValue: '自动去除换行' })}>
                     <ConfigSwitch on={deleteNewline} onChange={setDeleteNewline} testId="cfg-translate_delete_newline" />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.remember_language', { defaultValue: '记住语言选择' })}>
@@ -91,20 +91,20 @@ export default function TranslatePage(): React.ReactElement {
                 </ConfigRow>
             </ConfigCard>
 
-            <ConfigCard title={t('translate_settings.window') || '窗口'}>
+            <ConfigCard title={t('translate_settings.window', { defaultValue: '窗口' })}>
                 <ConfigRow label={t('translate_settings.window_position', { defaultValue: '窗口位置' })}>
                     <ConfigSelect value={windowPosition} onChange={setWindowPosition} options={windowPositionOpts} testId="cfg-translate_window_position" style={{ minWidth: 160 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.remember_window_size') || '记住窗口大小'}>
+                <ConfigRow label={t('translate_settings.remember_window_size', { defaultValue: '记住窗口大小' })}>
                     <ConfigSwitch on={rememberWindowSize} onChange={setRememberWindowSize} testId="cfg-translate_remember_window_size" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.always_on_top') || '始终置顶'}>
+                <ConfigRow label={t('translate_settings.always_on_top', { defaultValue: '始终置顶' })}>
                     <ConfigSwitch on={alwaysOnTop} onChange={setAlwaysOnTop} testId="cfg-translate_always_on_top" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.hide_source') || '隐藏源文本'}>
+                <ConfigRow label={t('translate_settings.hide_source', { defaultValue: '隐藏源文本' })}>
                     <ConfigSwitch on={hideSource} onChange={setHideSource} testId="cfg-hide_source" />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.hide_language') || '隐藏语言选择'}>
+                <ConfigRow label={t('translate_settings.hide_language', { defaultValue: '隐藏语言选择' })}>
                     <ConfigSwitch on={hideLanguage} onChange={setHideLanguage} testId="cfg-hide_language" />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.hide_window', { defaultValue: '翻译后隐藏窗口' })} sub={t('translate_settings.hide_window_sub')}>
