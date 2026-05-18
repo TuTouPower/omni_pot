@@ -387,3 +387,24 @@ export function restore_local_backup(backup_name: string): void {
         rmSync(staging_dir, { recursive: true, force: true })
     }
 }
+
+export function restore_from_zip_path(zip_path: string): { restored_files: string[] } {
+    if (!existsSync(zip_path)) throw new Error(`File not found: ${zip_path}`)
+    if (!zip_path.endsWith('.zip')) throw new Error('Not a zip file')
+
+    const entries = read_zip_entries(zip_path)
+    const entry_by_name = new Map(entries.map((entry) => [entry.name, entry.data]))
+    validate_backup_entries(entry_by_name)
+
+    const staging_dir = create_restore_staging_dir(entry_by_name)
+    try {
+        cancel_pending_config_save()
+        close_history()
+        close_dict()
+        replace_from_staging(staging_dir, entry_by_name)
+    } finally {
+        rmSync(staging_dir, { recursive: true, force: true })
+    }
+
+    return { restored_files: [...entry_by_name.keys()].filter((k) => k !== BACKUP_MANIFEST_NAME) }
+}

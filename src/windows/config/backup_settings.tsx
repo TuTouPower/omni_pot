@@ -23,6 +23,7 @@ export default function BackupSettings(): React.ReactElement {
     const [backups, setBackups] = useState<string[]>([])
     const [status, setStatus] = useState('')
     const [restoreModal, setRestoreModal] = useState(false)
+    const [restoreResult, setRestoreResult] = useState<{ files: string[] } | null>(null)
 
     const load_backups = useCallback(async () => {
         try {
@@ -57,11 +58,32 @@ export default function BackupSettings(): React.ReactElement {
             if (result.success) {
                 setStatus('Restored successfully. Please restart the app.')
                 setRestoreModal(false)
+                setRestoreResult(null)
             } else {
                 setStatus(`Error: ${result.error ?? ''}`)
             }
         } catch (error) {
             setStatus(`Error: ${error_message(error)}`)
+        }
+    }
+
+    const handle_import = async (): Promise<void> => {
+        setStatus('导入中...')
+        setRestoreResult(null)
+        try {
+            const result = await window.electronAPI.backup.import()
+            if (result.success) {
+                const files = result.restored_files ?? []
+                setRestoreResult({ files })
+                setStatus(`导入成功，请重启应用。已恢复 ${files.length} 个文件。`)
+                load_backups().catch(console.error)
+            } else if (result.error === 'cancelled') {
+                setStatus('')
+            } else {
+                setStatus(`导入失败: ${result.error ?? ''}`)
+            }
+        } catch (error) {
+            setStatus(`导入失败: ${error_message(error)}`)
         }
     }
 
@@ -119,8 +141,26 @@ export default function BackupSettings(): React.ReactElement {
                         <Icons.Cycle size={14} />
                         {t('backup.restore', { defaultValue: '从备份恢复' })}
                     </button>
+                    <button data-testid="backup-import" className="btn" onClick={() => { handle_import().catch(console.error); }}>
+                        <Icons.Export size={14} />
+                        导入 ZIP
+                    </button>
                 </div>
                 {status && <p data-testid="backup-status" style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
+                {restoreResult && (
+                    <div data-testid="backup-restore-result" style={{ fontSize: 12, padding: '8px 12px', background: 'var(--bg-sunk)', borderRadius: 8, border: '1px solid var(--line)' }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>恢复校验</div>
+                        <div style={{ color: 'var(--text-dim)' }}>
+                            {restoreResult.files.map((f) => (
+                                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <Icons.Check size={12} style={{ color: 'var(--brand-primary)' }} />
+                                    <span className="mono" style={{ fontSize: 11 }}>{f}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div style={{ marginTop: 6, color: 'var(--text-mute)' }}>请重启应用以使更改生效。</div>
+                    </div>
+                )}
                 <div data-testid="backup-content-hint" className="hint">备份内容：设置、历史记录数据库、CC-CEDICT 词典数据库</div>
             </ConfigCard>
 
