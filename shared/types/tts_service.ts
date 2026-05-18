@@ -1,8 +1,8 @@
 import type { LanguageCode } from './language'
 
 /**
- * Handle returned by a direct-playback TTS service. Callers use `stop()` to
- * interrupt playback and `done` to await natural completion.
+ * Handle returned by a TTS service. Callers use `stop()` to interrupt playback
+ * and `done` to await natural completion.
  */
 export interface TtsPlaybackHandle {
     stop(): void
@@ -14,16 +14,10 @@ export interface TtsService {
     readonly name: string
     readonly languages: LanguageCode[]
     /**
-     * Synthesize speech into a downloadable audio buffer. Used by services that
-     * return a real audio stream (e.g. Edge TTS, Lingva TTS). Renderer code
-     * wraps the buffer in an HTMLAudio element for playback.
+     * Speak directly through the host platform's audio output. The current
+     * implementation (system_tts) uses the renderer's Web Speech API, which
+     * dispatches to Windows SAPI / macOS NSSpeechSynthesizer / Linux espeak.
      */
-    synthesize?(text: string, language: LanguageCode, config: Record<string, unknown>): Promise<ArrayBuffer>
-    /**
-     * Speak directly through the host platform's audio output. Used by services
-     * that cannot expose a decoded buffer (e.g. Web Speech API / OS TTS).
-     * Renderer code prefers `play` over `synthesize` when both exist.
-     */
-    play?(text: string, language: LanguageCode, config: Record<string, unknown>): TtsPlaybackHandle
+    play(text: string, language: LanguageCode, config: Record<string, unknown>): TtsPlaybackHandle
     testConfig(config: Record<string, unknown>): Promise<boolean>
 }

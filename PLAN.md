@@ -80,6 +80,7 @@
 - [ ] **Windows 实机 smoke 验收**：首次启动、托盘、快捷键、截图、设置/识别窗口（自动化通过后仍需人工执行）
 - [ ] **TTS 朗读发声**：自动化只能验 IPC 链路，发声本身归为 Windows 实机 smoke
 - [ ] **谷歌翻译失效**：当前环境仍失败，保留 issue，不用 mock 隐藏
+- [ ] **TTS playback state e2e**：`translate_source_area.spec.ts` 和 `translate_result_cards.spec.ts` 中针对 TTS 的按压/取消等待断言已降级为存在性 smoke。要恢复完整断言需要在 `app_fixture` 加 `init_script` 选项，在渲染进程注入受控的 `window.speechSynthesis` stub（用于决定何时触发 `onend`）
 
 ---
 

@@ -6,8 +6,6 @@ import { lingvaService } from '../../../src/services/lingva'
 import { mymemoryService } from '../../../src/services/mymemory'
 import { cambridgeDictService } from '../../../src/services/cambridge_dict'
 import { freeDictionaryService } from '../../../src/services/free_dictionary'
-import { edgeTtsService } from '../../../src/services/tts/edge_tts'
-import { lingvaTtsService } from '../../../src/services/tts/lingva_tts'
 
 function expect_result(value: unknown): void {
     if (typeof value === 'string') {
@@ -37,14 +35,8 @@ test.describe('@external external service health', () => {
         })
     }
 
-    for (const { name, run } of [
-        { name: 'Edge TTS', run: () => edgeTtsService.synthesize('hello world', 'en', {}) },
-        { name: 'Lingva TTS', run: () => lingvaTtsService.synthesize('hello world', 'en', {}) },
-    ] as const) {
-        test(`${name} returns real audio bytes`, async () => {
-            test.setTimeout(120_000)
-            const audio = await run()
-            expect(audio.byteLength).toBeGreaterThan(0)
-        })
-    }
+    // TTS is now provided by system_tts (Web Speech API → OS engine). It can
+    // only be exercised inside a renderer, not from a Node test runner; the
+    // translate_source_area and translate_result_cards specs cover it via
+    // a stubbed window.speechSynthesis instead of round-tripping a network call.
 })
