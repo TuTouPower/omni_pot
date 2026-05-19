@@ -4,7 +4,7 @@ import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
 import { format_hotkey } from '../../utils/format_hotkey'
 
-type HintIcon = 'translate' | 'type' | 'camera' | 'image'
+type HintIcon = 'translate' | 'type' | 'camera' | 'image' | 'search'
 
 interface HintItem {
     icon: HintIcon
@@ -22,6 +22,7 @@ function HintRow({ item }: { item: HintItem }): React.ReactElement {
     const IconComp = item.icon === 'translate' ? Icons.Translate
         : item.icon === 'type' ? Icons.Type
         : item.icon === 'camera' ? Icons.Camera
+        : item.icon === 'search' ? Icons.Search
         : Icons.Image
     return (
         <div className="card" data-testid={item.test_id} style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -53,6 +54,7 @@ interface WelcomeEmptyProps {
 export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.ReactElement {
     const { t } = useTranslation()
     const hotkey_translate = useConfigStore((s) => s.config.hotkey_translate)
+    const hotkey_selection_dictionary = useConfigStore((s) => s.config.hotkey_selection_dictionary)
     const hotkey_ocr_recognize = useConfigStore((s) => s.config.hotkey_ocr_recognize)
     const hotkey_ocr_translate = useConfigStore((s) => s.config.hotkey_ocr_translate)
 
@@ -65,6 +67,15 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
             sub_fallback: '选中文本自动翻译，未选中则打开输入窗口',
             hotkey_value: hotkey_translate,
             test_id: 'welcome-translate',
+        },
+        {
+            icon: 'search',
+            title_key: 'welcome.dictionary',
+            title_fallback: '词典',
+            sub_key: 'welcome.dictionary_sub',
+            sub_fallback: '选中字词查询字典词典',
+            hotkey_value: hotkey_selection_dictionary,
+            test_id: 'welcome-dictionary',
         },
         {
             icon: 'camera',

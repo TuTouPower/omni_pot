@@ -31,6 +31,7 @@ const SVC_META: Partial<Record<string, { name: string; mono: string; tone: strin
     yandex: { name: 'Yandex', mono: 'YD', tone: 'oklch(65% 0.13 25)' },
     lingva: { name: 'Lingva', mono: 'LV', tone: 'oklch(65% 0.10 170)' },
     ecdict: { name: 'ECDict', mono: 'EC', tone: 'oklch(64% 0.10 60)' },
+    chinese_dictionary: { name: '中文词典', mono: 'ZD', tone: 'oklch(60% 0.13 25)' },
     openai: { name: 'OpenAI', mono: 'AI', tone: 'oklch(58% 0.02 180)' },
     geminipro: { name: 'Gemini', mono: 'GM', tone: 'oklch(64% 0.12 280)' },
     chatglm: { name: 'ChatGLM', mono: 'GL', tone: 'oklch(60% 0.12 30)' },
