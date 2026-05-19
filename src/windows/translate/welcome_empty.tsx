@@ -73,7 +73,7 @@ export default function WelcomeEmpty({ onSkip }: WelcomeEmptyProps): React.React
             title_key: 'welcome.dictionary',
             title_fallback: '词典',
             sub_key: 'welcome.dictionary_sub',
-            sub_fallback: '选中字词查询字典词典',
+            sub_fallback: '选中字词查询词典',
             hotkey_value: hotkey_selection_dictionary,
             test_id: 'welcome-dictionary',
         },

@@ -71,7 +71,7 @@
         "screenshot_translate": "截圖翻譯",
         "screenshot_recognize": "截圖辨識",
         "clipboard_translate": "剪貼簿翻譯",
-        "selection_dictionary": "查詢字典"
+        "selection_dictionary": "詞典"
     },
     "service": {
         "title": "服務",
@@ -103,7 +103,7 @@
         "export_log": "匯出日誌"
     },
     "dict": {
-        "title": "字典",
+        "title": "詞典",
         "source_placeholder": "輸入要查詢的單字...",
         "no_result": "未找到結果",
         "look_up": "查詢",

@@ -50,7 +50,7 @@
         "translate": "翻译",
         "translate_sub": "选中文本自动翻译，未选中则打开输入窗口",
         "dictionary": "词典",
-        "dictionary_sub": "选中字词查询字典词典",
+        "dictionary_sub": "选中字词查询词典",
         "ocr_recognize": "文字识别",
         "ocr_recognize_sub": "截图后将文字提取到识别窗口",
         "ocr_translate": "截图翻译",
@@ -181,7 +181,7 @@
         "screenshot_translate": "截图翻译",
         "screenshot_recognize": "文字识别",
         "clipboard_translate": "剪贴板翻译",
-        "selection_dictionary": "查询字典"
+        "selection_dictionary": "词典"
     },
     "service": {
         "title": "服务",
@@ -226,7 +226,7 @@
         "export_log": "导出日志"
     },
     "dict": {
-        "title": "字典",
+        "title": "词典",
         "source_placeholder": "输入要查询的单词...",
         "no_result": "未找到结果",
         "look_up": "查询",

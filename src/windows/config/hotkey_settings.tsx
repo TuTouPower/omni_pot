@@ -147,7 +147,7 @@ export default function HotkeySettings(): React.ReactElement {
                     configKey="hotkey_ocr_translate"
                 />
                 <HotkeyField
-                    label={t('hotkey.selection_dictionary', { defaultValue: '划词词典' })}
+                    label={t('hotkey.selection_dictionary', { defaultValue: '词典' })}
                     sub="选中文本后按下快捷键查词典"
                     configKey="hotkey_selection_dictionary"
                 />

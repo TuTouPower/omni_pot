@@ -20,8 +20,8 @@ const CATEGORY_TABS = [
     { key: 'translate_service_list' as ServiceCategory, labelKey: 'service.translate', label: '翻译' },
     { key: 'dictionary_service_list' as ServiceCategory, labelKey: 'service.chinese_dictionary', label: '中文词典' },
     { key: 'english_dictionary_service_list' as ServiceCategory, labelKey: 'service.english_dictionary', label: '英文词典' },
-    { key: 'recognize_service_list' as ServiceCategory, labelKey: 'service.ocr', label: '识别' },
-    { key: 'tts_service_list' as ServiceCategory, labelKey: 'service.tts', label: '朗读' },
+    { key: 'recognize_service_list' as ServiceCategory, labelKey: 'service.ocr', label: '文字识别' },
+    { key: 'tts_service_list' as ServiceCategory, labelKey: 'service.tts', label: '语音朗读' },
     { key: 'collection_service_list' as ServiceCategory, labelKey: 'service.collection', label: '收藏' },
 ]
 
