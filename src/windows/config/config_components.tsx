@@ -23,9 +23,10 @@ export function ConfigCard({ title, hint, children }: {
     )
 }
 
-export function ConfigRow({ label, sub, children, testId }: {
+export function ConfigRow({ label, sub, help, children, testId }: {
     label: string
     sub?: string
+    help?: { href?: string; title?: string }
     children?: React.ReactNode
     testId?: string
 }): React.ReactElement {
@@ -33,6 +34,15 @@ export function ConfigRow({ label, sub, children, testId }: {
         <div className="row" data-testid={testId} style={{ minHeight: 36 }}>
             <div className="label">
                 {label}
+                {help && (
+                    <a
+                        href={help.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={help.title}
+                        className="label-help"
+                    >?</a>
+                )}
                 {sub && <span className="sub">{sub}</span>}
             </div>
             {children}
