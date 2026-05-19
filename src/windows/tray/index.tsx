@@ -105,7 +105,7 @@ export default function TrayWindow(): React.ReactElement {
                             >
                                 <Icon size={15} />
                                 <span style={{ flex: 1, whiteSpace: 'nowrap' }}>{labels[index] ?? action}</span>
-                                {shortcuts[action] && <span className="hint mono" style={{ fontSize: 11, whiteSpace: 'nowrap', marginLeft: 14 }}>{format_hotkey(shortcuts[action]).join('+')}</span>}
+                                {shortcuts[action] && <span className="hint mono" style={{ fontSize: 11, whiteSpace: 'nowrap', marginLeft: 14 }}>{format_hotkey(shortcuts[action]).join(' + ')}</span>}
                                 {active && <span className="chip" style={{ fontSize: 10, marginLeft: 14 }}>ON</span>}
                             </button>
                         </React.Fragment>

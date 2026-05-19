@@ -103,7 +103,7 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
                         format_hotkey(displayValue).map((k, i, a) => (
                             <React.Fragment key={i}>
                                 <kbd>{k}</kbd>
-                                {i < a.length - 1 && <span className="hint">+</span>}
+                                {i < a.length - 1 && <span className="hint"> + </span>}
                             </React.Fragment>
                         ))
                     ) : (
