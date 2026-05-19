@@ -36,7 +36,7 @@ function DictResultCard({ instanceKey, result, isCollected, onCollect, collectio
 
     if (result === null) {
         return (
-            <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
+            <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px', overflow: 'visible' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{service.name}</div>
                     {onToggleCollapse && (
@@ -60,7 +60,7 @@ function DictResultCard({ instanceKey, result, isCollected, onCollect, collectio
     return (
         <>
             {/* Definitions card */}
-            <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px' }}>
+            <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '12px 14px', overflow: 'visible' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{service.name}</div>
                     {onCollect && (
@@ -159,6 +159,7 @@ export default function DictWindow(): React.ReactElement {
         [collectionServiceList, serviceInstances]
     )
     const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
+    const setConfig = useConfigStore((s) => s.set)
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
     const [selection_notice, setSelectionNotice] = useState(false)
@@ -273,8 +274,11 @@ export default function DictWindow(): React.ReactElement {
 
     const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
     const handleTogglePin = useCallback(() => {
-        window.electronAPI.window.setAlwaysOnTop(!alwaysOnTop).catch(console.error)
-    }, [alwaysOnTop])
+        const next = !alwaysOnTop
+        window.electronAPI.window.setAlwaysOnTop(next)
+            .then(() => { setConfig('translate_always_on_top', next) })
+            .catch(console.error)
+    }, [alwaysOnTop, setConfig])
 
     const firstResult = enabledServiceList.map((ik) => results[ik]).find((r): r is DictResult => !!r)
     const collection_available = enabledCollectionServiceList.length > 0
@@ -456,7 +460,7 @@ export default function DictWindow(): React.ReactElement {
 
                 {/* Pronunciations + POS tags */}
                 {firstResult && (firstResult.pronunciations.length > 0 || firstResult.definitions.length > 0) && (
-                    <div className="card" style={{ padding: '10px 14px' }}>
+                    <div className="card" style={{ padding: '10px 14px', overflow: 'visible' }}>
                         {firstResult.pronunciations.length > 0 && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
                                 {firstResult.pronunciations.map((p, i) => (
