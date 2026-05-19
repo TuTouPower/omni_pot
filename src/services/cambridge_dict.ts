@@ -3,13 +3,6 @@ import type { LanguageCode } from '@shared/types/language'
 
 const CAMBRIDGE_LANGUAGES: LanguageCode[] = ['auto', 'en', 'zh_cn', 'zh_tw']
 
-const CAMBRIDGE_LANG_MAP: Record<string, string> = {
-    auto: 'english',
-    en: 'english',
-    zh_cn: 'chinese-simplified',
-    zh_tw: 'chinese-traditional'
-}
-
 function regex_capture(match: RegExpMatchArray | RegExpExecArray, index: number): string {
     return match[index] ?? ''
 }
@@ -52,9 +45,7 @@ export const cambridgeDictService: TranslateService = {
             return ''
         }
 
-        const dataset = from === 'en' && to !== 'en' && to !== 'auto'
-            ? `${CAMBRIDGE_LANG_MAP[from] ?? 'english'}-${CAMBRIDGE_LANG_MAP[to] ?? 'chinese-simplified'}`
-            : 'english'
+        const dataset = 'english'
 
         const url = `https://dictionary.cambridge.org/search/direct/?datasetsearch=${dataset}&q=${encodeURIComponent(text)}`
 
@@ -79,12 +70,13 @@ export const cambridgeDictService: TranslateService = {
         const definitions: DictResult['definitions'] = []
         const examples: DictResult['examples'] = []
 
-        const pron_pattern = /class="dpron-i"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g
+        const pron_pattern = /class="[^"]*dpron-i[^>]*>([\s\S]*?)<\/span>\s*<\/span>/g
         let pron_match: RegExpExecArray | null
         while ((pron_match = pron_pattern.exec(html)) !== null) {
             const block = regex_capture(pron_match, 1)
-            const region_match = block.match(/class="region"[^>]*>([^<]*)</)
-            const symbol_match = block.match(/class="pron"[^>]*>([^<]*)</)
+            const region_match = block.match(/class="region[^"]*"[^>]*>([^<]*)</)
+            const symbol_match = block.match(/class="[^"]*\bipa\b[^"]*"[^>]*>([^<]*)/)
+                ?? block.match(/class="pron[^"]*"[^>]*>\/([^<]*)/)
             if (region_match && symbol_match) {
                 pronunciations.push({
                     region: regex_capture(region_match, 1).trim(),
