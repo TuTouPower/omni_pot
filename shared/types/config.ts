@@ -53,6 +53,7 @@ export interface AppConfig {
 
   translate_service_list: string[]
   dictionary_service_list: string[]
+  english_dictionary_service_list: string[]
   recognize_service_list: string[]
   tts_service_list: string[]
   collection_service_list: string[]
@@ -85,6 +86,7 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
   'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
   'ecdict@default': { serviceKey: 'ecdict', config: {} },
   'chinese_dictionary@default': { serviceKey: 'chinese_dictionary', config: {} },
+  'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
   'system_tts@default': { serviceKey: 'system_tts', config: {} }
 }
 export const DEFAULT_CONFIG: AppConfig = {
@@ -136,7 +138,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   hotkey_selection_dictionary: '',
 
   translate_service_list: ['bing@default', 'deepl@default', 'mymemory@default'],
-  dictionary_service_list: ['chinese_dictionary@default', 'free_dictionary@default', 'ecdict@default'],
+  dictionary_service_list: ['chinese_dictionary@default', 'ecdict@default'],
+  english_dictionary_service_list: ['cambridge_dict@default', 'ecdict@default'],
   recognize_service_list: ['tesseract@default'],
   tts_service_list: ['system_tts@default'],
   collection_service_list: [],
