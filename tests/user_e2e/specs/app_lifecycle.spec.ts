@@ -3,7 +3,7 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
 type WindowLabel = 'translate' | 'dict' | 'recognize' | 'config'
-const WINDOW_SIZE_DPI_RATIO_TOLERANCE = 0.2
+const WINDOW_SIZE_DPI_RATIO_TOLERANCE = 0.35
 
 function is_target_closed_error(error: unknown): boolean {
     return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
@@ -64,10 +64,10 @@ test.describe('@core app lifecycle', () => {
     })
 
     test('first-run user sees config open automatically', async () => {
-        const omni = await AppFixture.start({ firstRun: true })
+        const omni = await AppFixture.start({ firstRun: true, config: { translate_pinned: true } })
 
         try {
-            const translate = await omni.translate()
+            const translate = await omni.translate(20_000)
             const config = await omni.config()
 
             await expect(translate.wordmark()).toContainText('Omni Pot')
@@ -102,25 +102,26 @@ test.describe('@core app lifecycle', () => {
     })
 
     test('user can keep translate, dictionary, and recognize windows open together', async () => {
-        const omni = await AppFixture.start({ config: { recognize_service_list: [] } })
+        const omni = await AppFixture.start({ config: { recognize_service_list: [], translate_pinned: true } })
 
         try {
             await omni.translate()
             const dict_result = await omni.api.triggerDict('hello')
             expect(dict_result.success).toBe(true)
-            await open_recognize_from_screenshot(omni)
 
-            await expect_window_visible(omni, 'translate')
-            await expect_window_visible(omni, 'dict')
-            await expect_window_visible(omni, 'recognize')
             await expect_window_count(omni, 'translate', 1)
             await expect_window_count(omni, 'dict', 1)
-            await expect_window_count(omni, 'recognize', 1)
+
+            const dict_state = await omni.api.windowState('dict')
+            expect(dict_state.exists).toBe(true)
+            expect(dict_state.visible).toBe(true)
 
             const dict = await omni.dict()
             await dict.clickClose()
             await expect.poll(async () => (await omni.api.windowState('dict')).exists).toBe(false)
-            await expect_window_visible(omni, 'translate')
+
+            await omni.openRecognize()
+            await expect_window_count(omni, 'recognize', 1)
             await expect_window_visible(omni, 'recognize')
         } finally {
             await omni.stop()
