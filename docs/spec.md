@@ -955,7 +955,7 @@ E2E 测试专用端点（仅 `OMNI_POT_E2E` 环境变量启用）：
 
 ### 托盘菜单
 
-中文 UI 下条目文案与显示，**每个功能项右侧显示当前绑定的快捷键全名**（如 `Ctrl + Alt + T`，使用 `Ctrl / Alt / Shift` 完整单词，不使用 ⌃⌥⇧ 简符）：
+中文 UI 下条目文案与显示，**每个功能项右侧显示当前绑定的快捷键全名**（使用 `Control / Alt / Shift` 完整单词，不使用 `Ctrl` 缩写或 ⌃⌥⇧ 简符）。修饰键必须按平台展示：Windows / Linux 显示 `Control`（如 `Control + Alt + T`），macOS 显示 `Command`（如 `Command + Alt + T`）；不得把 `CommandOrControl` 原样展示给用户：
 
 | 项目 | 类型 | 操作 |
 |---|---|---|
