@@ -61,11 +61,11 @@ export interface ElectronAPI {
   }
   ocr: {
     captureScreenshot(mode: 'recognize' | 'translate'): Promise<boolean>
-    openRecognize(base64Image: string, text: string): Promise<void>
+    openRecognize(base64Image: string, text: string, mode?: string): Promise<void>
     sendToTranslate(text: string): Promise<void>
     systemRecognize(base64Image: string, lang: string): Promise<string>
     onScreenshotShow(callback: (base64: string, mode: string) => void): () => void
-    onRecognizeShow(callback: (base64: string, text: string) => void): () => void
+    onRecognizeShow(callback: (base64: string, text: string, mode: string) => void): () => void
   }
   history: {
     add(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<void>
