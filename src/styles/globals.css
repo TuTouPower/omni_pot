@@ -165,7 +165,7 @@ select {
 .btn {
     height: var(--row-h);
     padding: 0 12px;
-    border-radius: var(--r-md);
+    border-radius: var(--r-card);
     font-size: 13px;
     font-weight: 500;
     display: inline-flex;
@@ -368,7 +368,7 @@ select {
 .card {
     background: var(--bg-card);
     border: 1px solid var(--line-soft);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-card);
     overflow: hidden;
 }
 
