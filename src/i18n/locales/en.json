@@ -49,6 +49,8 @@
         "subtitle": "The shortcuts below are preset for you; change them anytime under Settings.",
         "translate": "Translate",
         "translate_sub": "Translate selected text, or open input window if nothing selected",
+        "dictionary": "Dictionary",
+        "dictionary_sub": "Look up selected words in the dictionary",
         "ocr_recognize": "OCR recognize",
         "ocr_recognize_sub": "Capture a region and lift the text into recognize",
         "ocr_translate": "OCR translate",
@@ -185,6 +187,8 @@
         "title": "Services",
         "translate": "Translate",
         "dictionary": "Dictionary",
+        "chinese_dictionary": "Chinese Dict",
+        "english_dictionary": "English Dict",
         "tts": "TTS",
         "ocr": "OCR",
         "collection": "Collection",
@@ -218,7 +222,8 @@
         "title": "About",
         "version": "Version",
         "github": "GitHub",
-        "check_update": "Check for updates"
+        "check_update": "Check for updates",
+        "export_log": "Export Logs"
     },
     "dict": {
         "title": "Dictionary",

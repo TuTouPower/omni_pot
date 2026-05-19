@@ -49,6 +49,8 @@
         "subtitle": "下面的快捷键已为你预设，随时可在「设置」中修改",
         "translate": "翻译",
         "translate_sub": "选中文本自动翻译，未选中则打开输入窗口",
+        "dictionary": "词典",
+        "dictionary_sub": "选中字词查询字典词典",
         "ocr_recognize": "文字识别",
         "ocr_recognize_sub": "截图后将文字提取到识别窗口",
         "ocr_translate": "截图翻译",
@@ -184,7 +186,9 @@
     "service": {
         "title": "服务",
         "translate": "翻译",
-        "dictionary": "字典词典",
+        "dictionary": "词典",
+        "chinese_dictionary": "中文词典",
+        "english_dictionary": "英文词典",
         "tts": "语音朗读",
         "ocr": "文字识别",
         "collection": "收藏",
@@ -218,7 +222,8 @@
         "title": "关于",
         "version": "版本",
         "github": "GitHub",
-        "check_update": "检查更新"
+        "check_update": "检查更新",
+        "export_log": "导出日志"
     },
     "dict": {
         "title": "字典",
