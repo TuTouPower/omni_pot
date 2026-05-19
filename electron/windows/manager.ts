@@ -152,6 +152,12 @@ export class WindowManager {
         setConfig('translate_pinned', false)
         setConfig('translate_always_on_top', false)
       }
+      if (opts.label === WindowLabel.DICT) {
+        setConfig('dict_always_on_top', false)
+      }
+      if (opts.label === WindowLabel.RECOGNIZE) {
+        setConfig('recognize_always_on_top', false)
+      }
     })
 
     this.byLabel.set(opts.label, win)

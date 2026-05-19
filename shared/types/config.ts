@@ -39,6 +39,9 @@ export interface AppConfig {
   translate_window_position_x: number
   translate_window_position_y: number
 
+  dict_always_on_top: boolean
+  recognize_always_on_top: boolean
+
   recognize_language: string
   recognize_delete_newline: boolean
   recognize_auto_copy: boolean
@@ -129,6 +132,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   translate_window_height: 420,
   translate_window_position_x: 0,
   translate_window_position_y: 0,
+
+  dict_always_on_top: false,
+  recognize_always_on_top: false,
 
   hotkey_translate: '',
   hotkey_selection_translate: '',
