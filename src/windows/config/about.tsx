@@ -12,6 +12,7 @@ export default function AboutPage(): React.ReactElement {
     const [serverPort] = useConfig('server_port')
     const apiUrl = `http://127.0.0.1:${String(serverPort)}`
     const [logDir, setLogDir] = useState('...')
+    const [exporting, setExporting] = useState(false)
     const openExternal = (url: string): void => {
         window.electronAPI.shell.openExternal(url).catch(() => undefined)
     }
@@ -19,6 +20,15 @@ export default function AboutPage(): React.ReactElement {
     useEffect(() => {
         window.electronAPI.log.getDir().then(setLogDir).catch(() => { setLogDir('unknown'); })
     }, [])
+
+    const handleExportLog = (): void => {
+        setExporting(true)
+        window.electronAPI.log.export().then((result) => {
+            if (result.success) {
+                window.electronAPI.shell.openExternal(`file://${result.path}`).catch(() => undefined)
+            }
+        }).catch(() => undefined).finally(() => { setExporting(false); })
+    }
 
     return (
         <div className="stack gap-12">
@@ -76,6 +86,12 @@ export default function AboutPage(): React.ReactElement {
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>
+                <div style={{ padding: '8px 0 0' }}>
+                    <button className="btn sm" data-testid="about-export-log" disabled={exporting} onClick={handleExportLog}>
+                        {exporting ? '导出中...' : t('about.export_log', { defaultValue: '导出日志' })}
+                    </button>
+                    <div className="hint" style={{ fontSize: 11, marginTop: 4 }}>最近 7 天的日志打包为 zip，可附在反馈中</div>
+                </div>
             </ConfigCard>
         </div>
     )
