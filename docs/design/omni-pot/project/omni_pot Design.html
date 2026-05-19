@@ -132,10 +132,10 @@ function App() {
               results={SAMPLE_RESULTS}
               sourceText="The merge function must be both associative and commutative — otherwise the order of arriving operations matters and the result is no longer a CRDT. This invariant becomes critical once you start considering Byzantine actors or out-of-order delivery across geographically distributed replicas. In practice we relax to per-region consistency and reconcile every 60 seconds via a vector-clock merge, which gives us liveness without sacrificing correctness during the common case. Operators who care should monitor the divergence histogram in Grafana." />
           </DCArtboard>
-          <DCArtboard id="dict" label="字典词典 · 英文单词" width={420} height={780} style={{ height: 'auto' }}>
+          <DCArtboard id="dict" label="词典 · 英文字词" width={420} height={780} style={{ height: 'auto' }}>
             <DictWindow lang="en" />
           </DCArtboard>
-          <DCArtboard id="dict-zh" label="字典词典 · 中文字词" width={420} height={780} style={{ height: 'auto' }}>
+          <DCArtboard id="dict-zh" label="词典 · 中文字词" width={420} height={780} style={{ height: 'auto' }}>
             <DictWindow lang="zh" />
           </DCArtboard>
         </DCSection>
@@ -329,7 +329,7 @@ function TranslateEmptyState() {
           </div>
         </div>
         <Item icon={<Icons.Translate size={16} />} title="翻译" sub="选中文本时翻译该文本；未选中时弹出空翻译窗口" kbd={['Ctrl', 'Alt', 'T']} />
-        <Item icon={<Icons.Type size={16} />} title="字典词典" sub="选中单词查询词典释义" kbd={['Ctrl', 'Alt', 'D']} />
+        <Item icon={<Icons.Type size={16} />} title="词典" sub="选中字词查询字典词典" kbd={['Ctrl', 'Alt', 'D']} />
         <Item icon={<Icons.Camera size={16} />} title="文字识别" sub="截图后将文字提取到识别窗口" kbd={['Ctrl', 'Alt', 'S']} />
         <Item icon={<Icons.Image size={16} />} title="截图翻译" sub="截图、识别并直接翻译结果" kbd={['Ctrl', 'Alt', 'Shift', 'S']} />
         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 4 }}>

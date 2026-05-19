@@ -297,7 +297,7 @@ const PageHotkey = () => {
     <div className="stack gap-12">
       <Card title="全局快捷键" hint="按下组合键以录入 · Backspace 清除">
         <HK label="翻译" sub={['选中文本时翻译该文本；','未选中时弹出空翻译窗口供输入；','剪贴板监听时，自动翻译剪贴板。']} value="Ctrl+Alt+T" />
-        <HK label="划词字典" sub="选中单词查询词典释义" value="Ctrl+Alt+D" />
+        <HK label="词典" sub="选中字词查询字典词典" value="Ctrl+Alt+D" />
         <HK label="文字识别" sub="截图后将文字提取到识别窗口" value="Ctrl+Alt+S" />
         <HK label="截图翻译" sub="截图、识别并自动翻译" value="" />
       </Card>
@@ -309,7 +309,8 @@ const PageService = () => {
   const [tab, setTab] = useStateC('translate');
   const tabs = [
     { id:'translate', label:'翻译', count: 5 },
-    { id:'dictionary', label:'字典词典', count: 3 },
+    { id:'dict_zh', label:'中文词典', count: 2 },
+    { id:'dict_en', label:'英文词典', count: 3 },
     { id:'recognize', label:'文字识别', count: 2 },
     { id:'tts', label:'语音朗读', count: 1 },
     { id:'collection', label:'收藏', count: 1 },
@@ -322,10 +323,14 @@ const PageService = () => {
       { key:'lingva', enabled: true },
       { key:'mymemory', enabled: true },
     ],
-    dictionary: [
-      { key:'free_dictionary', enabled: true },
+    dict_zh: [
+      { key:'chinese_dictionary', enabled: true, tag:'OFFLINE' },
       { key:'ecdict', enabled: true, tag:'OFFLINE' },
+    ],
+    dict_en: [
       { key:'cambridge_dict', enabled: true },
+      { key:'ecdict', enabled: true, tag:'OFFLINE' },
+      { key:'free_dictionary', enabled: false },
     ],
     recognize: [
       { key:'system', enabled: true, tag:'PLATFORM' },
@@ -535,9 +540,10 @@ const PageAbout = () => (
     </div>
 
     <Card title="诊断">
-      <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/OmniPot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
-      <Row label="设置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/OmniPot</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
-      <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:20202</div><button className="btn ghost icon sm"><Icons.Copy size={12}/></button></Row>
+      <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/OmniPot</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
+      <Row label="设置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/OmniPot</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
+      <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:20202</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
+      <Row label="日志" sub="最近 7 天的日志打包为 zip，可附在反馈中"><button className="btn sm"><Icons.Export size={12}/>导出日志</button></Row>
     </Card>
   </div>
 );

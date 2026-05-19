@@ -367,143 +367,274 @@ const TranslateWindow = ({ width = 400, height, sourceText, services, results, p
 
 };
 
-// Collapsible section used in DictWindow. Matches the visual language of
-// ResultCard — a chevron button on the right rotates 90° when collapsed,
-// and a loading-dots indicator can sit in the header.
-const DictSection = ({ label, loading, defaultCollapsed = false, children }) => {
-  const [col, setCol] = useStateT(defaultCollapsed);
+// ====== Dictionary window — driven by `DictResult` from one or more dict services.
+//
+// All dict services return the same shape (see shared/types/service.ts):
+//   {
+//     type: 'dict',
+//     pronunciations: [{ region, phonetic }],
+//     definitions:    [{ partOfSpeech, meanings: string[] }],
+//     examples:       [{ source, target }],
+//   }
+//
+// The window renders one card per service, just like the translation window
+// renders one card per translation engine. Cards are independently
+// collapsible / loadable / failing.
+
+// One card per DictResult. Layout closely mirrors ResultCard in TranslateWindow:
+// service tile + name in the header, chevron on the right, body expands below.
+const DictResultCard = ({ s, r }) => {
+  const hasResult = !!(r && (r.result || r.error));
+  const isEmpty = r && r.result && r.result.definitions && r.result.definitions.length === 0;
+  const [col, setCol] = useStateT(false);
+  const seenRef = useRefT(false);
+  useEffectT(() => {
+    if (hasResult && !seenRef.current) { seenRef.current = true; setCol(false); }
+  }, [hasResult]);
+
+  const result = r && r.result;
+
   return (
-    <div className="card" style={{ padding: '12px 14px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: col ? 0 : 10 }}>
-        <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div>
-        {loading && <span className="dots mute" aria-label="加载中"><span /><span /><span /></span>}
+    <div className="card" style={{ padding: '10px 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Icons.Drag size={14} style={{ color: 'var(--text-mute)', cursor: 'grab', flex: '0 0 14px' }} />
+        <SvcTile name={s.name} />
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{s.label}</div>
+        {r.loading && !r.error &&
+          <span className="dots" aria-label="查询中" title="查询中…"><span /><span /><span /></span>
+        }
         <div style={{ flex: 1 }} />
+        {r.error &&
+          <button className="ic-btn" title="重试" style={{ color: 'var(--danger)' }}>
+            <Icons.Cycle size={14} />
+          </button>
+        }
+        <button className="ic-btn" title="复制"><Icons.Copy size={16} /></button>
+        <button className="ic-btn" title="收藏"><Icons.Heart size={16} /></button>
         <button className="ic-btn" title={col ? '展开' : '收起'} onClick={() => setCol((c) => !c)}>
-          <Icons.Chev size={15} style={{ transform: col ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
+          <Icons.Chev size={17} style={{ transform: col ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
         </button>
       </div>
-      {!col && (
-      loading ?
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div className="shimmer" style={{ height: 8, width: '88%' }} />
-            <div className="shimmer" style={{ height: 8, width: '72%' }} />
-            <div className="shimmer" style={{ height: 8, width: '54%' }} />
-          </div> :
-      children)
-      }
-    </div>);
 
+      {!col && (
+        r.error ?
+          <div style={{ marginTop: 8, marginLeft: 22, color: 'var(--danger)', fontSize: 13 }}>{r.error}</div> :
+        isEmpty ?
+          <div style={{ marginTop: 8, marginLeft: 22, color: 'var(--text-mute)', fontSize: 13 }}>未收录该词条</div> :
+        result ?
+          <DictBody result={result} /> :
+          <div style={{ marginTop: 8, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="shimmer" style={{ height: 8, width: '88%' }} />
+            <div className="shimmer" style={{ height: 8, width: '64%' }} />
+            <div className="shimmer" style={{ height: 8, width: '76%' }} />
+          </div>
+      )}
+    </div>
+  );
 };
 
-// ====== Dictionary window — language-specific.
-//   ・ English headword → only the English-English dictionary (Free Dictionary)
-//   ・ Chinese headword → only the Chinese dictionary (现代汉语词典 / ECDict zh side)
-// We never mix the two; the source-language detector picks one and the other
-// is omitted entirely so the window never looks half-empty.
+// Renders the `pronunciations` + `definitions` + `examples` arrays of a
+// DictResult. Pronunciations get their own row each, with a `朗读` button
+// (TTS is supplied by a separate service — dict services never carry audio).
+const DictBody = ({ result }) => {
+  const allPron = result.pronunciations || [];
+  const defs = result.definitions || [];
+  const examples = result.examples || [];
+  return (
+    <div style={{ marginTop: 10, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Pronunciations — one shared row. Multiple regional variants
+          (e.g. Cambridge us + uk) sit side-by-side; row wraps if it overflows.
+          A speak button follows each phonetic since TTS is per-variant. */}
+      {allPron.length > 0 &&
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 14, rowGap: 4 }}>
+          {allPron.map((p, i) =>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {p.region &&
+                <span className="chip plain mono" style={{ fontSize: 10, flex: '0 0 auto' }}>{p.region}</span>
+              }
+              <span className="mono" style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>{p.phonetic}</span>
+              <VolumeButton size={14} />
+            </div>
+          )}
+        </div>
+      }
+
+      {/* Definitions — grouped by partOfSpeech, each group lists numbered meanings. */}
+      {defs.length > 0 &&
+        <div className="stack" style={{ gap: 12 }}>
+          {defs.map((d, i) =>
+            <div key={i} style={{ display: 'flex', gap: 10 }}>
+              <div style={{ flex: '0 0 auto', minWidth: 36 }}>
+                {d.partOfSpeech
+                  ? <span className="chip plain mono" style={{ fontSize: 10 }}>{d.partOfSpeech}</span>
+                  : <span className="mono" style={{ fontSize: 11, color: 'var(--text-mute)' }}>{String(i+1).padStart(2,'0')}</span>}
+              </div>
+              <ol style={{ margin: 0, padding: 0, listStyle: 'none', flex: 1, display:'flex', flexDirection:'column', gap: 4 }}>
+                {(d.meanings || []).map((m, j) =>
+                  <li key={j} style={{ display:'flex', gap: 8, fontSize: 13.5, lineHeight: 1.55 }}>
+                    {(d.meanings || []).length > 1 &&
+                      <span className="mono" style={{ fontSize: 10.5, color:'var(--text-mute)', paddingTop: 3, flex:'0 0 14px' }}>{j+1}.</span>}
+                    <span style={{ flex: 1 }}>{m}</span>
+                  </li>
+                )}
+              </ol>
+            </div>
+          )}
+        </div>
+      }
+
+      {/* Examples — italics for en, plain for zh. We don't know the language, so always plain + monospace gutter. */}
+      {examples.length > 0 &&
+        <div className="stack" style={{ gap: 4, borderLeft: '2px solid var(--line-strong)', paddingLeft: 10 }}>
+          {examples.map((ex, i) =>
+            <div key={i} style={{ fontSize: 12.5, color: 'var(--text-dim)', lineHeight: 1.55 }}>
+              <div>{ex.source}</div>
+              {ex.target && <div style={{ color: 'var(--text-mute)', marginTop: 1 }}>{ex.target}</div>}
+            </div>
+          )}
+        </div>
+      }
+    </div>
+  );
+};
+
+// Source / query card at the top of the dictionary window. Matches the
+// translation window's source card vocabulary (editable area + bottom action
+// row) but in a more compact form because the query is usually a single word.
+const DictSourceCard = ({ word, detected }) => (
+  <div className="card" style={{ padding: 0 }}>
+    <div style={{ padding: '12px 14px 4px' }}>
+      <div contentEditable suppressContentEditableWarning
+        style={{ fontSize: 18, fontWeight: 600, letterSpacing:'-0.005em', lineHeight: 1.35, outline: 'none', wordBreak:'break-word' }}>
+        {word}
+      </div>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px 8px' }}>
+      <span style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4 }}>
+        检测为 <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{detected}</span>
+      </span>
+      <div style={{ flex: 1 }} />
+      <VolumeButton size={16} />
+      <button className="ic-btn" title="复制单词"><Icons.Copy size={16} /></button>
+      <button className="ic-btn" title="收藏"><Icons.Heart size={16} /></button>
+      <button className="ic-btn brand" title="查询" style={{ color: 'var(--brand-primary)' }}>
+        <Icons.Type size={16} />
+      </button>
+    </div>
+  </div>
+);
+
+// Sample DictResults — built from the exact shapes documented in
+// uploads/dict_service_test_results-0c79132e.md so the UI is honest about
+// each service's strengths and limitations.
+const SAMPLE_DICT_EN = {
+  word: 'reconcile',
+  detected: '英文',
+  services: [
+    { key: 'cambridge_dict', name: 'cambridge_dict', label: 'Cambridge' },
+    { key: 'ecdict', name: 'ecdict', label: 'ECDict · 英→中' },
+  ],
+  results: {
+    cambridge_dict: {
+      result: {
+        type: 'dict',
+        pronunciations: [
+          { region: 'us', phonetic: '/ˈrek.ən.saɪl/' },
+          { region: 'uk', phonetic: '/ˈrek.ən.saɪl/' },
+        ],
+        definitions: [
+          { partOfSpeech: 'verb', meanings: [
+            'to find a way in which two situations or beliefs that are opposed to each other can agree and exist together.',
+            'to make or show that two different ideas, beliefs, etc. can exist together or both be true.',
+          ]},
+          { partOfSpeech: 'verb', meanings: [
+            'to begin a friendly relationship again with someone after an argument.',
+            'to make yourself accept something that you do not like because you cannot easily change it.',
+          ]},
+        ],
+        examples: [
+          { source: 'It is difficult to reconcile such different points of view.', target: '' },
+          { source: 'She and her father had reconciled some time before his death.', target: '' },
+          { source: 'After many years, she reconciled herself to never having children.', target: '' },
+        ],
+      },
+    },
+    ecdict: {
+      result: {
+        type: 'dict',
+        pronunciations: [],
+        definitions: [
+          { partOfSpeech: 'zh', meanings: [
+            '调和 (tiao2 he2)',
+            '使一致 (shi3 yi2 zhi4)',
+            '使和解 (shi3 he2 jie3)',
+            '甘愿接受 (gan1 yuan4 jie1 shou4)',
+            '使顺从于 (shi3 shun4 cong2 yu2)',
+          ]},
+        ],
+        examples: [],
+      },
+    },
+  },
+};
+
+const SAMPLE_DICT_ZH = {
+  word: '调和',
+  detected: '中文',
+  services: [
+    { key: 'chinese_dictionary', name: 'chinese_dictionary', label: '中文词典' },
+    { key: 'ecdict', name: 'ecdict', label: 'ECDict · 中→英' },
+  ],
+  results: {
+    chinese_dictionary: {
+      result: {
+        type: 'dict',
+        pronunciations: [{ region: '普通话', phonetic: 'tiáo hé' }],
+        definitions: [
+          { partOfSpeech: '动', meanings: [
+            '配合得适当：色彩~。音律~。',
+            '使和谐；和解（调停纠纷）：~两人的矛盾。',
+            '搀和；混合：~漆。在水里~点儿白糖。',
+          ]},
+          { partOfSpeech: '形', meanings: [
+            '配合得均匀合适：色彩~。',
+          ]},
+        ],
+        examples: [],
+      },
+    },
+    ecdict: {
+      result: {
+        type: 'dict',
+        pronunciations: [{ region: '', phonetic: 'tiao2 he2' }],
+        definitions: [
+          { partOfSpeech: 'en', meanings: [
+            'to harmonize',
+            'to reconcile',
+            'to placate',
+            'harmonious',
+            'to mix or blend',
+          ]},
+        ],
+        examples: [],
+      },
+    },
+  },
+};
+
 const DictWindow = ({ width = 420, height, lang = 'en' }) => {
-  const isZh = lang === 'zh';
+  const data = lang === 'zh' ? SAMPLE_DICT_ZH : SAMPLE_DICT_EN;
   return (
     <div className="op-window" style={{ width, height: height || 'auto', alignSelf:'flex-start' }}>
-      <TitlebarLeft mode="字典词典" pinned={false} />
-      <div style={{ padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {isZh ? <ZhWordHeader/> : <EnWordHeader/>}
-        {isZh ? <ZhDictBody/> : <EnDictBody/>}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 4px 0' }}>
-          <span className="hint mono">来源</span>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>{isZh ? '现代汉语词典' : 'Free Dictionary'}</span>
-        </div>
+      <TitlebarLeft mode="词典" pinned={false} />
+      <div style={{ padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <DictSourceCard word={data.word} detected={data.detected} />
+        {data.services.map((s) =>
+          <DictResultCard key={s.key} s={s} r={data.results[s.key] || {}} />
+        )}
       </div>
-    </div>);
-
+    </div>
+  );
 };
 
-const EnWordHeader = () => (
-  <div className="card" style={{ padding: '14px 16px' }}>
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.01em' }}>reconcile</div>
-          <VolumeButton />
-          <div className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>/ˈrek.ən.saɪl/</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>v.</span>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>CEFR · C1</span>
-        </div>
-      </div>
-      <button className="ic-btn brand" title="收藏单词" style={{ color: 'var(--brand-primary)' }}>
-        <Icons.Heart size={18} />
-      </button>
-    </div>
-  </div>
-);
-
-const EnDictBody = () => (
-  <DictSection label="英文词典 · Free Dictionary">
-    <div className="stack" style={{ gap: 14 }}>
-      {[
-        { pos: 'verb', def: 'to make consistent or compatible.', ex: 'It is hard to reconcile the demands of work and family.' },
-        { pos: 'verb', def: 'to restore friendly relations between.', ex: 'She and her father had reconciled some time before his death.' },
-        { pos: 'verb', def: 'to make oneself accept (something unwelcome).', ex: 'She finally reconciled herself to a life of poverty.' }
-      ].map((d, i) =>
-        <div key={i} style={{ display: 'flex', gap: 10 }}>
-          <div style={{ width: 22, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 11, paddingTop: 3 }}>{String(i + 1).padStart(2, '0')}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="chip plain mono" style={{ fontSize: 10 }}>{d.pos}</span>
-              <span style={{ fontSize: 13.5 }}>{d.def}</span>
-            </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-dim)', marginTop: 4, fontStyle: 'italic', borderLeft:'2px solid var(--line-strong)', paddingLeft: 8 }}>{d.ex}</div>
-          </div>
-        </div>
-      )}
-    </div>
-  </DictSection>
-);
-
-const ZhWordHeader = () => (
-  <div className="card" style={{ padding: '14px 16px' }}>
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: '0.02em' }}>调和</div>
-          <VolumeButton />
-          <div className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>tiáo hé</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>动</span>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>形</span>
-          <span className="chip plain mono" style={{ fontSize: 10 }}>常用</span>
-        </div>
-      </div>
-      <button className="ic-btn brand" title="收藏" style={{ color: 'var(--brand-primary)' }}>
-        <Icons.Heart size={18} />
-      </button>
-    </div>
-  </div>
-);
-
-const ZhDictBody = () => (
-  <DictSection label="汉语词典 · 现代汉语词典">
-    <div className="stack" style={{ gap: 14 }}>
-      {[
-        { pos: '动', def: '配合得均匀合适。', ex: '色彩调和。｜音律调和。' },
-        { pos: '动', def: '使和谐；调解使和解。', ex: '调和双方的矛盾。' },
-        { pos: '形', def: '和谐；和睦。', ex: '夫妻调和，家庭美满。' }
-      ].map((d, i) =>
-        <div key={i} style={{ display: 'flex', gap: 10 }}>
-          <div style={{ width: 22, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 11, paddingTop: 3 }}>{String(i + 1).padStart(2, '0')}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="chip plain mono" style={{ fontSize: 10 }}>{d.pos}</span>
-              <span style={{ fontSize: 14 }}>{d.def}</span>
-            </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-dim)', marginTop: 4, fontStyle: 'normal', borderLeft:'2px solid var(--line-strong)', paddingLeft: 8 }}>{d.ex}</div>
-          </div>
-        </div>
-      )}
-    </div>
-  </DictSection>
-);
-
-Object.assign(window, { TranslateWindow, DictWindow, TitlebarLeft, ReactIcon, LangDropdown, SOURCE_LANGS, TARGET_LANGS });
+Object.assign(window, { TranslateWindow, DictWindow, DictResultCard, DictSourceCard, TitlebarLeft, ReactIcon, LangDropdown, SOURCE_LANGS, TARGET_LANGS });
