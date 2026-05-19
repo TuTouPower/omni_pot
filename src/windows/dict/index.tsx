@@ -6,9 +6,12 @@ import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { collectionServiceRegistry } from '../../services/index'
+import { detectLanguage } from '../../services/detect'
+import { native_language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult, ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
+import type { LanguageCode } from '@shared/types/language'
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -133,9 +136,11 @@ function DictResultCard({ instanceKey, result, isCollected, onCollect, collectio
 export default function DictWindow(): React.ReactElement {
     const { t } = useTranslation()
     const word = useDictStore((s) => s.word)
+    const detectedLanguage = useDictStore((s) => s.detectedLanguage)
     const results = useDictStore((s) => s.results)
     const isLoading = useDictStore((s) => s.isLoading)
     const setWord = useDictStore((s) => s.setWord)
+    const setDetectedLanguage = useDictStore((s) => s.setDetectedLanguage)
     const setResult = useDictStore((s) => s.setResult)
     const setIsLoading = useDictStore((s) => s.setIsLoading)
     const clearResults = useDictStore((s) => s.clearResults)
@@ -162,6 +167,8 @@ export default function DictWindow(): React.ReactElement {
     const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
     const [ttsPlaying, setTtsPlaying] = useState(false)
     const lookup_request_ref = useRef(0)
+    const inputRef = useRef<HTMLDivElement>(null)
+    const sourceLangRef = useRef<LanguageCode>('en')
 
     useEffect(() => {
         window.electronAPI.dict.check().then(({ ready }) => { setDictReady(ready); }).catch(console.error)
@@ -190,10 +197,16 @@ export default function DictWindow(): React.ReactElement {
         clearResults()
 
         const lookupWord = trimmed.split(' ')[0] ?? ''
-        const isEnglish = /^[a-zA-Z]/.test(lookupWord)
-        const source_language = isEnglish ? 'en' : 'zh_cn'
-        const target_language = isEnglish ? 'zh_cn' : 'en'
-        const activeList = isEnglish ? enServiceList : zhServiceList
+        const detectEngine = useConfigStore.getState().config.translate_detect_engine
+        const detected = await detectLanguage(lookupWord, detectEngine)
+        if (lookup_request_ref.current !== request_id) return
+        setDetectedLanguage(detected)
+        sourceLangRef.current = detected
+
+        const isEn = detected === 'en'
+        const source_language = detected
+        const target_language: LanguageCode = isEn ? 'zh_cn' : 'en'
+        const activeList = isEn ? enServiceList : zhServiceList
 
         const promises = activeList.map(async (instanceKey) => {
             if (get_service_config(serviceInstances, instanceKey).enable === false) return
@@ -225,7 +238,7 @@ export default function DictWindow(): React.ReactElement {
         if (lookup_request_ref.current === request_id) {
             setIsLoading(false)
         }
-    }, [zhServiceList, enServiceList, serviceInstances, setWord, setIsLoading, clearResults, setResult])
+    }, [zhServiceList, enServiceList, serviceInstances, setWord, setDetectedLanguage, setIsLoading, clearResults, setResult])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onDictLookup((text: string) => {
@@ -316,12 +329,38 @@ export default function DictWindow(): React.ReactElement {
         setTtsPlaying(true)
         const instanceConfig = get_service_config(serviceInstances, instanceKey)
         try {
-            const handle = ttsService.play(word.trim(), 'en', instanceConfig)
+            const handle = ttsService.play(word.trim(), sourceLangRef.current, instanceConfig)
             handle.done.then(() => { setTtsPlaying(false) }, () => { setTtsPlaying(false) })
         } catch {
             setTtsPlaying(false)
         }
     }, [word, ttsServiceList, serviceInstances, ttsPlaying])
+
+    const [wordCopied, setWordCopied] = useState(false)
+    const handleCopyWord = useCallback(() => {
+        if (!word.trim()) return
+        window.electronAPI.text.writeClipboard(word.trim()).catch(() => undefined)
+        setWordCopied(true)
+        setTimeout(() => { setWordCopied(false); }, 1500)
+    }, [word])
+
+    const handleCollectFirst = useCallback(() => {
+        const firstKey = enabledServiceList.find((ik) => results[ik])
+        if (firstKey) handleCollect(firstKey).catch(console.error)
+    }, [enabledServiceList, results, handleCollect])
+
+    const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            const text = inputRef.current?.textContent?.trim() ?? ''
+            if (text) handleLookup(text).catch(console.error)
+        }
+    }, [handleLookup])
+
+    const handleLookupClick = useCallback(() => {
+        const text = inputRef.current?.textContent?.trim() ?? word.trim()
+        if (text) handleLookup(text).catch(console.error)
+    }, [word, handleLookup])
 
     return (
         <div className="op-window">
@@ -347,65 +386,96 @@ export default function DictWindow(): React.ReactElement {
             </div>
 
             <div style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {/* Word header card */}
-                <div className="card" data-testid="dict-card" style={{ padding: '16px 16px 18px', overflow: 'visible' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                                <div
-                                    data-testid="dict-word"
-                                    style={{
-                                        fontSize: 24,
-                                        fontWeight: 600,
-                                        letterSpacing: '-0.01em',
-                                        color: 'var(--text)',
-                                        minHeight: 30,
-                                    }}
-                                >
-                                    {word || t('dict.source_placeholder')}
-                                </div>
-                                {word.trim() && ttsAvailable && (
-                                    <button
-                                        className={'ic-btn' + (ttsPlaying ? ' brand' : '')}
-                                        data-testid="dict-tts-btn"
-                                        title={ttsPlaying ? t('tts_stop', { defaultValue: '停止朗读' }) : t('result.tts', { defaultValue: '朗读' })}
-                                        onClick={handleTts}
-                                        style={ttsPlaying ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
-                                    >
-                                        <Icons.Volume size={16} fill={ttsPlaying} />
-                                    </button>
-                                )}
-                            </div>
-                            {firstResult && firstResult.pronunciations.length > 0 && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, flexWrap: 'wrap' }}>
-                                    {firstResult.pronunciations.map((p, i) => (
-                                        <span key={i} data-testid="dict-pronunciation" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                            {p.region && <span className="hint" style={{ fontSize: 11 }}>{p.region}</span>}
-                                            <span className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>{p.phonetic}</span>
-                                            {ttsAvailable && (
-                                                <button
-                                                    className={'ic-btn' + (ttsPlaying ? ' brand' : '')}
-                                                    title={t('result.tts', { defaultValue: '朗读' })}
-                                                    onClick={handleTts}
-                                                    style={{ marginLeft: 2 }}
-                                                >
-                                                    <Icons.Volume size={12} fill={ttsPlaying} />
-                                                </button>
-                                            )}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                            {firstResult && firstResult.definitions.length > 0 && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                                    {firstResult.definitions.map((def, i) => (
-                                        <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
-                                    ))}
-                                </div>
-                            )}
+                {/* Source word card */}
+                <div className="card" data-testid="dict-card" style={{ padding: 0, overflow: 'visible' }}>
+                    <div style={{ padding: '12px 14px 4px' }}>
+                        <div
+                            ref={inputRef}
+                            contentEditable
+                            suppressContentEditableWarning
+                            data-testid="dict-word"
+                            onKeyDown={handleInputKeyDown}
+                            style={{
+                                fontSize: 18,
+                                fontWeight: 600,
+                                letterSpacing: '-0.005em',
+                                lineHeight: 1.35,
+                                outline: 'none',
+                                wordBreak: 'break-word',
+                                color: 'var(--text)',
+                                minHeight: 24,
+                            }}
+                        >
+                            {word}
                         </div>
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px 8px' }}>
+                        <span data-testid="dict-detected-lang" style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4 }}>
+                            {detectedLanguage && <>{t('detected_language_prefix', { defaultValue: '检测为' })} <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{native_language_name(t, detectedLanguage)}</span></>}
+                        </span>
+                        <div style={{ flex: 1 }} />
+                        {ttsAvailable && (
+                            <button
+                                className={'ic-btn' + (ttsPlaying ? ' brand' : '')}
+                                data-testid="dict-source-tts-btn"
+                                title={ttsPlaying ? t('tts_stop', { defaultValue: '停止朗读' }) : t('result.tts', { defaultValue: '朗读' })}
+                                onClick={handleTts}
+                                style={ttsPlaying ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
+                            >
+                                <Icons.Volume size={16} fill={ttsPlaying} />
+                            </button>
+                        )}
+                        <button
+                            className="ic-btn"
+                            data-testid="dict-copy-btn"
+                            title={wordCopied ? t('dict.copied', { defaultValue: '已复制' }) : t('result.copy', { defaultValue: '复制' })}
+                            onClick={handleCopyWord}
+                        >
+                            <Icons.Copy size={16} />
+                        </button>
+                        <button
+                            className="ic-btn"
+                            data-testid="dict-source-collect-btn"
+                            title={t('result.collect', { defaultValue: '收藏' })}
+                            onClick={handleCollectFirst}
+                            disabled={!collection_available || !firstResult}
+                        >
+                            <Icons.Heart size={16} />
+                        </button>
+                        <button
+                            className="ic-btn"
+                            data-testid="dict-lookup-btn"
+                            title={t('dict.look_up', { defaultValue: '查询' })}
+                            onClick={handleLookupClick}
+                            style={{ color: 'var(--brand-primary)' }}
+                        >
+                            <Icons.Type size={16} />
+                        </button>
+                    </div>
                 </div>
+
+                {/* Pronunciations + POS tags */}
+                {firstResult && (firstResult.pronunciations.length > 0 || firstResult.definitions.length > 0) && (
+                    <div className="card" style={{ padding: '10px 14px' }}>
+                        {firstResult.pronunciations.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                                {firstResult.pronunciations.map((p, i) => (
+                                    <span key={i} data-testid="dict-pronunciation" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                        {p.region && <span className="hint" style={{ fontSize: 11 }}>{p.region}</span>}
+                                        <span className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>{p.phonetic}</span>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                        {firstResult.definitions.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: firstResult.pronunciations.length > 0 ? 6 : 0, flexWrap: 'wrap' }}>
+                                {firstResult.definitions.map((def, i) => (
+                                    <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Empty selection feedback */}
                 {selection_notice && (
