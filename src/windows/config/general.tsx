@@ -52,6 +52,7 @@ export default function GeneralPage(): React.ReactElement {
     const [checkUpdate, setCheckUpdate] = useConfig('check_update')
     const [serverPort, setServerPort] = useConfig('server_port')
     const [autoStart, setAutoStart] = useConfig('auto_start')
+    const [trayClickEvent, setTrayClickEvent] = useConfig('tray_click_event')
     const languageOptions = LANGUAGE_VALUES.map((value) => ({ value, label: t(`general.app_language_${value}`) }))
     const fontOptions = FONT_OPTIONS.map((option) => option.value === 'default'
         ? { ...option, label: t('general.font_default') }
@@ -66,6 +67,19 @@ export default function GeneralPage(): React.ReactElement {
                 <ConfigRow label={t('general.check_update', { defaultValue: '启动时检查更新' })}>
                     <ConfigSwitch on={checkUpdate} onChange={setCheckUpdate} testId="cfg-check_update" />
                 </ConfigRow>
+                <ConfigRow label={t('general.tray_click', { defaultValue: '托盘点击事件' })}>
+                    <ConfigSelect
+                        value={trayClickEvent}
+                        onChange={setTrayClickEvent}
+                        options={[
+                            { value: 'show_config' as const, label: t('general.tray_show_config', { defaultValue: '显示设置' }) },
+                            { value: 'show_translate' as const, label: t('general.tray_show_translate', { defaultValue: '显示翻译' }) },
+                            { value: 'none' as const, label: t('general.tray_none', { defaultValue: '无' }) },
+                        ]}
+                        testId="cfg-tray_click_event"
+                        style={{ minWidth: 140 }}
+                    />
+                </ConfigRow>
                 <ConfigRow label={t('general.app_language', { defaultValue: '界面语言' })}>
                     <ConfigSelect
                         value={appLanguage as typeof LANGUAGE_VALUES[number]}
@@ -75,7 +89,7 @@ export default function GeneralPage(): React.ReactElement {
                         style={{ minWidth: 160 }}
                     />
                 </ConfigRow>
-                <ConfigRow label={t('general.server_port', { defaultValue: '本地 API 端口' })} sub={t('general.server_port_sub')}>
+                <ConfigRow label={t('general.server_port', { defaultValue: '本地 API 端口' })} sub={t('general.server_port_sub')} help={{ href: 'https://github.com/TuTouPower/omni_pot/blob/main/docs/external_api.md', title: 'API 文档' }}>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <ConfigField
                             mono
@@ -84,13 +98,6 @@ export default function GeneralPage(): React.ReactElement {
                             testId="cfg-server_port"
                             style={{ width: 140 }}
                         />
-                        <a
-                            href="https://github.com/TuTouPower/omni_pot/blob/main/docs/external_api.md"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="API 文档"
-                            style={{ color: 'var(--text-mute)', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}
-                        >?</a>
                     </div>
                 </ConfigRow>
             </ConfigCard>

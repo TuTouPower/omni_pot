@@ -419,6 +419,27 @@ select {
     margin-top: 2px;
 }
 
+.label-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: var(--bg-sunk);
+    color: var(--text-mute);
+    font-size: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    vertical-align: middle;
+    line-height: 1;
+}
+.label-help:hover {
+    background: var(--line);
+    color: var(--text);
+}
+
 /* Tag / chip */
 .chip {
     display: inline-flex;
