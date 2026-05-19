@@ -9,13 +9,13 @@ function format_segment(seg: string): string {
             case 'Command':
             case 'Super':
             case 'Meta':
-                return '⌘'
+                return 'Command'
             case 'Control':
-                return '⌃'
+                return 'Control'
             case 'Alt':
-                return '⌥'
+                return 'Alt'
             case 'Shift':
-                return '⇧'
+                return 'Shift'
             default:
                 return seg
         }
@@ -23,8 +23,9 @@ function format_segment(seg: string): string {
     switch (seg) {
         case 'CommandOrControl':
         case 'CmdOrCtrl':
+        case 'Command':
         case 'Control':
-            return 'Ctrl'
+            return 'Control'
         case 'Super':
         case 'Meta':
             return 'Win'
@@ -32,8 +33,6 @@ function format_segment(seg: string): string {
             return 'Alt'
         case 'Shift':
             return 'Shift'
-        case 'Command':
-            return 'Ctrl'
         default:
             return seg
     }
