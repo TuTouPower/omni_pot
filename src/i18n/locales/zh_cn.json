@@ -15,7 +15,8 @@
         "export": "导出",
         "export_format": "导出格式",
         "format_text": "纯文本",
-        "format_word_document": "Word 文档"
+        "format_word_document": "Word 文档",
+        "copy_image": "复制图片"
     },
     "close": "关闭",
     "copy": "复制",
