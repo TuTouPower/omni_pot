@@ -370,7 +370,7 @@ const TrayMenu = () => {
         <span className="hint mono">3.1.0</span>
       </div>
       <Item icon={<Icons.Translate/>} label="翻译" kbd="Ctrl+Alt+T"/>
-      <Item icon={<Icons.Type/>} label="字典词典" kbd="Ctrl+Alt+D"/>
+      <Item icon={<Icons.Type/>} label="词典" kbd="Ctrl+Alt+D"/>
       <Item icon={<Icons.Camera/>} label="文字识别" kbd="Ctrl+Alt+S"/>
       <Item icon={<Icons.Image/>} label="截图翻译" kbd="Ctrl+Alt+Shift+S"/>
       <div className="div" style={{margin:'4px 8px'}}/>
