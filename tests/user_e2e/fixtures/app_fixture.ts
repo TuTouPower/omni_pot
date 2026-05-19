@@ -78,8 +78,8 @@ export class AppFixture {
         this.api = new E2eApi(launched.httpPort, launched.e2eToken)
     }
 
-    async firstWindow(): Promise<Page> {
-        const page = await this.waitForWindow(/#translate/)
+    async firstWindow(timeout = 10_000): Promise<Page> {
+        const page = await this.waitForWindow(/#translate/, timeout)
         if (this.init_script && !this.init_script_applied_to_first_window) {
             // The first window was created during app startup, before
             // addInitScript was registered on the context. Reload it once so
@@ -101,8 +101,8 @@ export class AppFixture {
         throw new Error(`No window matching ${String(urlPattern)} after ${String(timeout)}ms`)
     }
 
-    async translate(): Promise<TranslatePage> {
-        const page = await this.firstWindow()
+    async translate(timeout = 10_000): Promise<TranslatePage> {
+        const page = await this.firstWindow(timeout)
         return new TranslatePage(page)
     }
 
