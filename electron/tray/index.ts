@@ -21,11 +21,12 @@ let last_tray_menu_labels: string[] = []
 
 const log_tray = log.scope('tray')
 
-type TrayLabelKey = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
+type TrayLabelKey = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   en: {
     input_translate: 'Translate',
+    dictionary: 'Dictionary',
     ocr_recognize: 'Text Recognize',
     screenshot_translate: 'Screenshot Translate',
     clipboard_monitor: 'Clipboard Monitor',
@@ -37,6 +38,7 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   },
   zh_cn: {
     input_translate: '翻译',
+    dictionary: '字典词典',
     ocr_recognize: '文字识别',
     screenshot_translate: '截图翻译',
     clipboard_monitor: '剪贴板监听',
@@ -53,7 +55,7 @@ function get_tray_labels(): Record<TrayLabelKey, string> {
 }
 
 function tray_labels_to_array(labels: Record<TrayLabelKey, string>): string[] {
-  return [labels.input_translate, labels.ocr_recognize, labels.screenshot_translate, labels.clipboard_monitor, labels.config, labels.check_update, labels.view_log, labels.restart, labels.quit]
+  return [labels.input_translate, labels.dictionary, labels.ocr_recognize, labels.screenshot_translate, labels.clipboard_monitor, labels.config, labels.check_update, labels.view_log, labels.restart, labels.quit]
 }
 
 export function get_tray_menu_labels(): string[] {
@@ -183,6 +185,17 @@ export function trigger_tray_action(action: string): boolean {
       windowManager?.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
       close_tray_popup()
       return true
+    case 'dictionary':
+      if (!windowManager) return false
+      windowManager.focusOrCreate(WindowLabel.DICT, {
+        label: WindowLabel.DICT,
+        width: 380,
+        height: 480,
+        minWidth: 300,
+        minHeight: 300,
+      })
+      close_tray_popup()
+      return true
     case 'ocr_recognize':
       if (!windowManager) return false
       start_screenshot_capture(windowManager, 'recognize').catch((err: unknown) => { log_tray.error(err) })
@@ -261,8 +274,10 @@ function install_linux_fallback_menu(): void {
   const labels = get_tray_labels()
   const menu = Menu.buildFromTemplate([
     { label: labels.input_translate, click: () => { trigger_tray_action('input_translate') } },
+    { label: labels.dictionary, click: () => { trigger_tray_action('dictionary') } },
     { label: labels.ocr_recognize, click: () => { trigger_tray_action('ocr_recognize') } },
     { label: labels.screenshot_translate, click: () => { trigger_tray_action('screenshot_translate') } },
+    { type: 'separator' },
     {
       label: labels.clipboard_monitor,
       type: 'checkbox',
