@@ -8,7 +8,8 @@
         "re_recognize": "重新辨識",
         "translate": "翻譯",
         "delete_newline": "刪除換行",
-        "delete_spaces": "刪除空格"
+        "delete_spaces": "刪除空格",
+        "copy_image": "複製圖片"
     },
     "close": "關閉",
     "delete_newline": "刪除換行",

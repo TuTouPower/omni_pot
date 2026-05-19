@@ -690,7 +690,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 borderTop: '1px solid var(--line)',
             }}>
                 {/* Left: Copy Image */}
-                <button className="ic-btn" title={t('copy') + ' ' + (t('recognize.title').toLowerCase())} data-testid="ocr-copy-image-btn" onClick={() => { handleCopyImage().catch(console.error); }} disabled={!imageBase64}>
+                <button className="ic-btn" title={t('recognize.copy_image', { defaultValue: '复制图片' })} data-testid="ocr-copy-image-btn" onClick={() => { handleCopyImage().catch(console.error); }} disabled={!imageBase64}>
                     <Icons.Image size={16} />
                 </button>
                 {/* OCR Engine Select */}

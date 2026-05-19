@@ -15,7 +15,8 @@
         "export": "Export",
         "export_format": "Export format",
         "format_text": "Plain text",
-        "format_word_document": "Word document"
+        "format_word_document": "Word document",
+        "copy_image": "Copy Image"
     },
     "close": "Close",
     "copy": "Copy",
