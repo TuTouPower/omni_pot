@@ -10,6 +10,9 @@ interface BackupFile {
     data: Buffer
 }
 
+export type { BackupFile }
+export { create_zip }
+
 interface ZipEntry {
     name: string
     data: Buffer
