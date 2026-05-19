@@ -31,7 +31,7 @@ export const cambridgeDictService: TranslateService = {
     async translate(
         text: string,
         from: LanguageCode,
-        to: LanguageCode
+        _to: LanguageCode
     ): Promise<string | DictResult> {
         if (from === 'auto') {
             from = /^[A-Za-z]/.test(text) ? 'en' : from
