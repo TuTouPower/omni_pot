@@ -35,10 +35,10 @@
 }
 
 :root {
-    /* Brand */
-    --brand-primary: oklch(58% 0.13 45);
-    --brand-primary-soft: oklch(58% 0.13 45 / 0.12);
-    --brand-primary-hover: oklch(54% 0.13 45);
+    /* Brand — matches DEFAULT_CONFIG.app_primary_color (#5a9bbf sky blue) */
+    --brand-primary: #5a9bbf;
+    --brand-primary-soft: oklch(64% 0.07 240 / 0.12);
+    --brand-primary-hover: oklch(58% 0.07 240);
     --brand-accent-2: oklch(62% 0.11 195);
 
     /* Neutrals — pure white outside, warm-tinted cards inside */
