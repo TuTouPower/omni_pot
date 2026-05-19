@@ -35,8 +35,28 @@ export class DictPage {
         return this.page.getByTestId('dict-newline-btn')
     }
 
+    ttsButton(): Locator {
+        return this.page.getByTestId('dict-source-tts-btn')
+    }
+
+    lookupButton(): Locator {
+        return this.page.getByTestId('dict-lookup-btn')
+    }
+
+    detectedLang(): Locator {
+        return this.page.getByTestId('dict-detected-lang')
+    }
+
+    posTags(): Locator {
+        return this.page.getByTestId('dict-pos-tag')
+    }
+
     collectButton(): Locator {
         return this.page.getByTestId('dict-collect-btn')
+    }
+
+    sourceCollectButton(): Locator {
+        return this.page.getByTestId('dict-source-collect-btn')
     }
 
     copyButtons(): Locator {

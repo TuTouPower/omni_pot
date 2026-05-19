@@ -37,7 +37,8 @@ test.describe('@ui dict window', () => {
             await expect(dict.searchInputs()).toHaveCount(0)
             await expect(dict.newlineButtons()).toHaveCount(0)
 
-            await dict.waitForCards(1, 60_000)
+            // Wait for at least 2 cards: source card + result card (pronunciation card may also appear)
+            await dict.waitForCards(2, 60_000)
             await expect(dict.definitions().first()).toBeVisible()
             await expect(dict.pronunciations().first()).toBeVisible()
             await expect(dict.examples().first()).toBeVisible()
@@ -46,8 +47,10 @@ test.describe('@ui dict window', () => {
             await expect.poll(async () => (await omni.api.readClipboard()).text).not.toBe('')
 
             await dict.fulfill_anki_collection_once()
-            await dict.clickCollect()
-            await expect(dict.collectButton()).toHaveAttribute('aria-pressed', 'true')
+            // Use the result card's collect button (not the source card's).
+            const result_collect = dict.dictCards().nth(1).getByTestId('dict-collect-btn')
+            await result_collect.click()
+            await expect(result_collect).toHaveAttribute('aria-pressed', 'true')
 
             await dict.clickPin()
             await expect.poll(async () => (await omni.api.windowState('dict')).alwaysOnTop).toBe(true)

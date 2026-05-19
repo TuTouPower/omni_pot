@@ -35,7 +35,7 @@ test.describe('@ui translate welcome empty state', () => {
 
             const translate_kbd = page.getByTestId('welcome-translate').locator('kbd')
             await expect(translate_kbd).toHaveCount(3)
-            await expect(translate_kbd.first()).toContainText('CommandOrControl')
+            await expect(translate_kbd.first()).toContainText('Control')
             await expect(translate_kbd.last()).toContainText('T')
         } finally {
             await omni.stop()

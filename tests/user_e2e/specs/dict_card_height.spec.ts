@@ -13,7 +13,8 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
 async function wait_for_dict_card(page: Page): Promise<void> {
-    await expect(page.locator('[data-testid="dict-card"]')).toHaveCount(2, { timeout: 60_000 })
+    // 3 cards: source card + pronunciation card + result card
+    await expect(page.locator('[data-testid="dict-card"]')).toHaveCount(3, { timeout: 60_000 })
 }
 
 test.describe('@ui dict card height auto-fits content', () => {
@@ -35,7 +36,8 @@ test.describe('@ui dict card height auto-fits content', () => {
             const page = dict['page']
             await wait_for_dict_card(page)
 
-            const definitions_card = page.locator('[data-testid="dict-card"]').nth(1)
+            // Result card is at index 2 (index 0 = source card, index 1 = pronunciation card)
+            const definitions_card = page.locator('[data-testid="dict-card"]').nth(2)
             const definitions = definitions_card.locator('[data-testid="dict-definition"]')
 
             // "run" has well over 10 senses in Free Dictionary — we require at
