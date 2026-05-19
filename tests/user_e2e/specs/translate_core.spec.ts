@@ -52,8 +52,6 @@ test.describe('@core translate core', () => {
 })
 
 test.describe('@external default free services UI roundtrip', () => {
-    test.skip(process.env.OMNI_POT_EXTERNAL_SERVICE_TESTS !== '1',
-        'Set OMNI_POT_EXTERNAL_SERVICE_TESTS=1 to run real public-service checks')
     test.describe.configure({ retries: 2 })
 
     test('default free translation services return visible user results', async () => {
