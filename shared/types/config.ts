@@ -121,9 +121,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   translate_hide_window: false,
 
   recognize_language: 'auto',
-  recognize_delete_newline: false,
-  recognize_auto_copy: false,
-  recognize_hide_window: false,
+  recognize_delete_newline: true,
+  recognize_auto_copy: true,
+  recognize_hide_window: true,
 
   translate_window_width: 350,
   translate_window_height: 420,
