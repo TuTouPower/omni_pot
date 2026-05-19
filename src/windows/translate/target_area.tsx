@@ -42,6 +42,7 @@ interface SortableCardProps {
     onCollect: (key: string) => void
     onReverseTranslate: (text: string) => void
     playingKey: string | null
+    busyKey: string | null
     collectedKeys: Set<string>
     ttsAvailable: boolean
     collectionAvailable: boolean
@@ -50,7 +51,7 @@ interface SortableCardProps {
 function SortableCard({
     instanceKey, results, isTranslating, collapsed, onToggleCollapse, onRetry,
     onCopy, onTts, onCollect,
-    playingKey, collectedKeys, ttsAvailable, collectionAvailable,
+    playingKey, busyKey, collectedKeys, ttsAvailable, collectionAvailable,
 }: SortableCardProps): React.ReactElement | null {
     const { t } = useTranslation()
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
@@ -69,6 +70,7 @@ function SortableCard({
     const is_loading = isTranslating && result === undefined
     const is_collected = collectedKeys.has(instanceKey)
     const is_playing = playingKey === instanceKey
+    const is_busy = busyKey === instanceKey
 
     return (
         <div ref={setNodeRef} style={style}>
@@ -95,15 +97,19 @@ function SortableCard({
                     <button
                         data-testid="result-tts"
                         className={'ic-btn' + (is_playing ? ' brand' : '')}
-                        title={is_playing ? t('tts_stop', { defaultValue: '停止朗读' }) : t('result.tts', { defaultValue: '朗读' })}
-                        aria-pressed={is_playing}
-                        disabled={!ttsAvailable || !result_text}
+                        title={is_busy ? t('tts_cancel', { defaultValue: '取消朗读' }) : (is_playing ? t('tts_stop', { defaultValue: '停止朗读' }) : t('result.tts', { defaultValue: '朗读' }))}
+                        aria-pressed={is_playing || is_busy}
+                        disabled={!ttsAvailable || (!result_text && !is_busy && !is_playing)}
                         style={is_playing ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
                         onClick={() => {
-                            if (result_text) onTts(result_text, instanceKey)
+                            if (result_text || is_busy) onTts(result_text, instanceKey)
                         }}
                     >
-                        <Icons.Volume size={16} fill={is_playing} />
+                        {is_busy ? (
+                            <span className="dots" aria-label="加载中"><span /><span /><span /></span>
+                        ) : (
+                            <Icons.Volume size={16} fill={is_playing} />
+                        )}
                     </button>
                     <button data-testid="result-copy" className="ic-btn" title={t('result.copy', { defaultValue: '复制' })} disabled={!result_text} onClick={() => {
                         if (result_text) onCopy(result_text)
@@ -203,6 +209,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     const playingRequestRef = useRef(0)
     const playingActiveRef = useRef(false)
     const [playingKey, setPlayingKey] = useState<string | null>(null)
+    const [busyKey, setBusyKey] = useState<string | null>(null)
     const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
     const [manuallyCollapsedKeys, setManuallyCollapsedKeys] = useState<Set<string>>(new Set())
 
@@ -233,12 +240,13 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     }, [setSourceText])
 
     const handleTts = useCallback((text: string, key: string) => {
-        if (playingActiveRef.current) {
+        if (playingActiveRef.current || busyKey) {
             playingRequestRef.current += 1
             playingActiveRef.current = false
             playingCleanupRef.current?.()
             playingCleanupRef.current = null
             setPlayingKey(null)
+            setBusyKey(null)
             return
         }
 
@@ -251,16 +259,19 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         const request_id = playingRequestRef.current + 1
         playingRequestRef.current = request_id
         playingActiveRef.current = true
-        setPlayingKey(key)
+        setBusyKey(key)
         try {
             const instanceConfig = get_service_config(serviceInstances, instanceKey)
             const language = effectiveTargetLanguage ?? targetLanguage
 
             const handle = ttsService.play(text, language, instanceConfig)
+            setBusyKey(null)
+            setPlayingKey(key)
             const reset = (): void => {
                 if (playingRequestRef.current === request_id) {
                     playingActiveRef.current = false
                     setPlayingKey(null)
+                    setBusyKey(null)
                 }
                 if (playingCleanupRef.current === reset) {
                     playingCleanupRef.current = null
@@ -272,14 +283,16 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
             if (playingRequestRef.current === request_id) {
                 playingActiveRef.current = false
                 setPlayingKey(null)
+                setBusyKey(null)
             }
         }
-    }, [targetLanguage, effectiveTargetLanguage, ttsServiceList, serviceInstances])
+    }, [busyKey, targetLanguage, effectiveTargetLanguage, ttsServiceList, serviceInstances])
 
     useEffect(() => {
         return () => {
             playingRequestRef.current += 1
             playingActiveRef.current = false
+            setBusyKey(null)
             const cleanup = playingCleanupRef.current
             playingCleanupRef.current = null
             cleanup?.()
@@ -365,6 +378,7 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                             onCollect={(key) => { handleCollect(key).catch(console.error); }}
                             onReverseTranslate={handleReverseTranslate}
                             playingKey={playingKey}
+                            busyKey={busyKey}
                             collectedKeys={collectedKeys}
                             ttsAvailable={ttsServiceList.length > 0}
                             collectionAvailable={enabledCollectionServiceList.length > 0}
