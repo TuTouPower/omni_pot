@@ -369,6 +369,21 @@ export function list_local_backups(): string[] {
         .reverse()
 }
 
+export interface BackupEntry {
+    name: string
+    size: number
+}
+
+export function list_local_backups_with_size(): BackupEntry[] {
+    const dir = get_backup_dir()
+    if (!existsSync(dir)) return []
+    return readdirSync(dir)
+        .filter((f) => f === basename(f) && f.endsWith('.zip'))
+        .sort()
+        .reverse()
+        .map((name) => ({ name, size: lstatSync(join(dir, name)).size }))
+}
+
 export function restore_local_backup(backup_name: string): void {
     const backup_path = resolve_backup_path(backup_name)
     if (!existsSync(backup_path)) throw new Error(`Backup not found: ${backup_name}`)
@@ -386,6 +401,15 @@ export function restore_local_backup(backup_name: string): void {
     } finally {
         rmSync(staging_dir, { recursive: true, force: true })
     }
+}
+
+export function get_backup_path(backup_name: string): string {
+    return resolve_backup_path(backup_name)
+}
+
+export function delete_local_backup(backup_name: string): void {
+    const backup_path = resolve_backup_path(backup_name)
+    remove_file_if_exists(backup_path)
 }
 
 export function restore_from_zip_path(zip_path: string): { restored_files: string[] } {

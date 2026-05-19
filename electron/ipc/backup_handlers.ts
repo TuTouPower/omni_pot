@@ -2,8 +2,11 @@ import { ipcMain, dialog } from 'electron'
 import {
     create_local_backup,
     list_local_backups,
+    list_local_backups_with_size,
     restore_local_backup,
-    restore_from_zip_path
+    restore_from_zip_path,
+    delete_local_backup,
+    get_backup_path
 } from '../backup'
 
 export function registerBackupHandlers(): void {
@@ -44,5 +47,22 @@ export function registerBackupHandlers(): void {
         } catch (err) {
             return { success: false, error: String(err) }
         }
+    })
+
+    ipcMain.handle('backup:list-with-size', () => {
+        return list_local_backups_with_size()
+    })
+
+    ipcMain.handle('backup:delete', (_event, name: string) => {
+        try {
+            delete_local_backup(name)
+            return { success: true }
+        } catch (err) {
+            return { success: false, error: String(err) }
+        }
+    })
+
+    ipcMain.handle('backup:get-path', (_event, name: string) => {
+        return get_backup_path(name)
     })
 }

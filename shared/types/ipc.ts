@@ -78,8 +78,11 @@ export interface ElectronAPI {
   backup: {
     create(): Promise<{ success: boolean; path?: string; error?: string }>
     list(): Promise<string[]>
+    listWithSize(): Promise<Array<{ name: string; size: number }>>
     restore(name: string): Promise<{ success: boolean; error?: string }>
     import(): Promise<{ success: boolean; restored_files?: string[]; error?: string }>
+    delete(name: string): Promise<{ success: boolean; error?: string }>
+    getPath(name: string): Promise<string>
   }
   dict: {
     lookup(text: string, from: string, to: string): Promise<DictResult | null>
