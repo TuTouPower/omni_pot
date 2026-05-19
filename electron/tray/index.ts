@@ -38,7 +38,7 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   },
   zh_cn: {
     input_translate: '翻译',
-    dictionary: '字典词典',
+    dictionary: '词典',
     ocr_recognize: '文字识别',
     screenshot_translate: '截图翻译',
     clipboard_monitor: '剪贴板监听',
