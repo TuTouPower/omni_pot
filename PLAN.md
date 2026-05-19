@@ -139,18 +139,18 @@
 来源：`docs/frontend_spec_gap_analysis.md`（D1-D4）、`docs/design/demo_vs_implementation_diff.md`（三）、`docs/design/omni-pot/chats/chat11.md`。
 
 - [X] **用户可见名称统一为"词典"**：窗口标题、快捷键页、托盘（D1）
-- [ ] **英文输入只查英文词典（cambridge_dict + ecdict）**：当前还查 free_dictionary（D2）—— `free_dictionary` 默认关闭，用户可手动启用
+- [X] **英文输入只查英文词典（cambridge_dict + ecdict）**：当前还查 free_dictionary（D2）—— `free_dictionary` 默认关闭，用户可手动启用
 - [X] **移除"来源" chips**（D3）
 - [X] **收藏按钮移到每个词卡右上角**：当前在顶部 header card（D4）
 - [X] **单词头部添加朗读按钮**：英文/中文均需（demo diff 3.2）
 - [X] **结果卡片支持折叠**（demo diff 3.3, demo P2 #20）
-- [ ] **Cambridge 使用纯英文数据集**：默认 `dataset = 'english'`，不返回中文翻译
-- [ ] **词典发音 UI**：每个发音独占一行（region 标签 + 音标 mono + 朗读按钮），英文 US/UK 合并同行 flex-wrap，中文单行
+- [X] **Cambridge 使用纯英文数据集**：默认 `dataset = 'english'`，不返回中文翻译
+- [X] **词典发音 UI**：每个发音独占一行（region 标签 + 音标 mono + 朗读按钮），英文 US/UK 合并同行 flex-wrap，中文单行
 - [ ] **顶部源词卡片**：可编辑查询词 + 语言检测 + 朗读/复制/收藏/查询
-- [ ] **服务设置拆分中文/英文词典 Tab**：「字典词典」Tab → 「中文词典」+「英文词典」两个 Tab，默认实例中文 = chinese_dictionary + ecdict，英文 = cambridge_dict + ecdict
-- [ ] **设置 → 关于 → 导出日志**：诊断卡片底部添加"导出日志"按钮，最近 7 天日志打包为 zip
-- [ ] **欢迎页副标题**：改为"选中字词查询字典词典"
-- [ ] **chinese_dictionary 加入 SVC_META**：中字 monogram
+- [X] **服务设置拆分中文/英文词典 Tab**：「字典词典」Tab → 「中文词典」+「英文词典」两个 Tab，默认实例中文 = chinese_dictionary + ecdict，英文 = cambridge_dict + ecdict
+- [X] **设置 → 关于 → 导出日志**：诊断卡片底部添加"导出日志"按钮，最近 7 天日志打包为 zip
+- [X] **欢迎页副标题**：改为"选中字词查询字典词典"
+- [X] **chinese_dictionary 加入 SVC_META**：中字 monogram
 
 ---
 
