@@ -91,7 +91,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
       return () => { ipcRenderer.off('screenshot:show', handler) }
     },
     onRecognizeShow: (callback) => {
-      const handler = (_event: Electron.IpcRendererEvent, base64: string, text: string) => { callback(base64, text); }
+      const handler = (_event: Electron.IpcRendererEvent, base64: string, text: string, mode: string) => { callback(base64, text, mode); }
       ipcRenderer.on('recognize:show', handler)
       return () => { ipcRenderer.off('recognize:show', handler) }
     }

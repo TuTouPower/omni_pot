@@ -2,16 +2,33 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
-import { ConfigCard, ConfigRow, ConfigSelect, ConfigField } from './config_components'
+import { ConfigCard, ConfigRow, ConfigField } from './config_components'
 
-const BACKUP_TYPES = [
-    { value: 'webdav', label: 'WebDAV' },
-    { value: 'local', label: '本地文件' },
-]
+interface BackupEntry {
+    name: string
+    size: number
+}
 
 function error_message(error: unknown): string {
     return error instanceof Error ? error.message : String(error)
 }
+
+function format_size(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function extract_timestamp(name: string): string {
+    const m = name.match(/pot-backup-(\d{4})-(\d{2})-(\d{2})T(\d{2})-(\d{2})-(\d{2})/)
+    if (!m) return ''
+    return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`
+}
+
+const BACKUP_TYPES = [
+    { value: 'webdav' as const, label: 'WebDAV', sub: '同步到任意 WebDAV 服务器' },
+    { value: 'local' as const, label: '本地文件', sub: '导出 ZIP 到本地路径' },
+]
 
 export default function BackupSettings(): React.ReactElement {
     const { t } = useTranslation()
@@ -20,14 +37,13 @@ export default function BackupSettings(): React.ReactElement {
     const [webdavUsername, setWebdavUsername] = useConfig('webdav_username')
     const [webdavPassword, setWebdavPassword] = useConfig('webdav_password')
 
-    const [backups, setBackups] = useState<string[]>([])
+    const [backups, setBackups] = useState<BackupEntry[]>([])
     const [status, setStatus] = useState('')
     const [restoreModal, setRestoreModal] = useState(false)
-    const [restoreResult, setRestoreResult] = useState<{ files: string[] } | null>(null)
 
     const load_backups = useCallback(async () => {
         try {
-            const list = await window.electronAPI.backup.list()
+            const list = await window.electronAPI.backup.listWithSize()
             setBackups(list)
         } catch (error) {
             setStatus(`Error: ${error_message(error)}`)
@@ -58,7 +74,6 @@ export default function BackupSettings(): React.ReactElement {
             if (result.success) {
                 setStatus('Restored successfully. Please restart the app.')
                 setRestoreModal(false)
-                setRestoreResult(null)
             } else {
                 setStatus(`Error: ${result.error ?? ''}`)
             }
@@ -67,38 +82,54 @@ export default function BackupSettings(): React.ReactElement {
         }
     }
 
-    const handle_import = async (): Promise<void> => {
-        setStatus('导入中...')
-        setRestoreResult(null)
+    const handle_delete = async (name: string): Promise<void> => {
         try {
-            const result = await window.electronAPI.backup.import()
+            const result = await window.electronAPI.backup.delete(name)
             if (result.success) {
-                const files = result.restored_files ?? []
-                setRestoreResult({ files })
-                setStatus(`导入成功，请重启应用。已恢复 ${files.length} 个文件。`)
                 load_backups().catch(console.error)
-            } else if (result.error === 'cancelled') {
-                setStatus('')
             } else {
-                setStatus(`导入失败: ${result.error ?? ''}`)
+                setStatus(`删除失败: ${result.error ?? ''}`)
             }
         } catch (error) {
-            setStatus(`导入失败: ${error_message(error)}`)
+            setStatus(`删除失败: ${error_message(error)}`)
+        }
+    }
+
+    const handle_copy_path = async (name: string): Promise<void> => {
+        try {
+            const path = await window.electronAPI.backup.getPath(name)
+            await navigator.clipboard.writeText(path)
+        } catch (error) {
+            setStatus(`复制失败: ${error_message(error)}`)
         }
     }
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('backup.title', { defaultValue: '备份' })}>
-                <ConfigRow label="备份类型">
-                    <ConfigSelect
-                        value={backupType}
-                        onChange={setBackupType}
-                        options={BACKUP_TYPES}
-                        testId="cfg-backup_type"
-                        style={{ minWidth: 160 }}
-                    />
-                </ConfigRow>
+            <ConfigCard title="备份目标">
+                <div style={{ display: 'flex', gap: 8 }}>
+                    {BACKUP_TYPES.map((opt) => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            data-testid={`cfg-backup_type-${opt.value}`}
+                            onClick={() => { setBackupType(opt.value); }}
+                            style={{
+                                flex: 1,
+                                padding: 12,
+                                borderRadius: 10,
+                                border: `1px solid ${backupType === opt.value ? 'var(--brand-primary)' : 'var(--line)'}`,
+                                background: backupType === opt.value ? 'var(--brand-primary-soft)' : 'var(--bg-elev)',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                            }}
+                        >
+                            <div style={{ fontSize: 13, fontWeight: 600, color: backupType === opt.value ? 'var(--brand-primary)' : 'var(--text)' }}>{opt.label}</div>
+                            <div className="hint" style={{ marginTop: 2 }}>{opt.sub}</div>
+                        </button>
+                    ))}
+                </div>
             </ConfigCard>
 
             {backupType === 'webdav' && (
@@ -128,6 +159,20 @@ export default function BackupSettings(): React.ReactElement {
                             style={{ minWidth: 280 }}
                         />
                     </ConfigRow>
+                    <div className="row" style={{ marginTop: 4 }}>
+                        <div style={{ flex: 1 }} />
+                        <button data-testid="backup-test-connection" className="btn sm" onClick={() => { setStatus('WebDAV 同步功能即将推出'); }}>
+                            测试连接
+                        </button>
+                    </div>
+                </ConfigCard>
+            )}
+
+            {backupType === 'local' && (
+                <ConfigCard title="本地路径">
+                    <ConfigRow label="备份目录">
+                        <div className="mono hint" style={{ fontSize: 12 }}>~/Documents/OmniPotBackups</div>
+                    </ConfigRow>
                 </ConfigCard>
             )}
 
@@ -141,45 +186,34 @@ export default function BackupSettings(): React.ReactElement {
                         <Icons.Cycle size={14} />
                         {t('backup.restore', { defaultValue: '从备份恢复' })}
                     </button>
-                    <button data-testid="backup-import" className="btn" onClick={() => { handle_import().catch(console.error); }}>
-                        <Icons.Export size={14} />
-                        导入 ZIP
-                    </button>
                 </div>
                 {status && <p data-testid="backup-status" style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
-                {restoreResult && (
-                    <div data-testid="backup-restore-result" style={{ fontSize: 12, padding: '8px 12px', background: 'var(--bg-sunk)', borderRadius: 8, border: '1px solid var(--line)' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>恢复校验</div>
-                        <div style={{ color: 'var(--text-dim)' }}>
-                            {restoreResult.files.map((f) => (
-                                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <Icons.Check size={12} style={{ color: 'var(--brand-primary)' }} />
-                                    <span className="mono" style={{ fontSize: 11 }}>{f}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div style={{ marginTop: 6, color: 'var(--text-mute)' }}>请重启应用以使更改生效。</div>
-                    </div>
-                )}
                 <div data-testid="backup-content-hint" className="hint">备份内容：设置、历史记录数据库、CC-CEDICT 词典数据库</div>
             </ConfigCard>
 
-            {/* Recent backups */}
             <ConfigCard title="最近备份">
                 {backups.length === 0 && (
                     <p data-testid="backup-empty" style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('backup.no_backups', { defaultValue: '暂无备份' })}</p>
                 )}
-                {backups.slice(0, 5).map((name, i) => (
-                    <div key={name} data-testid="backup-row" data-backup-name={name} className="row" style={{ paddingBottom: 8, borderBottom: i < Math.min(backups.length, 5) - 1 ? '1px solid var(--line)' : 'none' }}>
+                {backups.slice(0, 5).map((entry, i) => (
+                    <div key={entry.name} data-testid="backup-row" data-backup-name={entry.name} className="row" style={{ paddingBottom: 8, borderBottom: i < Math.min(backups.length, 5) - 1 ? '1px solid var(--line)' : 'none' }}>
                         <Icons.Cloud size={14} style={{ color: 'var(--text-mute)' }} />
                         <div style={{ flex: 1 }}>
-                            <div className="mono" style={{ fontSize: 12 }}>{name}</div>
+                            <div className="mono" style={{ fontSize: 12 }}>{entry.name}</div>
+                            <div className="hint" style={{ marginTop: 2 }}>
+                                {extract_timestamp(entry.name)}{extract_timestamp(entry.name) ? ' · ' : ''}{format_size(entry.size)}
+                            </div>
                         </div>
+                        <button data-testid="backup-copy-path" className="btn ghost icon sm" title="复制路径" onClick={() => { handle_copy_path(entry.name).catch(console.error); }}>
+                            <Icons.Copy size={12} />
+                        </button>
+                        <button data-testid="backup-delete" className="btn ghost icon sm" style={{ color: 'var(--danger)' }} title="删除" onClick={() => { handle_delete(entry.name).catch(console.error); }}>
+                            <Icons.Trash size={12} />
+                        </button>
                     </div>
                 ))}
             </ConfigCard>
 
-            {/* Restore modal */}
             {restoreModal && (
                 <div
                     data-testid="backup-restore-modal"
@@ -209,11 +243,11 @@ export default function BackupSettings(): React.ReactElement {
                             {backups.length === 0 && (
                                 <p data-testid="backup-restore-empty" style={{ fontSize: 13, color: 'var(--text-mute)', padding: 12 }}>No backups available.</p>
                             )}
-                            {backups.map((name) => (
+                            {backups.map((entry) => (
                                 <div
-                                    key={name}
+                                    key={entry.name}
                                     data-testid="backup-restore-row"
-                                    data-backup-name={name}
+                                    data-backup-name={entry.name}
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
@@ -225,8 +259,11 @@ export default function BackupSettings(): React.ReactElement {
                                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-sunk)'}
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
-                                    <span style={{ fontSize: 13 }}>{name}</span>
-                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => { handle_restore(name).catch(console.error); }}>恢复</button>
+                                    <div>
+                                        <span style={{ fontSize: 13 }}>{entry.name}</span>
+                                        <div className="hint" style={{ marginTop: 2 }}>{extract_timestamp(entry.name)}{extract_timestamp(entry.name) ? ' · ' : ''}{format_size(entry.size)}</div>
+                                    </div>
+                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => { handle_restore(entry.name).catch(console.error); }}>恢复</button>
                                 </div>
                             ))}
                         </div>
