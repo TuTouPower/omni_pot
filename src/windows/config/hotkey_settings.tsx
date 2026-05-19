@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
-import { Icons } from '../../components/icons'
 import { ConfigCard, ConfigRow } from './config_components'
 import { format_hotkey } from '../../utils/format_hotkey'
 
@@ -112,7 +111,7 @@ function HotkeyField({ label, sub, configKey }: HotkeyFieldProps): React.ReactEl
                 </div>
                 {!capturing ? (
                     <button className="btn sm" data-testid={`cfg-${configKey}-bind`} onClick={() => { setCapturing(true); setTempValue(''); setStatus('') }}>
-                        {currentValue ? <><Icons.Check size={12} /> {t('ui.unbind', { defaultValue: '解绑' })}</> : t('ui.set', { defaultValue: '绑定' })}
+                        {currentValue ? t('ui.unbind', { defaultValue: '解绑' }) : t('ui.set', { defaultValue: '绑定' })}
                     </button>
                 ) : (
                     <>
