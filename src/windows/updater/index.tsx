@@ -110,16 +110,41 @@ export default function UpdaterWindow(): React.ReactElement {
     }, [])
 
     const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
-    const [alwaysOnTop, setAlwaysOnTop] = useState(false)
-    const handlePin = useCallback(async () => {
-        const next = !alwaysOnTop
-        await window.electronAPI.window.setAlwaysOnTop(next)
-        setAlwaysOnTop(next)
-    }, [alwaysOnTop])
     const handleOpenRelease = useCallback(() => {
         if (release?.html_url) window.open(release.html_url, '_blank')
     }, [release])
 
+    const format_changelog = (body: string): React.ReactNode[] => {
+        return body.split('\n').map((line, i) => {
+            const trimmed = line.trim()
+            if (!trimmed) return <br key={i} />
+            // Bold text
+            let formatted: React.ReactNode = trimmed.replace(/\*\*(.+?)\*\*/g, '$1')
+            if (typeof formatted === 'string') {
+                // Links: [text](url)
+                const link_parts: React.ReactNode[] = []
+                let remaining = formatted as string
+                const link_re = /\[([^\]]+)\]\(([^)]+)\)/g
+                let last = 0
+                let match = link_re.exec(remaining)
+                while (match) {
+                    if (match.index > last) link_parts.push(remaining.slice(last, match.index))
+                    link_parts.push(<a key={`${i}-link-${String(link_parts.length)}`} href={match[2]} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-primary)' }}>{match[1]}</a>)
+                    last = link_re.lastIndex
+                    match = link_re.exec(remaining)
+                }
+                if (last < remaining.length) link_parts.push(remaining.slice(last))
+                if (link_parts.length > 1) formatted = <>{link_parts}</>
+            }
+            // Headers
+            if (trimmed.startsWith('### ')) return <div key={i} style={{ fontSize: 12.5, fontWeight: 600, marginTop: 8, marginBottom: 2 }}>{formatted}</div>
+            if (trimmed.startsWith('## ')) return <div key={i} style={{ fontSize: 13, fontWeight: 600, marginTop: 10, marginBottom: 4 }}>{trimmed.slice(3)}</div>
+            if (trimmed.startsWith('# ')) return <div key={i} style={{ fontSize: 14, fontWeight: 700, marginTop: 12, marginBottom: 4 }}>{trimmed.slice(2)}</div>
+            // List items
+            if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) return <div key={i} style={{ paddingLeft: 14, position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>·</span>{formatted}</div>
+            return <div key={i}>{formatted}</div>
+        })
+    }
 
     const format_date = (dateStr: string): string => {
         try {
@@ -134,17 +159,7 @@ export default function UpdaterWindow(): React.ReactElement {
         <div className="op-window" style={{ width: 600, height: 420 }}>
             {/* Titlebar */}
             <div className="op-titlebar">
-                <button
-                    className="ic-btn"
-                    title={t('pin')}
-                    data-testid="updater-pin"
-                    aria-pressed={alwaysOnTop}
-                    onClick={() => { handlePin().catch(console.error); }}
-                    style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                >
-                    <Icons.Pin size={14} fill={alwaysOnTop} />
-                </button>
-                <div className="op-wordmark" style={{ marginLeft: 2 }}>
+                <div className="op-wordmark" data-testid="titlebar-wordmark">
                     Omni Pot
                 </div>
                 <span className="op-mode">{t('updater.title')}</span>
@@ -215,8 +230,8 @@ export default function UpdaterWindow(): React.ReactElement {
                                 <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
                                     {t('changelog')}
                                 </div>
-                                <div style={{ fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text-dim)' }}>
-                                    {release.body}
+                                <div style={{ fontSize: 13, lineHeight: 1.65, color: 'var(--text-dim)' }}>
+                                    {format_changelog(release.body)}
                                 </div>
                             </div>
                         )}
