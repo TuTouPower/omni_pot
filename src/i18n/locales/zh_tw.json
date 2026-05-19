@@ -76,7 +76,9 @@
     "service": {
         "title": "服務",
         "translate": "翻譯",
-        "dictionary": "字典詞典",
+        "dictionary": "詞典",
+        "chinese_dictionary": "中文詞典",
+        "english_dictionary": "英文詞典",
         "tts": "語音朗讀",
         "ocr": "文字辨識",
         "collection": "收藏",
@@ -97,7 +99,8 @@
     "about": {
         "title": "關於",
         "version": "版本",
-        "github": "GitHub"
+        "github": "GitHub",
+        "export_log": "匯出日誌"
     },
     "dict": {
         "title": "字典",

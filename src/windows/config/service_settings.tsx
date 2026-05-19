@@ -13,12 +13,13 @@ import type { ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 import { ConfigSwitch } from './config_components'
 
-type ServiceCategory = 'translate_service_list' | 'dictionary_service_list' | 'recognize_service_list' | 'tts_service_list' | 'collection_service_list'
+type ServiceCategory = 'translate_service_list' | 'dictionary_service_list' | 'english_dictionary_service_list' | 'recognize_service_list' | 'tts_service_list' | 'collection_service_list'
 type TestableService = { testConfig(config: Record<string, unknown>): Promise<boolean> }
 
 const CATEGORY_TABS = [
     { key: 'translate_service_list' as ServiceCategory, labelKey: 'service.translate', label: '翻译' },
-    { key: 'dictionary_service_list' as ServiceCategory, labelKey: 'service.dictionary', label: '词典' },
+    { key: 'dictionary_service_list' as ServiceCategory, labelKey: 'service.chinese_dictionary', label: '中文词典' },
+    { key: 'english_dictionary_service_list' as ServiceCategory, labelKey: 'service.english_dictionary', label: '英文词典' },
     { key: 'recognize_service_list' as ServiceCategory, labelKey: 'service.ocr', label: '识别' },
     { key: 'tts_service_list' as ServiceCategory, labelKey: 'service.tts', label: '朗读' },
     { key: 'collection_service_list' as ServiceCategory, labelKey: 'service.collection', label: '收藏' },
@@ -33,6 +34,7 @@ function getRegistryForCategory(category: ServiceCategory) {
     switch (category) {
         case 'translate_service_list': return translateServiceRegistry
         case 'dictionary_service_list': return translateServiceRegistry
+        case 'english_dictionary_service_list': return translateServiceRegistry
         case 'recognize_service_list': return ocrServiceRegistry
         case 'tts_service_list': return ttsServiceRegistry
         case 'collection_service_list': return collectionServiceRegistry
@@ -196,6 +198,7 @@ export default function ServiceSettings(): React.ReactElement {
     const categoryCounts = {
         translate_service_list: useConfigStore((s) => s.config.translate_service_list.length),
         dictionary_service_list: useConfigStore((s) => s.config.dictionary_service_list.length),
+        english_dictionary_service_list: useConfigStore((s) => s.config.english_dictionary_service_list.length),
         recognize_service_list: useConfigStore((s) => s.config.recognize_service_list.length),
         tts_service_list: useConfigStore((s) => s.config.tts_service_list.length),
         collection_service_list: useConfigStore((s) => s.config.collection_service_list.length),

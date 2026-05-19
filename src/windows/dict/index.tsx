@@ -7,7 +7,6 @@ import { translateServiceRegistry } from '../../services/registry'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { collectionServiceRegistry } from '../../services/index'
 import { getServiceKey } from '@shared/types/service'
-import type { LanguageCode } from '@shared/types/language'
 import type { DictResult, ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 
@@ -131,17 +130,6 @@ function DictResultCard({ instanceKey, result, isCollected, onCollect, collectio
     )
 }
 
-function service_supports_dictionary_query(service_key: string, source_language: LanguageCode): boolean {
-    if (source_language === 'en') {
-        // English source → English dictionaries. CC-CEDICT also indexes English glosses,
-        // so it can find Chinese translations for English headwords.
-        return ['free_dictionary', 'ecdict', 'cambridge_dict'].includes(service_key)
-    }
-    // Chinese (or auto-detected as zh) source → Chinese dictionaries. Both the local
-    // chinese-dictionary DB and CC-CEDICT have Chinese headwords.
-    return service_key === 'chinese_dictionary' || service_key === 'ecdict'
-}
-
 export default function DictWindow(): React.ReactElement {
     const { t } = useTranslation()
     const word = useDictStore((s) => s.word)
@@ -152,12 +140,14 @@ export default function DictWindow(): React.ReactElement {
     const setIsLoading = useDictStore((s) => s.setIsLoading)
     const clearResults = useDictStore((s) => s.clearResults)
 
-    const serviceList = useConfigStore((s) => s.config.dictionary_service_list)
+    const zhServiceList = useConfigStore((s) => s.config.dictionary_service_list)
+    const enServiceList = useConfigStore((s) => s.config.english_dictionary_service_list)
     const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
+    const allDictionaryInstances = useMemo(() => [...new Set([...zhServiceList, ...enServiceList])], [zhServiceList, enServiceList])
     const enabledServiceList = useMemo(
-        () => serviceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
-        [serviceList, serviceInstances]
+        () => allDictionaryInstances.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
+        [allDictionaryInstances, serviceInstances]
     )
     const enabledCollectionServiceList = useMemo(
         () => collectionServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
@@ -200,12 +190,14 @@ export default function DictWindow(): React.ReactElement {
         clearResults()
 
         const lookupWord = trimmed.split(' ')[0] ?? ''
-        const source_language = /^[a-zA-Z]/.test(lookupWord) ? 'en' : 'zh_cn'
-        const target_language = source_language === 'en' ? 'zh_cn' : 'en'
+        const isEnglish = /^[a-zA-Z]/.test(lookupWord)
+        const source_language = isEnglish ? 'en' : 'zh_cn'
+        const target_language = isEnglish ? 'zh_cn' : 'en'
+        const activeList = isEnglish ? enServiceList : zhServiceList
 
-        const promises = enabledServiceList.map(async (instanceKey) => {
+        const promises = activeList.map(async (instanceKey) => {
+            if (get_service_config(serviceInstances, instanceKey).enable === false) return
             const serviceKey = getServiceKey(instanceKey)
-            if (!service_supports_dictionary_query(serviceKey, source_language)) return
             const service = translateServiceRegistry.get(serviceKey)
             if (!service) {
                 if (lookup_request_ref.current === request_id) {
@@ -233,7 +225,7 @@ export default function DictWindow(): React.ReactElement {
         if (lookup_request_ref.current === request_id) {
             setIsLoading(false)
         }
-    }, [enabledServiceList, serviceInstances, setWord, setIsLoading, clearResults, setResult])
+    }, [zhServiceList, enServiceList, serviceInstances, setWord, setIsLoading, clearResults, setResult])
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onDictLookup((text: string) => {
@@ -347,7 +339,7 @@ export default function DictWindow(): React.ReactElement {
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     Omni Pot
                 </div>
-                <span className="op-mode" data-testid="titlebar-mode">字典词典</span>
+                <span className="op-mode" data-testid="titlebar-mode">词典</span>
                 <div style={{ flex: 1 }} />
                 <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={14} />
@@ -385,10 +377,21 @@ export default function DictWindow(): React.ReactElement {
                                 )}
                             </div>
                             {firstResult && firstResult.pronunciations.length > 0 && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, flexWrap: 'wrap' }}>
                                     {firstResult.pronunciations.map((p, i) => (
-                                        <span key={i} data-testid="dict-pronunciation" className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>
-                                            {p.region && `${p.region} `}{p.phonetic}
+                                        <span key={i} data-testid="dict-pronunciation" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                            {p.region && <span className="hint" style={{ fontSize: 11 }}>{p.region}</span>}
+                                            <span className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>{p.phonetic}</span>
+                                            {ttsAvailable && (
+                                                <button
+                                                    className={'ic-btn' + (ttsPlaying ? ' brand' : '')}
+                                                    title={t('result.tts', { defaultValue: '朗读' })}
+                                                    onClick={handleTts}
+                                                    style={{ marginLeft: 2 }}
+                                                >
+                                                    <Icons.Volume size={12} fill={ttsPlaying} />
+                                                </button>
+                                            )}
                                         </span>
                                     ))}
                                 </div>
