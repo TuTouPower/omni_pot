@@ -102,10 +102,10 @@ export function registerOcrHandlers(manager: WindowManager): void {
         return start_screenshot_capture(manager, mode)
     })
 
-    ipcMain.handle('ocr:open-recognize', (_event, base64Image: string, text: string) => {
+    ipcMain.handle('ocr:open-recognize', (_event, base64Image: string, text: string, mode?: string) => {
         manager.focusOrCreate(WindowLabel.RECOGNIZE, get_recognize_window_options())
 
-        manager.sendWhenReady(WindowLabel.RECOGNIZE, 'recognize:show', base64Image, text)
+        manager.sendWhenReady(WindowLabel.RECOGNIZE, 'recognize:show', base64Image, text, mode ?? 'recognize')
     })
 
     ipcMain.handle('ocr:send-to-translate', (_event, text: string) => {

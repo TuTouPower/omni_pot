@@ -82,7 +82,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
   },
   ocr: {
     captureScreenshot: (mode) => ipcRenderer.invoke('ocr:capture-screenshot', mode),
-    openRecognize: (base64Image, text) => ipcRenderer.invoke('ocr:open-recognize', base64Image, text),
+    openRecognize: (base64Image, text, mode) => ipcRenderer.invoke('ocr:open-recognize', base64Image, text, mode),
     sendToTranslate: (text) => ipcRenderer.invoke('ocr:send-to-translate', text),
     systemRecognize: (base64Image, lang) => ipcRenderer.invoke('ocr:system-recognize', base64Image, lang),
     onScreenshotShow: (callback) => {
@@ -107,8 +107,11 @@ const api: Omit<ElectronAPI, 'ready'> = {
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),
     list: () => ipcRenderer.invoke('backup:list'),
+    listWithSize: () => ipcRenderer.invoke('backup:list-with-size'),
     restore: (name) => ipcRenderer.invoke('backup:restore', name),
-    import: () => ipcRenderer.invoke('backup:import')
+    import: () => ipcRenderer.invoke('backup:import'),
+    delete: (name) => ipcRenderer.invoke('backup:delete', name),
+    getPath: (name) => ipcRenderer.invoke('backup:get-path', name)
   },
   dict: {
     lookup: (text, from, to) => ipcRenderer.invoke('dict:lookup', text, from, to),

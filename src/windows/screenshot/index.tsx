@@ -126,9 +126,9 @@ export default function ScreenshotWindow(): React.ReactElement {
             }
 
             if (mode === 'translate') {
-                await window.electronAPI.ocr.sendToTranslate(full_text)
+                await window.electronAPI.ocr.openRecognize(cropped, full_text, 'translate')
             } else {
-                await window.electronAPI.ocr.openRecognize(cropped, full_text)
+                await window.electronAPI.ocr.openRecognize(cropped, full_text, 'recognize')
             }
         } catch {
             // crop or recognize failed

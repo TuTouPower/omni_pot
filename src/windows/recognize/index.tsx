@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
-import { ocrServiceRegistry } from '../../services/registry'
+import { ocrServiceRegistry, translateServiceRegistry } from '../../services/registry'
+import { detectLanguage } from '../../services/detect'
 import { native_language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
 import { LANGUAGE_CODES } from '@shared/types/language'
@@ -178,45 +179,7 @@ function PillSelect({
     )
 }
 
-// Pill-style button — same dimensions as PillSelect, no chevron
-function PillButton({
-    icon,
-    label,
-    onClick,
-    testId,
-}: {
-    icon: React.ReactNode
-    label: string
-    onClick?: () => void
-    testId?: string
-}): React.ReactElement {
-    return (
-        <button
-            data-testid={testId}
-            onClick={onClick}
-            style={{
-                height: 30,
-                padding: '0 10px',
-                borderRadius: 8,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--line)',
-                color: 'var(--text)',
-                fontSize: 12.5,
-                fontWeight: 500,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-            }}
-        >
-            {icon}
-            <span>{label}</span>
-        </button>
-    )
-}
-
-// Export button with dropdown
+// Export button with dropdown — generates real Word documents for .docx
 function ExportButton({ text }: { text: string }): React.ReactElement {
     const { t } = useTranslation()
     const [open, setOpen] = useState(false)
@@ -235,9 +198,24 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
         { value: 'doc', label: 'Word 97-2003', ext: '.doc' },
     ]
 
-    const handle_export = (fmt: string): void => {
+    const handle_export = async (fmt: string): Promise<void> => {
         const ext = formats.find((format) => format.value === fmt)?.ext ?? '.txt'
-        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+        let blob: Blob
+        if (fmt === 'docx') {
+            const { Document, Packer, Paragraph, TextRun } = await import('docx')
+            const lines = text.split('\n')
+            const doc = new Document({
+                sections: [{
+                    children: lines.map((line) =>
+                        new Paragraph({ children: [new TextRun({ text: line, font: 'Calibri', size: 24 })] })
+                    ),
+                }],
+            })
+            const buffer = await Packer.toBlob(doc)
+            blob = buffer
+        } else {
+            blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+        }
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
@@ -275,7 +253,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
                         <div
                             key={f.value}
                             data-testid={`ocr-export-option-${f.value}`}
-                            onClick={() => { handle_export(f.value); }}
+                            onClick={() => { handle_export(f.value).catch(console.error); }}
                             style={{
                                 padding: '6px 10px',
                                 borderRadius: 6,
@@ -300,26 +278,38 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
 
 export default function RecognizeWindow(): React.ReactElement {
     const { t } = useTranslation()
+    const [mode, setMode] = useState<'recognize' | 'translate'>('recognize')
     const [imageBase64, setImageBase64] = useState<string>('')
     const [recognizedText, setRecognizedText] = useState<string>('')
+    const [translatedText, setTranslatedText] = useState<string>('')
     const [alwaysOnTop, setAlwaysOnTop] = useState(false)
     const [selectedService, setSelectedService] = useState<string>('')
     const [selectedLanguage, setSelectedLanguage] = useState<string>('auto')
+    const [targetLanguage, setTargetLanguage] = useState<string>('')
     const [isRecognizing, setIsRecognizing] = useState(false)
+    const [isTranslating, setIsTranslating] = useState(false)
 
     const config = useConfigStore((s) => s.config)
+    const ocrRequestIdRef = useRef(0)
 
+    const handleNormalizeText = useCallback((text: string): string => {
+        return config.recognize_delete_newline ? normalize_recognized_text(text) : text
+    }, [config.recognize_delete_newline])
+
+    // Listen for new screenshots from main process
     useEffect(() => {
-        const unsub = window.electronAPI.ocr.onRecognizeShow((base64, text) => {
-            const next_text = config.recognize_delete_newline ? normalize_recognized_text(text) : text
+        const unsub = window.electronAPI.ocr.onRecognizeShow((base64, text, m) => {
+            const next_text = handleNormalizeText(text)
             setImageBase64(base64)
             setRecognizedText(next_text)
+            setTranslatedText('')
+            setMode(m === 'translate' ? 'translate' : 'recognize')
             if (config.recognize_auto_copy && next_text) {
                 window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
             }
         })
         return unsub
-    }, [config.recognize_auto_copy, config.recognize_delete_newline])
+    }, [config.recognize_auto_copy, handleNormalizeText])
 
     useEffect(() => {
         window.electronAPI.ready('recognize')
@@ -348,18 +338,86 @@ export default function RecognizeWindow(): React.ReactElement {
     })
 
     // Build language options
-    const lang_options = LANGUAGE_CODES.map((code) => ({
-        value: code,
-        label: native_language_name(t, code),
-    }))
+    const lang_options = [
+        { value: 'auto', label: native_language_name(t, 'auto') },
+        ...LANGUAGE_CODES.map((code) => ({
+            value: code,
+            label: native_language_name(t, code),
+        })),
+    ]
 
     const effectiveService = selectedService && service_list.includes(selectedService) ? selectedService : service_list[0] || ''
     const effectiveServiceKey = effectiveService ? getServiceKey(effectiveService) : ''
     const effectiveMeta = effectiveServiceKey ? (OCR_META[effectiveServiceKey] ?? null) : null
 
+    const effectiveTarget = targetLanguage || config.translate_target_language || 'zh_cn'
+
+    // ---- Request ID guard for OCR ----
+    const bumpOcrRequestId = useCallback((): number => {
+        ocrRequestIdRef.current += 1
+        return ocrRequestIdRef.current
+    }, [])
+
+    // Auto-re-recognize when OCR language or service changes in recognize mode
+    useEffect(() => {
+        if (mode !== 'recognize') return
+        if (!imageBase64) return
+        handleRecognize().catch(console.error)
+    }, [selectedLanguage, effectiveService]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // ---- Translate (used in translate mode) ----
+    const doTranslate = useCallback(async (text: string, sourceLang: LanguageCode, requestId: number): Promise<void> => {
+        const translateServiceList = useConfigStore.getState().config.translate_service_list
+        const svcInstances = useConfigStore.getState().config.service_instances
+        const enabledList = translateServiceList.filter((ik) => get_service_config(svcInstances, ik).enable !== false)
+        if (enabledList.length === 0) return
+
+        const secondLanguage = useConfigStore.getState().config.translate_second_language
+
+        let detectedSource: LanguageCode | null = null
+        if (sourceLang === 'auto') {
+            detectedSource = await detectLanguage(text, useConfigStore.getState().config.translate_detect_engine)
+            if (ocrRequestIdRef.current !== requestId) return
+        }
+
+        let effectiveTargetLang = effectiveTarget as LanguageCode
+        if (sourceLang === 'auto' && detectedSource && detectedSource === effectiveTargetLang) {
+            effectiveTargetLang = (secondLanguage || 'en') as LanguageCode
+        }
+        const effectiveSource = sourceLang === 'auto' ? (detectedSource ?? 'auto') : sourceLang
+
+        const firstInstanceKey = enabledList[0]
+        if (!firstInstanceKey) return
+        const svcKey = getServiceKey(firstInstanceKey)
+        const service = translateServiceRegistry.get(svcKey)
+        if (!service) return
+
+        const instanceConfig = get_service_config(svcInstances, firstInstanceKey)
+        try {
+            if (service.translateStream) {
+                let accumulated = ''
+                for await (const chunk of service.translateStream(text, effectiveSource, effectiveTargetLang, instanceConfig)) {
+                    if (ocrRequestIdRef.current !== requestId) return
+                    accumulated += chunk
+                    setTranslatedText(accumulated)
+                }
+            } else {
+                const result = await service.translate(text, effectiveSource, effectiveTargetLang, instanceConfig)
+                if (ocrRequestIdRef.current !== requestId) return
+                const translated = typeof result === 'string' ? result : result.definitions.map((d) => `${d.partOfSpeech ? `[${d.partOfSpeech}] ` : ''}${d.meanings.join('; ')}`).join('\n')
+                setTranslatedText(translated)
+            }
+        } catch {
+            // keep existing on failure
+        }
+    }, [effectiveTarget])
+
+    // ---- OCR ----
     const handleRecognize = useCallback(async () => {
         if (!imageBase64) return
+        const requestId = bumpOcrRequestId()
         setIsRecognizing(true)
+        setTranslatedText('')
 
         const lang = (selectedLanguage || config.recognize_language) as LanguageCode
         const instance_key = effectiveService
@@ -378,17 +436,38 @@ export default function RecognizeWindow(): React.ReactElement {
         const instance_config: ServiceConfig = get_service_config(service_instances, instance_key)
         try {
             const result = await service.recognize(imageBase64, lang, instance_config)
-            const next_text = config.recognize_delete_newline ? normalize_recognized_text(result || '') : result || ''
+            if (ocrRequestIdRef.current !== requestId) return
+            const next_text = handleNormalizeText(result || '')
             setRecognizedText(next_text)
             if (config.recognize_auto_copy && next_text) {
                 await window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
             }
+            // Auto-translate in translate mode after OCR completes
+            if (mode === 'translate' && next_text) {
+                setIsTranslating(true)
+                await doTranslate(next_text, lang, requestId)
+                setIsTranslating(false)
+            }
         } catch {
             // keep existing text on failure
         }
-        setIsRecognizing(false)
-    }, [imageBase64, effectiveService, selectedLanguage, service_instances, config.recognize_language, config.recognize_auto_copy, config.recognize_delete_newline])
+        if (ocrRequestIdRef.current === requestId) {
+            setIsRecognizing(false)
+        }
+    }, [imageBase64, effectiveService, selectedLanguage, service_instances, config.recognize_language, config.recognize_auto_copy, config.recognize_delete_newline, mode, bumpOcrRequestId, handleNormalizeText, doTranslate])
 
+    // Auto-re-translate when target language changes in translate mode
+    useEffect(() => {
+        if (mode !== 'translate') return
+        if (!recognizedText) return
+        const requestId = bumpOcrRequestId()
+        setIsTranslating(true)
+        doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
+            .finally(() => { setIsTranslating(false); })
+            .catch(console.error)
+    }, [targetLanguage, effectiveTarget]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // ---- Handlers ----
     const handleCopy = useCallback(async () => {
         if (recognizedText) {
             await window.electronAPI.text.writeClipboard(recognizedText).catch(() => undefined)
@@ -396,10 +475,14 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [recognizedText])
 
     const handleTranslate = useCallback(async () => {
-        if (recognizedText) {
-            await window.electronAPI.ocr.sendToTranslate(recognizedText)
-        }
-    }, [recognizedText])
+        setMode('translate')
+        setTranslatedText('')
+        if (!recognizedText) return
+        const requestId = bumpOcrRequestId()
+        setIsTranslating(true)
+        await doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
+        setIsTranslating(false)
+    }, [recognizedText, selectedLanguage, bumpOcrRequestId, doTranslate])
 
     const handleDeleteNewline = useCallback(() => {
         setRecognizedText(normalize_recognized_text(recognizedText))
@@ -418,6 +501,32 @@ export default function RecognizeWindow(): React.ReactElement {
         setAlwaysOnTop(next)
         window.electronAPI.window.setAlwaysOnTop(next).catch(console.error)
     }, [alwaysOnTop])
+
+    const handleCopyImage = useCallback(async () => {
+        if (!imageBase64) return
+        try {
+            const binary = atob(imageBase64)
+            const bytes = new Uint8Array(binary.length)
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+            const blob = new Blob([bytes], { type: 'image/png' })
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+        } catch {
+            // fallback: copy data URL as text
+            await window.electronAPI.text.writeClipboard(`data:image/png;base64,${imageBase64}`).catch(() => undefined)
+        }
+    }, [imageBase64])
+
+    const handleSwap = useCallback(() => {
+        const src = selectedLanguage === 'auto' ? (selectedLanguage) : selectedLanguage
+        const tgt = effectiveTarget
+        setTargetLanguage(src === 'auto' ? tgt : src)
+        if (src !== 'auto') {
+            setSelectedLanguage(tgt)
+        }
+    }, [selectedLanguage, effectiveTarget])
+
+    const is_translate_mode = mode === 'translate'
+    const modeLabel = is_translate_mode ? t('recognize.translate') : t('recognize.title')
 
     return (
         <div className="op-window">
@@ -449,7 +558,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
                     Omni Pot
                 </div>
-                <span className="op-mode" data-testid="titlebar-mode">{t('recognize.title')}</span>
+                <span className="op-mode" data-testid="titlebar-mode">{modeLabel}</span>
                 <div style={{ flex: 1 }} />
                 <button className="op-close" title={t('close')} data-testid="titlebar-close" onClick={handleClose}>
                     <Icons.Close size={18} />
@@ -489,29 +598,87 @@ export default function RecognizeWindow(): React.ReactElement {
                     </div>
                 </div>
 
-                {/* Text card */}
-                <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-                    <textarea
-                        data-testid="ocr-text"
-                        value={recognizedText}
-                        onChange={(e) => { setRecognizedText(e.target.value); }}
-                        placeholder={t('recognize.result_placeholder')}
-                        style={{
-                            flex: 1,
-                            padding: '12px 14px',
-                            fontSize: 13.5,
-                            lineHeight: 1.65,
-                            color: 'var(--text)',
-                            background: 'transparent',
-                            border: 'none',
-                            outline: 'none',
-                            resize: 'none',
-                            fontFamily: 'inherit',
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                        }}
-                    />
-                </div>
+                {/* Right column: single card (recognize) or dual cards (translate) */}
+                {is_translate_mode ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 8 }}>
+                        {/* Recognized text card */}
+                        <div className="card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                            <div style={{ padding: '6px 14px 0', fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
+                                {t('recognize.title')}
+                            </div>
+                            <textarea
+                                data-testid="ocr-text"
+                                value={recognizedText}
+                                onChange={(e) => { setRecognizedText(e.target.value); }}
+                                placeholder={isRecognizing ? t('recognize.recognizing') : t('recognize.result_placeholder')}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px 14px 12px',
+                                    fontSize: 13.5,
+                                    lineHeight: 1.65,
+                                    color: 'var(--text)',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    outline: 'none',
+                                    resize: 'none',
+                                    fontFamily: 'inherit',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                }}
+                            />
+                        </div>
+                        {/* Translation result card */}
+                        <div className="card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                            <div style={{ padding: '6px 14px 0', fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
+                                {t('translate')}
+                            </div>
+                            <div
+                                data-testid="ocr-translation"
+                                style={{
+                                    flex: 1,
+                                    padding: '8px 14px 12px',
+                                    fontSize: 13.5,
+                                    lineHeight: 1.65,
+                                    color: 'var(--text)',
+                                    overflowY: 'auto',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                }}
+                            >
+                                {isTranslating && !translatedText ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
+                                        <div className="shimmer" style={{ height: 13, width: '70%' }} />
+                                        <div className="shimmer" style={{ height: 13, width: '90%' }} />
+                                        <div className="shimmer" style={{ height: 13, width: '50%' }} />
+                                    </div>
+                                ) : translatedText || null}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                        <textarea
+                            data-testid="ocr-text"
+                            value={recognizedText}
+                            onChange={(e) => { setRecognizedText(e.target.value); }}
+                            placeholder={isRecognizing ? t('recognize.recognizing') : t('recognize.result_placeholder')}
+                            style={{
+                                flex: 1,
+                                padding: '12px 14px',
+                                fontSize: 13.5,
+                                lineHeight: 1.65,
+                                color: 'var(--text)',
+                                background: 'transparent',
+                                border: 'none',
+                                outline: 'none',
+                                resize: 'none',
+                                fontFamily: 'inherit',
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                            }}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Action bar */}
@@ -522,6 +689,11 @@ export default function RecognizeWindow(): React.ReactElement {
                 padding: '8px 10px 10px',
                 borderTop: '1px solid var(--line)',
             }}>
+                {/* Left: Copy Image */}
+                <button className="ic-btn" title={t('copy') + ' ' + (t('recognize.title').toLowerCase())} data-testid="ocr-copy-image-btn" onClick={() => { handleCopyImage().catch(console.error); }} disabled={!imageBase64}>
+                    <Icons.Image size={16} />
+                </button>
+                {/* OCR Engine Select */}
                 {ocr_engine_options.length > 0 && (
                     <PillSelect
                         value={effectiveService}
@@ -531,46 +703,57 @@ export default function RecognizeWindow(): React.ReactElement {
                         testId="ocr-engine-select"
                     />
                 )}
-                <PillButton
-                    icon={isRecognizing ? (
-                        <Icons.Cycle size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                    ) : (
-                        <Icons.Cycle size={14} />
-                    )}
-                    label={isRecognizing ? t('recognize.recognizing') : t('recognize.re_recognize')}
-                    onClick={() => { handleRecognize().catch(console.error); }}
-                    testId="ocr-reocr-btn"
-                />
+                {/* Language selector (no Globe icon) */}
                 <PillSelect
                     value={selectedLanguage}
                     options={lang_options}
-                    leading={<Icons.Globe size={13} style={{ color: 'var(--text-mute)' }} />}
                     onChange={setSelectedLanguage}
                     testId="ocr-lang-select"
                 />
 
+                {/* Translate mode extras: swap + target language */}
+                {is_translate_mode && (
+                    <>
+                        <button className="ic-btn" title={t('swap_languages')} data-testid="ocr-swap-btn" onClick={handleSwap}>
+                            <Icons.Swap size={16} />
+                        </button>
+                        <PillSelect
+                            value={effectiveTarget}
+                            options={LANGUAGE_CODES.map((code) => ({
+                                value: code,
+                                label: native_language_name(t, code),
+                            }))}
+                            onChange={setTargetLanguage}
+                            testId="ocr-target-lang-select"
+                        />
+                    </>
+                )}
+
                 <div style={{ flex: 1 }} />
 
-                <button
-                    className="ic-btn"
-                    data-testid="ocr-translate-btn"
-                    title={t('recognize.translate')}
-                    style={{ color: recognizedText ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                    onClick={() => { handleTranslate().catch(console.error); }}
-                    disabled={!recognizedText}
-                >
-                    <Icons.Translate size={18} />
-                </button>
-                <button className="ic-btn" title={t('recognize.delete_newline')} data-testid="ocr-newline-btn" onClick={handleDeleteNewline} disabled={!recognizedText}>
+                {/* Right side actions */}
+                {!is_translate_mode && (
+                    <button
+                        className="ic-btn"
+                        data-testid="ocr-translate-btn"
+                        title={t('recognize.translate')}
+                        style={{ color: recognizedText ? 'var(--brand-primary)' : 'var(--text-mute)' }}
+                        onClick={() => { handleTranslate().catch(console.error); }}
+                        disabled={!recognizedText}
+                    >
+                        <Icons.Translate size={18} />
+                    </button>
+                )}
+                <button className="ic-btn" title={t('delete_newline')} data-testid="ocr-newline-btn" onClick={handleDeleteNewline} disabled={!recognizedText}>
                     <Icons.Newline size={16} />
                 </button>
-                <button className="ic-btn" title={t('recognize.delete_spaces')} data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
+                <button className="ic-btn" title={t('delete_spaces')} data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
                     <Icons.Space size={16} />
                 </button>
                 <button className="ic-btn" title={t('copy')} data-testid="ocr-copy-btn" onClick={() => { handleCopy().catch(console.error); }} disabled={!recognizedText}>
                     <Icons.Copy size={16} />
                 </button>
-                <ExportButton text={recognizedText} />
+                <ExportButton text={is_translate_mode ? translatedText : recognizedText} />
             </div>
 
             {/* Spin animation for recognizing state */}
