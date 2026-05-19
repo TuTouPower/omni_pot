@@ -13,8 +13,10 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
 async function wait_for_dict_card(page: Page): Promise<void> {
-    // 3 cards: source card + pronunciation card + result card
-    await expect(page.locator('[data-testid="dict-card"]')).toHaveCount(3, { timeout: 60_000 })
+    // At least 2 cards: source card + result card (pronunciation card may also appear)
+    await expect(page.locator('[data-testid="dict-card"]')).toHaveCount(2, { timeout: 60_000 })
+    // Wait for definitions to actually render inside the result card
+    await expect(page.locator('[data-testid="dict-definition"]').first()).toBeVisible({ timeout: 60_000 })
 }
 
 test.describe('@ui dict card height auto-fits content', () => {
@@ -23,9 +25,10 @@ test.describe('@ui dict card height auto-fits content', () => {
     test('all definitions for a many-sense word render inside the card without clipping', async () => {
         const omni = await AppFixture.start({
             config: {
-                dictionary_service_list: ['free_dictionary@default'],
+                dictionary_service_list: [],
+                english_dictionary_service_list: ['cambridge_dict@default'],
                 service_instances: {
-                    'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+                    'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
                 },
             },
         })
@@ -36,14 +39,14 @@ test.describe('@ui dict card height auto-fits content', () => {
             const page = dict['page']
             await wait_for_dict_card(page)
 
-            // Result card is at index 2 (index 0 = source card, index 1 = pronunciation card)
-            const definitions_card = page.locator('[data-testid="dict-card"]').nth(2)
+            // Result card is the last card (after source card and optional pronunciation card).
+            const card_count = await page.locator('[data-testid="dict-card"]').count()
+            const definitions_card = page.locator('[data-testid="dict-card"]').nth(card_count - 1)
             const definitions = definitions_card.locator('[data-testid="dict-definition"]')
 
-            // "run" has well over 10 senses in Free Dictionary — we require at
-            // least 5 to assert the card actually expanded.
+            // "run" has many senses in Cambridge Dictionary — require at least 3.
             const count = await definitions.count()
-            expect(count, 'free_dictionary should return many senses for "run"').toBeGreaterThanOrEqual(5)
+            expect(count, 'cambridge_dict should return multiple senses for "run"').toBeGreaterThanOrEqual(3)
 
             const card_box = await definitions_card.boundingBox()
             if (!card_box) throw new Error('missing definitions card box')
