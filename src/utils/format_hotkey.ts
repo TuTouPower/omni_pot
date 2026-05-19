@@ -9,11 +9,11 @@ function format_segment(seg: string): string {
             case 'Command':
             case 'Super':
             case 'Meta':
-                return 'Command'
+                return 'Cmd'
             case 'Control':
-                return 'Control'
+                return 'Ctrl'
             case 'Alt':
-                return 'Alt'
+                return 'Opt'
             case 'Shift':
                 return 'Shift'
             default:
@@ -25,7 +25,7 @@ function format_segment(seg: string): string {
         case 'CmdOrCtrl':
         case 'Command':
         case 'Control':
-            return 'Control'
+            return 'Ctrl'
         case 'Super':
         case 'Meta':
             return 'Win'
