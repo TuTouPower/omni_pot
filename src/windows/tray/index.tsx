@@ -6,7 +6,7 @@ type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screensh
 
 const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'input_translate', icon: 'Translate' },
-    { action: 'dictionary', icon: 'Layers' },
+    { action: 'dictionary', icon: 'Type' },
     { action: 'ocr_recognize', icon: 'Camera' },
     { action: 'screenshot_translate', icon: 'Image' },
     { action: 'clipboard_monitor', icon: 'Copy' },
