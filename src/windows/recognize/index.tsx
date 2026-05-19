@@ -282,7 +282,7 @@ export default function RecognizeWindow(): React.ReactElement {
     const [imageBase64, setImageBase64] = useState<string>('')
     const [recognizedText, setRecognizedText] = useState<string>('')
     const [translatedText, setTranslatedText] = useState<string>('')
-    const [alwaysOnTop, setAlwaysOnTop] = useState(false)
+    const [alwaysOnTop, setAlwaysOnTop] = useState(() => useConfigStore.getState().config.recognize_always_on_top)
     const [selectedService, setSelectedService] = useState<string>('')
     const [selectedLanguage, setSelectedLanguage] = useState<string>('auto')
     const [targetLanguage, setTargetLanguage] = useState<string>('')
@@ -499,7 +499,9 @@ export default function RecognizeWindow(): React.ReactElement {
     const handleTogglePin = useCallback(() => {
         const next = !alwaysOnTop
         setAlwaysOnTop(next)
-        window.electronAPI.window.setAlwaysOnTop(next).catch(console.error)
+        window.electronAPI.window.setAlwaysOnTop(next)
+            .then(() => { useConfigStore.getState().set('recognize_always_on_top', next) })
+            .catch(console.error)
     }, [alwaysOnTop])
 
     const handleCopyImage = useCallback(async () => {

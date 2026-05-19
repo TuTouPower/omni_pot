@@ -220,7 +220,7 @@ export default function DictWindow(): React.ReactElement {
         () => collectionServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [collectionServiceList, serviceInstances]
     )
-    const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
+    const alwaysOnTop = useConfigStore((s) => s.config.dict_always_on_top)
     const setConfig = useConfigStore((s) => s.set)
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
@@ -340,7 +340,7 @@ export default function DictWindow(): React.ReactElement {
     const handleTogglePin = useCallback(() => {
         const next = !alwaysOnTop
         window.electronAPI.window.setAlwaysOnTop(next)
-            .then(() => { setConfig('translate_always_on_top', next) })
+            .then(() => { setConfig('dict_always_on_top', next) })
             .catch(console.error)
     }, [alwaysOnTop, setConfig])
 
