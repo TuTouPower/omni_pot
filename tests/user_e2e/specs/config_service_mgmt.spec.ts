@@ -3,9 +3,10 @@ import { AppFixture } from '../fixtures/app_fixture'
 
 const SERVICE_CATEGORIES = [
     ['translate_service_list', '翻译', ['Bing', 'DeepL', 'MyMemory']],
-    ['dictionary_service_list', '字典', ['中文词典', 'Free Dictionary', 'ECDICT']],
+    ['dictionary_service_list', '中文词典', ['中文词典', 'CC-CEDICT']],
+    ['english_dictionary_service_list', '英文词典', ['Cambridge Dict', 'CC-CEDICT']],
     ['recognize_service_list', '识别', ['Tesseract']],
-    ['tts_service_list', '语音合成', ['Edge TTS']],
+    ['tts_service_list', '朗读', ['System TTS']],
     ['collection_service_list', '收藏', []],
 ] as const
 
@@ -49,7 +50,7 @@ test.describe('@ui config service management', () => {
             await expect(config.serviceDragHandle('bing@default')).toBeVisible()
             await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
             await expect(config.serviceEdit('bing@default')).toBeVisible()
-            await expect(config.serviceMoveControls('bing@default')).toHaveCount(0)
+            await expect(config.serviceMoveControls('bing@default')).toHaveCount(2)
             await expect(config.serviceDelete('bing@default')).toBeEnabled()
         } finally {
             await omni.stop()
@@ -130,6 +131,7 @@ test.describe('@ui config service management', () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
+                translate_pinned: true,
                 translate_service_list: ['bing@default', 'google@default'],
             },
         })
@@ -200,6 +202,7 @@ test.describe('@ui config service management', () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
+                translate_pinned: true,
                 translate_service_list: ['bing@default', 'google@default'],
             },
         })
