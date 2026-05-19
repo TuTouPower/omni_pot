@@ -2,10 +2,11 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
 import { format_hotkey } from '../../utils/format_hotkey'
 
-type TrayAction = 'input_translate' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
+type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'input_translate', icon: 'Translate' },
+    { action: 'dictionary', icon: 'Layers' },
     { action: 'ocr_recognize', icon: 'Camera' },
     { action: 'screenshot_translate', icon: 'Image' },
     { action: 'clipboard_monitor', icon: 'Copy' },
@@ -32,6 +33,7 @@ export default function TrayWindow(): React.ReactElement {
             setClipboardMonitoring(monitoring)
             setShortcuts({
                 input_translate: config.hotkey_translate,
+                dictionary: config.hotkey_selection_dictionary,
                 ocr_recognize: config.hotkey_ocr_recognize,
                 screenshot_translate: config.hotkey_ocr_translate,
             })
@@ -71,7 +73,7 @@ export default function TrayWindow(): React.ReactElement {
                 {ACTIONS.map(({ action, icon }, index) => {
                     const Icon = Icons[icon]
                     const active = action === 'clipboard_monitor' && clipboardMonitoring
-                    const separator = index === 4 || index === 5 || index === 7
+                    const separator = index === 4 || index === 5 || index === 8
                     return (
                         <React.Fragment key={action}>
                             {separator && <div data-testid="tray-separator" style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />}
@@ -80,7 +82,7 @@ export default function TrayWindow(): React.ReactElement {
                                 onClick={() => { run_action(action) }}
                                 style={{
                                     border: 0,
-                                    borderRadius: 10,
+                                    borderRadius: 6,
                                     background: active ? 'var(--brand-primary-soft)' : 'transparent',
                                     color: active ? 'var(--brand-primary)' : 'var(--text)',
                                     minHeight: 34,
