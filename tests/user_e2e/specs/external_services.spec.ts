@@ -39,7 +39,6 @@ function expect_zh_translation(value: unknown, source_text: string): void {
 }
 
 test.describe('@external external service health', () => {
-    test.skip(process.env.OMNI_POT_EXTERNAL_SERVICE_TESTS !== '1', 'Set OMNI_POT_EXTERNAL_SERVICE_TESTS=1 to run real public-service checks')
     test.describe.configure({ retries: 2 })
 
     for (const { name, run, source_text, target_contains_cjk } of [
