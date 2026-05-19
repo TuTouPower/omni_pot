@@ -377,10 +377,10 @@ class TranslatePage {
 - `translate_remember_language`：重开窗口语言被记住
 - 第二语言回退：检测语言 == 目标语言时改用 `translate_second_language`
 
-### 5.8 dict_window.spec.ts — 字典词典窗口
+### 5.8 dict_window.spec.ts — 词典窗口
 
-- `/trigger-dict` 打开字典词典窗口
-- 标题栏：置顶 → wordmark → 模式标签 `字典词典`，右上角关闭按钮
+- `/trigger-dict` 打开词典窗口
+- 标题栏：置顶 → wordmark → 模式标签 `词典`，右上角关闭按钮
 - 查英文词（`hello`）：**只渲染英文词典**（free_dictionary），断言**不渲染任何中文词典卡片**
 - 查中文词：**只渲染中文词典**（chinese_dictionary / ecdict 中文释义），断言**不渲染任何英文词典卡片**
 - 多词典并行真实出结果：用户启用 free_dictionary / ecdict / cambridge_dict，查英文词后所有英文词典服务渲染含真实内容的卡片
@@ -432,13 +432,13 @@ class TranslatePage {
   逐项读写 → 断言 `config.json` 持久化
 - **翻译页**：语言、行为、窗口三组卡片逐项读写持久化；语言下拉项以**该语言自身文字**显示（English / 日本語 / ...），不带 AUTO/ZH 字母前缀
 - **文字识别页**：识别语言、去换行、自动复制、失焦关闭、隐藏窗口读写
-- **快捷键页**：**4 个录入框**（翻译 / 字典词典 / 文字识别 / 截图翻译）；翻译行 UI 上同时绑定 `hotkey_selection_translate` 与 `hotkey_input_translate`；按钮在未绑定时显示"绑定"、已绑定显示"解绑"（**不出现 × 清除按钮**）；录入组合键、Backspace 清除、绑定按钮注册成功/失败提示；快捷键冲突提示出现在状态细节区域而非常驻在本页
+- **快捷键页**：**4 个录入框**（翻译 / 词典 / 文字识别 / 截图翻译）；翻译行 UI 上同时绑定 `hotkey_selection_translate` 与 `hotkey_input_translate`；按钮在未绑定时显示"绑定"、已绑定显示"解绑"（**不出现 × 清除按钮**）；录入组合键、Backspace 清除、绑定按钮注册成功/失败提示；快捷键冲突提示出现在状态细节区域而非常驻在本页
 - **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/设置目录、API 地址）
 - **config:changed 广播**：设置窗口改 `app_theme` → 翻译窗口主题同步变化
 
 ### 5.12 config_service_mgmt.spec.ts — 服务管理页
 
-- Tabs 切换**翻译 / 字典词典 / 文字识别 / 语音朗读 / 收藏** 五类
+- Tabs 切换**翻译 / 中文词典 / 英文词典 / 文字识别 / 语音朗读 / 收藏** 六类
 - 服务实例列表项渲染：拖拽手柄、图标、实例名、key、启停、编辑、上移/下移、删除
 - **添加内置服务** → 创建新实例（key 形如 `bing@xxxx`），出现在列表与 `*_service_list`
 - **删除实例** → 从列表与 `*_service_list` 移除，并同步删除 `service_instances` 项
