@@ -16,7 +16,7 @@ const PRIMARY_COLOR_VALUES: Array<{ key: string; value: AppPrimaryColor; fallbac
     { key: 'sky', value: APP_PRIMARY_COLORS[4], fallback_label: 'Sky blue' },
 ]
 
-const LANGUAGE_VALUES = ['zh_cn', 'en'] as const
+const LANGUAGE_VALUES = ['zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'de'] as const
 
 const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${String(s)}px` }))
 
@@ -68,7 +68,7 @@ export default function GeneralPage(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label={t('general.app_language', { defaultValue: '界面语言' })}>
                     <ConfigSelect
-                        value={appLanguage as 'zh_cn' | 'en'}
+                        value={appLanguage as typeof LANGUAGE_VALUES[number]}
                         onChange={setAppLanguage}
                         options={languageOptions}
                         testId="cfg-app_language"
