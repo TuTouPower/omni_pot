@@ -14,6 +14,18 @@ const TIME_FILTERS = [
     { value: 30, label: '最近 30 天' },
 ] as const
 
+const SVC_ABBR: Record<string, string> = {
+    bing: 'BI', deepl: 'DL', google: 'GG', openai: 'AI', mymemory: 'MM',
+    free_dictionary: 'FD', geminipro: 'GP', lingva: 'LV', baidu: 'BD',
+    tencent: 'TC', alibaba: 'AL', caiyun: 'CY', youdao: 'YD',
+    sogai: 'SG', translatetranslate: 'TT', ecdict: 'EC', cambridge_dict: 'CD',
+}
+
+const LANG_LABEL: Record<string, string> = {
+    auto: 'AUTO', zh_cn: 'ZH', zh_tw: 'TW', en: 'EN', ja: 'JA', ko: 'KO', fr: 'FR',
+    de: 'DE', es: 'ES', ru: 'RU', it: 'IT', pt_pt: 'PT', pt_br: 'BR', vi: 'VI',
+}
+
 export default function HistorySettings(): React.ReactElement {
     const { t } = useTranslation()
     const [historyDisable, setHistoryDisable] = useConfig('history_disable')
@@ -66,6 +78,18 @@ export default function HistorySettings(): React.ReactElement {
     }
 
     const disabled = historyDisable
+
+    const page_numbers = (): (number | string)[] => {
+        if (total_pages <= 7) return Array.from({ length: total_pages }, (_, i) => i + 1)
+        const pages: (number | string)[] = [1]
+        if (page > 3) pages.push('...')
+        for (let i = Math.max(2, page - 1); i <= Math.min(total_pages - 1, page + 1); i++) {
+            pages.push(i)
+        }
+        if (page < total_pages - 2) pages.push('...')
+        pages.push(total_pages)
+        return pages
+    }
 
     return (
         <div className="stack gap-12">
@@ -128,7 +152,7 @@ export default function HistorySettings(): React.ReactElement {
                 <div data-testid="history-list" className="card" style={{ padding: 0, opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' : undefined }}>
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 110px 120px 1fr 120px',
+                        gridTemplateColumns: '32px 1fr 90px 1fr 100px',
                         alignItems: 'center',
                         padding: '10px 14px',
                         borderBottom: '1px solid var(--line)',
@@ -139,9 +163,9 @@ export default function HistorySettings(): React.ReactElement {
                         textTransform: 'uppercase',
                         letterSpacing: '.05em',
                     }}>
+                        <div />
                         <div>源文本</div>
                         <div>语言</div>
-                        <div>服务</div>
                         <div>译文</div>
                         <div>时间</div>
                     </div>
@@ -152,7 +176,7 @@ export default function HistorySettings(): React.ReactElement {
                             data-history-id={r.id}
                             style={{
                                 display: 'grid',
-                                gridTemplateColumns: '1fr 110px 120px 1fr 120px',
+                                gridTemplateColumns: '32px 1fr 90px 1fr 100px',
                                 alignItems: 'center',
                                 padding: '10px 14px',
                                 borderBottom: i < records.length - 1 ? '1px solid var(--line)' : 'none',
@@ -164,9 +188,15 @@ export default function HistorySettings(): React.ReactElement {
                             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-sunk)'}
                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                         >
+                            <div data-testid="history-service-tile" className="svc-tile" title={r.service_key}>
+                                {SVC_ABBR[r.service_key] ?? r.service_key.slice(0, 2).toUpperCase()}
+                            </div>
                             <div data-testid="history-source" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>{r.source_text}</div>
-                            <div data-testid="history-language" className="hint mono" style={{ fontSize: 11 }}>{r.source_lang} → {r.target_lang}</div>
-                            <div data-testid="history-service" className="hint mono" style={{ fontSize: 11 }}>{r.service_key}</div>
+                            <div data-testid="history-language" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span className="flag">{LANG_LABEL[r.source_lang] ?? r.source_lang.slice(0, 2).toUpperCase()}</span>
+                                <Icons.Chev size={10} style={{ color: 'var(--text-mute)', transform: 'rotate(-90deg)' }} />
+                                <span className="flag">{LANG_LABEL[r.target_lang] ?? r.target_lang.slice(0, 2).toUpperCase()}</span>
+                            </div>
                             <div data-testid="history-target" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: 'var(--text-dim)' }}>{r.target_text}</div>
                             <div data-testid="history-created-at" className="hint mono" style={{ fontSize: 11 }}>{r.created_at}</div>
                         </div>
@@ -183,12 +213,29 @@ export default function HistorySettings(): React.ReactElement {
             {/* Pagination */}
             {total > 0 && (
                 <div className="between">
-                    <div data-testid="history-count" className="hint mono">共 {total} 条</div>
+                    <div data-testid="history-count" className="hint mono">
+                        显示 {(page - 1) * PAGE_SIZE + 1} – {Math.min(page * PAGE_SIZE, total)} / 共 {total.toLocaleString()} 条
+                    </div>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                         <button data-testid="history-prev" className="btn ghost icon sm" disabled={page <= 1 || disabled} onClick={() => { setPage(page - 1); }}>
                             <Icons.Chev size={12} style={{ transform: 'rotate(90deg)' }} />
                         </button>
-                        <span data-testid="history-page" className="hint mono" style={{ padding: '0 8px' }}>{page} / {total_pages}</span>
+                        {page_numbers().map((p, idx) => (
+                            typeof p === 'string'
+                                ? <span key={`ellipsis-${idx}`} className="hint" style={{ padding: '0 4px' }}>…</span>
+                                : (
+                                    <button
+                                        key={p}
+                                        data-testid={`history-page-${p}`}
+                                        className={p === page ? 'btn sm' : 'btn ghost sm'}
+                                        style={p === page ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)', borderColor: 'transparent' } : undefined}
+                                        disabled={disabled}
+                                        onClick={() => { setPage(p); }}
+                                    >
+                                        {p}
+                                    </button>
+                                )
+                        ))}
                         <button data-testid="history-next" className="btn ghost icon sm" disabled={page >= total_pages || disabled} onClick={() => { setPage(page + 1); }}>
                             <Icons.Chev size={12} style={{ transform: 'rotate(-90deg)' }} />
                         </button>
