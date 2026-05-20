@@ -13,6 +13,7 @@ export default function RecognizeSettings(): React.ReactElement {
     const [deleteNewline, setDeleteNewline] = useConfig('recognize_delete_newline')
     const [autoCopy, setAutoCopy] = useConfig('recognize_auto_copy')
     const [hideWindow, setHideWindow] = useConfig('recognize_hide_window')
+    const [rememberWindowSize, setRememberWindowSize] = useConfig('recognize_remember_window_size')
     const allLangOpts = native_language_options(t, ALL_LANGUAGES)
 
     return (
@@ -29,6 +30,9 @@ export default function RecognizeSettings(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.hide_source', { defaultValue: '识别后隐藏窗口' })}>
                     <ConfigSwitch on={hideWindow} onChange={setHideWindow} testId="cfg-recognize_hide_window" />
+                </ConfigRow>
+                <ConfigRow label={t('translate_settings.remember_window_size', { defaultValue: '记住窗口大小' })}>
+                    <ConfigSwitch on={rememberWindowSize} onChange={setRememberWindowSize} testId="cfg-recognize_remember_window_size" />
                 </ConfigRow>
             </ConfigCard>
         </div>
