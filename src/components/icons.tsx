@@ -77,7 +77,6 @@ export const Icons = {
     Image: (p: IconProps) => <Icon {...p} d={["M3 5h18v14H3z", "M3 16l5-5 4 4 3-3 6 6", "M9 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"]} />,
     Hash: (p: IconProps) => <Icon {...p} d={["M4 9h16", "M4 15h16", "M10 3l-2 18", "M16 3l-2 18"]} />,
     Layers: (p: IconProps) => <Icon {...p} d={["M12 2l9 5-9 5-9-5 9-5z", "M3 12l9 5 9-5", "M3 17l9 5 9-5"]} />,
-    Type: (p: IconProps) => <Icon {...p} d={["M4 7h16", "M12 7v14", "M8 21h8"]} />,
     Kbd: (p: IconProps) => <Icon {...p} d={["M3 7h18v10H3z", "M7 11h0M11 11h0M15 11h0M7 14h10"]} />,
     Clock: (p: IconProps) => <Icon {...p} d={["M12 21a9 9 0 100-18 9 9 0 000 18z", "M12 7v5l3 2"]} />,
     Cloud: (p: IconProps) => <Icon {...p} d="M18 18H7a4 4 0 01-1-7.9 6 6 0 0111.7-1A4 4 0 0118 18z" />,
