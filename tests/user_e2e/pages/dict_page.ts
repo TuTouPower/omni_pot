@@ -147,4 +147,15 @@ export class DictPage {
             { timeout }
         )
     }
+
+    async resultKeys(): Promise<string[]> {
+        const cards = this.dictCards()
+        const count = await cards.count()
+        const keys: string[] = []
+        for (let i = 0; i < count; i++) {
+            const key = await cards.nth(i).getAttribute('data-result-key')
+            if (key) keys.push(key)
+        }
+        return keys
+    }
 }
