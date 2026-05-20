@@ -1,36 +1,21 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-
-const LINGVA_INSTANCE = {
-    serviceKey: 'lingva',
-    config: { requestPath: 'https://lingva.lunar.icu' },
-}
-
-function lingva_config(config: Record<string, unknown> = {}): Record<string, unknown> {
-    return {
-        app_language: 'zh_cn',
-        app_theme: 'light',
-        dynamic_translate: false,
-        translate_detect_engine: 'local',
-        translate_source_language: 'en',
-        translate_target_language: 'zh_cn',
-        translate_service_list: ['lingva@default'],
-        service_instances: { 'lingva@default': LINGVA_INSTANCE },
-        ...config,
-    }
-}
+import { TranslationTestServer } from '../fixtures/translation_test_server'
 
 test.describe('@ui config history and backup settings', () => {
     test('user sees a successful translation in history, edits it, and clears it', async () => {
-        const omni = await AppFixture.start({ config: lingva_config() })
+        const omni = await AppFixture.start()
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_lingva_response({ translation: '历史译文', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('历史译文')
 
             await translate.typeSource('history source text')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@default')).toContainText('历史译文')
+            await expect(translate.resultBody('lingva@e2e')).toContainText('历史译文')
 
             const config = await omni.openConfig()
             await config.openSection('history')
@@ -38,7 +23,7 @@ test.describe('@ui config history and backup settings', () => {
             const row = config.historyRowBySource('history source text')
             await expect(config.historyRows()).toHaveCount(1)
             await expect(row.getByTestId('history-language')).toContainText('en → zh_cn')
-            await expect(row.getByTestId('history-service')).toContainText('lingva@default')
+            await expect(row.getByTestId('history-service')).toContainText('lingva@e2e')
             await expect(row.getByTestId('history-target')).toContainText('历史译文')
             await expect(row.getByTestId('history-created-at')).not.toBeEmpty()
             await expect.poll(async () => config.historyRecordCount()).toBe(1)
@@ -57,12 +42,13 @@ test.describe('@ui config history and backup settings', () => {
             await expect(config.historyEmpty()).toContainText('暂无历史记录')
             await expect.poll(async () => config.historyRecordCount()).toBe(0)
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
 
     test('user pages through history records', async () => {
-        const omni = await AppFixture.start({ config: lingva_config() })
+        const omni = await AppFixture.start()
 
         try {
             const config = await omni.openConfig()
@@ -94,34 +80,41 @@ test.describe('@ui config history and backup settings', () => {
     })
 
     test('user disables history and new translations are not recorded', async () => {
-        const omni = await AppFixture.start({ config: lingva_config({ history_disable: true }) })
+        const omni = await AppFixture.start({ config: { history_disable: true } })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_lingva_response({ translation: '不会写入历史', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('不会写入历史')
 
             await translate.typeSource('disabled history source')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@default')).toContainText('不会写入历史')
+            await expect(translate.resultBody('lingva@e2e')).toContainText('不会写入历史')
 
             const config = await omni.openConfig()
             await config.openSection('history')
             await expect(config.historyEmpty()).toContainText('暂无历史记录')
             await expect.poll(async () => config.historyRecordCount()).toBe(0)
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
 
     test('user creates a local backup and restores config and history after restart', async () => {
-        const omni = await AppFixture.start({ config: lingva_config({ backup_type: 'webdav' }) })
+        const omni = await AppFixture.start({ config: { backup_type: 'webdav' } })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_lingva_response({ translation: '备份前译文', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('备份前译文')
             await translate.typeSource('backup history source')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@default')).toContainText('备份前译文')
+            await expect(translate.resultBody('lingva@e2e')).toContainText('备份前译文')
 
             const config = await omni.openConfig()
             await expect.poll(async () => config.historyRecordCount()).toBe(1)
@@ -169,6 +162,7 @@ test.describe('@ui config history and backup settings', () => {
             await expect(restoredRow.getByTestId('history-target')).toContainText('备份前译文')
             await expect.poll(async () => restartedConfig.historyRecordCount()).toBe(1)
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })

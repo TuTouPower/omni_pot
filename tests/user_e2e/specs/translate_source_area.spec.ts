@@ -67,7 +67,7 @@ test.describe('@ui translate source area', () => {
         }
     })
 
-    test('clearing source cancels an in-flight translation', async () => {
+    test('clearing source cancels an in-flight translation (stubbed - page fetch interceptor)', async () => {
         const omni = await AppFixture.start({
             config: {
                 dynamic_translate: false,

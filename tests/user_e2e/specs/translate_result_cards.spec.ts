@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const lingva_config = {
     app_language: 'zh_cn',
@@ -18,7 +19,7 @@ const lingva_config = {
 }
 
 test.describe('@ui translate result cards', () => {
-    test('cards stay collapsed while translating and auto-expand when the result arrives', async () => {
+    test('cards stay collapsed while translating and auto-expand when the result arrives (stubbed - page fetch interceptor)', async () => {
         const omni = await AppFixture.start({ config: lingva_config })
 
         try {
@@ -47,7 +48,7 @@ test.describe('@ui translate result cards', () => {
         }
     })
 
-    test('user copies, collects, collapses, expands, and retries a result card', async () => {
+    test('user copies, collects, collapses, expands, and retries a result card (stubbed - page fetch interceptor)', async () => {
         const omni = await AppFixture.start({ config: lingva_config })
 
         try {
@@ -106,7 +107,6 @@ test.describe('@ui translate result cards', () => {
 
     test('user stops result TTS while audio is still loading', async () => {
         const omni = await AppFixture.start({
-            config: lingva_config,
             init_script: `
                 const fake_voice = { lang: 'zh-CN', name: 'Fake-zh', default: true, localService: true, voiceURI: 'fake' };
                 window.__last_utterance = null;
@@ -124,21 +124,25 @@ test.describe('@ui translate result cards', () => {
                 });
             `,
         })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_lingva_response({ translation: '你好世界', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('你好世界')
             await translate.typeSource('hello world')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@default')).toContainText('你好世界')
+            await expect(translate.resultBody('lingva@e2e')).toContainText('你好世界')
 
-            await expect(translate.result_tts_button('lingva@default')).toHaveAttribute('aria-pressed', 'false')
-            await translate.click_result_tts('lingva@default')
-            await expect(translate.result_tts_button('lingva@default')).toHaveAttribute('aria-pressed', 'true')
+            await expect(translate.result_tts_button('lingva@e2e')).toHaveAttribute('aria-pressed', 'false')
+            await translate.click_result_tts('lingva@e2e')
+            await expect(translate.result_tts_button('lingva@e2e')).toHaveAttribute('aria-pressed', 'true')
 
-            await translate.click_result_tts('lingva@default')
-            await expect(translate.result_tts_button('lingva@default')).toHaveAttribute('aria-pressed', 'false')
+            await translate.click_result_tts('lingva@e2e')
+            await expect(translate.result_tts_button('lingva@e2e')).toHaveAttribute('aria-pressed', 'false')
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })

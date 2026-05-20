@@ -219,6 +219,7 @@ export class TranslatePage {
         return new URL(request.url()).pathname
     }
 
+    /** @stubbed Page-level fetch interceptor for Lingva. Prefer TranslationTestServer for new tests. */
     async hold_lingva_translation_once(translation: string): Promise<{ wait_for_request: () => Promise<void>; release_response: () => Promise<void> }> {
         await this.page.evaluate((translation_text: string) => {
             type E2eWindow = Window & {
@@ -423,6 +424,7 @@ export class TranslatePage {
         await this.page.mouse.up()
     }
 
+    /** @stubbed Page-level fetch interceptor. Prefer TranslationTestServer for new tests. */
     async fail_then_succeed_lingva_translation_once(translation: string): Promise<void> {
         await this.page.evaluate((translation_text: string) => {
             const original_fetch = window.fetch.bind(window)
@@ -447,6 +449,7 @@ export class TranslatePage {
         }, translation)
     }
 
+    /** @stubbed Page-level fetch interceptor. No longer used by converted tests; prefer TranslationTestServer. */
     async fulfill_lingva_translation_once(translation: string, target_language = 'zh'): Promise<void> {
         await this.page.evaluate(({ translation_text, target_language_code }) => {
             const original_fetch = window.fetch.bind(window)
@@ -465,6 +468,7 @@ export class TranslatePage {
         }, { translation_text: translation, target_language_code: target_language })
     }
 
+    /** @stubbed Page-level fetch interceptor. No longer used by converted tests; prefer TranslationTestServer. */
     async fulfill_mymemory_translation_once(translation: string): Promise<void> {
         await this.page.evaluate((translation_text: string) => {
             const original_fetch = window.fetch.bind(window)
@@ -481,6 +485,7 @@ export class TranslatePage {
         }, translation)
     }
 
+    /** @stubbed Intercepts local AnkiConnect. Not a translation stub — tests collection feature. */
     async fulfill_anki_collection_once(): Promise<void> {
         await this.page.route('http://localhost:8765/', async (route) => {
             await route.fulfill({

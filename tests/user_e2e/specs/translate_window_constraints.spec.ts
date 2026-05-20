@@ -7,9 +7,11 @@
 // The test resizes the window programmatically and checks that the OS-applied
 // bounds respect the constraints. Because window manager DPI rounding can shift
 // the result by a few px we allow a small tolerance.
+// Card height tests use a local HTTP test server instead of page-level fetch stubs.
 
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const RESIZE_TOLERANCE_PX = 4
 
@@ -50,10 +52,13 @@ test.describe('@ui translate window constraints', () => {
     })
 
     test('window cannot stretch taller than content card stack', async () => {
-        const omni = await AppFixture.start({ config: lingva_only_config })
+        const omni = await AppFixture.start()
+        let server: TranslationTestServer | null = null
         try {
+            server = await omni.startTranslationTestServer()
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('constraint height body')
+
+            server.set_lingva_response({ translation: 'constraint height body', status: 200 })
             await translate.typeSource('hello height')
             await translate.clickTranslate()
             await translate.waitAllResults(30_000)
@@ -78,15 +83,19 @@ test.describe('@ui translate window constraints', () => {
             // Window height should be near content + chrome; absolutely not 2000.
             expect(final_bounds.height).toBeLessThan(content_height + 200)
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
 
     test('window cannot shrink below first-result-card height', async () => {
-        const omni = await AppFixture.start({ config: lingva_only_config })
+        const omni = await AppFixture.start()
+        let server: TranslationTestServer | null = null
         try {
+            server = await omni.startTranslationTestServer()
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('min height body')
+
+            server.set_lingva_response({ translation: 'min height body', status: 200 })
             await translate.typeSource('hi')
             await translate.clickTranslate()
             await translate.waitAllResults(30_000)
@@ -99,14 +108,15 @@ test.describe('@ui translate window constraints', () => {
             expect(final_bounds).not.toBeNull()
 
             // The first result card must still be fully visible in the viewport.
-            const first_card_visible = await translate.resultCard('lingva@default').isVisible()
+            const first_card_visible = await translate.resultCard('lingva@e2e').isVisible()
             expect(first_card_visible).toBe(true)
-            const card_box = await translate.resultCard('lingva@default').boundingBox()
+            const card_box = await translate.resultCard('lingva@e2e').boundingBox()
             const viewport = translate['page'].viewportSize() ?? { width: 0, height: 0 }
             if (card_box) {
                 expect(card_box.y + card_box.height).toBeLessThanOrEqual(viewport.height + RESIZE_TOLERANCE_PX)
             }
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })

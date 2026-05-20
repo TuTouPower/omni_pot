@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const WINDOW_SIZE_TOLERANCE = 8
 
@@ -279,20 +280,24 @@ test.describe('@ui translate behavior settings', () => {
     ] as const) {
         test(`user sees translate_auto_copy=${mode} update clipboard correctly`, async () => {
             const omni = await AppFixture.start({
-                config: mymemory_config({ translate_auto_copy: mode }),
+                config: { app_language: 'zh_cn', translate_auto_copy: mode, translate_detect_engine: 'local', translate_source_language: 'en', translate_target_language: 'zh_cn' },
             })
+            let server: TranslationTestServer | null = null
 
             try {
+                server = await omni.startTranslationTestServer()
+                server.set_mymemory_response({ translated_text: '复制目标译文', status: 200 })
+
                 const translate = await omni.translate()
                 await omni.api.triggerClipboard('previous clipboard')
-                await translate.fulfill_mymemory_translation_once('复制目标译文')
 
                 await translate.typeSource('copy source text')
                 await translate.clickTranslate()
 
-                await expect(translate.resultBody('mymemory@default')).toContainText('复制目标译文')
+                await expect(translate.resultBody('mymemory@e2e')).toContainText('复制目标译文')
                 await expect_clipboard(omni, expected_clipboard)
             } finally {
+                await server?.stop()
                 await omni.stop()
             }
         })
@@ -300,59 +305,83 @@ test.describe('@ui translate behavior settings', () => {
 
     test('user stops typing and dynamic translate shows a result without clicking translate', async () => {
         const omni = await AppFixture.start({
-            config: mymemory_config({ dynamic_translate: true }),
+            config: { app_language: 'zh_cn', dynamic_translate: true, translate_detect_engine: 'local', translate_source_language: 'en', translate_target_language: 'zh_cn' },
         })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_mymemory_response({ translated_text: '动态翻译结果', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_mymemory_translation_once('动态翻译结果')
 
             await translate.typeSource('dynamic source text')
 
-            await expect(translate.resultBody('mymemory@default')).toContainText('动态翻译结果', { timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('动态翻译结果', { timeout: 15_000 })
+
+            // Verify debounce: should have sent exactly 1 request after typing stopped
+            expect(server.request_count).toBe(1)
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
 
     test('changing language with source text retranslates immediately', async () => {
-        const omni = await AppFixture.start({ config: mymemory_config() })
+        const omni = await AppFixture.start({
+            config: { app_language: 'zh_cn', translate_detect_engine: 'local', translate_source_language: 'en', translate_target_language: 'zh_cn' },
+        })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_mymemory_response({ translated_text: '初始译文', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_mymemory_translation_once('初始译文')
             await translate.typeSource('language switch text')
             await translate.clickTranslate()
-            await expect(translate.resultBody('mymemory@default')).toContainText('初始译文')
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('初始译文')
 
-            await translate.fulfill_mymemory_translation_once('日语译文')
+            // Change response for the retranslation after language switch
+            server.set_mymemory_response({ translated_text: '日语译文', status: 200 })
+            server.clear_requests()
 
             await translate.selectTargetLanguage('ja')
-            await expect(translate.resultBody('mymemory@default')).toContainText('日语译文')
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('日语译文')
+
+            // Verify retranslation actually sent a new request
+            expect(server.request_count).toBeGreaterThanOrEqual(1)
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
 
     test('user gets the configured second language when detected language equals target language', async () => {
         const omni = await AppFixture.start({
-            config: mymemory_config({
+            config: {
+                app_language: 'zh_cn',
+                translate_detect_engine: 'local',
                 translate_source_language: 'auto',
                 translate_target_language: 'en',
                 translate_second_language: 'zh_cn',
-            }),
+            },
         })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_mymemory_response({ translated_text: '回退到第二语言', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_mymemory_translation_once('回退到第二语言')
 
             await translate.typeSource('hello fallback target')
             await translate.clickTranslate()
 
             await expect(translate.detectedLanguage()).toContainText('英文')
-            await expect(translate.resultBody('mymemory@default')).toContainText('回退到第二语言')
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('回退到第二语言')
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })

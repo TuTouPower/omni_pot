@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { TranslationTestServer } from '../fixtures/translation_test_server'
 import type { TranslatePage } from '../pages/translate_page'
 
 async function first_visible_result_text(translate: TranslatePage): Promise<string> {
@@ -88,16 +89,15 @@ test.describe('@ui translate language area', () => {
             config: language_area_config({
                 translate_target_language: 'zh_cn',
                 translate_second_language: 'en',
-                translate_service_list: ['lingva@default'],
-                service_instances: {
-                    'lingva@default': { serviceKey: 'lingva', config: { requestPath: 'https://lingva.lunar.icu' } },
-                },
             }),
         })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_lingva_response({ translation: 'hello', status: 200 })
+
             const translate = await omni.translate()
-            await translate.fulfill_lingva_translation_once('hello', 'en')
             const result = await omni.api.triggerSelection('你好')
 
             expect(result.success).toBe(true)
@@ -106,24 +106,23 @@ test.describe('@ui translate language area', () => {
             await expect(translate.targetLanguage()).toContainText('英文')
             await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).toBe('hello')
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
 
     test('user changes languages and retranslates with the new direction', async () => {
         const omni = await AppFixture.start({
-            config: language_area_config({
-                translate_service_list: ['lingva@default'],
-                service_instances: {
-                    'lingva@default': { serviceKey: 'lingva', config: { requestPath: 'https://lingva.lunar.icu' } },
-                },
-            }),
+            config: language_area_config(),
         })
+        let server: TranslationTestServer | null = null
 
         try {
+            server = await omni.startTranslationTestServer()
+            server.set_lingva_response({ translation: '中文译文', status: 200 })
+
             const translate = await omni.translate()
 
-            await translate.fulfill_lingva_translation_once('中文译文')
             await translate.selectSourceLanguage('en')
             await expect(translate.sourceLanguage()).toContainText('英文')
             await translate.typeSource('hello world')
@@ -132,7 +131,7 @@ test.describe('@ui translate language area', () => {
             const chinese_result = await first_visible_result_text(translate)
 
             await translate.selectTargetLanguage('ja')
-            await translate.fulfill_lingva_translation_once('日本語訳', 'ja')
+            server.set_lingva_response({ translation: '日本語訳', status: 200 })
             await expect(translate.targetLanguage()).toContainText('日语')
             await translate.clickTranslate()
             await expect.poll(async () => {
@@ -140,6 +139,7 @@ test.describe('@ui translate language area', () => {
                 return text && text !== chinese_result ? text : ''
             }, { timeout: 45_000 }).not.toBe('')
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
