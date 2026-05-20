@@ -1,5 +1,4 @@
-import type { BrowserWindow } from 'electron'
-import { getConfig, setConfig } from '../config/store'
+import { getConfig } from '../config/store'
 import { WindowLabel, type WindowOptions } from './types'
 
 const RECOGNIZE_MIN_WIDTH = 600
@@ -16,13 +15,4 @@ export function get_recognize_window_options(): WindowOptions {
         minWidth: RECOGNIZE_MIN_WIDTH,
         minHeight: RECOGNIZE_MIN_HEIGHT,
     }
-}
-
-export function attach_recognize_resize_persistence(win: BrowserWindow): void {
-    if (!getConfig('recognize_remember_window_size') || win.listenerCount('resize')) return
-    win.on('resize', () => {
-        const [width, height] = win.getSize()
-        setConfig('recognize_window_width', width)
-        setConfig('recognize_window_height', height)
-    })
 }

@@ -642,7 +642,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         {/* Translation result card */}
                         <div className="card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                             <div style={{ padding: '6px 14px 0', fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                                {native_language_name(t, (effectiveTargetLang ?? effectiveTarget) as LanguageCode)}{t('of_separator', { defaultValue: '的' })}{t('translate')}
+                                {detectedSourceLang ? `${native_language_name(t, (effectiveTargetLang ?? effectiveTarget) as LanguageCode)}${t('of_separator', { defaultValue: '的' })}${t('translate')}` : t('translate')}
                             </div>
                             <div
                                 data-testid="ocr-translation"
