@@ -3,6 +3,7 @@ import type { Rectangle } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { WindowLabel } from '../windows/types'
+import { get_dict_window_options } from '../windows/dict_options'
 import type { WindowManager } from '../windows/manager'
 import {
     startClipboardMonitor,
@@ -187,13 +188,7 @@ export function trigger_tray_action(action: string): boolean {
       return true
     case 'dictionary':
       if (!windowManager) return false
-      windowManager.focusOrCreate(WindowLabel.DICT, {
-        label: WindowLabel.DICT,
-        width: 380,
-        height: 480,
-        minWidth: 300,
-        minHeight: 300,
-      })
+      windowManager.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
       close_tray_popup()
       return true
     case 'ocr_recognize':

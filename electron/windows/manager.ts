@@ -139,6 +139,18 @@ export class WindowManager {
       }).catch((err: unknown) => { log_wm.error(err) })
     }
 
+    // Attach resize persistence for windows that support it
+    if (opts.label === WindowLabel.TRANSLATE || opts.label === WindowLabel.DICT) {
+      if (getConfig('translate_remember_window_size') && !win.listenerCount('resize')) {
+        win.on('resize', () => { const [w, h] = win.getSize(); setConfig('translate_window_width', w); setConfig('translate_window_height', h) })
+      }
+    }
+    if (opts.label === WindowLabel.RECOGNIZE) {
+      if (getConfig('recognize_remember_window_size') && !win.listenerCount('resize')) {
+        win.on('resize', () => { const [w, h] = win.getSize(); setConfig('recognize_window_width', w); setConfig('recognize_window_height', h) })
+      }
+    }
+
     win.on('closed', () => {
       log_wm.info('window closed:', opts.label)
       this.byLabel.delete(opts.label)

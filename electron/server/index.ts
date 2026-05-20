@@ -5,6 +5,7 @@ import { DEFAULT_CONFIG } from '@shared/types/config'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
+import { get_dict_window_options } from '../windows/dict_options'
 import { get_recognize_window_options } from '../windows/recognize_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
@@ -14,12 +15,6 @@ import { get_history_page, get_history_count } from '../history'
 import { log } from '../log'
 
 const log_server = log.scope('server')
-
-const DICT_OPTS = {
-    label: WindowLabel.DICT,
-    width: 350,
-    height: 420
-}
 
 const IS_E2E = !!process.env.OMNI_POT_E2E
 const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
@@ -252,7 +247,7 @@ function handleDictLookup(
             res.end(JSON.stringify({ success: false, error: 'empty body' }))
             return
         }
-        mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+        mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
         mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', trimmed)
         res.writeHead(200)
         res.end(JSON.stringify({ success: true }))
@@ -333,7 +328,7 @@ function handleTriggerDict(
                 res.end(JSON.stringify({ success: false, error: 'empty text' }))
                 return
             }
-            mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+            mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
             mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', text)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))

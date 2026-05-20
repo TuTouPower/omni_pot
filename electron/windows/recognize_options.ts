@@ -1,11 +1,28 @@
+import type { BrowserWindow } from 'electron'
+import { getConfig, setConfig } from '../config/store'
 import { WindowLabel, type WindowOptions } from './types'
 
+const RECOGNIZE_MIN_WIDTH = 600
+const RECOGNIZE_MIN_HEIGHT = 420
+
 export function get_recognize_window_options(): WindowOptions {
+    const remember_size = getConfig('recognize_remember_window_size') as boolean
+    const width = remember_size ? (getConfig('recognize_window_width') as number) : 860
+    const height = remember_size ? (getConfig('recognize_window_height') as number) : 520
     return {
         label: WindowLabel.RECOGNIZE,
-        width: 860,
-        height: 520,
-        minWidth: 600,
-        minHeight: 420,
+        width: Math.max(width, RECOGNIZE_MIN_WIDTH),
+        height: Math.max(height, RECOGNIZE_MIN_HEIGHT),
+        minWidth: RECOGNIZE_MIN_WIDTH,
+        minHeight: RECOGNIZE_MIN_HEIGHT,
     }
+}
+
+export function attach_recognize_resize_persistence(win: BrowserWindow): void {
+    if (!getConfig('recognize_remember_window_size') || win.listenerCount('resize')) return
+    win.on('resize', () => {
+        const [width, height] = win.getSize()
+        setConfig('recognize_window_width', width)
+        setConfig('recognize_window_height', height)
+    })
 }

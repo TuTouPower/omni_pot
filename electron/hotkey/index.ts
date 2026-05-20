@@ -5,6 +5,7 @@ import { getConfig } from '../config/store'
 import type { ConfigKey } from '@shared/types/config'
 import { start_screenshot_capture } from '../screenshot'
 import { get_translate_window_options } from '../windows/translate_options'
+import { get_dict_window_options } from '../windows/dict_options'
 import { readSelectedText } from '../selection'
 import { log } from '../log'
 
@@ -28,12 +29,6 @@ export function setE2eHotkeySystemFailures(shortcuts: string[]): void {
 export function setWindowManagerForHotkey(mgr: WindowManager): void {
   windowManager = mgr
 }
-
-const DICT_OPTS = {
-  label: WindowLabel.DICT,
-  width: 400,
-  height: 500
-} as const
 
 export function buildHotkeyAction(name: string, mgr: WindowManager): () => void {
   switch (name) {
@@ -73,12 +68,12 @@ async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
 
     if (!result.text.trim()) {
         log_hotkey.info('selection dictionary: no text, reason=%s', result.reason ?? 'empty')
-        mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+        mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
         mgr.sendWhenReady(WindowLabel.DICT, 'dict:selection-empty')
         return
     }
 
-    mgr.focusOrCreate(WindowLabel.DICT, DICT_OPTS)
+    mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
     mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', result.text)
 }
 
