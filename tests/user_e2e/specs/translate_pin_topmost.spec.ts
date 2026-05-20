@@ -78,18 +78,18 @@ test.describe('@ui translate pin/topmost split', () => {
         try {
             const translate = await omni.translate()
             await translate.clickPin()
-            await expect.poll(async () => (await omni.api.windowState('translate')).alwaysOnTop,
+            await expect.poll(async () => (await omni.api.getConfig()).translate_pinned,
                 { timeout: 3_000 }).toBe(true)
+            const state = await omni.api.windowState('translate')
+            expect(state.alwaysOnTop).toBe(false)
 
             // Close the translate window through the titlebar close button.
             await translate.clickClose()
             await expect.poll(async () => (await omni.api.windowState('translate')).exists,
                 { timeout: 5_000 }).toBe(false)
 
-            // Reopen — both pin and topmost must be off again, regardless of the
-            // previous session's pin state.
-            const reopened = await omni.translate()
-            await expect(reopened.pinButton()).toHaveAttribute('aria-pressed', 'false')
+            // Reopen via input-translate hotkey — topmost must be off again.
+            await omni.triggerInputTranslate()
             const fresh_state = await omni.api.windowState('translate')
             expect(fresh_state.alwaysOnTop).toBe(false)
         } finally {

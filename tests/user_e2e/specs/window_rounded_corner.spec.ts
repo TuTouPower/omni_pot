@@ -36,7 +36,7 @@ test.describe('@ui rounded window corners', () => {
             const radius = await page_obj.evaluate(() => {
                 return parseFloat(getComputedStyle(document.documentElement).borderTopLeftRadius || '0')
             })
-            expect(radius, `${label} 窗口圆角应大于 0`).toBeGreaterThan(0)
+            expect(radius, `${label} 窗口圆角应为 10px`).toBe(10)
 
             // <html> / <body> background must be transparent at the corner —
             // otherwise the rounded mask reveals a white rectangle.

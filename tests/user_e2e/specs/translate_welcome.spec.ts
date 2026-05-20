@@ -30,6 +30,7 @@ test.describe('@ui translate welcome empty state', () => {
             await expect(page.getByTestId('welcome-translate')).toContainText('翻译')
             await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
             await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
+            await expect(page.getByTestId('welcome-dictionary')).toContainText('词典')
             await expect(page.getByTestId('welcome-ocr-recognize')).toContainText('文字识别')
             await expect(page.getByTestId('welcome-ocr-translate')).toContainText('截图翻译')
 

@@ -4,7 +4,7 @@ import { TranslationTestServer } from '../fixtures/translation_test_server'
 
 test.describe('@ui config history and backup settings', () => {
     test('user sees a successful translation in history, edits it, and clears it', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: { translate_source_language: 'en' } })
         let server: TranslationTestServer | null = null
 
         try {
@@ -22,7 +22,7 @@ test.describe('@ui config history and backup settings', () => {
 
             const row = config.historyRowBySource('history source text')
             await expect(config.historyRows()).toHaveCount(1)
-            await expect(row.getByTestId('history-language')).toContainText('en → zh_cn')
+            await expect(row.getByTestId('history-language')).toContainText(/EN.*ZH/)
             await expect(row.getByTestId('history-service')).toContainText('lingva@e2e')
             await expect(row.getByTestId('history-target')).toContainText('历史译文')
             await expect(row.getByTestId('history-created-at')).not.toBeEmpty()

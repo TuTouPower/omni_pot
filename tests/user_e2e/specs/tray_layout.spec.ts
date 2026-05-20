@@ -12,6 +12,7 @@ import { test, expect } from '../fixtures/test'
 
 const REQUIRED_ACTIONS = [
     'tray-action-input_translate',
+    'tray-action-dictionary',
     'tray-action-ocr_recognize',
     'tray-action-screenshot_translate',
     'tray-action-clipboard_monitor',

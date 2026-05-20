@@ -51,10 +51,11 @@ test.describe('@ui config settings window', () => {
     })
 
     test('user changes general settings and the theme broadcasts to open windows', async () => {
-        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', app_primary_color: '#bad', transparent: true, dev_mode: true } })
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', app_primary_color: '#bad', transparent: true, dev_mode: true, translate_always_on_top: true } })
 
         try {
             const translate = await omni.translate()
+            await translate.clickPin()
             const config = await omni.openConfig()
 
             await expect.poll(async () => await translate.documentTheme()).toBe('light')
@@ -174,7 +175,7 @@ test.describe('@ui config settings window', () => {
             await config.toggle('cfg-recognize_hide_window')
 
             await expect_config(omni, 'recognize_language', 'en')
-            await expect_config(omni, 'recognize_delete_newline', true)
+            await expect_config(omni, 'recognize_delete_newline', false)
             await expect_config(omni, 'recognize_auto_copy', true)
             await expect_config(omni, 'recognize_hide_window', true)
         } finally {
@@ -184,7 +185,7 @@ test.describe('@ui config settings window', () => {
 
     test('user records and clears a hotkey with visible registration status', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
-        const hotkey = 'hotkey_selection_translate'
+        const hotkey = 'hotkey_translate'
 
         try {
             const config = await omni.openConfig()
@@ -207,8 +208,8 @@ test.describe('@ui config settings window', () => {
 
     test('user sees a conflict when another action already uses the same hotkey', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
-        const firstHotkey = 'hotkey_selection_translate'
-        const secondHotkey = 'hotkey_input_translate'
+        const firstHotkey = 'hotkey_translate'
+        const secondHotkey = 'hotkey_selection_dictionary'
         const shortcut = 'CommandOrControl+Shift+Alt+F9'
 
         try {
@@ -284,6 +285,7 @@ test.describe('@ui config settings window', () => {
             await config.openSection('about')
 
             await expect(config.aboutVersion()).toContainText(/version \d+\.\d+\.\d+/)
+            await expect(config.page.getByTestId('about-export-log')).toBeVisible()
             await expect(config.aboutLink('home')).toContainText('官网')
             await expect(config.aboutLink('docs')).toContainText('文档')
             await expect(config.aboutLink('feedback')).toContainText('反馈')
