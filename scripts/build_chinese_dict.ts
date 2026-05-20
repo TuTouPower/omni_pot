@@ -168,6 +168,10 @@ function import_idioms(db: Database.Database): number {
 function build(): void {
     // 1. Validate source directory
     if (!existsSync(DATA_DIR)) {
+        if (existsSync(OUTPUT_DB)) {
+            console.log(`[build:chinese-dict] Source directory not found (${DATA_DIR}), but output DB already exists — skipping rebuild`)
+            return
+        }
         fail(`Source directory not found: ${DATA_DIR}\nSet CHINESE_DICT_DATA_DIR or clone mapull/chinese-dictionary to github_repo/`)
     }
 

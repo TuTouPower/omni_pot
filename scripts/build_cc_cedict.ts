@@ -29,6 +29,10 @@ function read_gzip_text(path: string): Promise<string> {
 
 async function main(): Promise<void> {
     if (!existsSync(SRC)) {
+        if (existsSync(OUT_DB)) {
+            console.log(`[build:cc-cedict] Source file not found (${SRC}), but output DB already exists — skipping rebuild`)
+            return
+        }
         console.error(`[build:cc-cedict] missing source: ${SRC}`)
         process.exit(1)
     }
