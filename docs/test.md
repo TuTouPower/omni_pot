@@ -40,6 +40,44 @@
 
 ---
 
+## 2.1 mock / stub 使用准则
+
+> 核心原则：测试默认真测；mock/stub 只能用于当前测试层无法真实触达、
+> 不可稳定触发或会产生外部副作用的边界。任何 mock/stub 测试都不能冒充真实链路测试。
+
+### 允许 mock 的场景
+
+| 场景 | 原因 |
+|---|---|
+| Electron API（`ipcRenderer`、`BrowserWindow` 等） | Vitest 不是真实 Electron 运行时，无法获得原生 API |
+| 平台分发（macOS Accessibility 等） | Windows 环境无法真实运行 macOS 调用 |
+| HTTP 失败分支（502 / 超时 / 乱码） | 真实外部服务不可控失败场景 |
+| updater 版本注入 | 避免依赖真实 GitHub release 和版本号 |
+| Web Speech TTS voice 列表 | 自动化测试无法稳定验证 OS 真实发声 |
+
+### 禁止 mock 的场景
+
+- 免费、无需密钥的翻译/词典服务必须走真实 API（`external_services.spec.ts`）。
+- UI 状态测试（loading / retry / 卡片高度 / 动态翻译 / 历史写入）应使用**本地可控 HTTP 服务**控制响应，不能 mock 应用内部 service adapter 或 fetch。
+- 本地 OCR 测试应使用真实图片 + 真实识别链路，不能 mock 识别结果。
+
+### 命名与标注要求
+
+- mock/stub 测试的 `describe` 或 `test` 名称必须包含原因标识（如 `stubbed`、`@electron-mock`），
+  或在测试体内用注释说明 mock 的原因、未覆盖的真实能力。
+- `expect(result.success).toBe(true)` 只能作为**前置断言**，后续必须验证用户可见状态、
+  持久化结果或真实输出。不允许只有 `success` 断言的测试冒充功能覆盖。
+
+### 标签约定
+
+| 标签 | 含义 |
+|---|---|
+| `@core` / `@ui` | 默认不 mock 应用内部模块；走真实服务链路 |
+| `@external` | 真实外部服务连通性测试，依赖网络 |
+| `@stubbed` | 包含 mock/stub，测试名称或注释必须说明原因 |
+
+---
+
 ## 3. 自动化测试与真实 smoke 边界
 
 自动化测试必须优先守住能稳定复现的产品行为，但不能把自动化通过等同于真实打包产物验收通过。每个缺陷修复都应先判断属于哪一类，并在测试或 issue 中写清覆盖范围。
@@ -123,6 +161,20 @@
 
 ## 5. 运行命令
 
+### 前置准备
+
+```bash
+npm install
+npm run build:chinese-dict   # 生成 chinese_dict.db（词典相关单元/E2E 测试依赖）
+npm run build:cc-cedict      # 生成 cc_cedict.db（词典相关单元/E2E 测试依赖）
+```
+
+> 两个词典 DB 不提交到仓库（gitignored）。`npm run dist` 会自动运行上述两步；
+> 纯本地 `dev`/`test` 路径需手动运行一次。词典相关测试（`tests/chinese_dict/`、
+> 词典 E2E spec）在 DB 缺失时会直接报错并提示运行生成命令。
+
+### 验收命令
+
 ```bash
 # 单元 + 集成测试
 npx vitest run tests/unit tests/integration
@@ -132,7 +184,37 @@ npm run test:e2e            # 全部 spec（full project）
 npm run test:e2e:core       # 核心用户路径（@core 标签），PR 快速门禁
 npm run test:e2e:ui         # UI 回归（@ui 标签）
 npm run test:e2e -- <file>  # 单文件调试
+
+# 类型检查
+npm run typecheck
+
+# Lint
+npm run lint
+
+# 完整构建（开发验证）
+npm run build
 ```
+
+### 可选：外部服务连通性测试
+
+```bash
+# 设置环境变量后运行 external_services.spec.ts（需真实网络访问）
+OMNI_POT_EXTERNAL_SERVICE_TESTS=1 npx playwright test tests/user_e2e/specs/external_services.spec.ts
+```
+
+> 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查。
+> 覆盖无密钥外部服务（Bing、Google、DeepL 免费、Lingva、MyMemory、Cambridge、
+> Free Dictionary、Edge TTS、Lingva TTS）。CI nightly 跑此项；PR 不跑。
+
+### 分层执行说明
+
+| 场景 | 命令 | 覆盖范围 |
+|---|---|---|
+| PR 快速门禁 | `npm run test:e2e:core` | `@core` 标签：生命周期 + 翻译核心路径 |
+| PR UI 回归 | `npm run test:e2e:ui` | `@ui` 标签：翻译 UI + 词典 + 识别 + 截图 + 设置 |
+| 完整回归 | `npm run test:e2e` | 全部 spec（含外部服务，需网络） |
+| 单文件调试 | `npm run test:e2e -- tests/user_e2e/specs/<file>.spec.ts` | 指定文件 |
+| 单元 + 集成 | `npx vitest run tests/unit tests/integration` | 模块正确性、配置读写、服务逻辑 |
 
 > **注意**: `test:e2e:core` 和 `test:e2e:ui` 分别指定 Playwright `core` / `ui`
 > project；对应 project 通过 `@core` / `@ui` 标签分组，spec 文件中需用

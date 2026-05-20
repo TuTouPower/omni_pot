@@ -521,15 +521,49 @@ class TranslatePage {
 
 ### 6.4 真实环境 vs 桩
 
-- 全部测试模拟真实用户操作，免费服务在“用户翻译/查词/识别”流程中被真实调用。
+- 全部测试模拟真实用户操作，免费服务在”用户翻译/查词/识别”流程中被真实调用。
 - 付费服务（需密钥）E2E 不覆盖，由单元测试 mock。
-- 更新检查：`/e2e/mock-update` 注入假“有新版本”数据，避免依赖真实 GitHub release ——
+- 更新检查：`/e2e/mock-update` 注入假”有新版本”数据，避免依赖真实 GitHub release ——
   这只是数据桩，用户操作（点更新器按钮）仍是真实的。
 - 截图/OCR：真实路径优先；CI 无显示器时降级为窗口创建与取消路径。
+
+### 6.5 本地可控 HTTP 服务策略
+
+> 用于需要控制服务响应时序或内容的 UI 状态测试（loading、retry、长文本布局、
+> 动态翻译 debounce、历史写入等）。**不用于替代真实外部服务连通性测试**。
+
+- 启动本地 HTTP test server（Node.js `http.createServer`），提供 Lingva / MyMemory
+  兼容响应格式。
+- 通过 E2E config 或环境变量将服务 base URL 指向本地 test server，
+  让应用照常走真实 service adapter 和真实 HTTP 请求。
+- 响应控制：
+  - loading 测试：本地服务保持请求挂起（不释放响应），断言 loading UI；
+    释放响应后断言结果展开。
+  - retry 测试：本地服务第一次返回 500，第二次返回 200，
+    断言 retry 后真实重新请求并渲染成功结果。
+  - 长文本 / 卡片高度测试：本地服务返回固定长文本，断言布局高度、滚动和折叠行为。
+  - 动态翻译 debounce 测试：本地服务记录请求次数和请求 body，
+    断言停止输入后只发一次最终文本请求。
+  - 历史写入测试：本地服务返回固定译文，真实点击翻译后打开历史页验证记录。
+- 旧的 `fulfill_*_translation_once`（Playwright route.fulfill）属于 stub，
+  逐步替换为本地 HTTP 服务。暂时保留的 stub 测试名称必须包含 `stubbed` 或注释说明只测 UI 状态。
 
 ---
 
 ## 7. 运行与 CI
+
+### 前置准备
+
+```bash
+npm install
+npm run build:chinese-dict   # 生成 chinese_dict.db（词典相关 E2E 测试依赖）
+npm run build:cc-cedict      # 生成 cc_cedict.db（词典相关 E2E 测试依赖）
+```
+
+> 词典 DB 不提交到仓库（gitignored）。`npm run dist` 自动运行上述两步；
+> 纯 E2E 测试路径需手动运行一次。词典 E2E spec 在 DB 缺失时直接报错并提示运行命令。
+
+### 运行命令
 
 `package.json` 脚本：
 
@@ -540,10 +574,21 @@ test:e2e:ui         # @ui 标签（translate_* + dict + recognize + screenshot +
 test:e2e -- <file>  # 单文件调试
 ```
 
+### 可选：外部服务连通性测试
+
+```bash
+OMNI_POT_EXTERNAL_SERVICE_TESTS=1 npx playwright test tests/user_e2e/specs/external_services.spec.ts
+```
+
+> 默认跳过。设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查。
+> CI nightly 跑此项；PR 不跑。
+
+### CI 策略
+
 - Playwright 当前由 fixture 为每个测试启动独立 Electron 实例、独立端口、独立 userData。
 - Playwright `workers: 1`，用例固定顺序执行。
 - `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
-- CI：PR 跑 `core + ui`；nightly 跑 full（含真实网络服务）。
+- CI：PR 跑 `core + ui`；nightly 跑 full（含外部服务连通性）。
 - issues #1（better-sqlite3 缺失）、#2（双击两次启动）属打包/启动问题，
   E2E 难直接覆盖 → 使用 `npm run dist:dir` 生成 unsigned unpacked 包做本地 smoke 验证，
   或 CI 单独加“打包产物启动验证”作业
