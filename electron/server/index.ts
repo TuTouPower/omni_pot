@@ -130,6 +130,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/set-config') {
+                handleSetConfig(req, res)
+                return
+            }
+
             if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/clipboard') {
                 handleReadClipboard(res)
                 return
@@ -498,6 +503,30 @@ function handleResetConfig(res: http.ServerResponse): void {
         res.writeHead(500)
         res.end(JSON.stringify({ success: false, error: String(error) }))
     }
+}
+
+function handleSetConfig(req: http.IncomingMessage, res: http.ServerResponse): void {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+        try {
+            const body = parse_json_body(chunks)
+            const results: Record<string, boolean> = {}
+            for (const [key, value] of Object.entries(body)) {
+                try {
+                    setConfig(key as keyof typeof DEFAULT_CONFIG, value)
+                    results[key] = true
+                } catch {
+                    results[key] = false
+                }
+            }
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true, results }))
+        } catch (error: unknown) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
+    })
 }
 
 function handleReadClipboard(res: http.ServerResponse): void {

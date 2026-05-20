@@ -7,6 +7,7 @@ import { RecognizePage } from '../pages/recognize_page'
 import { ScreenshotPage } from '../pages/screenshot_page'
 import { ConfigPage } from '../pages/config_page'
 import { UpdaterPage } from '../pages/updater_page'
+import { TranslationTestServer } from './translation_test_server'
 
 export class AppFixture {
     app: ElectronApplication
@@ -159,6 +160,38 @@ export class AppFixture {
     async mockUpdate(release: Parameters<E2eApi['mockUpdate']>[0] = {}): Promise<UpdaterPage> {
         await this.api.mockUpdate(release)
         return this.updater()
+    }
+
+    /**
+     * Start a local HTTP test server and configure the app to route
+     * Lingva/MyMemory translations through it. Returns the server for
+     * tests to control responses and inspect requests.
+     */
+    async startTranslationTestServer(): Promise<TranslationTestServer> {
+        const server = new TranslationTestServer()
+        const port = await server.start()
+        const base_url = server.base_url
+
+        // Read current config to merge service instances (setConfig replaces entire value)
+        const current_config = await this.api.getConfig() as Record<string, unknown>
+        const current_instances = (current_config['service_instances'] ?? {}) as Record<string, unknown>
+
+        await this.api.setConfig({
+            service_instances: {
+                ...current_instances,
+                'lingva@e2e': {
+                    serviceKey: 'lingva',
+                    config: { requestPath: base_url },
+                },
+                'mymemory@e2e': {
+                    serviceKey: 'mymemory',
+                    config: { custom_url: base_url },
+                },
+            },
+            translate_service_list: ['lingva@e2e', 'mymemory@e2e'],
+        })
+
+        return server
     }
 
     async resetConfig(): Promise<void> {

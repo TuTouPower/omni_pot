@@ -98,6 +98,10 @@ export class E2eApi {
         return this.request('POST', '/e2e/reset-config') as Promise<{ success: boolean }>
     }
 
+    async setConfig(entries: Record<string, unknown>): Promise<{ success: boolean; results?: Record<string, boolean>; error?: string }> {
+        return this.request('POST', '/e2e/set-config', entries) as Promise<{ success: boolean; results?: Record<string, boolean>; error?: string }>
+    }
+
     async getConfig(): Promise<Record<string, unknown>> {
         return this.request('GET', '/config') as Promise<Record<string, unknown>>
     }
