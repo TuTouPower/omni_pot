@@ -288,6 +288,8 @@ export default function RecognizeWindow(): React.ReactElement {
     const [targetLanguage, setTargetLanguage] = useState<string>('')
     const [isRecognizing, setIsRecognizing] = useState(false)
     const [isTranslating, setIsTranslating] = useState(false)
+    const [effectiveTargetLang, setEffectiveTargetLang] = useState<LanguageCode | null>(null)
+    const [detectedSourceLang, setDetectedSourceLang] = useState<LanguageCode | null>(null)
 
     const config = useConfigStore((s) => s.config)
     const ocrRequestIdRef = useRef(0)
@@ -303,6 +305,8 @@ export default function RecognizeWindow(): React.ReactElement {
             setImageBase64(base64)
             setRecognizedText(next_text)
             setTranslatedText('')
+            setEffectiveTargetLang(null)
+            setDetectedSourceLang(null)
             setMode(m === 'translate' ? 'translate' : 'recognize')
             if (config.recognize_auto_copy && next_text) {
                 window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
@@ -337,14 +341,18 @@ export default function RecognizeWindow(): React.ReactElement {
         }
     })
 
-    // Build language options
+    // Build language options (source includes auto, target excludes auto)
     const lang_options = [
         { value: 'auto', label: native_language_name(t, 'auto') },
-        ...LANGUAGE_CODES.map((code) => ({
+        ...LANGUAGE_CODES.filter((c) => c !== 'auto').map((code) => ({
             value: code,
             label: native_language_name(t, code),
         })),
     ]
+    const target_lang_options = LANGUAGE_CODES.filter((c) => c !== 'auto').map((code) => ({
+        value: code,
+        label: native_language_name(t, code),
+    }))
 
     const effectiveService = selectedService && service_list.includes(selectedService) ? selectedService : service_list[0] || ''
     const effectiveServiceKey = effectiveService ? getServiceKey(effectiveService) : ''
@@ -379,11 +387,13 @@ export default function RecognizeWindow(): React.ReactElement {
             detectedSource = await detectLanguage(text, useConfigStore.getState().config.translate_detect_engine)
             if (ocrRequestIdRef.current !== requestId) return
         }
+        setDetectedSourceLang(detectedSource)
 
-        let effectiveTargetLang = effectiveTarget as LanguageCode
-        if (sourceLang === 'auto' && detectedSource && detectedSource === effectiveTargetLang) {
-            effectiveTargetLang = (secondLanguage || 'en') as LanguageCode
+        let effectiveTargetLangLocal = effectiveTarget as LanguageCode
+        if (sourceLang === 'auto' && detectedSource && detectedSource === effectiveTargetLangLocal) {
+            effectiveTargetLangLocal = (secondLanguage || 'en') as LanguageCode
         }
+        setEffectiveTargetLang(effectiveTargetLangLocal !== effectiveTarget ? effectiveTargetLangLocal : null)
         const effectiveSource = sourceLang === 'auto' ? (detectedSource ?? 'auto') : sourceLang
 
         const firstInstanceKey = enabledList[0]
@@ -396,13 +406,13 @@ export default function RecognizeWindow(): React.ReactElement {
         try {
             if (service.translateStream) {
                 let accumulated = ''
-                for await (const chunk of service.translateStream(text, effectiveSource, effectiveTargetLang, instanceConfig)) {
+                for await (const chunk of service.translateStream(text, effectiveSource, effectiveTargetLangLocal, instanceConfig)) {
                     if (ocrRequestIdRef.current !== requestId) return
                     accumulated += chunk
                     setTranslatedText(accumulated)
                 }
             } else {
-                const result = await service.translate(text, effectiveSource, effectiveTargetLang, instanceConfig)
+                const result = await service.translate(text, effectiveSource, effectiveTargetLangLocal, instanceConfig)
                 if (ocrRequestIdRef.current !== requestId) return
                 const translated = typeof result === 'string' ? result : result.definitions.map((d) => `${d.partOfSpeech ? `[${d.partOfSpeech}] ` : ''}${d.meanings.join('; ')}`).join('\n')
                 setTranslatedText(translated)
@@ -606,7 +616,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         {/* Recognized text card */}
                         <div className="card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                             <div style={{ padding: '6px 14px 0', fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                                {t('recognize.title')}
+                                {detectedSourceLang ? `${native_language_name(t, detectedSourceLang)}${t('of_separator', { defaultValue: '的' })}${t('recognize.title')}` : t('recognize.title')}
                             </div>
                             <textarea
                                 data-testid="ocr-text"
@@ -632,7 +642,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         {/* Translation result card */}
                         <div className="card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                             <div style={{ padding: '6px 14px 0', fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                                {t('translate')}
+                                {native_language_name(t, (effectiveTargetLang ?? effectiveTarget) as LanguageCode)}{t('of_separator', { defaultValue: '的' })}{t('translate')}
                             </div>
                             <div
                                 data-testid="ocr-translation"
@@ -720,11 +730,8 @@ export default function RecognizeWindow(): React.ReactElement {
                             <Icons.Swap size={16} />
                         </button>
                         <PillSelect
-                            value={effectiveTarget}
-                            options={LANGUAGE_CODES.map((code) => ({
-                                value: code,
-                                label: native_language_name(t, code),
-                            }))}
+                            value={effectiveTargetLang ?? effectiveTarget}
+                            options={target_lang_options}
                             onChange={setTargetLanguage}
                             testId="ocr-target-lang-select"
                         />
