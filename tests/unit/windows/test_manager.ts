@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 
+// @electron-mock Required: Vitest is not a real Electron runtime.
+// This mock stubs BrowserWindow, screen, and app to test WindowManager's
+// window lifecycle (create, focus, reuse, close, position) logic.
+// Real window behavior is covered by E2E (app_lifecycle.spec.ts,
+// updater_and_tray.spec.ts window-state assertions).
 function makeWindowStub(opts: unknown): Record<string, unknown> {
   const win: Record<string, unknown> = {
     id: Math.floor(Math.random() * 1_000_000),

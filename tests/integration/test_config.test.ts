@@ -4,6 +4,10 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { DEFAULT_CONFIG } from '../../shared/types/config'
 
+// @electron-mock Required: Vitest is not a real Electron runtime.
+// This mock stubs app.getLocale / app.getPath / BrowserWindow.getAllWindows so
+// the config store can run in Node. Real Electron config persistence and
+// broadcast are covered by E2E (config_settings.spec.ts, config_history_backup.spec.ts).
 const electron_mock = vi.hoisted(() => ({
     locale: 'en-US',
     user_data_dir: '',

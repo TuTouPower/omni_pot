@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type * as node_crypto from 'node:crypto'
 import type { getSelectedTextViaClipboard as getSelectedTextViaClipboardType } from '../../../electron/selection/clipboard'
 
+// @electron-mock Required: Vitest cannot access real system clipboard.
+// This mock stubs Electron clipboard (read/write/clear) and crypto.randomUUID
+// to test clipboard restore, read suppression, and UUID determinism.
+// Real clipboard round-trips are covered by E2E (translate_behavior.spec.ts,
+// updater_and_tray.spec.ts clipboard monitor tests).
 const { mockReadText, mockWriteText, mockClear, mockWrite, mockRandomUUID } = vi.hoisted(() => {
     let mockClipboardText = ''
     const uuidFn = vi.fn()

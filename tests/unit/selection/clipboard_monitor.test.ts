@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { WindowManager } from '../../../electron/windows/manager'
 
+// @electron-mock Required: Vitest cannot access real system clipboard or
+// BrowserWindow. This mock stubs Electron clipboard.readText to test the
+// clipboard monitor's debounce, suppression, and duplicate-detection logic.
+// Real clipboard monitor behavior is covered by E2E (updater_and_tray.spec.ts).
 let mockClipboardText = 'initial'
 
 const mockFocusOrCreate = vi.fn()

@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { lingvaService } from '../../../src/services/lingva'
 
+// @http-error-stub Required: tests the HTTP error handling branch (502 with
+// body containing translation). Real Lingva service connectivity is covered by
+// external_services.spec.ts (@external).
 describe('lingvaService', () => {
     afterEach(() => {
         vi.unstubAllGlobals()

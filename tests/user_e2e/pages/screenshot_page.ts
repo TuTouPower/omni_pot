@@ -43,6 +43,8 @@ export class ScreenshotPage {
         return this.root().evaluate((el) => getComputedStyle(el).backgroundImage)
     }
 
+    /** @stubbed Page-level fetch interceptor — stubs Baidu OCR token + general_basic/accurate_basic responses.
+     *  Used only for UI routing tests (enable/disable service display). Real OCR is covered by Tesseract engine tests. */
     async fulfill_baidu_ocr_services(enabled_text: string, disabled_text: string): Promise<void> {
         await this.page.evaluate(({ enabled_text, disabled_text }: { enabled_text: string; disabled_text: string }) => {
             const original_fetch = window.fetch.bind(window)
