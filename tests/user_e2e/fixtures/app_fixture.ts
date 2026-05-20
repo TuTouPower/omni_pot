@@ -104,7 +104,7 @@ export class AppFixture {
 
     async translate(timeout = 10_000): Promise<TranslatePage> {
         const page = await this.firstWindow(timeout)
-        return new TranslatePage(page)
+        return new TranslatePage(page, this.api)
     }
 
     async dict(): Promise<DictPage> {

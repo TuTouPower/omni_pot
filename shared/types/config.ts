@@ -33,6 +33,7 @@ export interface AppConfig {
   hide_source: boolean
   hide_language: boolean
   translate_hide_window: boolean
+  welcome_dismissed: boolean
 
   translate_window_width: number
   translate_window_height: number
@@ -126,6 +127,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   hide_source: false,
   hide_language: false,
   translate_hide_window: false,
+  welcome_dismissed: false,
 
   recognize_language: 'auto',
   recognize_delete_newline: true,

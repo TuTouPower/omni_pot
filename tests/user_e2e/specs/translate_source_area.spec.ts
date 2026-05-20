@@ -4,7 +4,6 @@ import { AppFixture } from '../fixtures/app_fixture'
 test.describe('@ui translate source area', () => {
     test('user can edit, normalize, copy, and clear source text', async ({ omni }) => {
         const translate = await omni.translate()
-        await translate.dismissWelcome()
 
         await expect(translate.sourceInput()).toHaveAttribute('rows', '1')
         const initial_height = await translate.sourceInput().evaluate((el) => (el as HTMLTextAreaElement).clientHeight)
@@ -31,7 +30,6 @@ test.describe('@ui translate source area', () => {
 
     test('source input caps growth at eight lines and scrolls internally', async ({ omni }) => {
         const translate = await omni.translate()
-        await translate.dismissWelcome()
 
         await translate.typeSource(Array.from({ length: 12 }, (_, i) => `line ${(i + 1).toString()}`).join('\n'))
 

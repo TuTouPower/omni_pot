@@ -1,11 +1,12 @@
 import type { Page, Locator } from '@playwright/test'
+import type { E2eApi } from '../fixtures/e2e_api'
 
 function is_target_closed_error(error: unknown): boolean {
     return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
 }
 
 export class TranslatePage {
-    constructor(private page: Page) {}
+    constructor(private page: Page, private api: E2eApi) {}
 
     wordmark(): Locator {
         return this.page.getByTestId('titlebar-wordmark')
@@ -43,20 +44,9 @@ export class TranslatePage {
         return this.page.getByTestId('welcome-empty')
     }
 
-    async dismissWelcome(): Promise<void> {
-        await this.ensureSourceVisible()
-    }
-
     async ensureSourceVisible(): Promise<void> {
-        await this.page.waitForFunction(() => {
-            const source_input = document.querySelector('[data-testid="source-input"]')
-            const welcome_empty = document.querySelector('[data-testid="welcome-empty"]')
-            return source_input !== null || welcome_empty !== null
-        })
-
         if (await this.sourceInput().isVisible().catch(() => false)) return
-
-        await this.page.getByTestId('welcome-skip').click()
+        await this.api.triggerInputTranslate()
         await this.sourceInput().waitFor({ state: 'visible' })
     }
 

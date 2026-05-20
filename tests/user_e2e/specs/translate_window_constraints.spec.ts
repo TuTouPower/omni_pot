@@ -20,6 +20,7 @@ const lingva_only_config = {
     service_instances: {
         'lingva@default': { serviceKey: 'lingva', config: {} },
     },
+    welcome_dismissed: true,
 }
 
 test.describe('@ui translate window constraints', () => {
@@ -125,7 +126,6 @@ test.describe('@ui translate window constraints', () => {
         const omni = await AppFixture.start({ config: lingva_only_config })
         try {
             const translate = await omni.translate()
-            await translate.ensureSourceVisible()
 
             // Compute the natural width of the source -> swap -> target row.
             const lang_row_width = await translate.sourceLanguageButton().evaluate((source_el) => {

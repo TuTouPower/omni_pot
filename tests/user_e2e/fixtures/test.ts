@@ -4,7 +4,7 @@ import { AppFixture } from './app_fixture'
 export const test = base.extend<{ omni: AppFixture }>({
     omni: async ({ browserName: _browserName }, use) => {
         void _browserName
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: { welcome_dismissed: true } })
         await use(omni)
         await omni.stop()
     },

@@ -7,7 +7,7 @@ test.describe('@ui translate titlebar', () => {
 
         await expect(translate.wordmark()).toContainText('Omni Pot')
         await expect(translate.modeLabel()).toHaveText('翻译')
-        expect(await translate.titlebarOrder()).toEqual(['pin', 'topmost', 'wordmark', 'mode', 'close'])
+        expect(await translate.titlebarOrder()).toEqual(['topmost', 'pin', 'wordmark', 'mode', 'close'])
         await expect.poll(async () => await translate.modeLabelHasPillBackground()).toBe(false)
         await expect.poll(async () => await translate.titlebarAppRegion()).toBe('drag')
         await expect.poll(async () => await translate.pinButtonAppRegion()).toBe('no-drag')
@@ -17,7 +17,6 @@ test.describe('@ui translate titlebar', () => {
 
     test('ordinary action symbols match text size while window controls are larger', async ({ omni }) => {
         const translate = await omni.translate()
-        await translate.dismissWelcome()
 
         const clear_width = await translate.icon_width(translate.clearSourceButton())
         const translate_width = await translate.icon_width(translate.translateButton())

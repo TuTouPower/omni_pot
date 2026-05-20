@@ -391,6 +391,7 @@ test.describe('@ui translate behavior settings', () => {
             config: no_service_config({
                 translate_remember_language: true,
                 translate_remember_window_size: true,
+                welcome_dismissed: true,
             }),
         })
 
@@ -420,7 +421,6 @@ test.describe('@ui translate behavior settings', () => {
             const open_result = await omni.api.openWindow('translate')
             expect(open_result.success).toBe(true)
             const reopened = await omni.translate()
-            await reopened.dismissWelcome()
 
             await expect(reopened.sourceLanguage()).toContainText('英文')
             await expect(reopened.targetLanguage()).toContainText('日语')

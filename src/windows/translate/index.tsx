@@ -108,9 +108,9 @@ export default function TranslateWindow(): React.ReactElement {
         }
     }, [rememberLanguage, sourceLanguage, targetLanguage, configSourceLang, configTargetLang, setConfig])
 
+    const welcomeDismissed = useConfigStore((s) => s.config.welcome_dismissed)
     const [forceShowSource, setForceShowSource] = useState(false)
     const [selection_notice, setSelectionNotice] = useState(false)
-    const [welcome_dismissed, setWelcomeDismissed] = useState(false)
     const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
     const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -340,7 +340,7 @@ export default function TranslateWindow(): React.ReactElement {
     }, [cancel_scheduled_translate, setSourceText, setDetectedLanguage, clearResults])
 
     const showSource = forceShowSource || !hideSource
-    const show_welcome_empty = sourceText.trim() === '' && !forceShowSource && !welcome_dismissed && !selection_notice
+    const show_welcome_empty = sourceText.trim() === '' && !forceShowSource && !welcomeDismissed && !selection_notice
 
     useEffect(() => {
         window.electronAPI.ready('translate')
@@ -647,7 +647,7 @@ export default function TranslateWindow(): React.ReactElement {
                 )}
                 {!hideLanguage && !show_welcome_empty && <LanguageArea onSwap={handleSwapLanguages} />}
                 {show_welcome_empty && (
-                    <WelcomeEmpty onSkip={() => { setWelcomeDismissed(true); window.electronAPI.window.close().catch(console.error); }} />
+                    <WelcomeEmpty onSkip={() => { setConfig({ welcome_dismissed: true }); window.electronAPI.window.close().catch(console.error); }} />
                 )}
                 {!show_welcome_empty && (
                     <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />
