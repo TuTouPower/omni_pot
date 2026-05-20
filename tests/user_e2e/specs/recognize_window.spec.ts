@@ -53,16 +53,16 @@ async function sample_ocr_image(page: Page): Promise<string> {
     })
 }
 
-async function open_recognize_with_image(omni: AppFixture, image: string, text: string): Promise<RecognizePage> {
+async function open_recognize_with_image(omni: AppFixture, image: string, text: string, mode: 'recognize' | 'translate' = 'recognize'): Promise<RecognizePage> {
     const page = await omni.firstWindow()
-    await page.evaluate(({ image, text }) => window.electronAPI.ocr.openRecognize(image, text), { image, text })
+    await page.evaluate(({ image, text, mode }) => window.electronAPI.ocr.openRecognize(image, text, mode), { image, text, mode })
     return omni.recognize()
 }
 
-async function open_recognize_with_sample(omni: AppFixture, text: string): Promise<RecognizePage> {
+async function open_recognize_with_sample(omni: AppFixture, text: string, mode: 'recognize' | 'translate' = 'recognize'): Promise<RecognizePage> {
     const page = await omni.firstWindow()
     const image = await sample_ocr_image(page)
-    return open_recognize_with_image(omni, image, text)
+    return open_recognize_with_image(omni, image, text, mode)
 }
 
 test.describe('@ui recognize window', () => {
@@ -210,6 +210,36 @@ test.describe('@ui recognize window', () => {
             await recognize.engineOption('system@default').click()
             await recognize.clickReRecognize()
             await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: 90_000 }).toContain('OCR')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('screenshot translate mode target language dropdown excludes auto', async () => {
+        const omni = await AppFixture.start({ config: recognize_config })
+
+        try {
+            const recognize = await open_recognize_with_sample(omni, 'Line one\nLine two with spaces', 'translate')
+
+            await expect(recognize.modeLabel()).toContainText('翻译')
+            await expect(recognize.modeLabel()).not.toContainText('文字识别')
+
+            // Open target language dropdown and verify 'auto' is not present
+            const target_select = recognize.page.getByTestId('ocr-target-lang-select')
+            await expect(target_select).toBeVisible()
+            await target_select.click()
+            const auto_option = recognize.page.getByTestId('ocr-target-lang-select-option-auto')
+            await expect(auto_option).toHaveCount(0)
+
+            // Select a different target language and verify the bar updates
+            const en_option = recognize.page.getByTestId('ocr-target-lang-select-option-en')
+            await expect(en_option).toBeVisible()
+            await en_option.click()
+            await expect(target_select).toContainText('English')
+
+            // Source language dropdown still has 'auto'
+            await recognize.clickLanguageSelect()
+            await expect(recognize.languageOption('auto')).toContainText('自动检测')
         } finally {
             await omni.stop()
         }

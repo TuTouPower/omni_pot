@@ -192,7 +192,7 @@ test.describe('@ui config settings window', () => {
             await expect(config.window()).not.toContainText('Wayland 用户')
 
             await bind_hotkey(config, hotkey, 'Control+Alt+Shift+F9')
-            await expect(config.hotkeyStatus(hotkey)).toContainText('绑定成功')
+            await expect(config.hotkeyStatus(hotkey)).not.toBeVisible()
             await expect_config(omni, hotkey, 'CommandOrControl+Shift+Alt+F9')
 
             await config.hotkeyBindButton(hotkey).click()
@@ -216,7 +216,7 @@ test.describe('@ui config settings window', () => {
             await config.openSection('hotkey')
 
             await bind_hotkey(config, firstHotkey, 'Control+Alt+Shift+F9')
-            await expect(config.hotkeyStatus(firstHotkey)).toContainText('绑定成功')
+            await expect(config.hotkeyStatus(firstHotkey)).not.toBeVisible()
             await expect_config(omni, firstHotkey, shortcut)
 
             await bind_hotkey(config, secondHotkey, 'Control+Alt+Shift+F9')
@@ -243,6 +243,34 @@ test.describe('@ui config settings window', () => {
             await bind_hotkey(config, hotkey, 'Control+Alt+Shift+F10')
             await expect(config.hotkeyStatus(hotkey)).toContainText('绑定失败')
             await expect_config(omni, hotkey, '')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user records a hotkey and the previous recording field exits automatically', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+        const firstHotkey = 'hotkey_translate'
+        const secondHotkey = 'hotkey_selection_dictionary'
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('hotkey')
+
+            // Start recording on the first hotkey
+            await config.hotkeyBindButton(firstHotkey).click()
+            await expect(config.hotkeyField(firstHotkey)).toContainText('按下快捷键')
+
+            // Start recording on the second hotkey — first should exit recording
+            await config.hotkeyBindButton(secondHotkey).click()
+            await expect(config.hotkeyField(secondHotkey)).toContainText('按下快捷键')
+            await expect(config.hotkeyField(firstHotkey)).toContainText('未设置')
+
+            // Confirm the second hotkey
+            await config.hotkeyField(secondHotkey).press('Control+Alt+Shift+F8')
+            await config.hotkeyConfirmButton(secondHotkey).click()
+            await expect(config.hotkeyStatus(secondHotkey)).not.toBeVisible()
+            await expect_config(omni, secondHotkey, 'CommandOrControl+Shift+Alt+F8')
         } finally {
             await omni.stop()
         }

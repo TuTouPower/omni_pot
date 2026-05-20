@@ -93,6 +93,13 @@ test.describe('@ui dict window', () => {
             await expect(dict.sourceTags()).toHaveCount(2)
             await expect.poll(async () => await dict.definitions().count(), { timeout: 60_000 }).toBeGreaterThanOrEqual(2)
 
+            // Service routing: English query only hits English dictionary services
+            const en_keys = await dict.resultKeys()
+            for (const key of en_keys) {
+                expect(key).toMatch(/^(cambridge_dict|ecdict)@/)
+            }
+            expect(en_keys.some((k) => k.startsWith('chinese_dictionary@'))).toBe(false)
+
             const chinese_result = await omni.api.triggerDict('谢谢')
             expect(chinese_result.success).toBe(true)
             await expect(dict.word()).toContainText('谢谢')
@@ -103,6 +110,14 @@ test.describe('@ui dict window', () => {
             expect(source_text).toContain('中文词典')
             expect(source_text).toContain('CC-CEDICT')
             await expect(dict.definitions().first()).toContainText('对别人表示感谢')
+
+            // Service routing: Chinese query only hits Chinese dictionary services
+            const zh_keys = await dict.resultKeys()
+            for (const key of zh_keys) {
+                expect(key).toMatch(/^(chinese_dictionary|ecdict)@/)
+            }
+            expect(zh_keys.some((k) => k.startsWith('cambridge_dict@'))).toBe(false)
+
             const card_text = (await dict.dictCards().allTextContents()).join('\n')
             expect(card_text).not.toContain('hello')
         } finally {
