@@ -29,9 +29,7 @@ const OCR_META: Partial<Record<string, { name: string; mono: string; tone: strin
     qrcode: { name: '二维码', mono: 'QR', tone: 'oklch(50% 0.01 70)' },
 }
 
-function normalize_recognized_text(text: string): string {
-    return text.replace(/-\s+/g, '').replace(/\s+/g, ' ')
-}
+import { normalize_recognized_text } from '@shared/text_normalize'
 
 function SvcTile({ name, size = 22 }: { name: string; size?: number }): React.ReactElement {
     const m = OCR_META[name] ?? { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }

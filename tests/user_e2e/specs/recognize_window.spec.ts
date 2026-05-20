@@ -5,6 +5,7 @@ import type { RecognizePage } from '../pages/recognize_page'
 
 const recognize_config = {
     app_language: 'zh_cn',
+    recognize_delete_newline: false,
     recognize_service_list: ['system@default', 'tesseract@default'],
     service_instances: {
         'system@default': { serviceKey: 'system', config: {} },
@@ -96,7 +97,11 @@ test.describe('@ui recognize window', () => {
             await expect(recognize.languageOption('auto')).toContainText('自动检测')
             await recognize.languageOption('en').click()
             await expect(recognize.languageSelect()).toContainText('English')
-            await expect(recognize.reRecognizeButton()).toContainText('重新识别')
+
+            // Spec §8.5: switching recognize language auto re-recognizes.
+            // The text area should be refreshed with a new OCR result.
+            await expect.poll(async () => (await recognize.getText()).length > 0,
+                { timeout: 30_000 }).toBe(true)
 
             await recognize.setText('Line one\nLine two with spaces')
             await recognize.clickDeleteNewline()
@@ -170,7 +175,9 @@ test.describe('@ui recognize window', () => {
             await config.clickClose()
 
             await expect(recognize.engineSelect()).toContainText('百度高精度')
-            await recognize.clickReRecognize()
+            // Disabling the selected service triggers auto re-recognize with the fallback.
+            await expect.poll(async () => (await recognize.getText()).length > 0,
+                { timeout: 30_000 }).toBe(true)
             await expect(recognize.text()).toHaveValue('启用服务结果')
         } finally {
             await omni.stop()
@@ -184,7 +191,9 @@ test.describe('@ui recognize window', () => {
             const recognize = await open_recognize_with_image(omni, qrcode_image, '')
             await expect(recognize.engineSelect()).toContainText('二维码')
 
-            await recognize.clickReRecognize()
+            // QR code recognition happens automatically on open.
+            await expect.poll(async () => (await recognize.getText()).length > 0,
+                { timeout: 30_000 }).toBe(true)
             await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
         } finally {
             await omni.stop()
@@ -208,7 +217,7 @@ test.describe('@ui recognize window', () => {
 
             await recognize.clickEngineSelect()
             await recognize.engineOption('system@default').click()
-            await recognize.clickReRecognize()
+            // Switching engine triggers auto re-recognize.
             await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: 90_000 }).toContain('OCR')
         } finally {
             await omni.stop()
@@ -262,7 +271,7 @@ test.describe('@ui recognize window', () => {
 
             await recognize.clickEngineSelect()
             await recognize.engineOption('tesseract@default').click()
-            await recognize.clickReRecognize()
+            // Switching engine triggers auto re-recognize.
             await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: 90_000 }).toContain('OCR')
         } finally {
             await omni.stop()
