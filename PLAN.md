@@ -13,6 +13,145 @@
 
 **第二轮状态**: 代码修复 ✅ (6/6) · 测试加固 ✅ (5/5) · 人工验证待做
 
+**第三轮重点**: 测试质量整改 — 尽量少 mock，删除假通过/条件 skip，关键用户链路改为真实 Electron/E2E/本地可控 HTTP 服务验证。
+
+---
+
+## 第三轮测试整改计划
+
+> **目标**: 测试默认真测；mock/stub 只能用于当前测试层无法真实触达、不可稳定触发或会产生外部副作用的边界。任何 mock/stub 测试都不能冒充真实链路测试。
+
+### Test-Q1: 建立 mock 使用准则与标签
+
+**文件**: `docs/test.md`、`docs/test_user_e2e.md`
+**问题**: 现有测试没有明确区分真实链路、mock UI 状态测试、外部服务健康测试，容易把 stubbed 测试误认为真实覆盖。
+**整改**:
+- [ ] 在 `docs/test.md` 增加测试分层规则：`@core` / `@ui` 默认不 mock 应用内部模块；`@external` 代表真实外部服务；mock/stub 测试必须在 test/describe 名称或注释里说明原因。
+- [ ] 明确禁止把 `expect(result.success).toBe(true)` 作为最终断言；它只能作为前置断言，后续必须验证用户可见状态、持久化结果或真实输出。
+- [ ] 在 `docs/test_user_e2e.md` 记录本地可控 HTTP 服务策略：UI loading/retry/长文本布局可以使用真实 HTTP test server 控制响应，而不是 mock fetch 或 mock 应用内部服务。
+
+**验证**:
+- [ ] 搜索测试文档，确认包含“mock/stub 必须说明原因”“success 不能作为最终断言”“本地可控 HTTP 服务优先于 fetch mock”。
+
+### Test-Q2: 删除中文词典 DB 的假通过和条件 skip
+
+**文件**: `tests/chinese_dict/build.test.ts`
+**问题**: 当前 `it.skipIf(!db_exists)` 会在本地 DB 不存在时跳过大量真实校验；`if (!db_exists) return` 会造成无断言假通过。
+**整改**:
+- [ ] 删除所有 `it.skipIf(!db_exists)`。
+- [ ] 删除 `if (!db_exists) return` 形式的无断言测试。
+- [ ] 在 `beforeAll` 中若 `resources/data/dict/chinese_dict.db` 不存在，直接抛出带操作指引的错误：运行 `npm run build:chinese-dict` 后再测。
+- [ ] LICENSE 测试始终断言 `resources/data/dict/chinese-dictionary-LICENSE` 存在，不再依赖 `db_exists` 静默返回。
+- [ ] 保留 metadata、words、characters、idioms、FTS、DB size 的真实 SQLite 查询断言。
+
+**验证**:
+- [ ] 临时移走 `resources/data/dict/chinese_dict.db` 时，该测试必须失败并提示构建命令。
+- [ ] DB 存在时，`npm test -- tests/chinese_dict/build.test.ts` 通过。
+
+### Test-Q3: 把翻译 UI 状态 stub 升级为本地可控 HTTP 服务
+
+**文件**: `tests/user_e2e/pages/translate_page.ts`、`tests/user_e2e/specs/translate_result_states.spec.ts`、`tests/user_e2e/specs/translate_window_constraints.spec.ts`、`tests/user_e2e/specs/translate_behavior.spec.ts`
+**问题**: loading、retry、卡片高度、动态翻译、历史写入等测试现在通过 `fulfill_*_translation_once` 控制结果；这稳定但不够真实，容易被误读为服务真实链路。
+**整改**:
+- [ ] 新增或复用 E2E fixture 启动本地 HTTP test server，提供 Lingva/MyMemory 兼容响应。
+- [ ] 让应用照常走真实 service adapter 和真实 HTTP 请求，只把服务 base URL 指向本地 test server。
+- [ ] loading 测试：本地服务保持请求挂起，断言 loading UI；释放响应后断言结果展开。
+- [ ] retry 测试：本地服务第一次返回 500，第二次返回 200，断言 retry 后真实重新请求并渲染成功结果。
+- [ ] 长文本/卡片高度测试：本地服务返回固定长文本，断言布局高度、滚动和折叠行为。
+- [ ] 动态翻译 debounce 测试：本地服务记录请求次数和请求 body，断言停止输入后只发一次最终文本请求。
+- [ ] 历史写入测试：本地服务返回固定译文，真实点击翻译后打开历史页验证记录。
+- [ ] 删除或降级旧的 `fulfill_*_translation_once` 使用；如暂时保留，测试名称必须包含 `stubbed` 或注释说明只测 UI 状态。
+
+**验证**:
+- [ ] 搜索 `fulfill_lingva_translation_once`、`fulfill_mymemory_translation_once`，确认只剩必要的 stubbed 测试，且名称/注释清楚。
+- [ ] `npm run test:e2e -- --project=full tests/user_e2e/specs/translate_result_states.spec.ts` 通过。
+- [ ] `npm run test:e2e -- --project=full tests/user_e2e/specs/translate_behavior.spec.ts` 通过。
+
+### Test-Q4: 补真实翻译链路覆盖，避免只靠本地服务
+
+**文件**: `tests/user_e2e/specs/translate_core.spec.ts`、`tests/user_e2e/specs/external_services.spec.ts`
+**问题**: 本地 test server 可以让 UI 状态稳定，但不能证明真实外部服务适配器可用。
+**整改**:
+- [ ] 保留 `external_services.spec.ts` 的真实外部服务请求，继续断言 Bing/Google/DeepL/Lingva/MyMemory/词典服务返回非空且不同于源文。
+- [ ] 在 `translate_core.spec.ts` 保留或补强 default free services UI roundtrip，断言真实外部服务结果进入结果卡，不只是服务函数返回。
+- [ ] 对真实服务失败风险高的 case 使用 `@external` 标记和 retries，而不是 mock 替代。
+- [ ] 外部服务测试失败时应暴露具体服务名和返回状态，方便判断是代码问题还是网络/上游问题。
+
+**验证**:
+- [ ] `npm run test:e2e -- --project=full tests/user_e2e/specs/external_services.spec.ts` 在网络可用时通过。
+- [ ] `npm run test:e2e -- --project=full tests/user_e2e/specs/translate_core.spec.ts` 在网络可用时通过。
+
+### Test-Q5: 补真实 OCR / 截图识别兜底
+
+**文件**: `tests/user_e2e/specs/recognize_window.spec.ts`、`tests/user_e2e/specs/screenshot_window.spec.ts`、`tests/user_e2e/fixtures/`
+**问题**: 识别窗口目前有 `fulfill_baidu_ocr_services` 形式的可控响应，能测 UI 服务启停，但不能证明 OCR 真链路可用。
+**整改**:
+- [ ] 保留百度 OCR stub 用于“启用服务显示、停用服务不显示”的 UI 路由测试，因为真实百度 OCR 需要凭据且不适合默认 CI。
+- [ ] 新增本地 OCR fixture 图片测试：使用项目自带或测试内生成的图片，走真实截图/识别窗口结果渲染链路。
+- [ ] 若 Tesseract 数据缺失，测试必须明确失败并提示初始化方式；不能静默 skip。
+- [ ] 百度 OCR 真实服务可作为可选 `@external` 测试，只有存在凭据时运行；默认套件不依赖外部付费/密钥服务。
+
+**验证**:
+- [ ] 真实本地 OCR fixture 测试能断言识别结果包含预期文本。
+- [ ] 搜索 `fulfill_baidu_ocr_services`，确认其只用于 UI 路由测试，测试名/注释不声称真实 OCR。
+
+### Test-Q6: 补真实 Electron 剪贴板与窗口行为 E2E
+
+**文件**: `tests/unit/selection/clipboard.test.ts`、`tests/unit/selection/clipboard_monitor.test.ts`、`tests/user_e2e/specs/translate_behavior.spec.ts`、`tests/user_e2e/specs/updater_and_tray.spec.ts`
+**问题**: Vitest 中 Electron clipboard/window manager mock 必须保留，但不能作为唯一证明。
+**整改**:
+- [ ] 保留 Vitest 单测中的 Electron mock，用于验证剪贴板恢复、异常恢复、监听抑制等细分逻辑。
+- [ ] 在 E2E 中增加真实 Electron 剪贴板测试：通过 E2E API 写入系统剪贴板，开启剪贴板监听，断言翻译窗口真实收到剪贴板文本。
+- [ ] 增加真实窗口行为断言：托盘动作、窗口打开/关闭、置顶、焦点和配置持久化必须通过 E2E API + Playwright 观察真实 BrowserWindow 状态。
+- [ ] 单元测试文件注释中说明 mock 只覆盖 Node/Vitest 层逻辑，不代表真实 Electron 集成。
+
+**验证**:
+- [ ] `npm test -- tests/unit/selection/clipboard.test.ts tests/unit/selection/clipboard_monitor.test.ts` 通过。
+- [ ] 对应 E2E 测试通过，并且断言真实剪贴板文本进入 UI。
+
+### Test-Q7: 清理只靠 success 的弱断言
+
+**文件**: `tests/user_e2e/specs/*.spec.ts`
+**问题**: 多个 E2E 使用 `expect(result.success).toBe(true)`；虽然不少后续已有 UI 断言，但仍需逐条确认没有只测“链路通”的假测。
+**整改**:
+- [ ] 全量搜索 `expect(.*success.*).toBe(true)`。
+- [ ] 对每个命中点确认后续至少有一个强断言：用户可见文本、窗口状态、结果卡内容、配置持久化、历史记录、剪贴板内容或服务 key 路由。
+- [ ] 如果没有强断言，补上对应用户可见/持久化断言。
+- [ ] 对确实只需要 API health 的测试，改名为 health/smoke，并说明不覆盖用户体验。
+
+**验证**:
+- [ ] 搜索结果中不存在“只有 success 断言”的 E2E test。
+- [ ] 关键 UI 流程失败时，测试失败信息能指出具体用户可见差异，而不是只显示 success false。
+
+### Test-Q8: 标清必须保留的 mock，不让它们冒充真测
+
+**文件**: `tests/integration/test_config.test.ts`、`tests/unit/selection/*.test.ts`、`tests/unit/services/lingva.test.ts`、`tests/user_e2e/specs/i18n.spec.ts`、`tests/user_e2e/specs/updater_and_tray.spec.ts`、`tests/user_e2e/specs/translate_source_area.spec.ts`、`tests/user_e2e/specs/translate_result_cards.spec.ts`
+**问题**: 有些 mock 必须保留，但需要明确边界。
+**整改**:
+- [ ] Electron API mock：保留，因为 Vitest 不是真实 Electron 运行时。
+- [ ] 平台分发 mock：保留，因为 Windows 环境不能真实跑 macOS Accessibility。
+- [ ] fetch 失败分支 mock：保留，用于制造 HTTP 502/异常等真实服务不可控失败。
+- [ ] updater mock：保留，用于固定版本号、日期和 changelog，不依赖真实 GitHub release。
+- [ ] Web Speech fake voice：保留，因为自动化测试无法稳定验证 OS 真实发声。
+- [ ] 给上述测试添加清晰命名或注释：mock 的原因、未覆盖的真实能力、对应真实 E2E/人工验证位置。
+
+**验证**:
+- [ ] 搜索 `vi.mock`、`stubGlobal`、`mockUpdate`、`Fake-`，每个保留项都有原因或测试名标识。
+- [ ] [PLAN.md](PLAN.md) 的人工验证继续保留 TTS 实机发声。
+
+### Test-Q9: 更新验收命令与分层执行说明
+
+**文件**: `docs/test.md`、`docs/test_user_e2e.md`、`PLAN.md`
+**问题**: 测试整改后需要明确哪些测试默认跑、哪些依赖网络、哪些依赖本地资源或凭据。
+**整改**:
+- [ ] 记录默认验证命令：`npm test`、`npm run test:e2e:core`、`npm run test:e2e`。
+- [ ] 记录真实外部服务验证：`npm run test:e2e -- --project=full tests/user_e2e/specs/external_services.spec.ts`。
+- [ ] 记录词典 DB 前置条件：`npm run build:chinese-dict`、`npm run build:cc-cedict`。
+- [ ] 记录可选外部凭据测试的跳过/运行条件，避免默认 CI 因缺少密钥失败。
+
+**验证**:
+- [ ] 新同事只看测试文档即可区分默认测试、本地资源测试、真实外部服务测试和人工验证。
+
 ---
 
 ## 第二轮代码修复
