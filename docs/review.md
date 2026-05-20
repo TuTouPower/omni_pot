@@ -1,134 +1,135 @@
-# 测试与 spec.md 对照审查
+# 测试覆盖审查 — spec / PLAN / issues 对照
 
-> 审查日期: 2026-05-20
-> 审查范围: `tests/unit/`、`tests/integration/`、`tests/detect/`、`tests/chinese_dict/`、`tests/user_e2e/specs/`
-> 对照基准: `docs/spec.md`（v1.0, 2026-05-20）
+> 审查日期: 2026-05-21
+> 对照基准: `docs/spec.md`、`PLAN.md`、`docs/issues.md`、`docs/test_user_e2e.md`
+> 审查范围: `tests/user_e2e/specs/`、`tests/unit/`、`tests/integration/`、`tests/detect/`、`tests/chinese_dict/`
 
----
-
-## 翻译窗口
-
-### 1. 输入框行数 — translate_input_rows.spec.ts
-
-- **文件**: `tests/user_e2e/specs/translate_input_rows.spec.ts`
-- **问题**: 断言 textarea 始终是 8 行高度，即使只输入 1 行内容
-- **spec §5.0**: 文本输入从 1 行起，随内容增长到最多约 8 行，超过后内部滚动
-
-### ~~2. 检测语言标签格式 — translate_language_area.spec.ts~~ ✅ 已修正 spec
-
-- **文件**: `tests/user_e2e/specs/translate_language_area.spec.ts`
-- **原判断**: 断言 `'检测为 英文'`（为和英文之间有空格），与 spec 不符
-- **结论**: spec 已更新为"检测为 **English**"格式（空格 + 语言自身文字）。测试行为正确。
-
-### 3. 顶部栏按钮顺序 — translate_titlebar.spec.ts
-
-- **文件**: `tests/user_e2e/specs/translate_titlebar.spec.ts`
-- **问题**: 顺序为 `[pin, topmost, wordmark, mode, close]`，即 pin（translate_pinned）在 topmost（translate_always_on_top）前面
-- **spec §4.3 / §5.1**: 左对齐顺序为**置顶按钮 → 固定按钮 → Omni Pot → 模式标签**，即 always-on-top 在 pinned 前面
-
-### 4. 固定按钮行为矛盾 — translate_pin_topmost.spec.ts
-
-- **文件**: `tests/user_e2e/specs/translate_pin_topmost.spec.ts`
-- **问题**: 第 81 行断言点击"固定"后 `alwaysOnTop` 变为 `true`
-- **spec §5.1**: 固定按钮只 toggle `translate_pinned`，不改变置顶状态
-
-### 5. 欢迎页快捷键提示数量 — translate_welcome.spec.ts
-
-- **文件**: `tests/user_e2e/specs/translate_welcome.spec.ts`
-- **问题**: 只测试了 3 个快捷键提示卡（translate / OCR / screenshot translate），缺少"词典"
-- **spec §5.5 / §31**: 4 个提示卡（翻译 / 词典 / 文字识别 / 截图翻译）
-
-### ~~6. "设置快捷键"按钮行为 — translate_welcome.spec.ts~~ ✅ 测试合理
-
-- **文件**: `tests/user_e2e/specs/translate_welcome.spec.ts`
-- **原判断**: 断言点击"设置快捷键"后翻译窗口关闭，与 spec 不符
-- **结论**: 欢迎页是翻译窗口的空状态，点击"设置快捷键"导航到设置后关闭翻译窗口是合理行为。测试正确。
+本文档列出 spec / PLAN / issues 中**测试没覆盖到或覆盖不充分**的项目，按优先级和类别分组。
+已完成的覆盖项见 `docs/test_user_e2e.md` §8 issues 映射表。
 
 ---
 
-## 托盘与 i18n
+## P0 — issues.md 仍开放但测试未覆盖
 
-### 7. 托盘菜单中文文案 — i18n.spec.ts
-
-- **文件**: `tests/user_e2e/specs/i18n.spec.ts`
-- **问题**: 断言中文标签含 `'输入翻译'`、`'OCR 识别'`，缺少 `'词典'`
-- **spec §21 / §32**: 中文 UI 禁止出现 "OCR"；4 个功能项为**翻译 / 词典 / 文字识别 / 截图翻译**
-
-### 8. 托盘菜单英文文案 — i18n.spec.ts
-
-- **文件**: `tests/user_e2e/specs/i18n.spec.ts`
-- **问题**: 缺少 Dictionary 功能项
-- **spec §21**: 英文也应有 Dictionary 对应功能项
-
-### 9. 托盘菜单项列表 — tray_layout.spec.ts
-
-- **文件**: `tests/user_e2e/specs/tray_layout.spec.ts`
-- **问题**: `REQUIRED_ACTIONS` 包含 `clipboard_monitor` 作为功能项，缺少词典项
-- **spec §21**: 4 个功能项为翻译 / 词典 / 文字识别 / 截图翻译；剪贴板监听是单独的分隔线后复选框
+| 项 | 来源 | 现状 | 建议 |
+|---|---|---|---|
+| 置顶按钮在所有非设置窗口都应存在且样式一致（翻译/词典/识别/截图翻译） | `issues.md` §置顶按钮 | `translate_pin_topmost` 只测翻译窗口；缺词典/识别/截图翻译窗口的存在性与样式一致性断言 | 在 `dict_window` / `recognize_window` spec 中补 `titlebar-pin` 选择器存在与点击翻转断言；视觉一致性以共享组件单测覆盖 |
+| 简单中文字词查询无结果（"经济"、"自我"、"佛"） | `issues.md` §词典服务分流 | `dict_window` 用了 "经济" 但**未断言中文词典数据库真能返回非空结果**；缺"自我"/"佛"等覆盖 | 在 `dict_window` 加 dataset 表驱断言：每个常用词均渲染 `chinese_dictionary@` 卡片且 `data-result-content` 非空 |
+| 中文字词应只调用中文词典 + ecdict | `issues.md` §词典服务分流 | `dict_window.spec.ts` 已有 `data-result-key` 前缀断言，但需确认 negative assertion（不出现 `cambridge_dict` / `free_dictionary`） | 强化 negative assertion |
+| 英文字词应只调用 Free Dictionary / Cambridge | `issues.md` | 同上 | 同上 |
+| 去除换行 / 去除空格图标与 demo 一致 | `issues.md` | 视觉项，自动化难 | 断言 SVG `path d` 等于常量，捕捉图标回退 |
 
 ---
 
-## 设置窗口
+## P1 — spec.md 明确要求但测试规划遗漏
 
-### 10. 快捷键页面拆分翻译入口 — config_settings.spec.ts
+### 1. 平台化快捷键展示
+- spec §9.6、§21、§22、§28、§32：`CommandOrControl` 必须按平台解析为 `Control + Alt + T` / `Cmd + Opt + T`，**不得展示原始 `CommandOrControl`**。
+- 涉及：欢迎页快捷键卡、托盘菜单右侧、快捷键设置页显示。
+- 现状：`i18n.spec.ts` / `tray_layout.spec.ts` / `translate_welcome.spec.ts` 有部分涉及，但缺**对 `CommandOrControl` 字面量的 negative assertion**。
+- 建议：每个相关 spec 加 `expect(page.locator('body')).not.toContainText('CommandOrControl')`。
 
-- **文件**: `tests/user_e2e/specs/config_settings.spec.ts`
-- **问题**: 使用了 `hotkey_selection_translate` 和 `hotkey_input_translate` 两个独立快捷键条目
-- **spec §9.6**: 翻译是**单一入口**，不拆分为"划词翻译"和"输入翻译"
+### 2. 设置 → 通用页
+- spec §9.3 要求项：
+  - 本地 API 端口标签右侧的**问号按钮**贴近标签、点击打开 API 文档。
+  - **不提供代理功能**（无代理卡片、无代理文案）。
+  - 字体/字号同行展示，标签叫"文字"不叫"字体"，且**无预览块**。
+  - 主题用**三按钮分段控件**（非下拉）。
+- 现状：`config_settings.spec.ts` 未见对应断言。
+- 建议：补 4 条断言。
 
-### 11. 关于页版本号格式 — config_settings.spec.ts
+### 3. 设置 → 历史页工具栏
+- spec §9.8：
+  - 启用开关 + 搜索 + 服务筛选 + 时间筛选 + 清空**一行完整展示**，不允许换行/挤占。
+  - 启用关闭时其余控件**置灰禁用**。
+- 现状：`config_history_backup.spec.ts` 未断言一行布局与置灰联动。
+- 建议：用 bounding box 比较 y 坐标，加置灰联动断言。
 
-- **文件**: `tests/user_e2e/specs/config_settings.spec.ts`
-- **问题**: 只断言 `version X.Y.Z`，未验证 platform-arch 后缀；未验证"导出日志"按钮
-- **spec §9.10**: 版本号格式为 `version {x.y.z} · {platform-arch}`；必须有"导出日志"按钮
+### 4. 设置 → 关于页
+- spec §9.10：
+  - **导出日志按钮**（最近 7 天打包为 zip）。
+  - **版本号格式**：`version x.y.z · platform-arch`。
+  - 真实日志目录路径（来自 `log:getDir` IPC）。
+- 现状：完全未覆盖。
+- 建议：新增 `config_about.spec.ts` 或合入 `config_settings.spec.ts`。
 
-### 12. 配置默认值测试不完整 — test_config_defaults.test.ts
+### 5. 识别 / 截图翻译窗口
+- spec §8.5：
+  - **切换识别语言后自动重新识别**，无需手动点击。
+  - **截图翻译模式切换目标语言后自动重新翻译**。
+  - 文字识别窗口和截图翻译窗口**共用同一窗口体系**（不拆两个窗口概念）。
+- 现状：`recognize_window.spec.ts` 涉及切换但未明确断言"切换语言→自动触发"链路。
+- 建议：补"切换识别语言→断言 OCR 重跑（请求计数/结果文本变化）"以及"切换目标语言→断言翻译重跑"。
 
-- **文件**: `tests/integration/test_config_defaults.test.ts`
-- **问题**: `server_port` 只验证范围 0–65535，未断言默认值 20202；缺少大量配置键的默认值断言（`app_font_size:16`、`clipboard_monitor:false`、`recognize_delete_newline:true` 等）
-- **spec §18.2**: 每个配置键都有明确的默认值
+### 6. 翻译结果卡片
+- spec §5.4：
+  - `stream` 标签不显示 ✓（`translate_result_cards.spec.ts` 已覆盖）
+  - 等待时折叠 + 轻量动效；返回后自动展开 ✓（`translate_result_states.spec.ts` 已覆盖）
+  - **用户手动折叠/展开后保持状态，直到下一次新翻译请求重置** — 未见明确断言。
+  - **重试只重新调用该服务实例**（不重跑全部服务）— 未见明确断言。
+- 建议：补 2 条断言。
+
+### 7. 语言检测
+- spec §17：
+  - **失败回退链 `bing → google → baidu → tencent → niutrans → local`**。
+  - **中文长句不被误判为日语**（如重复 "我爱你"）— spec §5.4 显式约束。
+  - 检测引擎与目标语言相同 → 回退到 `translate_second_language`（`translate_behavior.spec.ts` 有相关用例，需确认强断言）。
+- 现状：`tests/detect/cld3.test.ts` 仅 cld3 单测；回退链未端到端覆盖。
+- 建议：单元层加 mock 模拟逐个引擎失败的回退顺序；E2E 加 "我爱你×N → 检测为中文" 断言。
+
+### 8. 备份与恢复
+- spec §26、§32：**导出的 zip 必须可作为恢复输入重新导入**；恢复后配置 / 历史记录 / 随包 CC-CEDICT DB 数据一致。
+- 现状：`config_history_backup.spec.ts` 有 restore 测试，但需要确认是否走"导出 → 重新导入 → 三类数据回验"完整闭环。
+- 建议：明确加上"备份创建后 close→relaunch→restore→比对配置 + 历史条目 + 词典查询"闭环断言。
+
+### 9. i18n 缺失 key 处理
+- spec §28、§32：缺失 key 必须显示明确 fallback，**不展示 `welcome.translate` / `Delete_spaces` 等原始翻译 key**。
+- 现状：`i18n.spec.ts` 有 fallback 测试，需确认 negative assertion（搜索"原始 key 字面量不出现"）。
+- 建议：补 negative assertion，覆盖去除换行/空格按钮、欢迎页、托盘菜单等高风险点。
+
+### 10. 托盘弹窗
+- spec §21：
+  - **宽度由内容自然决定**，不使用固定宽度，不预留大块空白。
+  - **不允许先显示空白弹窗**（renderer 内容和菜单文案就绪后才显示）。
+- 现状：`tray_layout.spec.ts` 应覆盖布局；"先空白后填充"难自动化。
+- 建议：能做的至少是断言菜单首次出现时所有项文案非空。
 
 ---
 
-## 窗口通用行为
+## P2 — 单元 / 集成层薄弱
 
-### 13. 圆角半径 — window_rounded_corner.spec.ts
-
-- **文件**: `tests/user_e2e/specs/window_rounded_corner.spec.ts`
-- **问题**: 断言 `radius > 0`
-- **spec §4.3 / §32**: 圆角固定 **10px**
-
-### ~~14. 词典窗口标题栏按钮 — dict_window.spec.ts~~ ✅ 已修正 spec
-
-- **文件**: `tests/user_e2e/specs/dict_window.spec.ts`
-- **原判断**: 断言有 `pin` 按钮（translate_pinned 行为），与 spec "只有置顶按钮" 不符
-- **结论**: spec 已更新——除设置窗口外，所有窗口均有置顶按钮和固定按钮。测试行为正确。
-
-### 15. 文字识别窗口切换语言 — recognize_window.spec.ts
-
-- **文件**: `tests/user_e2e/specs/recognize_window.spec.ts`
-- **问题**: 切换识别语言后只验证下拉更新，未断言 OCR 自动重新执行
-- **spec §8.5**: 文字识别模式切换识别语言后必须自动重新识别
-
-### 16. OCR handler 测试缺失 — ocr_handlers.test.ts
-
-- **文件**: `tests/unit/ipc/ocr_handlers.test.ts`
-- **问题**: 只测试了语言标签规范化，缺少核心行为测试
-- **spec §8.5**:
-  - 旧请求 ID 结果被忽略（requestId 机制）
-  - `recognize_delete_newline=true` 时文本用 `/-\s+/g → ''` 和 `/\s+/g → ' '` 规范化
-  - `recognize_auto_copy=true` 时最终 OCR 文本复制到剪贴板
+| 项 | spec 章节 | 现状 |
+|---|---|---|
+| HTTP API 端点 `POST /translate`、`GET /config`、`/recognize` stub 行为 | §20 | 未见专门集成测；E2E 仅用 `/trigger-*` 路径 |
+| 选中文本 fallback 链（UIA → Ctrl+C → sentinel → restore） | §24 | `tests/unit/selection/clipboard.test.ts` 覆盖局部 |
+| CSP 策略（`connect-src` https、`media-src blob:`、`worker-src blob:`、WASM 执行） | §3.4 | 未见验证 |
+| better-sqlite3 native rebuild + 打包 unpacked（issue #1） | §29 | 走 dist smoke，未自动化 |
+| 翻译历史按**实例 key** 存 `service_key`（同服务多实例） | §25 | 未见专门断言 |
+| 服务实例 `config.enable=false` 时**保留在列表中但不参与执行** | §12.3 | `config_service_mgmt.spec.ts` 有启停，需确认是否断言"保留在列表" |
+| 剪贴板抑制窗口（划词翻译 Ctrl+C 回退期间不误触发监听） | §23 | 单测覆盖局部 |
 
 ---
 
-## 统计
+## P3 — 已记录但只能人工 / 打包验证
 
-| 类别 | 数量 |
-|---|---|
-| 测试行为与 spec 矛盾 | 8 |
-| 测试覆盖缺失 | 4 |
-| 测试断言不精确 | 2 |
-| 已修正 spec / 测试正确（排除） | 3 |
-| **待修复** | **13** |
+来自 `PLAN.md` 与 `issues.md`：
 
-涉及测试文件：11 个
+- TTS 实机发声（翻译/词典/识别窗口点击朗读真实有声音）
+- dist 打包 smoke（首次启动、托盘、快捷键、截图、设置、识别）
+- 谷歌翻译当前环境失败（环境问题，不修，仅跟踪）
+- 置顶图钉竖线视觉确认
+
+---
+
+## 建议下一步（按收益高低）
+
+1. **词典服务分流强断言 + 中文常用词真实返回非空** — 直接关闭 3 条 issues。
+2. **平台化快捷键展示 negative assertion**：全局搜 `CommandOrControl` 字面量在 UI 中不出现，托盘/欢迎页/快捷键页/欢迎页快捷键卡均覆盖。
+3. **置顶按钮全窗口存在性**：词典/识别/截图翻译 spec 加 `titlebar-pin` 选择器存在与点击翻转断言。
+4. **识别/截图翻译切换语言自动重跑**：补 `recognize_window` 用例。
+5. **历史工具栏单行布局 + 启用开关置灰联动**。
+6. **关于页"导出日志"按钮 + 版本号格式**。
+7. **备份导出 zip 再导入回环测试**。
+8. **设置 → 通用页 4 项**：API 端口问号、无代理、文字一行、主题三按钮。
+9. **结果卡片"手动折叠保持态"和"重试只重跑当前实例"**。
+10. **语言检测回退链 + "我爱你"中文不误判日语**。
