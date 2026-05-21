@@ -4,7 +4,6 @@ import { AppFixture } from '../fixtures/app_fixture'
 const BASE_CONFIG = {
     check_update: false,
     dynamic_translate: false,
-    translate_detect_engine: 'local',
     translate_service_list: [],
     translate_source_language: 'auto',
     translate_target_language: 'zh_cn',

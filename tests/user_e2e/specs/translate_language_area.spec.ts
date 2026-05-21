@@ -16,7 +16,6 @@ function language_area_config(config: Record<string, unknown> = {}): Record<stri
     return {
         app_language: 'zh_cn',
         dynamic_translate: false,
-        translate_detect_engine: 'local',
         translate_service_list: [],
         ...config,
     }

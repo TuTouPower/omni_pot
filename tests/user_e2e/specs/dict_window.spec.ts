@@ -68,7 +68,6 @@ test.describe('@ui dict window', () => {
     test('user gets real English and Chinese dictionary results from multiple services', async () => {
         const omni = await AppFixture.start({
             config: {
-                detect_cld3_enabled: false,
                 dictionary_service_list: ['chinese_dictionary@default', 'ecdict@default'],
                 english_dictionary_service_list: ['cambridge_dict@default', 'ecdict@default'],
                 service_instances: {

@@ -30,10 +30,12 @@ export function registerWindowHandlers(manager: WindowManager): void {
   ipcMain.handle('window:setContentHeight', (event, height: number) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return
-    const current_w = win.getContentSize()[0] ?? win.getBounds().width
+    const bounds = win.getBounds()
+    const [current_w = bounds.width, current_h = bounds.height] = win.getContentSize()
     const [, min_h = 0] = win.getMinimumSize()
     const [, max_h = 0] = win.getMaximumSize()
     const h = Math.max(min_h, max_h > 0 ? Math.min(max_h, Math.round(height)) : Math.round(height))
+    if (Math.abs(current_h - h) <= 1) return
     win.setContentSize(current_w, h)
   })
   ipcMain.handle('window:getLabel', (event): string => {
@@ -44,10 +46,8 @@ export function registerWindowHandlers(manager: WindowManager): void {
   ipcMain.handle('window:openConfig', (_event, section?: string) => {
     manager.focusOrCreate(WindowLabel.CONFIG, {
       label: WindowLabel.CONFIG,
-      width: 880,
-      height: 600,
-      minWidth: 880,
-      minHeight: 400
+      width: 720,
+      height: 740
     })
     if (section) {
       manager.sendWhenReady(WindowLabel.CONFIG, 'config:navigate', section)

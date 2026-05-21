@@ -183,7 +183,6 @@ test.describe('@ui translate source area', () => {
                 config: {
                     dynamic_translate: false,
                     translate_service_list: [],
-                    translate_detect_engine: 'local',
                     tts_service_list: ['system_tts@default'],
                     service_instances: {
                         'system_tts@default': { serviceKey: 'system_tts', config: {} },

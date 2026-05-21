@@ -54,10 +54,8 @@ if (!gotLock) {
   app.on('second-instance', () => {
     windowManager?.focusOrCreate(WindowLabel.CONFIG, {
       label: WindowLabel.CONFIG,
-      width: 880,
-      height: 600,
-      minWidth: 880,
-      minHeight: 400
+      width: 720,
+      height: 740
     })
   })
 
@@ -218,10 +216,8 @@ if (!gotLock) {
     if (isFirstRun()) {
       manager.createWindow({
         label: WindowLabel.CONFIG,
-        width: 800,
-        height: 600,
-        minWidth: 800,
-        minHeight: 400
+        width: 720,
+        height: 740
       })
       commitFirstRun()
     }

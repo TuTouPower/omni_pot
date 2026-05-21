@@ -5,7 +5,6 @@ const TEST_CONFIG = {
     app_language: 'en',
     check_update: false,
     dynamic_translate: false,
-    translate_detect_engine: 'local',
     translate_service_list: [],
 }
 

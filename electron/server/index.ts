@@ -496,7 +496,7 @@ function handleOpenWindow(
 
             const windowOpts: Partial<Record<string, ReturnType<typeof get_translate_window_options>>> = {
                 dict: { label: WindowLabel.DICT, width: 350, height: 420 },
-                config: { label: WindowLabel.CONFIG, width: 880, height: 600 },
+                config: { label: WindowLabel.CONFIG, width: 720, height: 740 },
                 recognize: get_recognize_window_options(),
                 updater: { label: WindowLabel.UPDATER, width: 400, height: 300 },
             }

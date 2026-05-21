@@ -5,7 +5,6 @@ import type { TranslationTestServer } from '../fixtures/translation_test_server'
 const test_service_config = {
     app_language: 'zh_cn',
     dynamic_translate: false,
-    translate_detect_engine: 'local',
     translate_source_language: 'en',
     translate_target_language: 'zh_cn',
     tts_service_list: ['system_tts@default'],

@@ -10,7 +10,6 @@ function no_service_config(config: Record<string, unknown> = {}): Record<string,
     return {
         app_language: 'zh_cn',
         dynamic_translate: false,
-        translate_detect_engine: 'local',
         translate_service_list: [],
         ...config,
     }
@@ -45,6 +44,8 @@ test.describe('@ui translate behavior settings', () => {
             await translate.clickTopmost()
             await expect.poll(async () => (await pinned_app.api.windowState('translate')).alwaysOnTop).toBe(false)
             await expect_config(pinned_app, 'translate_always_on_top', false)
+            await translate.clickPin()
+            await expect_config(pinned_app, 'translate_pinned', true)
 
             const pinned_config = await pinned_app.openConfig()
             await pinned_config.wordmark().click()
@@ -108,12 +109,12 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
-    test('input translate hotkey opens source input instead of hiding the visible translate window', async () => {
+    test('translate hotkey opens source input for empty selection instead of hiding the visible translate window', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({
                 hide_source: true,
                 hide_language: true,
-                hotkey_input_translate: 'CommandOrControl+Shift+Alt+F9',
+                hotkey_translate: 'CommandOrControl+Shift+Alt+F9',
             }),
         })
 
@@ -123,7 +124,7 @@ test.describe('@ui translate behavior settings', () => {
             await expect(translate.sourceInput()).toHaveCount(0)
             await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(true)
 
-            const result = await omni.api.triggerHotkey('hotkey_input_translate', 'selected text should be ignored')
+            const result = await omni.api.triggerHotkey('hotkey_translate', '')
             expect(result.success).toBe(true)
 
             await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(true)
@@ -135,12 +136,12 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
-    test('input translate hotkey opens source input after the translate window was closed', async () => {
+    test('translate hotkey opens source input after the translate window was closed', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({
                 hide_source: true,
                 hide_language: true,
-                hotkey_input_translate: 'CommandOrControl+Shift+Alt+F9',
+                hotkey_translate: 'CommandOrControl+Shift+Alt+F9',
             }),
         })
 
@@ -150,7 +151,7 @@ test.describe('@ui translate behavior settings', () => {
             await translate.clickClose()
             await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
 
-            const result = await omni.api.triggerHotkey('hotkey_input_translate')
+            const result = await omni.api.triggerHotkey('hotkey_translate', '')
             expect(result.success).toBe(true)
 
             const reopened = await omni.translate()
@@ -164,13 +165,13 @@ test.describe('@ui translate behavior settings', () => {
     test('selection hotkeys handle empty selection for translate and dictionary actions', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({
-                hotkey_selection_translate: 'CommandOrControl+Shift+Alt+F8',
+                hotkey_translate: 'CommandOrControl+Shift+Alt+F8',
                 hotkey_selection_dictionary: 'CommandOrControl+Shift+Alt+F7',
             }),
         })
 
         try {
-            const translate_result = await omni.api.triggerHotkey('hotkey_selection_translate', '')
+            const translate_result = await omni.api.triggerHotkey('hotkey_translate', '')
             expect(translate_result.success).toBe(true)
             const translate = await omni.translate()
             await expect(translate.sourceInput()).toBeVisible()
@@ -189,13 +190,13 @@ test.describe('@ui translate behavior settings', () => {
         const omni = await AppFixture.start({
             config: no_service_config({
                 dictionary_service_list: [],
-                hotkey_selection_translate: 'CommandOrControl+Shift+Alt+F8',
+                hotkey_translate: 'CommandOrControl+Shift+Alt+F8',
                 hotkey_selection_dictionary: 'CommandOrControl+Shift+Alt+F7',
             }),
         })
 
         try {
-            const translate_result = await omni.api.triggerHotkey('hotkey_selection_translate', 'selected translate text')
+            const translate_result = await omni.api.triggerHotkey('hotkey_translate', 'selected translate text')
             expect(translate_result.success).toBe(true)
             const translate = await omni.translate()
             await expect(translate.sourceInput()).toHaveValue('selected translate text')
@@ -256,15 +257,13 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
-    for (const { mode, expected_clipboard } of [
-        { mode: 'source', expected_clipboard: 'copy source text' },
-        { mode: 'target', expected_clipboard: '复制目标译文' },
-        { mode: 'source_target', expected_clipboard: 'copy source text\n\n复制目标译文' },
-        { mode: 'disable', expected_clipboard: 'previous clipboard' },
+    for (const { enabled, expected_clipboard } of [
+        { enabled: true, expected_clipboard: '复制目标译文' },
+        { enabled: false, expected_clipboard: 'previous clipboard' },
     ] as const) {
-        test(`user sees translate_auto_copy=${mode} update clipboard correctly`, async () => {
+        test(`user sees translate_auto_copy=${String(enabled)} update clipboard correctly`, async () => {
             const omni = await AppFixture.start({
-                config: { app_language: 'zh_cn', translate_auto_copy: mode, translate_detect_engine: 'local', translate_source_language: 'en', translate_target_language: 'zh_cn' },
+                config: { app_language: 'zh_cn', translate_auto_copy: enabled, translate_source_language: 'en', translate_target_language: 'zh_cn' },
             })
             let server: TranslationTestServer | null = null
 
@@ -289,7 +288,7 @@ test.describe('@ui translate behavior settings', () => {
 
     test('user stops typing and dynamic translate shows a result without clicking translate', async () => {
         const omni = await AppFixture.start({
-            config: { app_language: 'zh_cn', dynamic_translate: true, translate_detect_engine: 'local', translate_source_language: 'en', translate_target_language: 'zh_cn' },
+            config: { app_language: 'zh_cn', dynamic_translate: true, translate_source_language: 'en', translate_target_language: 'zh_cn' },
         })
         let server: TranslationTestServer | null = null
 
@@ -313,7 +312,7 @@ test.describe('@ui translate behavior settings', () => {
 
     test('changing language with source text retranslates immediately', async () => {
         const omni = await AppFixture.start({
-            config: { app_language: 'zh_cn', translate_detect_engine: 'local', translate_source_language: 'en', translate_target_language: 'zh_cn' },
+            config: { app_language: 'zh_cn', translate_source_language: 'en', translate_target_language: 'zh_cn' },
         })
         let server: TranslationTestServer | null = null
 
@@ -345,7 +344,6 @@ test.describe('@ui translate behavior settings', () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
-                translate_detect_engine: 'local',
                 translate_source_language: 'auto',
                 translate_target_language: 'en',
                 translate_second_language: 'zh_cn',
@@ -376,7 +374,6 @@ test.describe('@ui translate behavior settings', () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
-                translate_detect_engine: 'local',
                 translate_source_language: 'auto',
                 translate_target_language: 'en',
             },
@@ -400,10 +397,9 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
-    test('user reopens translate window with remembered size and languages', async () => {
+    test('user reopens translate window with remembered size', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({
-                translate_remember_language: true,
                 translate_remember_window_size: true,
                 welcome_dismissed: true,
             }),
@@ -411,11 +407,6 @@ test.describe('@ui translate behavior settings', () => {
 
         try {
             const translate = await omni.translate()
-
-            await translate.selectSourceLanguage('en')
-            await translate.selectTargetLanguage('ja')
-            await expect_config(omni, 'translate_source_language', 'en')
-            await expect_config(omni, 'translate_target_language', 'ja')
 
             await translate.resizeWindowTo(520, 560)
             await expect.poll(async () => {
@@ -427,17 +418,17 @@ test.describe('@ui translate behavior settings', () => {
             const expected_width = resized_bounds.width
             const expected_height = resized_bounds.height
             await expect_config(omni, 'translate_window_width', expected_width)
-            await expect_config(omni, 'translate_window_height', expected_height)
+            await expect.poll(async () => {
+                const height = (await omni.api.getConfig()).translate_window_height
+                return typeof height === 'number' && Math.abs(height - expected_height) <= WINDOW_SIZE_TOLERANCE
+            }).toBe(true)
 
             await translate.clickClose()
             await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
 
             const open_result = await omni.api.openWindow('translate')
             expect(open_result.success).toBe(true)
-            const reopened = await omni.translate()
-
-            await expect(reopened.sourceLanguage()).toContainText('English')
-            await expect(reopened.targetLanguage()).toContainText('日本語')
+            await omni.translate()
             await expect.poll(async () => {
                 const bounds = (await omni.api.windowState('translate')).bounds
                 return !!bounds

@@ -8,35 +8,15 @@ import { ConfigCard, ConfigRow, ConfigSwitch, ConfigSelect } from './config_comp
 const ALL_LANGUAGES = LANGUAGE_CODES
 const TARGET_LANGUAGES = LANGUAGE_CODES.filter((c) => c !== 'auto')
 
-const AUTO_COPY_VALUES = ['disable', 'source', 'target', 'source_target'] as const
-
-const AUTO_COPY_LABEL_KEYS: Record<typeof AUTO_COPY_VALUES[number], string> = {
-    disable: 'translate_settings.auto_copy_disable',
-    source: 'translate_settings.auto_copy_source',
-    target: 'translate_settings.auto_copy_target',
-    source_target: 'translate_settings.auto_copy_both',
-}
-
-const DETECT_ENGINES = [
-    { value: 'bing', label: 'Bing' },
-    { value: 'google', label: 'Google' },
-    { value: 'baidu', label: '百度' },
-    { value: 'tencent', label: '腾讯' },
-    { value: 'niutrans', label: '牛翻译' },
-    { value: 'local', label: '本地 (Lingua)' },
-]
-
 export default function TranslatePage(): React.ReactElement {
     const { t } = useTranslation()
     const [sourceLang, setSourceLang] = useConfig('translate_source_language')
     const [targetLang, setTargetLang] = useConfig('translate_target_language')
     const [secondLang, setSecondLang] = useConfig('translate_second_language')
-    const [detectEngine, setDetectEngine] = useConfig('translate_detect_engine')
     const [autoCopy, setAutoCopy] = useConfig('translate_auto_copy')
     const [deleteNewline, setDeleteNewline] = useConfig('translate_delete_newline')
     const [incremental, setIncremental] = useConfig('incremental_translate')
     const [dynamicTranslate, setDynamicTranslate] = useConfig('dynamic_translate')
-    const [rememberLanguage, setRememberLanguage] = useConfig('translate_remember_language')
     const [historyDisable, setHistoryDisable] = useConfig('history_disable')
     const [windowPosition, setWindowPosition] = useConfig('translate_window_position')
     const [alwaysOnTop, setAlwaysOnTop] = useConfig('translate_always_on_top')
@@ -47,7 +27,6 @@ export default function TranslatePage(): React.ReactElement {
 
     const allLangOpts = native_language_options(t, ALL_LANGUAGES)
     const targetLangOpts = native_language_options(t, TARGET_LANGUAGES)
-    const autoCopyOpts = AUTO_COPY_VALUES.map((value) => ({ value, label: t(AUTO_COPY_LABEL_KEYS[value]) }))
     const windowPositionOpts: { value: 'mouse' | 'pre_state'; label: string }[] = [
         { value: 'mouse', label: t('translate_settings.window_position_mouse') },
         { value: 'pre_state', label: t('translate_settings.window_position_pre_state') },
@@ -65,14 +44,11 @@ export default function TranslatePage(): React.ReactElement {
                 <ConfigRow label={t('translate_settings.second_language', { defaultValue: '第二语言' })} sub={t('translate_settings.second_language_sub')}>
                     <ConfigSelect value={secondLang} onChange={setSecondLang} options={targetLangOpts} testId="cfg-translate_second_language" style={{ minWidth: 180 }} />
                 </ConfigRow>
-                <ConfigRow label={t('translate_settings.detect_engine', { defaultValue: '检测引擎' })}>
-                    <ConfigSelect value={detectEngine} onChange={setDetectEngine} options={DETECT_ENGINES} testId="cfg-translate_detect_engine" style={{ minWidth: 180 }} />
-                </ConfigRow>
             </ConfigCard>
 
             <ConfigCard title={t('translate_settings.behavior', { defaultValue: '行为' })}>
                 <ConfigRow label={t('translate_settings.auto_copy', { defaultValue: '自动复制' })}>
-                    <ConfigSelect value={autoCopy} onChange={setAutoCopy} options={autoCopyOpts} testId="cfg-translate_auto_copy" style={{ minWidth: 180 }} />
+                    <ConfigSwitch on={autoCopy} onChange={setAutoCopy} testId="cfg-translate_auto_copy" />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.incremental_translate', { defaultValue: '增量翻译' })} sub={t('translate_settings.incremental_translate_sub')}>
                     <ConfigSwitch on={incremental} onChange={setIncremental} testId="cfg-incremental_translate" />
@@ -82,9 +58,6 @@ export default function TranslatePage(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.delete_newline', { defaultValue: '自动去除换行' })}>
                     <ConfigSwitch on={deleteNewline} onChange={setDeleteNewline} testId="cfg-translate_delete_newline" />
-                </ConfigRow>
-                <ConfigRow label={t('translate_settings.remember_language', { defaultValue: '记住语言选择' })}>
-                    <ConfigSwitch on={rememberLanguage} onChange={setRememberLanguage} testId="cfg-translate_remember_language" />
                 </ConfigRow>
                 <ConfigRow label={t('translate_settings.history_disable', { defaultValue: '禁用历史记录' })}>
                     <ConfigSwitch on={historyDisable} onChange={setHistoryDisable} testId="cfg-history_disable" />
