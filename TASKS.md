@@ -28,6 +28,60 @@
 
 ---
 
+## T2 语言检测替换为 cld3-asm，移除远程 API 回退链
+
+> 测试报告见 `docs/external_services/lang_detect_api_test_20260521.md`。
+> 结论：5 个远程检测 API（Bing/Google/Baidu/Tencent/NiuTrans）在当前环境全部不可用，
+> cld3-asm 15 种语言 30/30 全部正确，体积 6.3MB，初始化 7ms，速度最快。
+
+### 范围
+
+- **安装 cld3-asm**：`npm install cld3-asm`，加入 dependencies
+- **重写 `src/services/detect.ts`**：
+  - 移除 `bing_detect`、`google_detect`、`baidu_detect`、`tencent_detect`、`niutrans_detect` 五个远程检测函数
+  - 移除 `fetch_with_timeout`、`DETECT_REQUEST_TIMEOUT_MS`、`DETECT_FALLBACK_ORDER`
+  - 移除所有 `*_LANG_MAP`（BING_LANG_MAP、GOOGLE_LANG_MAP、BAIDU_DETECT_LANG_MAP 等）
+  - 移除 `RemoteDetectEngine` 类型、`DetectFallback` 类型
+  - 移除 `detect_engine_order` 函数
+  - 新增 `detect_cld3()` 函数：使用 cld3-asm WASM 检测，返回 BCP-47 代码，映射到项目 `LanguageCode`
+  - 新增 BCP-47 → 项目语言码映射表（复用 cld3 测试中验证的映射）
+  - `detectLanguage(text, engine?)` 简化为：cld3 为主，regex 兜底（cld3 加载失败时）
+  - engine 参数保留但仅支持 `'local'`（cld3+regex）一种模式，或考虑移除 engine 参数
+- **重写 `electron/detect/index.ts`**：
+  - 移除 IPC `detect.local` 的 regex 实现，改为调用 cld3
+  - 保留 regex 作为 cld3 WASM 加载失败的最终兜底
+- **更新测试**：
+  - 重写 `tests/unit/services/test_detect.test.ts`：移除远程引擎 mock 测试，新增 cld3 检测测试
+  - 更新 E2E 检测相关断言
+- **更新文档**：
+  - `docs/spec.md` §17 语言检测：移除远程 API 回退链描述，改为 cld3 本地检测
+  - `docs/external_service_catalog.md`：语言检测部分更新为 cld3-asm
+  - `docs/external_services/lang_detect_api_test_20260521.md`：标记 cld3-asm 已采纳
+
+### cld3-asm API 备忘
+
+```ts
+import { loadModule } from 'cld3-asm'
+const factory = await loadModule()
+const instance = factory.create(0)
+const result = instance.findLanguage('你好世界')
+// { language: 'zh', probability: 0.9999, is_reliable: true, proportion: 1, byte_ranges: [] }
+```
+
+- BCP-47 代码映射：`zh` → `zh_cn`、`pt` → `pt_pt`、`no` → `nb_no`、`zh-Hant` → `zh_tw` 等
+- v4 API：返回 `is_reliable`（小写下划线），无 `.delete()` / `.destroy()` 方法
+
+- [ ] 安装 cld3-asm，加入 package.json dependencies
+- [ ] 重写 src/services/detect.ts（移除远程 API，新增 cld3，保留 regex 兜底）
+- [ ] 重写 electron/detect/index.ts（IPC 层改用 cld3）
+- [ ] 重写 tests/unit/services/test_detect.test.ts
+- [ ] 更新 E2E 检测相关测试
+- [ ] 更新 docs/spec.md §17
+- [ ] 更新 docs/external_service_catalog.md
+- [ ] 更新 docs/external_services/lang_detect_api_test_20260521.md
+
+---
+
 ## P2: 单元 / 集成层薄弱项
 
 来源 `docs/review.md` §P2。
