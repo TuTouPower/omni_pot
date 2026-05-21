@@ -2,6 +2,30 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
+const free_dictionary_init_script = `
+(() => {
+    const original_fetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+        if (url.startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
+            return new Response(JSON.stringify([{
+                word: 'hello',
+                phonetic: '/həˈləʊ/',
+                phonetics: [{ text: '/həˈloʊ/', audio: 'https://example.test/hello-us.mp3' }],
+                meanings: [{
+                    partOfSpeech: 'noun',
+                    definitions: [{
+                        definition: 'A greeting or expression of goodwill.',
+                        example: 'She said hello to everyone in the room.',
+                    }],
+                }],
+            }]), { status: 200, headers: { 'content-type': 'application/json' } })
+        }
+        return original_fetch(input, init)
+    }
+})()
+`
+
 async function wait_for_dict_ready(page: Page): Promise<void> {
     await expect.poll(async () => page.evaluate(() => window.electronAPI.dict.check().then((result) => result.ready)), { timeout: 45_000 }).toBe(true)
 }
@@ -15,12 +39,13 @@ test.describe('@ui dict window', () => {
 
     test('user opens dictionary from selected text and uses the word card', async () => {
         const omni = await AppFixture.start({
+            init_script: free_dictionary_init_script,
             config: {
                 dictionary_service_list: [],
-                english_dictionary_service_list: ['cambridge_dict@default'],
+                english_dictionary_service_list: ['free_dictionary@default'],
                 collection_service_list: ['anki@default'],
                 service_instances: {
-                    'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
+                    'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
                     'anki@default': { serviceKey: 'anki', config: { port: 8765 } },
                 },
             },
@@ -65,15 +90,49 @@ test.describe('@ui dict window', () => {
         }
     })
 
-    test('user gets real English and Chinese dictionary results from multiple services', async () => {
+    test('user edits the source word card and presses Enter to look up again', async () => {
         const omni = await AppFixture.start({
             config: {
+                dictionary_service_list: [],
+                english_dictionary_service_list: ['ecdict@default'],
+                service_instances: {
+                    'ecdict@default': { serviceKey: 'ecdict', config: {} },
+                },
+            },
+        })
+
+        try {
+            const page = await omni.firstWindow()
+            await wait_for_dict_ready(page)
+
+            const result = await omni.api.triggerDict('hello')
+            expect(result.success).toBe(true)
+            const dict = await omni.dict()
+            await expect(dict.word()).toContainText('hello')
+            await dict.waitForCards(2, 60_000)
+            await expect(dict.definitions().first()).not.toBeEmpty()
+            const previous_definition = await dict.definitions().first().textContent()
+
+            await dict.editWordAndSubmit('apple')
+
+            await expect(dict.word()).toContainText('apple')
+            await expect.poll(async () => await dict.definitions().first().textContent(), { timeout: 60_000 }).not.toBe(previous_definition)
+            await expect(dict.definitions().first()).not.toBeEmpty()
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user gets real English and Chinese dictionary results from multiple services', async () => {
+        const omni = await AppFixture.start({
+            init_script: free_dictionary_init_script,
+            config: {
                 dictionary_service_list: ['chinese_dictionary@default', 'ecdict@default'],
-                english_dictionary_service_list: ['cambridge_dict@default', 'ecdict@default'],
+                english_dictionary_service_list: ['free_dictionary@default', 'ecdict@default'],
                 service_instances: {
                     'chinese_dictionary@default': { serviceKey: 'chinese_dictionary', config: {} },
                     'ecdict@default': { serviceKey: 'ecdict', config: {} },
-                    'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
+                    'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
                 },
             },
         })
@@ -89,13 +148,13 @@ test.describe('@ui dict window', () => {
 
             // Wait for source + pronunciation + at least 1 result card
             await dict.waitForCards(3, 60_000)
-            // At least cambridge_dict + ecdict result cards
+            // At least free_dictionary + ecdict result cards
             await expect(dict.sourceTags().first()).toBeVisible()
             await expect.poll(async () => await dict.definitions().count(), { timeout: 60_000 }).toBeGreaterThanOrEqual(2)
 
             // Service routing: English query hits English dictionary services.
             const en_keys = await dict.resultKeysWithContent()
-            expect(en_keys.some((k) => k.startsWith('cambridge_dict@'))).toBe(true)
+            expect(en_keys.some((k) => k.startsWith('free_dictionary@'))).toBe(true)
             expect(en_keys.some((k) => k.startsWith('ecdict@'))).toBe(true)
 
             // Chinese word "谢谢" routes to Chinese dictionaries only.

@@ -131,6 +131,11 @@ export class DictPage {
         })).then((positions) => positions.sort((a, b) => a.x - b.x).map((item) => item.name))
     }
 
+    async editWordAndSubmit(word: string): Promise<void> {
+        await this.word().fill(word)
+        await this.word().press('Enter')
+    }
+
     // Dict cards
     dictCards(): Locator {
         return this.page.locator('[data-testid="dict-card"]')
