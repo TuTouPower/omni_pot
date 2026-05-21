@@ -162,6 +162,18 @@ export class ConfigPage {
         return this.page.getByTestId('history-clear')
     }
 
+    historySearch(): Locator {
+        return this.page.getByTestId('history-search')
+    }
+
+    historyServiceFilter(): Locator {
+        return this.page.getByTestId('history-service-filter')
+    }
+
+    historyTimeFilter(): Locator {
+        return this.page.getByTestId('history-time-filter')
+    }
+
     historyEmpty(): Locator {
         return this.page.getByTestId('history-empty')
     }

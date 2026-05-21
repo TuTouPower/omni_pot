@@ -161,7 +161,7 @@ test.describe('@ui translate source area', () => {
 
                 await translate.clickSourceTts()
                 await expect(translate.sourceTtsButton()).toHaveAttribute('aria-pressed', 'true', { timeout: 10_000 })
-                await expect(translate.sourceTtsButton()).toHaveAttribute('title', '取消朗读')
+                await expect(translate.sourceTtsButton()).toHaveAttribute('title', '停止朗读')
                 await expect(translate.sourceInput()).toHaveValue(source_text)
 
                 await translate.clickSourceTts()

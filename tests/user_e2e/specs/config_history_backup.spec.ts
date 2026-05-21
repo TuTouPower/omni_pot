@@ -140,6 +140,55 @@ test.describe('@ui config history and backup settings', () => {
         }
     })
 
+    test('user searches and filters history records from the toolbar', async () => {
+        const omni = await AppFixture.start()
+
+        try {
+            const config = await omni.openConfig()
+            await config.addHistoryRecord({
+                service_key: 'mymemory@first',
+                source_text: 'apple source keep',
+                source_lang: 'en',
+                target_text: '苹果译文',
+                target_lang: 'zh_cn',
+            })
+            await config.addHistoryRecord({
+                service_key: 'deepl@default',
+                source_text: 'apple source other',
+                source_lang: 'en',
+                target_text: '其他苹果译文',
+                target_lang: 'zh_cn',
+            })
+            await config.addHistoryRecord({
+                service_key: 'mymemory@first',
+                source_text: 'banana source',
+                source_lang: 'en',
+                target_text: '香蕉译文',
+                target_lang: 'zh_cn',
+            })
+
+            await config.openSection('history')
+            await expect(config.historyRows()).toHaveCount(3)
+
+            await config.historySearch().fill('apple')
+            await expect(config.historyRows()).toHaveCount(2)
+            await expect(config.historyCount()).toContainText('共 2 条')
+            await expect(config.historyRowBySource('apple source keep')).toBeVisible()
+            await expect(config.historyRowBySource('apple source other')).toBeVisible()
+
+            await config.historyServiceFilter().selectOption('mymemory@first')
+            await expect(config.historyRows()).toHaveCount(1)
+            await expect(config.historyRowBySource('apple source keep')).toBeVisible()
+            await expect(config.historyCount()).toContainText('共 1 条')
+
+            await config.historyTimeFilter().selectOption('1')
+            await expect(config.historyRows()).toHaveCount(1)
+            await expect(config.historyRowBySource('apple source keep')).toBeVisible()
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('history toolbar renders all controls on one row and disable switch grays out other controls', async () => {
         const omni = await AppFixture.start({ config: { history_disable: false } })
 

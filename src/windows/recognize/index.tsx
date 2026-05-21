@@ -286,11 +286,13 @@ export default function RecognizeWindow(): React.ReactElement {
     const [targetLanguage, setTargetLanguage] = useState<string>('')
     const [isRecognizing, setIsRecognizing] = useState(false)
     const [isTranslating, setIsTranslating] = useState(false)
+    const [recognizeShowId, setRecognizeShowId] = useState(0)
     const [effectiveTargetLang, setEffectiveTargetLang] = useState<LanguageCode | null>(null)
     const [detectedSourceLang, setDetectedSourceLang] = useState<LanguageCode | null>(null)
 
     const config = useConfigStore((s) => s.config)
     const ocrRequestIdRef = useRef(0)
+    const autoOcrImageRef = useRef('')
 
     const handleNormalizeText = useCallback((text: string): string => {
         return config.recognize_delete_newline ? normalize_recognized_text(text) : text
@@ -300,6 +302,7 @@ export default function RecognizeWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.ocr.onRecognizeShow((base64, text, m) => {
             const next_text = handleNormalizeText(text)
+            setRecognizeShowId((current) => current + 1)
             setImageBase64(base64)
             setRecognizedText(next_text)
             setTranslatedText('')
@@ -370,6 +373,15 @@ export default function RecognizeWindow(): React.ReactElement {
         if (!imageBase64) return
         handleRecognize().catch(console.error)
     }, [selectedLanguage, effectiveService]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (mode !== 'recognize') return
+        if (!imageBase64 || recognizedText.trim()) return
+        const auto_ocr_key = `${String(recognizeShowId)}:${imageBase64}`
+        if (autoOcrImageRef.current === auto_ocr_key) return
+        autoOcrImageRef.current = auto_ocr_key
+        handleRecognize().catch(console.error)
+    }, [mode, imageBase64, recognizedText, recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // ---- Translate (used in translate mode) ----
     const doTranslate = useCallback(async (text: string, sourceLang: LanguageCode, requestId: number): Promise<void> => {
@@ -514,16 +526,7 @@ export default function RecognizeWindow(): React.ReactElement {
 
     const handleCopyImage = useCallback(async () => {
         if (!imageBase64) return
-        try {
-            const binary = atob(imageBase64)
-            const bytes = new Uint8Array(binary.length)
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-            const blob = new Blob([bytes], { type: 'image/png' })
-            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-        } catch {
-            // fallback: copy data URL as text
-            await window.electronAPI.text.writeClipboard(`data:image/png;base64,${imageBase64}`).catch(() => undefined)
-        }
+        await window.electronAPI.text.writeClipboardImage(imageBase64)
     }, [imageBase64])
 
     const handleSwap = useCallback(() => {

@@ -45,6 +45,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
   text: {
     getSelection: () => ipcRenderer.invoke('text:getSelection'),
     writeClipboard: (text) => ipcRenderer.invoke('text:writeClipboard', text),
+    writeClipboardImage: (base64Image) => ipcRenderer.invoke('text:writeClipboardImage', base64Image),
     onTranslateFromSelection: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('translate:from-selection', handler)
@@ -101,6 +102,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
     add: (record) => ipcRenderer.invoke('history:add', record),
     list: (page, pageSize, filters) => ipcRenderer.invoke('history:list', page, pageSize, filters),
     count: (filters) => ipcRenderer.invoke('history:count', filters),
+    serviceKeys: () => ipcRenderer.invoke('history:service-keys'),
     update: (id, sourceText, targetText) => ipcRenderer.invoke('history:update', id, sourceText, targetText),
     delete: (id) => ipcRenderer.invoke('history:delete', id),
     clear: () => ipcRenderer.invoke('history:clear')

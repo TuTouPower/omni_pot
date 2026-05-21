@@ -114,21 +114,28 @@ test.describe('@ui recognize window', () => {
             await recognize.clickCopy()
             await expect.poll(async () => (await omni.api.readClipboard()).text).toBe('ABC')
 
+            await recognize.click_copy_image()
+            await expect.poll(async () => (await omni.api.read_clipboard_image()).is_empty).toBe(false)
+            await expect.poll(async () => (await omni.api.read_clipboard_image()).size).toEqual({ width: 900, height: 260 })
+
+            await recognize.clickPin()
+            await expect(recognize.pinButton()).toHaveAttribute('aria-pressed', 'true')
+
             await recognize.clickExport()
             await expect(recognize.exportOption('md')).toContainText('.md')
             await expect(recognize.exportOption('txt')).toContainText('.txt')
             await expect(recognize.exportOption('docx')).toContainText('.docx')
             await expect(recognize.exportOption('doc')).toContainText('.doc')
+            await recognize.clickExport()
 
             await expect(recognize.image()).not.toContainText(/尺寸|类型|字数|耗时/)
             await expect(recognize.text()).not.toContainText(/尺寸|类型|字数|耗时/)
 
-            await recognize.clickPin()
-            await expect.poll(async () => (await omni.api.windowState('recognize')).alwaysOnTop).toBe(true)
-
+            await recognize.setText('ABC')
             await recognize.clickTranslate()
-            const translate = await omni.translate()
-            await expect.poll(async () => await translate.getSourceText()).toBe('ABC')
+            await expect(recognize.modeLabel()).toContainText('翻译')
+            await expect(recognize.text()).toHaveValue('ABC')
+            await expect(recognize.translation()).toContainText('ABC')
 
             await recognize.clickClose()
             await expect.poll(async () => (await omni.api.windowState('recognize')).visible).toBe(false)
@@ -160,19 +167,21 @@ test.describe('@ui recognize window', () => {
         const omni = await AppFixture.start({ config: recognize_disable_config })
 
         try {
-            const recognize = await open_recognize_with_sample(omni, '')
+            const recognize = await open_recognize_with_sample(omni, 'initial text')
             await recognize.fulfill_baidu_ocr_services('启用服务结果', '停用服务不应显示')
 
             await recognize.clickEngineSelect()
             await recognize.engineOption('baidu_ocr@disabled').click()
             await expect(recognize.engineSelect()).toContainText('百度文字识别')
-
-            const config = await omni.openConfig()
-            await config.openSection('service')
-            await config.openServiceCategory('recognize_service_list')
-            await config.toggleService('baidu_ocr@disabled')
-            await expect(config.serviceToggle('baidu_ocr@disabled')).toHaveAttribute('aria-checked', 'false')
-            await config.clickClose()
+            await omni.api.setConfig({
+                service_instances: {
+                    ...recognize_disable_config.service_instances,
+                    'baidu_ocr@disabled': {
+                        ...recognize_disable_config.service_instances['baidu_ocr@disabled'],
+                        config: { ...recognize_disable_config.service_instances['baidu_ocr@disabled'].config, enable: false },
+                    },
+                },
+            })
 
             await expect(recognize.engineSelect()).toContainText('百度高精度')
             // Disabling the selected service triggers auto re-recognize with the fallback.

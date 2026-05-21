@@ -30,6 +30,7 @@ const REPO_NAME = 'omni_pot'
 interface GithubReleaseAsset {
     name: string
     browser_download_url: string
+    size?: number
 }
 
 interface GithubRelease {
@@ -51,7 +52,9 @@ function read_string(value: unknown): string | null {
 
 function is_github_release_asset(value: unknown): value is GithubReleaseAsset {
     if (!is_record(value)) return false
-    return typeof value.name === 'string' && typeof value.browser_download_url === 'string'
+    return typeof value.name === 'string'
+        && typeof value.browser_download_url === 'string'
+        && (value.size === undefined || typeof value.size === 'number')
 }
 
 function parse_github_release(value: unknown): GithubRelease | null {
@@ -115,7 +118,8 @@ export default function UpdaterWindow(): React.ReactElement {
                     published_at: latest_release.published_at,
                     assets: latest_release.assets.map((asset) => ({
                         name: asset.name,
-                        url: asset.browser_download_url
+                        url: asset.browser_download_url,
+                        size: asset.size
                     }))
                 })
             } catch (err) {
@@ -196,6 +200,8 @@ export default function UpdaterWindow(): React.ReactElement {
         }
     }
 
+    const release_size = release ? format_size(release.assets[0]?.size) : null
+
     return (
         <div className="op-window" style={{ width: 600, height: 420 }}>
             {/* Titlebar */}
@@ -258,9 +264,10 @@ export default function UpdaterWindow(): React.ReactElement {
                                 <div style={{ fontSize: 15, fontWeight: 600 }}>
                                     {t('update_available', { defaultValue: '有新版本可用' })}
                                 </div>
-                                <div className="hint mono">
+                                <div className="hint mono" data-testid="updater-release-meta">
                                     {release.current_version} → {release.version}
                                     {release.published_at && <> · {format_date(release.published_at)}</>}
+                                    {release_size && <> · {release_size}</>}
                                 </div>
                             </div>
                         </div>

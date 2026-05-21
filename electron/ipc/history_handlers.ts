@@ -4,6 +4,7 @@ import {
     add_history,
     get_history_page,
     get_history_count,
+    get_history_service_keys,
     update_history,
     delete_history,
     clear_history
@@ -33,6 +34,10 @@ export function registerHistoryHandlers(): void {
 
     ipcMain.handle('history:count', (_event, filters?: HistoryQueryFilters) => {
         return get_history_count(filters)
+    })
+
+    ipcMain.handle('history:service-keys', () => {
+        return get_history_service_keys()
     })
 
     ipcMain.handle('history:update', (_event, id: number, source_text: string, target_text: string) => {

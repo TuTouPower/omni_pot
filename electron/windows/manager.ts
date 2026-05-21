@@ -8,6 +8,13 @@ import { log } from '../log'
 
 const log_wm = log.scope('wm')
 
+export function log_renderer_console_message(label: WindowLabel, level: number, message: string): void {
+  const tag = `[renderer:${label}]`
+  if (level === 3) log_wm.error(tag, message)
+  else if (level === 2) log_wm.warn(tag, message)
+  else log_wm.info(tag, message)
+}
+
 function resolveIconPath(): string {
   const candidates = [
     join(__dirname, '../../public/logos/logo.ico'),
@@ -122,10 +129,7 @@ export class WindowManager {
     })
 
     win.webContents.on('console-message', (_event, level, message) => {
-      const tag = `[renderer:${opts.label}]`
-      if (level === 3) log_wm.error(tag, message)
-      else if (level === 2) log_wm.warn(tag, message)
-      else log_wm.info(tag, message)
+      log_renderer_console_message(opts.label, level, message)
     })
 
     if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {

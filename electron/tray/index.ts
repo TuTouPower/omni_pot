@@ -222,10 +222,12 @@ export function trigger_tray_action(action: string): boolean {
       close_tray_popup()
       return true
     case 'restart':
+      if (process.env['OMNI_POT_E2E'] === '1') return true
       app.relaunch()
       app.exit(0)
       return true
     case 'quit':
+      if (process.env['OMNI_POT_E2E'] === '1') return true
       app.quit()
       return true
     case 'tray_click':

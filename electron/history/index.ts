@@ -84,6 +84,11 @@ export function get_history_count(filters?: HistoryQueryFilters): number {
     return row.count
 }
 
+export function get_history_service_keys(): string[] {
+    const rows = get_db().prepare('SELECT DISTINCT service_key FROM history ORDER BY service_key ASC').all() as Array<{ service_key: string }>
+    return rows.map((row) => row.service_key)
+}
+
 export function update_history(id: number, source_text: string, target_text: string): void {
     get_db().prepare(
         'UPDATE history SET source_text = ?, target_text = ? WHERE id = ?'

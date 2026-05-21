@@ -52,6 +52,7 @@ export interface ElectronAPI {
   text: {
     getSelection(): Promise<string>
     writeClipboard(text: string): Promise<void>
+    writeClipboardImage(base64Image: string): Promise<void>
     onTranslateFromSelection(callback: (text: string) => void): () => void
     onTranslateSelectionEmpty(callback: () => void): () => void
     onInputTranslate(callback: () => void): () => void
@@ -72,6 +73,7 @@ export interface ElectronAPI {
     add(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<void>
     list(page: number, pageSize: number, filters?: { search?: string; service_key?: string; days?: number }): Promise<HistoryRecord[]>
     count(filters?: { search?: string; service_key?: string; days?: number }): Promise<number>
+    serviceKeys(): Promise<string[]>
     update(id: number, sourceText: string, targetText: string): Promise<void>
     delete(id: number): Promise<void>
     clear(): Promise<void>

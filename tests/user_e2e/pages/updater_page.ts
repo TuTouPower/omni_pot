@@ -15,6 +15,10 @@ export class UpdaterPage {
         return this.page.locator('body')
     }
 
+    releaseMeta(): Locator {
+        return this.page.getByTestId('updater-release-meta')
+    }
+
     downloadLink(name: string): Locator {
         return this.page.getByRole('link', { name: exact_text(name) })
     }

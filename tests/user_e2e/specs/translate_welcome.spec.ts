@@ -103,7 +103,13 @@ test.describe('@ui translate welcome empty state', () => {
             const page = translate.sourceInput().page()
 
             await expect(page.getByTestId('welcome-empty')).toBeVisible()
-            await page.getByTestId('welcome-skip').click()
+            const close_promise = page.waitForEvent('close').catch(() => undefined)
+            try {
+                await page.getByTestId('welcome-skip').click()
+            } catch (error) {
+                if (!page.isClosed()) throw error
+            }
+            await close_promise
             // Skip persists welcome_dismissed and closes the window.
             await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
 
@@ -149,6 +155,8 @@ test.describe('@ui translate welcome empty state', () => {
             await page.getByTestId('welcome-configure-hotkeys').click()
             const config = await omni.config()
             await expect(config.title()).toContainText('快捷键')
+            await expect(config.nav('hotkey')).toHaveAttribute('aria-current', 'page')
+            await expect(config.hotkeyField('hotkey_translate')).toBeVisible()
 
             // The translate (welcome) window must close after navigating to the config window.
             await expect.poll(async () => (await omni.api.windowState('translate')).exists,

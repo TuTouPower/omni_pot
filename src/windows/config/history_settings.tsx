@@ -37,6 +37,7 @@ export default function HistorySettings(): React.ReactElement {
     const [editTarget, setEditTarget] = useState('')
     const [search, setSearch] = useState('')
     const [serviceFilter, setServiceFilter] = useState('')
+    const [serviceOptions, setServiceOptions] = useState<string[]>([])
     const [timeFilter, setTimeFilter] = useState(0)
 
     const load_page = useCallback(async (p: number) => {
@@ -52,6 +53,12 @@ export default function HistorySettings(): React.ReactElement {
     }, [search, serviceFilter, timeFilter])
 
     useEffect(() => { load_page(page).catch(console.error) }, [page, load_page])
+
+    useEffect(() => {
+        window.electronAPI.history.serviceKeys()
+            .then(setServiceOptions)
+            .catch(console.error)
+    }, [records])
 
     const total_pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -125,9 +132,9 @@ export default function HistorySettings(): React.ReactElement {
                     style={{ fontSize: 12, opacity: disabled ? 0.5 : 1, background: 'var(--bg-sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', color: 'var(--text)' }}
                 >
                     <option value="">全部服务</option>
-                    <option value="bing">Bing</option>
-                    <option value="deepl">DeepL</option>
-                    <option value="mymemory">MyMemory</option>
+                    {serviceOptions.map((service_key) => (
+                        <option key={service_key} value={service_key}>{service_key}</option>
+                    ))}
                 </select>
                 <select
                     data-testid="history-time-filter"

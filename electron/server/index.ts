@@ -166,6 +166,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/clipboard-image') {
+                handle_read_clipboard_image(res)
+                return
+            }
+
             if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/window-state') {
                 handleWindowState(mgr, url, res)
                 return
@@ -560,6 +565,18 @@ function handleReadClipboard(res: http.ServerResponse): void {
         const text = clipboard.readText()
         res.writeHead(200)
         res.end(JSON.stringify({ success: true, text }))
+    } catch (error: unknown) {
+        res.writeHead(500)
+        res.end(JSON.stringify({ success: false, error: String(error) }))
+    }
+}
+
+function handle_read_clipboard_image(res: http.ServerResponse): void {
+    try {
+        const image = clipboard.readImage()
+        const size = image.getSize()
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true, is_empty: image.isEmpty(), size }))
     } catch (error: unknown) {
         res.writeHead(500)
         res.end(JSON.stringify({ success: false, error: String(error) }))

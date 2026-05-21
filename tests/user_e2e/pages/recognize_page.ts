@@ -51,6 +51,10 @@ export class RecognizePage {
         return this.page.getByTestId('ocr-copy-btn')
     }
 
+    copy_image_button(): Locator {
+        return this.page.getByTestId('ocr-copy-image-btn')
+    }
+
     exportButton(): Locator {
         return this.page.getByTestId('ocr-export-btn')
     }
@@ -61,6 +65,10 @@ export class RecognizePage {
 
     translateButton(): Locator {
         return this.page.getByTestId('ocr-translate-btn')
+    }
+
+    translation(): Locator {
+        return this.page.getByTestId('ocr-translation')
     }
 
     clickPin(): Promise<void> {
@@ -107,6 +115,10 @@ export class RecognizePage {
 
     clickCopy(): Promise<void> {
         return this.copyButton().click()
+    }
+
+    click_copy_image(): Promise<void> {
+        return this.copy_image_button().click()
     }
 
     clickExport(): Promise<void> {

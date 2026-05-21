@@ -68,23 +68,23 @@ test.describe('@ui updater and tray', () => {
         const omni = await AppFixture.start({ config: TEST_CONFIG })
         try {
             const updater = await omni.mockUpdate({
-                version: '2.0.0',
-                current_version: '1.0.0',
-                name: 'E2E Release 2.0.0',
+                version: '3.1.0',
+                current_version: '3.0.6',
+                name: 'E2E Release 3.1.0',
                 body: '### Changes\n- Added updater and tray coverage',
-                html_url: 'https://example.invalid/omni_pot/releases/2.0.0',
+                html_url: 'https://example.invalid/omni_pot/releases/3.1.0',
                 published_at: '2026-05-15T08:30:00.000Z',
                 assets: [{
-                    name: 'omni_pot-2.0.0-win.zip',
-                    url: 'https://example.invalid/omni_pot-2.0.0-win.zip',
+                    name: 'omni_pot-3.1.0-win.zip',
+                    url: 'https://example.invalid/omni_pot-3.1.0-win.zip',
+                    size: 5 * 1024 * 1024,
                 }],
             })
 
             await expect(updater.titleMode()).toContainText('Update')
-            await expect(updater.body()).toContainText('1.0.0 → 2.0.0')
-            await expect(updater.body()).toContainText('2026-05-15')
+            await expect(updater.releaseMeta()).toHaveText('3.0.6 → 3.1.0 · 2026-05-15 · 5.0 MB')
             await expect(updater.changelog()).toContainText('Added updater and tray coverage')
-            await expect(updater.downloadLink('omni_pot-2.0.0-win.zip')).toBeVisible()
+            await expect(updater.downloadLink('omni_pot-3.1.0-win.zip')).toBeVisible()
             await expect(updater.confirmButton()).toBeEnabled()
 
             await updater.clickLater()
@@ -221,6 +221,23 @@ test.describe('@ui updater and tray', () => {
             const disable_result = await omni.api.trayAction('clipboard_monitor')
             expect(disable_result.success).toBe(true)
             await expect.poll(async () => (await omni.api.getConfig()).clipboard_monitor).toBe(false)
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user triggers restart and quit from tray actions', async () => {
+        const omni = await AppFixture.start({ config: TEST_CONFIG })
+        try {
+            const restart_result = await omni.api.trayAction('restart')
+            expect(restart_result).toEqual({ success: true, action: 'restart' })
+
+            const quit_result = await omni.api.trayAction('quit')
+            expect(quit_result).toEqual({ success: true, action: 'quit' })
+
+            const translate_result = await omni.api.trayAction('input_translate')
+            expect(translate_result.success).toBe(true)
+            await expect_window_visible(omni, 'translate')
         } finally {
             await omni.stop()
         }
