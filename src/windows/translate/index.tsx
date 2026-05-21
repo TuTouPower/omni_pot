@@ -61,7 +61,6 @@ export default function TranslateWindow(): React.ReactElement {
     )
     const configTargetLang = useConfigStore((s) => s.config.translate_target_language)
     const configSourceLang = useConfigStore((s) => s.config.translate_source_language)
-    const rememberLanguage = useConfigStore((s) => s.config.translate_remember_language)
     const appFont = useConfigStore((s) => s.config.app_font)
     const appFontSize = useConfigStore((s) => s.config.app_font_size)
     const setConfig = useConfigStore((s) => s.set)
@@ -95,18 +94,6 @@ export default function TranslateWindow(): React.ReactElement {
             setStoreTargetLang(configTargetLang as LanguageCode)
         }
     }, [configTargetLang, targetLanguage, setStoreTargetLang])
-
-    useEffect(() => {
-        if (!rememberLanguage || !languageConfigReadyRef.current) return
-        if (configSourceLang !== sourceLanguage) {
-            configSourceLangRef.current = sourceLanguage
-            setConfig('translate_source_language', sourceLanguage)
-        }
-        if (configTargetLang !== targetLanguage) {
-            configTargetLangRef.current = targetLanguage
-            setConfig('translate_target_language', targetLanguage)
-        }
-    }, [rememberLanguage, sourceLanguage, targetLanguage, configSourceLang, configTargetLang, setConfig])
 
     const welcomeDismissed = useConfigStore((s) => s.config.welcome_dismissed)
     const [forceShowSource, setForceShowSource] = useState(false)
@@ -145,7 +132,7 @@ export default function TranslateWindow(): React.ReactElement {
         setDetectedLanguage(null)
         setEffectiveTargetLanguage(null)
 
-        const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
+        const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate) : null
         if (useTranslateStore.getState().requestId !== id) return
         if (detected) setDetectedLanguage(detected)
 
@@ -230,20 +217,12 @@ export default function TranslateWindow(): React.ReactElement {
             if (!isActiveRequest()) return
         }
 
-        if (autoCopy !== 'disable') {
+        if (autoCopy) {
             if (!isActiveRequest()) return
-            const targetTexts = Object.values(resultsMap)
+            const clipboardText = Object.values(resultsMap)
                 .filter((r): r is string | DictResult => r !== null)
                 .map((r) => typeof r === 'string' ? r : r.definitions.map((d) => d.meanings.join('; ')).join('\n'))
                 .join('\n')
-            let clipboardText = ''
-            if (autoCopy === 'source') {
-                clipboardText = textToTranslate
-            } else if (autoCopy === 'target') {
-                clipboardText = targetTexts
-            } else {
-                clipboardText = targetTexts ? `${textToTranslate}\n\n${targetTexts}` : textToTranslate
-            }
             if (clipboardText) window.electronAPI.text.writeClipboard(clipboardText).catch(() => undefined)
         }
     }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, setEffectiveTargetLanguage, secondLanguage, autoCopy, historyDisable])
@@ -420,7 +399,7 @@ export default function TranslateWindow(): React.ReactElement {
 
             const config = useConfigStore.getState().config
             const language = currentSourceLanguage === 'auto'
-                ? await detectLanguage(text, config.translate_detect_engine)
+                ? await detectLanguage(text)
                 : currentSourceLanguage
             if (!isCurrentSourceTtsRequest()) return
             const instanceConfig = get_service_config(config.service_instances, instanceKey)
@@ -511,7 +490,7 @@ export default function TranslateWindow(): React.ReactElement {
         })
 
         const instanceConfig = get_service_config(serviceInstances, instanceKey)
-        const detected = retrySourceLanguage === 'auto' ? await detectLanguage(textToTranslate, useConfigStore.getState().config.translate_detect_engine) : null
+        const detected = retrySourceLanguage === 'auto' ? await detectLanguage(textToTranslate) : null
         if (!isCurrentRetry()) return
 
         let effectiveTarget = retryEffectiveTargetLanguage ?? retryTargetLanguage
@@ -547,8 +526,9 @@ export default function TranslateWindow(): React.ReactElement {
             frame_id = window.requestAnimationFrame(() => {
                 const root_style = getComputedStyle(root)
                 const root_padding = (Number.parseFloat(root_style.paddingTop) || 0) + (Number.parseFloat(root_style.paddingBottom) || 0)
-                const height = titlebar.getBoundingClientRect().height + content.scrollHeight + root_padding
-                window.electronAPI.window.setContentHeight(Math.ceil(height)).catch(() => undefined)
+                const height = Math.ceil(titlebar.getBoundingClientRect().height + content.scrollHeight + root_padding)
+                if (Math.abs(window.innerHeight - height) <= 1) return
+                window.electronAPI.window.setContentHeight(height).catch(() => undefined)
             })
         }
 

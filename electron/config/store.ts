@@ -107,6 +107,12 @@ export function initConfigStore(): void {
         saveToDisk()
     }
 
+    const legacy_auto_copy = (data as Record<string, unknown>)['translate_auto_copy']
+    if (typeof legacy_auto_copy === 'string') {
+        data.translate_auto_copy = legacy_auto_copy !== 'disable'
+        saveToDisk()
+    }
+
     if (!data.hotkey_translate) {
         const legacy = (data.hotkey_selection_translate as string) || (data.hotkey_input_translate as string)
         if (legacy) {

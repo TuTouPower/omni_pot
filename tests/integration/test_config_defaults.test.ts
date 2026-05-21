@@ -24,27 +24,24 @@ describe('Config defaults', () => {
         expect(DEFAULT_CONFIG.app_font).toBe('default')
         expect(DEFAULT_CONFIG.app_fallback_font).toBe('default')
         expect(DEFAULT_CONFIG.app_font_size).toBe(16)
-        expect(DEFAULT_CONFIG.transparent).toBe(true)
+        expect(DEFAULT_CONFIG.transparent).toBe(false)
         expect(DEFAULT_CONFIG.check_update).toBe(true)
         expect(DEFAULT_CONFIG.server_port).toBe(20202)
         expect(DEFAULT_CONFIG.clipboard_monitor).toBe(false)
         expect(DEFAULT_CONFIG.auto_start).toBe(false)
         expect(DEFAULT_CONFIG.tray_click_event).toBe('show_config')
         expect(DEFAULT_CONFIG.dict_chinese_enabled).toBe(true)
-        expect(DEFAULT_CONFIG.detect_cld3_enabled).toBe(true)
     })
 
     it('translate settings have correct defaults', () => {
         expect(DEFAULT_CONFIG.translate_source_language).toBe('auto')
         expect(DEFAULT_CONFIG.translate_target_language).toBe('zh_cn')
         expect(DEFAULT_CONFIG.translate_second_language).toBe('en')
-        expect(DEFAULT_CONFIG.translate_detect_engine).toBe('bing')
-        expect(DEFAULT_CONFIG.translate_auto_copy).toBe('disable')
+        expect(DEFAULT_CONFIG.translate_auto_copy).toBe(false)
         expect(DEFAULT_CONFIG.incremental_translate).toBe(false)
         expect(DEFAULT_CONFIG.history_disable).toBe(false)
         expect(DEFAULT_CONFIG.dynamic_translate).toBe(false)
         expect(DEFAULT_CONFIG.translate_delete_newline).toBe(false)
-        expect(DEFAULT_CONFIG.translate_remember_language).toBe(false)
         expect(DEFAULT_CONFIG.translate_window_position).toBe('mouse')
         expect(DEFAULT_CONFIG.translate_remember_window_size).toBe(false)
         expect(DEFAULT_CONFIG.translate_pinned).toBe(false)
@@ -61,9 +58,9 @@ describe('Config defaults', () => {
 
     it('recognize settings have correct defaults', () => {
         expect(DEFAULT_CONFIG.recognize_language).toBe('auto')
-        expect(DEFAULT_CONFIG.recognize_delete_newline).toBe(true)
+        expect(DEFAULT_CONFIG.recognize_engine).toBe('tesseract@default')
+        expect(DEFAULT_CONFIG.recognize_delete_newline).toBe(false)
         expect(DEFAULT_CONFIG.recognize_auto_copy).toBe(true)
-        expect(DEFAULT_CONFIG.recognize_hide_window).toBe(true)
     })
 
     it('hotkeys default to empty', () => {

@@ -262,8 +262,7 @@ export default function DictWindow(): React.ReactElement {
         clearResults()
 
         const lookupWord = trimmed.split(' ')[0] ?? ''
-        const detectEngine = useConfigStore.getState().config.translate_detect_engine
-        const detected = await detectLanguage(lookupWord, detectEngine)
+        const detected = await detectLanguage(lookupWord)
         if (lookup_request_ref.current !== request_id) return
         setDetectedLanguage(detected)
         sourceLangRef.current = detected

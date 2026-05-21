@@ -18,13 +18,11 @@ export interface AppConfig {
   translate_source_language: string
   translate_target_language: string
   translate_second_language: string
-  translate_detect_engine: string
-  translate_auto_copy: 'disable' | 'source' | 'target' | 'source_target'
+  translate_auto_copy: boolean
   incremental_translate: boolean
   history_disable: boolean
   dynamic_translate: boolean
   translate_delete_newline: boolean
-  translate_remember_language: boolean
 
   translate_window_position: 'mouse' | 'pre_state'
   translate_remember_window_size: boolean
@@ -48,9 +46,9 @@ export interface AppConfig {
   recognize_window_height: number
 
   recognize_language: string
+  recognize_engine: string
   recognize_delete_newline: boolean
   recognize_auto_copy: boolean
-  recognize_hide_window: boolean
 
   hotkey_translate: string
   hotkey_selection_translate: string
@@ -77,7 +75,6 @@ export interface AppConfig {
   tray_click_event: 'show_config' | 'show_translate' | 'none'
 
   dict_chinese_enabled: boolean
-  detect_cld3_enabled: boolean
 }
 
 // service_instances: instance key -> instance config; main process builds default instances on first launch
@@ -104,7 +101,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   app_font: 'default',
   app_fallback_font: 'default',
   app_font_size: 16,
-  transparent: true,
+  transparent: false,
   check_update: true,
   server_port: 20202,
   clipboard_monitor: false,
@@ -112,13 +109,11 @@ export const DEFAULT_CONFIG: AppConfig = {
   translate_source_language: 'auto',
   translate_target_language: 'zh_cn',
   translate_second_language: 'en',
-  translate_detect_engine: 'bing',
-  translate_auto_copy: 'disable',
+  translate_auto_copy: false,
   incremental_translate: false,
   history_disable: false,
   dynamic_translate: false,
   translate_delete_newline: false,
-  translate_remember_language: false,
 
   translate_window_position: 'mouse',
   translate_remember_window_size: false,
@@ -130,9 +125,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   welcome_dismissed: false,
 
   recognize_language: 'auto',
-  recognize_delete_newline: true,
+  recognize_engine: 'tesseract@default',
+  recognize_delete_newline: false,
   recognize_auto_copy: true,
-  recognize_hide_window: true,
 
   translate_window_width: 350,
   translate_window_height: 420,
@@ -170,8 +165,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   auto_start: false,
   tray_click_event: 'show_config',
 
-  dict_chinese_enabled: true,
-  detect_cld3_enabled: true
+  dict_chinese_enabled: true
 }
 
 export type ConfigKey = keyof AppConfig

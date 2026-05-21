@@ -281,8 +281,8 @@ export default function RecognizeWindow(): React.ReactElement {
     const [recognizedText, setRecognizedText] = useState<string>('')
     const [translatedText, setTranslatedText] = useState<string>('')
     const [alwaysOnTop, setAlwaysOnTop] = useState(() => useConfigStore.getState().config.recognize_always_on_top)
-    const [selectedService, setSelectedService] = useState<string>('')
-    const [selectedLanguage, setSelectedLanguage] = useState<string>('auto')
+    const [selectedService, setSelectedService] = useState<string>(() => useConfigStore.getState().config.recognize_engine)
+    const [selectedLanguage, setSelectedLanguage] = useState<string>(() => useConfigStore.getState().config.recognize_language)
     const [targetLanguage, setTargetLanguage] = useState<string>('')
     const [isRecognizing, setIsRecognizing] = useState(false)
     const [isTranslating, setIsTranslating] = useState(false)
@@ -382,7 +382,7 @@ export default function RecognizeWindow(): React.ReactElement {
 
         let detectedSource: LanguageCode | null = null
         if (sourceLang === 'auto') {
-            detectedSource = await detectLanguage(text, useConfigStore.getState().config.translate_detect_engine)
+            detectedSource = await detectLanguage(text)
             if (ocrRequestIdRef.current !== requestId) return
         }
         setDetectedSourceLang(detectedSource)

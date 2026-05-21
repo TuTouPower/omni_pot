@@ -105,6 +105,31 @@ describe('Config Store integration', () => {
             .toEqual(DEFAULT_CONFIG.translate_service_list)
     })
 
+    it('migrates legacy translate_auto_copy modes to boolean', async () => {
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+            translate_auto_copy: 'disable',
+        }))
+        const store = await import('../../electron/config/store')
+
+        store.initConfigStore()
+        store.flush_config()
+
+        expect(store.getConfig('translate_auto_copy')).toBe(false)
+
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+            translate_auto_copy: 'target',
+        }))
+        vi.resetModules()
+        const reloaded_store = await import('../../electron/config/store')
+
+        reloaded_store.initConfigStore()
+        reloaded_store.flush_config()
+
+        expect(reloaded_store.getConfig('translate_auto_copy')).toBe(true)
+    })
+
     it('preserves user-customized translate_service_list across init', async () => {
         const custom_list = ['bing@default', 'google@default']
         writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
