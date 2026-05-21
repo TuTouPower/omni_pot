@@ -342,7 +342,7 @@ class TranslatePage {
 - `hide_source`：划词/API/剪贴板翻译时隐藏源文本区；输入翻译强制显示
 - `incremental_translate`：true 追加、false 替换
 - `translate_delete_newline`：true 时换行被规范化
-- `translate_auto_copy`：开关式 boolean —— true 复制译文到剪贴板，false 不复制（旧的 `'source'/'target'/'source_target'/'disable'` 枚举已在 spec §18.2 改为 boolean，相关用例需同步重写）
+- `translate_auto_copy`：开关式 boolean —— true 复制译文到剪贴板，false 不复制
 - `dynamic_translate`：true 时输入停顿 1s 自动翻译
 - `translate_remember_window_size`：resize 后尺寸写入配置
 - 第二语言回退：检测语言 == 目标语言时改用 `translate_second_language`

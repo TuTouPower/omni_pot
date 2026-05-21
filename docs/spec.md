@@ -320,10 +320,8 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 
 **自动复制行为**（`translate_auto_copy`）：
 
-- `source` — 复制源文本
-- `target` — 复制成功的目标译文（多个以换行拼接）
-- `source_target` — 复制源 + 译文
-- `disable` — 不复制
+- `true` — 复制成功的目标译文（多个以换行拼接）
+- `false` — 不复制
 
 ### 5.5 欢迎空状态
 
@@ -794,16 +792,11 @@ interface DictResult {
 
 **文件**: `src/services/detect.ts`
 
-源语言为 `auto` 时调用语言检测，决定实际源语言。检测引擎不暴露在设置页 UI，由项目固定为 cld3-asm 本地检测：
+源语言为 `auto` 时调用语言检测，决定实际源语言。检测引擎不暴露在设置页 UI，由项目固定为 cld3-asm 本地检测。
 
-- 在线引擎：bing、google、baidu、tencent、niutrans（旧实现，P1 cld3 重构将移除）
-- 离线引擎：local（cld3-asm WASM 神经网络，19 种 BCP-47 映射覆盖 18 种语言；WASM 加载失败或检测不可靠时自动回退到 Unicode 正则）
-
-配置项 `detect_cld3_enabled`（默认 `true`）可运行时禁用 cld3，回退到纯正则检测。
-
-**失败回退**（旧远程引擎链，P1 cld3 重构将整体移除，目标态为 cld3 → regex 两级兜底）：
-`bing → google → baidu → tencent → niutrans → local`。
-全部失败时，源语言保留为 `auto`，由翻译服务自身处理（不阻塞翻译流程）。
+- 主路径：主进程 `electron/detect/index.ts` 预加载 cld3-asm WASM，renderer 通过 `detect.local` IPC 调用本地检测。
+- 兜底路径：WASM 加载失败、检测不可靠、未映射语言或 IPC 不可用时回退到 Unicode 正则。
+- 中文长句（例如重复“我爱你”的文本）必须识别为简体中文，不得误判为日语。
 
 检测结果与目标语言相同时，实际目标回退到 `translate_second_language`。
 
@@ -833,14 +826,13 @@ interface DictResult {
 | `app_font` | string | `'default'` | 主字体族 |
 | `app_fallback_font` | string | `'default'` | 回退字体族 |
 | `app_font_size` | number | `16` | 基础字号 px |
-| `transparent` | boolean | `true` | 窗口透明 |
+| `transparent` | boolean | `false` | 窗口透明 |
 | `check_update` | boolean | `true` | 启动时检查更新 |
 | `server_port` | number | `20202` | HTTP API 端口，修改后需重启 |
 | `clipboard_monitor` | boolean | `false` | 剪贴板监听 |
 | `auto_start` | boolean | `false` | 开机自启 |
 | `tray_click_event` | `'show_config'\|'show_translate'\|'none'` | `'show_config'` | 托盘左键点击行为 |
 | `dict_chinese_enabled` | boolean | `true` | 中文字典（SQLite）开关，关闭后走在线词典 |
-| `detect_cld3_enabled` | boolean | `true` | cld3-asm 语言检测开关，关闭后回退到 Unicode 正则 |
 
 #### 翻译设置
 
@@ -875,7 +867,7 @@ interface DictResult {
 
 | 键 | 类型 | 默认值 |
 |---|---|---|
-| `recognize_engine` | string | 首个已注册 OCR 服务的 key |
+| `recognize_engine` | string | `'tesseract@default'` |
 | `recognize_language` | string | `'auto'` |
 | `recognize_delete_newline` | boolean | `false` |
 | `recognize_auto_copy` | boolean | `true` |

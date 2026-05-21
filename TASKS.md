@@ -58,14 +58,14 @@ const result = instance.findLanguage('你好世界')
 
 ### 任务清单
 
-- [ ] 安装 cld3-asm，加入 package.json dependencies
-- [ ] 重写 src/services/detect.ts（移除远程 API，新增 cld3，保留 regex 兜底）
-- [ ] 重写 electron/detect/index.ts（IPC 层改用 cld3）
-- [ ] 重写 tests/unit/services/test_detect.test.ts
-- [ ] 补 E2E："我爱你"中文断言、检测引擎=目标语言回退断言
-- [ ] 更新 docs/spec.md §17
-- [ ] 更新 docs/external_service_catalog.md §1.1
-- [ ] 更新 docs/archive/external_services/lang_detect_api_test_20260521.md（标记已采纳）
+- [x] 安装 cld3-asm，加入 package.json dependencies
+- [x] 重写 src/services/detect.ts（移除远程 API，新增 cld3，保留 regex 兜底）
+- [x] 重写 electron/detect/index.ts（IPC 层改用 cld3）
+- [x] 重写 tests/unit/services/test_detect.test.ts
+- [x] 补 E2E："我爱你"中文断言、检测引擎=目标语言回退断言
+- [x] 更新 docs/spec.md §17
+- [x] 更新 docs/external_service_catalog.md §1.1
+- [x] 更新 docs/archive/external_services/lang_detect_api_test_20260521.md（标记已采纳）
 
 ---
 
@@ -74,11 +74,11 @@ const result = instance.findLanguage('你好世界')
 设置页 → 文字识别设置里的"自动去除换行"选项，当前默认开启，改为默认关闭。
 当前无用户，无需迁移本地配置。
 
-- [ ] 定位设置项默认值（推测在 `electron/config/` 或 `src/services/ocr/` 配置 schema）
-- [ ] 改默认值为 `false`
+- [x] 定位设置项默认值（推测在 `electron/config/` 或 `src/services/ocr/` 配置 schema）
+- [x] 改默认值为 `false`
 - [x] 更新 `docs/spec.md` §18.2 识别设置 `recognize_delete_newline` 默认值 `true`→`false`
-- [ ] 更新 `docs/design/omni-pot/` 相关设计稿（如有标注默认值）
-- [ ] 单元/E2E 测试断言新默认值
+- [x] 更新 `docs/design/omni-pot/` 相关设计稿（如有标注默认值）
+- [x] 单元/E2E 测试断言新默认值
 
 ---
 
@@ -86,10 +86,10 @@ const result = instance.findLanguage('你好世界')
 
 翻译/识别等窗口的透明背景选项，当前默认开启，改为默认关闭。
 
-- [ ] 定位透明背景设置项默认值（`electron/config/` 或相关 store）
-- [ ] 改默认值为 `false`
-- [ ] 更新 `docs/spec.md` 相关默认值描述
-- [ ] 单元/E2E 测试断言新默认值
+- [x] 定位透明背景设置项默认值（`electron/config/` 或相关 store）
+- [x] 改默认值为 `false`
+- [x] 更新 `docs/spec.md` 相关默认值描述
+- [x] 单元/E2E 测试断言新默认值
 
 ---
 
@@ -106,15 +106,15 @@ const result = instance.findLanguage('你好世界')
 
 ### 代码任务清单
 
-- [ ] 配置 schema 删除四个 key（`translate_detect_engine` / `translate_remember_language` / `recognize_close_on_blur` / `recognize_hide_window`），新增 `recognize_engine`
-- [ ] `translate_auto_copy` 由枚举改 boolean；触发 store / IPC / 翻译流程引用点更新
-- [ ] `src/windows/config/translate_settings.tsx`：移除检测引擎、记住语言选择 UI；自动复制改 Switch 控件
-- [ ] `src/windows/config/recognize_settings.tsx`：仅保留 4 项；自动复制结果→"自动复制"；下拉控件 220px 对齐；删除窗口/截图卡片
-- [ ] `electron/config/store.ts` 默认值同步
-- [ ] 设置窗口默认尺寸改 720×740（`electron/windows/` 或 `shared/` 中相关常量）
-- [ ] 任何读取被删除 key 的代码点（如 detect.ts 读 `translate_detect_engine`）一并清理，与 P1 cld3 重构协同
-- [ ] 更新设计稿（`docs/design/omni-pot/`）和 demo_todo 同步偏差备忘
-- [ ] 单元/E2E 测试更新断言：
+- [x] 配置 schema 删除四个 key（`translate_detect_engine` / `translate_remember_language` / `recognize_close_on_blur` / `recognize_hide_window`），新增 `recognize_engine`
+- [x] `translate_auto_copy` 由枚举改 boolean；触发 store / IPC / 翻译流程引用点更新
+- [x] `src/windows/config/translate_settings.tsx`：移除检测引擎、记住语言选择 UI；自动复制改 Switch 控件
+- [x] `src/windows/config/recognize_settings.tsx`：仅保留 4 项；自动复制结果→"自动复制"；下拉控件 220px 对齐；删除窗口/截图卡片
+- [x] `electron/config/store.ts` 默认值同步
+- [x] 设置窗口默认尺寸改 720×740（`electron/windows/` 或 `shared/` 中相关常量）
+- [x] 任何读取被删除 key 的代码点（如 detect.ts 读 `translate_detect_engine`）一并清理，与 P1 cld3 重构协同
+- [x] 更新设计稿（`docs/design/omni-pot/`）和 demo_todo 同步偏差备忘
+- [x] 单元/E2E 测试更新断言：
   - `tests/integration/test_config_defaults.test.ts` — 删除/重命名 4 个 key 的默认值断言、`translate_auto_copy` boolean、`recognize_delete_newline=false`
   - `tests/user_e2e/specs/translate_behavior.spec.ts` — 删除 `translate_remember_language` 用例；`translate_auto_copy` 改 boolean 写法
   - `tests/user_e2e/specs/config_settings.spec.ts` — 翻译页删检测引擎/记住语言断言；文字识别页改 4 项断言；自动复制改开关样式断言

@@ -104,7 +104,7 @@ const ThemeSeg = ({ value, onChange }) => {
 const PageGeneral = () => {
   const [autostart, setAutostart] = useStateC(true);
   const [check, setCheck] = useStateC(true);
-  const [transparent, setTransparent] = useStateC(true);
+  const [transparent, setTransparent] = useStateC(false);
   const [proxy, setProxy] = useStateC(false);
   const [theme, setTheme] = useStateC('auto');
   const [fontFamily, setFontFamily] = useStateC('default');
@@ -172,7 +172,7 @@ const PageGeneral = () => {
 };
 
 const PageTranslate = () => {
-  const [stateMap, setStateMap] = useStateC({ auto_copy:false, history:false, incr:false, dyn:false, del:true, remember:false, pos:'mouse', size:true, blur:true, top:false, hideS:false, hideL:false, hideW:false });
+  const [stateMap, setStateMap] = useStateC({ auto_copy:false, history:false, incr:false, dyn:false, del:false, remember:false, pos:'mouse', size:true, blur:true, top:false, hideS:false, hideL:false, hideW:false });
   const set = (k,v) => setStateMap(s => ({...s, [k]: v}));
   return (
     <div className="stack gap-12">
@@ -212,7 +212,7 @@ const PageRecognize = () => {
     <div className="stack gap-12">
       <Card title="识别">
         <Row label="默认识别引擎">
-          <Select value="system" options={[
+          <Select value="tesseract" options={[
             {value:'system',label:'系统识别'},
             {value:'tesseract',label:'Tesseract'},
             {value:'openai_compatible',label:'AI 视觉 · Qwen2.5-VL'},

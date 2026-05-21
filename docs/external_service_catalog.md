@@ -1,8 +1,8 @@
 # 外部服务清单
 
-> 更新日期：2026-05-21（Lingva 公共实例连通性追加测试）
+> 更新日期：2026-05-21（语言检测已改为 cld3-asm 本地检测）
 >
-> 本清单整理自 `docs/external_services/` 现有调研与实测记录，并对照当前服务注册入口：`src/services/index.ts`、`src/services/ocr/index.ts`、`src/services/tts/index.ts`、`src/services/detect.ts`。
+> 本清单整理自历史调研与实测记录，并对照当前服务注册入口：`src/services/index.ts`、`src/services/ocr/index.ts`、`src/services/tts/index.ts`、`electron/detect/index.ts`。
 >
 > 这是一份事实清单，不代表最终采用决策。是否启用、替换、删除或新增服务，由后续产品/实现决策决定。
 
@@ -21,12 +21,9 @@
 
 | 服务/端点 | 状态 | 备注 |
 |---|---|---|
-| Bing detect | 当前代码存在 | 通过 Edge/Microsoft Translator auth + detect；失败后回退本地检测。 |
-| Google detect | 当前代码存在 | 使用 Google Translate gtx 接口；失败后回退本地检测。 |
-| Baidu detect | 当前代码存在 | 使用百度网页翻译 `transapi`；失败后回退本地检测。 |
-| Tencent detect | 当前代码存在 | 使用腾讯网页翻译接口；失败后回退本地检测。 |
-| NiuTrans detect | 当前代码存在 | 使用小牛无 key 探测路径；失败后回退本地检测。 |
-| local detect | 当前代码存在 | 本地检测兜底，不需要网络。严格说属于本地能力，列在这里是因为用户无需配置。 |
+| cld3-asm | 当前代码采用 | 本地 WASM 检测，无需网络；WASM 加载失败、检测不可靠或 IPC 不可用时回退到 Unicode 正则。 |
+| Unicode regex fallback | 当前代码采用 | 覆盖中/日/韩/俄乌/泰/阿波/希伯来/印地/越南等脚本；作为 cld3 失败时的最终兜底。 |
+| Bing / Google / Baidu / Tencent / NiuTrans detect | 已移除 | 历史实测在当前环境不可用或不稳定，不再作为运行时回退链。 |
 
 ### 1.2 翻译
 
