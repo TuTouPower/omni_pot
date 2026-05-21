@@ -174,7 +174,7 @@ export class E2eApi {
         body: string
         html_url: string
         published_at: string
-        assets: Array<{ name: string; url: string }>
+        assets: Array<{ name: string; url: string; size?: number }>
     }> = {}): Promise<{
         success: boolean
         release?: {
@@ -184,7 +184,7 @@ export class E2eApi {
             body: string
             html_url: string
             published_at: string
-            assets: Array<{ name: string; url: string }>
+            assets: Array<{ name: string; url: string; size?: number }>
         }
         error?: string
     }> {
@@ -197,7 +197,7 @@ export class E2eApi {
                 body: string
                 html_url: string
                 published_at: string
-                assets: Array<{ name: string; url: string }>
+                assets: Array<{ name: string; url: string; size?: number }>
             }
             error?: string
         }>

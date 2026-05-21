@@ -23,6 +23,14 @@ export class UpdaterPage {
         return this.page.getByTestId('updater-progress')
     }
 
+    progressPercent(): Locator {
+        return this.page.getByTestId('updater-progress-percent')
+    }
+
+    progressBar(): Locator {
+        return this.page.getByTestId('updater-progress-bar')
+    }
+
     changelog(): Locator {
         return this.page.getByTestId('updater-changelog')
     }
@@ -39,7 +47,11 @@ export class UpdaterPage {
         return this.confirmButton().click()
     }
 
-    clickLater(): Promise<void> {
-        return this.laterButton().click()
+    async clickLater(): Promise<void> {
+        try {
+            await this.laterButton().click()
+        } catch (error) {
+            if (!String(error).includes('Target page, context or browser has been closed')) throw error
+        }
     }
 }

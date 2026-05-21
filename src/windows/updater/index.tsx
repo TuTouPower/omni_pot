@@ -5,6 +5,7 @@ import { Icons } from '../../components/icons'
 interface ReleaseAsset {
     name: string
     url: string
+    size?: number
 }
 
 interface ReleaseInfo {
@@ -15,6 +16,12 @@ interface ReleaseInfo {
     html_url: string
     published_at: string
     assets: ReleaseAsset[]
+}
+
+interface DownloadProgress {
+    downloaded: number
+    total: number
+    percent: number
 }
 
 const REPO_OWNER = 'TuTouPower'
@@ -64,6 +71,10 @@ export default function UpdaterWindow(): React.ReactElement {
     const [release, setRelease] = useState<ReleaseInfo | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [download_progress, setDownloadProgress] = useState<DownloadProgress | null>(null)
+    const [download_error, setDownloadError] = useState<string | null>(null)
+    const [downloaded_path, setDownloadedPath] = useState<string | null>(null)
+    const [downloading, setDownloading] = useState(false)
     const main_release_received = useRef(false)
 
     useEffect(() => {
@@ -74,6 +85,13 @@ export default function UpdaterWindow(): React.ReactElement {
             setLoading(false)
         })
         window.electronAPI.ready('updater')
+        return cleanup
+    }, [])
+
+    useEffect(() => {
+        const cleanup = window.electronAPI.update.onDownloadProgress((progress) => {
+            setDownloadProgress(progress)
+        })
         return cleanup
     }, [])
 
@@ -110,9 +128,32 @@ export default function UpdaterWindow(): React.ReactElement {
     }, [])
 
     const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
-    const handleOpenRelease = useCallback(() => {
-        if (release?.html_url) window.open(release.html_url, '_blank')
-    }, [release])
+    const handleDownloadAndInstall = useCallback(() => {
+        const asset = release?.assets[0]
+        if (!asset || downloading) return
+        setDownloading(true)
+        setDownloadError(null)
+        setDownloadedPath(null)
+        setDownloadProgress({ downloaded: 0, total: asset.size ?? 0, percent: 0 })
+        window.electronAPI.update.downloadAndInstall(asset)
+            .then((result) => {
+                if (result.success) {
+                    setDownloadedPath(result.path ?? asset.name)
+                    setDownloadProgress((progress) => progress ? { ...progress, percent: 100 } : { downloaded: asset.size ?? 0, total: asset.size ?? 0, percent: 100 })
+                } else {
+                    setDownloadError(result.error ?? t('download_failed', { defaultValue: '下载失败' }))
+                }
+            })
+            .catch((err: unknown) => { setDownloadError(String(err)) })
+            .finally(() => { setDownloading(false) })
+    }, [downloading, release, t])
+
+    const format_size = (size?: number): string | null => {
+        if (size === undefined || size < 0) return null
+        if (size < 1024) return `${String(size)} B`
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+        return `${(size / 1024 / 1024).toFixed(1)} MB`
+    }
 
     const format_changelog = (body: string): React.ReactNode[] => {
         return body.split('\n').map((line, i) => {
@@ -269,13 +310,45 @@ export default function UpdaterWindow(): React.ReactElement {
                             </div>
                         )}
 
+                        {/* Download status */}
+                        {(download_progress || download_error || downloaded_path) && (
+                            <div className="card" data-testid="updater-progress" style={{ padding: 12 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--text-dim)', marginBottom: 8 }}>
+                                    <span>
+                                        {download_error
+                                            ? t('download_failed', { defaultValue: '下载失败' })
+                                            : downloaded_path
+                                                ? t('download_complete', { defaultValue: '下载完成' })
+                                                : t('downloading', { defaultValue: '正在下载' })}
+                                    </span>
+                                    {download_progress && <span className="mono" data-testid="updater-progress-percent">{download_progress.percent}%</span>}
+                                </div>
+                                {download_progress && (
+                                    <div style={{ height: 6, borderRadius: 999, background: 'var(--bg-sunk)', overflow: 'hidden' }}>
+                                        <div data-testid="updater-progress-bar" style={{ width: `${String(download_progress.percent)}%`, height: '100%', background: 'var(--brand-primary)', transition: 'width .12s' }} />
+                                    </div>
+                                )}
+                                {download_progress && download_progress.total > 0 && (
+                                    <div className="hint mono" style={{ marginTop: 6 }}>
+                                        {format_size(download_progress.downloaded)} / {format_size(download_progress.total)}
+                                    </div>
+                                )}
+                                {download_error && <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--danger)' }}>{download_error}</div>}
+                                {downloaded_path && <div className="hint mono" style={{ marginTop: 6 }}>{downloaded_path}</div>}
+                            </div>
+                        )}
+
                         {/* Actions */}
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button className="btn" data-testid="updater-later" onClick={handleClose}>
+                            <button className="btn" data-testid="updater-later" onClick={handleClose} disabled={downloading}>
                                 {t('update_later', { defaultValue: '稍后提醒' })}
                             </button>
-                            <button className="btn primary" data-testid="updater-confirm" onClick={handleOpenRelease}>
-                                {t('open_release_page', { defaultValue: '查看详情' })}
+                            <button className="btn primary" data-testid="updater-confirm" onClick={handleDownloadAndInstall} disabled={downloading || release.assets.length === 0}>
+                                {downloading
+                                    ? t('downloading', { defaultValue: '正在下载' })
+                                    : downloaded_path
+                                        ? t('download_complete', { defaultValue: '下载完成' })
+                                        : t('update_now', { defaultValue: '立即更新' })}
                             </button>
                         </div>
                     </>

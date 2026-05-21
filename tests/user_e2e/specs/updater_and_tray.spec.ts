@@ -1,3 +1,4 @@
+import http from 'http'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
@@ -9,6 +10,43 @@ const TEST_CONFIG = {
 }
 
 type WindowLabel = 'translate' | 'config' | 'updater' | 'screenshot' | 'tray'
+
+async function start_update_asset_server(body: Buffer): Promise<{ url: string; requests: string[]; stop(): Promise<void> }> {
+    const requests: string[] = []
+    const server = http.createServer((req, res) => {
+        requests.push(req.url ?? '')
+        if (req.url !== '/omni_pot-e2e-update.bin') {
+            res.writeHead(404)
+            res.end('not found')
+            return
+        }
+        const split_at = Math.max(1, Math.floor(body.length / 2))
+        res.writeHead(200, {
+            'content-length': String(body.length),
+            'content-type': 'application/octet-stream',
+        })
+        res.write(body.subarray(0, split_at))
+        setTimeout(() => { res.end(body.subarray(split_at)) }, 100)
+    })
+
+    const port = await new Promise<number>((resolve) => {
+        server.listen(0, '127.0.0.1', () => {
+            const address = server.address()
+            resolve(address && typeof address === 'object' ? address.port : 0)
+        })
+    })
+
+    return {
+        url: `http://127.0.0.1:${String(port)}/omni_pot-e2e-update.bin`,
+        requests,
+        stop: () => new Promise<void>((resolve, reject) => {
+            server.close((error) => {
+                if (error) reject(error)
+                else resolve()
+            })
+        }),
+    }
+}
 
 async function expect_window_visible(omni: AppFixture, label: WindowLabel): Promise<void> {
     await expect.poll(async () => (await omni.api.windowState(label)).visible).toBe(true)
@@ -52,6 +90,37 @@ test.describe('@ui updater and tray', () => {
             await updater.clickLater()
             await expect_window_not_exists(omni, 'updater')
         } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user downloads an update asset and sees progress complete', async () => {
+        const asset_body = Buffer.alloc(64 * 1024, 'a')
+        const asset_server = await start_update_asset_server(asset_body)
+        const omni = await AppFixture.start({ config: TEST_CONFIG })
+        try {
+            const updater = await omni.mockUpdate({
+                version: '2.0.1',
+                current_version: '1.0.0',
+                name: 'E2E Release 2.0.1',
+                body: '### Changes\n- Added download coverage',
+                html_url: 'https://example.invalid/omni_pot/releases/2.0.1',
+                published_at: '2026-05-16T08:30:00.000Z',
+                assets: [{
+                    name: 'omni_pot-e2e-update.bin',
+                    url: asset_server.url,
+                    size: asset_body.length,
+                }],
+            })
+
+            await expect(updater.confirmButton()).toContainText('Update Now')
+            await updater.clickConfirm()
+            await expect(updater.progress()).toBeVisible()
+            await expect(updater.progressPercent()).toContainText('100', { timeout: 20_000 })
+            await expect(updater.confirmButton()).toContainText('Download complete')
+            expect(asset_server.requests).toContain('/omni_pot-e2e-update.bin')
+        } finally {
+            await asset_server.stop()
             await omni.stop()
         }
     })
@@ -110,7 +179,7 @@ test.describe('@ui updater and tray', () => {
 
             const translate_result = await omni.api.trayAction('input_translate')
             expect(translate_result.success).toBe(true)
-            const translate = await omni.translate()
+            await omni.translate()
             await expect_window_visible(omni, 'translate')
 
             const recognize_result = await omni.api.trayAction('ocr_recognize')
@@ -139,12 +208,15 @@ test.describe('@ui updater and tray', () => {
             const enable_result = await omni.api.trayAction('clipboard_monitor')
             expect(enable_result.success).toBe(true)
             await expect.poll(async () => (await omni.api.getConfig()).clipboard_monitor).toBe(true)
+            const reopen_translate_result = await omni.api.openWindow('translate')
+            expect(reopen_translate_result.success).toBe(true)
+            const translate_after_config = await omni.translate()
 
             const current_clipboard = (await omni.api.readClipboard()).text
             const clipboard_text = current_clipboard === 'tray clipboard text' ? 'tray clipboard text changed' : 'tray clipboard text'
             const clipboard_result = await omni.api.triggerClipboard(clipboard_text)
             expect(clipboard_result.success).toBe(true)
-            await expect(translate.sourceInput()).toHaveValue(clipboard_text, { timeout: 10_000 })
+            await expect(translate_after_config.sourceInput()).toHaveValue(clipboard_text, { timeout: 10_000 })
 
             const disable_result = await omni.api.trayAction('clipboard_monitor')
             expect(disable_result.success).toBe(true)

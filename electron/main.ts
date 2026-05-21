@@ -34,7 +34,7 @@ import { spawn } from 'child_process'
 import { registerTrayHandlers } from './ipc/tray_handlers'
 import { close_history } from './history'
 import { close_dict, auto_import_if_needed } from './dict'
-import { checkForUpdate } from './updater'
+import { checkForUpdate, registerUpdateHandlers } from './updater'
 import { startServer, stopServer } from './server'
 import { preload_screenshot_window } from './screenshot'
 import {
@@ -104,6 +104,7 @@ if (!gotLock) {
     registerDictHandlers()
     registerChineseDictHandlers()
     registerDetectHandlers()
+    registerUpdateHandlers()
     registerTrayHandlers()
     log_main.info('IPC handlers: all registered')
 

@@ -104,8 +104,10 @@ export interface ElectronAPI {
       body: string
       html_url: string
       published_at: string
-      assets: Array<{ name: string; url: string }>
+      assets: Array<{ name: string; url: string; size?: number }>
     }) => void): () => void
+    downloadAndInstall(asset: { name: string; url: string }): Promise<{ success: boolean; path?: string; error?: string }>
+    onDownloadProgress(callback: (progress: { downloaded: number; total: number; percent: number }) => void): () => void
   }
   tray: {
     show(): Promise<boolean>

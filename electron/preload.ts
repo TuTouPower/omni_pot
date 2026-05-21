@@ -134,6 +134,12 @@ const api: Omit<ElectronAPI, 'ready'> = {
       const handler = (_event: Electron.IpcRendererEvent, release: Parameters<typeof callback>[0]) => { callback(release); }
       ipcRenderer.on('updater:release', handler)
       return () => { ipcRenderer.off('updater:release', handler) }
+    },
+    downloadAndInstall: (asset) => ipcRenderer.invoke('updater:downloadAndInstall', asset),
+    onDownloadProgress: (callback) => {
+      const handler = (_event: Electron.IpcRendererEvent, progress: Parameters<typeof callback>[0]) => { callback(progress); }
+      ipcRenderer.on('updater:download-progress', handler)
+      return () => { ipcRenderer.off('updater:download-progress', handler) }
     }
   },
   tray: {

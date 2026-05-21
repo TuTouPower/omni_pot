@@ -757,14 +757,17 @@ function handle_tray_menu(res: http.ServerResponse): void {
     }
 }
 
-function parse_mock_update_assets(value: unknown): Array<{ name: string; url: string }> {
+function parse_mock_update_assets(value: unknown): Array<{ name: string; url: string; size?: number }> {
     if (!Array.isArray(value)) return []
     return value.flatMap((asset) => {
         if (!asset || typeof asset !== 'object' || Array.isArray(asset)) return []
         const record = asset as Record<string, unknown>
-        return typeof record.name === 'string' && typeof record.url === 'string'
-            ? [{ name: record.name, url: record.url }]
-            : []
+        if (typeof record.name !== 'string' || typeof record.url !== 'string') return []
+        return [{
+            name: record.name,
+            url: record.url,
+            ...(typeof record.size === 'number' ? { size: record.size } : {}),
+        }]
     })
 }
 
