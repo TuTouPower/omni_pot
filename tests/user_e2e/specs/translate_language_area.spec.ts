@@ -35,12 +35,12 @@ test.describe('@ui translate language area', () => {
             await expect(translate.sourceLanguage()).not.toContainText('auto')
             await expect(translate.targetLanguage()).toContainText('简体中文')
             await expect(translate.targetLanguage()).not.toContainText('zh_cn')
-            await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: 15_000 })
             await expect(translate.detectedLanguage()).not.toContainText('en')
 
             await translate.clickSwap()
             await expect(translate.sourceLanguage()).toContainText('简体中文')
-            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect(translate.targetLanguage()).toContainText('English')
             await expect(translate.detectedLanguage()).toHaveCount(0)
         } finally {
             await omni.stop()
@@ -54,11 +54,11 @@ test.describe('@ui translate language area', () => {
             const result = await omni.api.triggerSelection('hello world')
 
             expect(result.success).toBe(true)
-            await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: 15_000 })
 
             await translate.clickDetectedLanguage()
             await expect(translate.sourceLanguage()).toContainText('简体中文')
-            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect(translate.targetLanguage()).toContainText('English')
             await expect(translate.detectedLanguage()).toHaveCount(0)
         } finally {
             await omni.stop()
@@ -73,11 +73,11 @@ test.describe('@ui translate language area', () => {
 
             expect(result.success).toBe(true)
             await expect(translate.targetLanguage()).toContainText('简体中文')
-            await expect(translate.detectedLanguage()).toContainText('检测为 英文', { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: 15_000 })
 
             await translate.clickDetectedLanguage()
             await expect(translate.sourceLanguage()).toContainText('简体中文')
-            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect(translate.targetLanguage()).toContainText('English')
             await expect(translate.detectedLanguage()).toHaveCount(0)
         } finally {
             await omni.stop()
@@ -95,7 +95,7 @@ test.describe('@ui translate language area', () => {
 
         try {
             server = await omni.startTranslationTestServer()
-            server.set_lingva_response({ translation: 'hello', status: 200 })
+            server.set_mymemory_response({ translated_text: 'hello', status: 200 })
 
             const translate = await omni.translate()
             const result = await omni.api.triggerSelection('你好')
@@ -103,7 +103,7 @@ test.describe('@ui translate language area', () => {
             expect(result.success).toBe(true)
             await expect(translate.sourceInput()).toHaveValue('你好', { timeout: 10_000 })
             await expect(translate.detectedLanguage()).toContainText('检测为 简体中文', { timeout: 15_000 })
-            await expect(translate.targetLanguage()).toContainText('英文')
+            await expect(translate.targetLanguage()).toContainText('English')
             await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).toBe('hello')
         } finally {
             await server?.stop()
@@ -119,20 +119,20 @@ test.describe('@ui translate language area', () => {
 
         try {
             server = await omni.startTranslationTestServer()
-            server.set_lingva_response({ translation: '中文译文', status: 200 })
+            server.set_mymemory_response({ translated_text: '中文译文', status: 200 })
 
             const translate = await omni.translate()
 
             await translate.selectSourceLanguage('en')
-            await expect(translate.sourceLanguage()).toContainText('英文')
+            await expect(translate.sourceLanguage()).toContainText('English')
             await translate.typeSource('hello world')
             await translate.clickTranslate()
             await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).not.toBe('')
             const chinese_result = await first_visible_result_text(translate)
 
             await translate.selectTargetLanguage('ja')
-            server.set_lingva_response({ translation: '日本語訳', status: 200 })
-            await expect(translate.targetLanguage()).toContainText('日语')
+            server.set_mymemory_response({ translated_text: '日本語訳', status: 200 })
+            await expect(translate.targetLanguage()).toContainText('日本語')
             await translate.clickTranslate()
             await expect.poll(async () => {
                 const text = await first_visible_result_text(translate)

@@ -53,7 +53,7 @@
 **文件**: `tests/user_e2e/pages/translate_page.ts`、`tests/user_e2e/specs/translate_result_states.spec.ts`、`tests/user_e2e/specs/translate_window_constraints.spec.ts`、`tests/user_e2e/specs/translate_behavior.spec.ts`
 **问题**: loading、retry、卡片高度、动态翻译、历史写入等测试现在通过 `fulfill_*_translation_once` 控制结果；这稳定但不够真实，容易被误读为服务真实链路。
 **整改**:
-- [x] 新增或复用 E2E fixture 启动本地 HTTP test server，提供 Lingva/MyMemory 兼容响应。
+- [x] 新增或复用 E2E fixture 启动本地 HTTP test server，提供 MyMemory 兼容响应。
 - [x] 让应用照常走真实 service adapter 和真实 HTTP 请求，只把服务 base URL 指向本地 test server。
 - [x] loading 测试：本地服务保持请求挂起，断言 loading UI；释放响应后断言结果展开。
 - [x] retry 测试：本地服务第一次返回 500，第二次返回 200，断言 retry 后真实重新请求并渲染成功结果。
@@ -63,7 +63,7 @@
 - [x] 删除或降级旧的 `fulfill_*_translation_once` 使用；如暂时保留，测试名称必须包含 `stubbed` 或注释说明只测 UI 状态。
 
 **验证**:
-- [x] 搜索 `fulfill_lingva_translation_once`、`fulfill_mymemory_translation_once`，确认只剩必要的 stubbed 测试，且名称/注释清楚。
+- [x] 搜索 `fulfill_mymemory_translation_once`，确认只剩必要的 stubbed 测试，且名称/注释清楚。
 - [x] `npm run test:e2e -- --project=full tests/user_e2e/specs/translate_result_states.spec.ts` 通过。
 - [x] `npm run test:e2e -- --project=full tests/user_e2e/specs/translate_behavior.spec.ts` 通过。
 
@@ -72,7 +72,7 @@
 **文件**: `tests/user_e2e/specs/translate_core.spec.ts`、`tests/user_e2e/specs/external_services.spec.ts`
 **问题**: 本地 test server 可以让 UI 状态稳定，但不能证明真实外部服务适配器可用。
 **整改**:
-- [x] 保留 `external_services.spec.ts` 的真实外部服务请求，继续断言 Bing/Google/DeepL/Lingva/MyMemory/词典服务返回非空且不同于源文。
+- [x] 保留 `external_services.spec.ts` 的真实外部服务请求，继续断言 Bing/Google/DeepL/MyMemory/词典服务返回非空且不同于源文。
 - [x] 在 `translate_core.spec.ts` 保留或补强 default free services UI roundtrip，断言真实外部服务结果进入结果卡，不只是服务函数返回。
 - [x] 对真实服务失败风险高的 case 使用 `@external` 标记和 retries，而不是 mock 替代。
 - [x] 外部服务测试失败时应暴露具体服务名和返回状态，方便判断是代码问题还是网络/上游问题。
@@ -125,7 +125,7 @@
 
 ### Test-Q8: 标清必须保留的 mock，不让它们冒充真测 ✅
 
-**文件**: `tests/integration/test_config.test.ts`、`tests/unit/selection/*.test.ts`、`tests/unit/services/lingva.test.ts`、`tests/user_e2e/specs/i18n.spec.ts`、`tests/user_e2e/specs/updater_and_tray.spec.ts`、`tests/user_e2e/specs/translate_source_area.spec.ts`、`tests/user_e2e/specs/translate_result_cards.spec.ts`
+**文件**: `tests/integration/test_config.test.ts`、`tests/unit/selection/*.test.ts`、`tests/user_e2e/specs/i18n.spec.ts`、`tests/user_e2e/specs/updater_and_tray.spec.ts`、`tests/user_e2e/specs/translate_source_area.spec.ts`、`tests/user_e2e/specs/translate_result_cards.spec.ts`
 **问题**: 有些 mock 必须保留，但需要明确边界。
 **整改**:
 - [x] Electron API mock：保留，因为 Vitest 不是真实 Electron 运行时。

@@ -10,14 +10,20 @@
 // correct branch depending on whether a selection was provided.
 
 import { test, expect } from '../fixtures/test'
+import { AppFixture } from '../fixtures/app_fixture'
 
 test.describe('@ui translate entry merge', () => {
-    test('welcome page shows a single merged translate entry, not two separate ones', async ({ omni }) => {
-        const translate = await omni.translate()
-        const page = translate.sourceInput().page()
-        await expect(page.getByTestId('welcome-translate')).toBeVisible()
-        await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
-        await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
+    test('welcome page shows a single merged translate entry, not two separate ones', async () => {
+        const omni = await AppFixture.start({ config: { welcome_dismissed: false } })
+        try {
+            const translate = await omni.translate()
+            const page = translate.sourceInput().page()
+            await expect(page.getByTestId('welcome-translate')).toBeVisible()
+            await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
+            await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
+        } finally {
+            await omni.stop()
+        }
     })
 
     test('hotkey with a selection performs selection-translate (source filled)', async ({ omni }) => {

@@ -707,32 +707,31 @@ interface DictResult {
 
 ## 13. 翻译服务清单
 
-`src/services/` 注册 22 个翻译服务（`registerAllServices()`，**以代码为准**）：
+`src/services/` 注册 21 个翻译服务（`registerAllServices()`，**以代码为准**）：
 
 | # | 服务 | Key | 认证 / 说明 |
 |---|---|---|---|
 | 1 | 必应 | `bing` | 免费 |
 | 2 | 谷歌 | `google` | 免费（token） |
 | 3 | DeepL | `deepl` | Free / API / DeepLX |
-| 4 | Lingva | `lingva` | 自定义 URL（代理谷歌翻译） |
-| 5 | 剑桥词典 | `cambridge_dict` | 免费（抓取），纯英文数据集，输出词典结果 |
-| 6 | 阿里巴巴 | `alibaba` | AccessKey |
-| 7 | 百度 | `baidu` | MD5 签名 |
-| 8 | 百度领域 | `baidu_field` | MD5 + field |
-| 9 | 彩云小译 | `caiyun` | Token |
-| 10 | 牛翻译 | `niutrans` | API Key |
-| 11 | 有道 | `youdao` | MD5 签名 |
-| 12 | 火山引擎 | `volcengine` | AppID + Secret |
-| 13 | TranSmart | `transmart` | Username + Token |
-| 14 | 腾讯 | `tencent` | TC3-HMAC-SHA256 |
-| 15 | OpenAI | `openai` | API Key，流式 |
-| 16 | ChatGLM | `chatglm` | API Key，流式 |
-| 17 | Gemini Pro | `geminipro` | API Key，流式 |
-| 18 | Ollama | `ollama` | 本地，流式 |
-| 19 | MyMemory | `mymemory` | 免费 |
-| 20 | 中文词典 | `chinese_dictionary` | 离线（mapull SQLite，320K 词/16K 字/50K 成语），输出词典结果 |
-| 21 | Free Dictionary | `free_dictionary` | 免费（dictionaryapi.dev），英文词典，输出词典结果 |
-| 22 | ECDict | `ecdict` | 离线（CC-CEDICT SQLite），输出中英词典结果 |
+| 4 | 剑桥词典 | `cambridge_dict` | 免费（抓取），纯英文数据集，输出词典结果 |
+| 5 | 阿里巴巴 | `alibaba` | AccessKey |
+| 6 | 百度 | `baidu` | MD5 签名 |
+| 7 | 百度领域 | `baidu_field` | MD5 + field |
+| 8 | 彩云小译 | `caiyun` | Token |
+| 9 | 牛翻译 | `niutrans` | API Key |
+| 10 | 有道 | `youdao` | MD5 签名 |
+| 11 | 火山引擎 | `volcengine` | AppID + Secret |
+| 12 | TranSmart | `transmart` | Username + Token |
+| 13 | 腾讯 | `tencent` | TC3-HMAC-SHA256 |
+| 14 | OpenAI | `openai` | API Key，流式 |
+| 15 | ChatGLM | `chatglm` | API Key，流式 |
+| 16 | Gemini Pro | `geminipro` | API Key，流式 |
+| 17 | Ollama | `ollama` | 本地，流式 |
+| 18 | MyMemory | `mymemory` | 免费 |
+| 19 | 中文词典 | `chinese_dictionary` | 离线（mapull SQLite，320K 词/16K 字/50K 成语），输出词典结果 |
+| 20 | Free Dictionary | `free_dictionary` | 免费（dictionaryapi.dev），英文词典，输出词典结果 |
+| 21 | ECDict | `ecdict` | 离线（CC-CEDICT SQLite），输出中英词典结果 |
 
 > 与原 Pot Desktop 3.0.7 的差异：本项目用 `mymemory`、`free_dictionary` 替代了原版的
 > `yandex`、`bing_dict`。
@@ -1136,7 +1135,7 @@ export async function getSelectedText(): Promise<string>
 - **单元测试（Vitest）**：服务接口、工具函数、状态管理逻辑
 - **集成测试（Vitest）**：IPC 通信、配置读写、数据库操作、选中文本提取的主方案/回退切换
 - **E2E 测试（Playwright）**：窗口行为、翻译流程、OCR 流程、字典流程、剪贴板流程
-- 无需密钥的外部服务（Bing、DeepL 免费模式、MyMemory、Google、Lingva、Free Dictionary、Cambridge、Edge TTS、Lingva TTS）需要真实连通性测试；需要密钥的服务使用契约测试和配置校验
+- 无需密钥的外部服务（Bing、DeepL 免费模式、MyMemory、Google、Free Dictionary、Cambridge、Edge TTS）需要真实连通性测试；需要密钥的服务使用契约测试和配置校验
 - 覆盖率目标：80%+
 - E2E 通过 HTTP server 的 `OMNI_POT_E2E` 专用端点注入文本、触发流程
 

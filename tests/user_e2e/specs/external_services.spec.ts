@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import { bingService } from '../../../src/services/bing'
 import { googleService } from '../../../src/services/google'
 import { deeplService } from '../../../src/services/deepl'
-import { lingvaService } from '../../../src/services/lingva'
 import { mymemoryService } from '../../../src/services/mymemory'
 import { cambridgeDictService } from '../../../src/services/cambridge_dict'
 import { freeDictionaryService } from '../../../src/services/free_dictionary'
@@ -77,7 +76,6 @@ test.describe('@external external service health', () => {
                 { type: 'deeplx_free' }
             )
         },
-        { name: 'Lingva Translate', run: () => lingvaService.translate('hello world', 'en', 'zh_cn', {}) },
         { name: 'MyMemory', run: () => mymemoryService.translate('hello world', 'en', 'zh_cn', {}) },
         { name: 'Cambridge Dictionary', run: () => cambridgeDictService.translate('hello', 'en', 'zh_cn', {}) },
         { name: 'Free Dictionary', run: () => freeDictionaryService.translate('hello', 'en', 'zh_cn', {}) },

@@ -6,7 +6,7 @@ test.describe('@ui translate titlebar', () => {
         const translate = await omni.translate()
 
         await expect(translate.wordmark()).toContainText('Omni Pot')
-        await expect(translate.modeLabel()).toHaveText('翻译')
+        await expect(translate.modeLabel()).toHaveText('Translate')
         expect(await translate.titlebarOrder()).toEqual(['topmost', 'pin', 'wordmark', 'mode', 'close'])
         await expect.poll(async () => await translate.modeLabelHasPillBackground()).toBe(false)
         await expect.poll(async () => await translate.titlebarAppRegion()).toBe('drag')

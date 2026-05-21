@@ -36,8 +36,11 @@ test.describe('@ui translate welcome empty state', () => {
 
             const translate_kbd = page.getByTestId('welcome-translate').locator('kbd')
             await expect(translate_kbd).toHaveCount(3)
-            await expect(translate_kbd.first()).toContainText('Control')
+            await expect(translate_kbd.first()).toContainText('Ctrl')
             await expect(translate_kbd.last()).toContainText('T')
+
+            // Spec §5.5: 快捷键提示必须按平台展示修饰键，不得把 CommandOrControl 原样展示。
+            await expect(welcome).not.toContainText('CommandOrControl')
         } finally {
             await omni.stop()
         }

@@ -258,15 +258,6 @@ deviceId={uuid}&locale=zh-CN&source=en&target=zh-CN&text=hello&...
 
 ---
 
-### 11. Lingva Translate — Cloudflare 拦截
-
-- **API 端点：** `GET https://lingva.ml/api/v1/{from}/{to}/{text}`
-- **问题：** 公共实例被 Cloudflare 拦截，返回 JS challenge 页面
-- **替代方案：** 自部署 Lingva 实例可免费使用
-- **结论：** 公共实例不可用
-
----
-
 ## 离线/需要额外数据的插件（未测试）
 
 | 插件 | 说明 |

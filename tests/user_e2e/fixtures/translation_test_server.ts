@@ -117,7 +117,16 @@ export class TranslationTestServer {
     // --- Response control ---
 
     set_lingva_response(response: LingvaResponseControl | null): void {
-        this.lingva_response = response
+        // Compatibility: lingva service was removed; redirect to mymemory.
+        if (response === null) {
+            this.mymemory_response = null
+        } else {
+            this.mymemory_response = {
+                translated_text: response.translation,
+                delay_ms: response.delay_ms,
+                status: response.status,
+            }
+        }
     }
 
     set_mymemory_response(response: MyMemoryResponseControl | null): void {

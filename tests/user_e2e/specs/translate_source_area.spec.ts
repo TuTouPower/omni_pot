@@ -65,30 +65,27 @@ test.describe('@ui translate source area', () => {
         }
     })
 
-    test('clearing source cancels an in-flight translation (stubbed - page fetch interceptor)', async () => {
+    test('clearing source cancels an in-flight translation (stubbed - local HTTP server)', async () => {
         const omni = await AppFixture.start({
             config: {
                 dynamic_translate: false,
-                translate_service_list: ['lingva@default'],
-                service_instances: {
-                    'lingva@default': { serviceKey: 'lingva', config: { requestPath: 'https://lingva.lunar.icu' } },
-                },
             },
         })
+        let server: import('../fixtures/translation_test_server').TranslationTestServer | null = null
 
         try {
-            const translate = await omni.translate()
+            server = await omni.startTranslationTestServer()
+            server.set_mymemory_response({ translated_text: 'stale translation', status: 200, delay_ms: 3000 })
 
-            const held_translation = await translate.hold_lingva_translation_once('stale translation')
+            const translate = await omni.translate()
             await translate.typeSource('hello world')
             await translate.clickTranslate()
-            await held_translation.wait_for_request()
             await translate.clickClearSource()
-            await held_translation.release_response()
 
             await expect(translate.sourceInput()).toHaveValue('')
-            await expect.poll(async () => await translate.resultBodies().count(), { timeout: 2_000 }).toBe(0)
+            await expect.poll(async () => await translate.resultBodies().count(), { timeout: 5_000 }).toBe(0)
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })

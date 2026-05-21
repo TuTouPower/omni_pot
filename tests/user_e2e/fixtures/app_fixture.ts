@@ -179,16 +179,12 @@ export class AppFixture {
         await this.api.setConfig({
             service_instances: {
                 ...current_instances,
-                'lingva@e2e': {
-                    serviceKey: 'lingva',
-                    config: { requestPath: base_url },
-                },
                 'mymemory@e2e': {
                     serviceKey: 'mymemory',
                     config: { custom_url: base_url },
                 },
             },
-            translate_service_list: ['lingva@e2e', 'mymemory@e2e'],
+            translate_service_list: ['mymemory@e2e'],
         })
 
         return server

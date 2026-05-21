@@ -66,7 +66,7 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
                         <Icons.Drag size={14} />
                     </span>
                     <SvcTile name={serviceKey} />
-                    <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{svcLabel(serviceKey)}</div>
+                    <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{svcLabel(serviceKey)}</div>
                     {isLoading && (
                         <span className="dots" data-testid="dict-loading" aria-label="查询中" title="查询中…">
                             <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>查询中…</span>
@@ -534,38 +534,6 @@ export default function DictWindow(): React.ReactElement {
                             {detectedLanguage && <>{t('detected_language_prefix', { defaultValue: '检测为' })} <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{native_language_name(t, detectedLanguage)}</span></>}
                         </span>
                         <div style={{ flex: 1 }} />
-                        {ttsAvailable && (
-                            <button
-                                className={'ic-btn' + (ttsPlayingKey === 'source' ? ' brand' : '')}
-                                data-testid="dict-source-tts-btn"
-                                title={ttsPlayingKey === 'source' ? t('tts_stop', { defaultValue: '停止朗读' }) : t('result.tts', { defaultValue: '朗读' })}
-                                onClick={() => {
-                                    if (ttsPlayingKey) { stopTts(); return; }
-                                    if (!word.trim()) return
-                                    const instanceKey = ttsServiceList[0]
-                                    if (!instanceKey) return
-                                    const svcKey = getServiceKey(instanceKey)
-                                    const ttsService = ttsServiceRegistry.get(svcKey)
-                                    if (!ttsService) return
-                                    const request_id = ttsRequestRef.current + 1
-                                    ttsRequestRef.current = request_id
-                                    setTtsPlayingKey('source')
-                                    const instanceConfig = get_service_config(serviceInstances, instanceKey)
-                                    try {
-                                        const handle = ttsService.play(word.trim(), sourceLangRef.current, instanceConfig)
-                                        const reset = (): void => {
-                                            if (ttsRequestRef.current === request_id) setTtsPlayingKey(null)
-                                            if (ttsCleanupRef.current === reset) ttsCleanupRef.current = null
-                                        }
-                                        ttsCleanupRef.current = () => { handle.stop(); reset() }
-                                        handle.done.then(reset, reset)
-                                    } catch { setTtsPlayingKey(null) }
-                                }}
-                                style={ttsPlayingKey === 'source' ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
-                            >
-                                <Icons.Volume size={16} fill={ttsPlayingKey === 'source'} />
-                            </button>
-                        )}
                         <button
                             className="ic-btn"
                             data-testid="dict-copy-btn"

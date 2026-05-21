@@ -339,7 +339,7 @@ class TranslatePage {
 
 - 每个启用的翻译实例渲染一张卡片
 - 卡片右上角同一行操作按钮顺序：朗读、复制、收藏、折叠
-- **点击朗读** → 配置真实 Lingva TTS 服务后按钮进入播放态；再次点击停止播放；音频仍在加载时再次点击不会重复发起 TTS 请求
+- **点击朗读** → 配置真实 TTS 服务后按钮进入播放态；再次点击停止播放；音频仍在加载时再次点击不会重复发起 TTS 请求
 - **点击折叠** → 卡片主体收起/展开；折叠图标尺寸接近正文
 - **点击复制** → 剪贴板为该卡片译文
 - **点击收藏** → 触发收藏，无异常
@@ -470,7 +470,7 @@ class TranslatePage {
 ### 5.14 external_services.spec.ts — 外部服务真实连通性
 
 - 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查
-- 覆盖无密钥外部服务：Bing、Google、DeepL 免费模式、Lingva、MyMemory、Cambridge、Free Dictionary、Edge TTS、Lingva TTS
+- 覆盖无密钥外部服务：Bing、Google、DeepL 免费模式、MyMemory、Cambridge、Free Dictionary、Edge TTS
 - 不使用 route/mock；公共服务不可达时测试应失败并暴露具体服务
 
 ### 5.15 updater_and_tray.spec.ts — 更新器 + 托盘
@@ -532,7 +532,7 @@ class TranslatePage {
 > 用于需要控制服务响应时序或内容的 UI 状态测试（loading、retry、长文本布局、
 > 动态翻译 debounce、历史写入等）。**不用于替代真实外部服务连通性测试**。
 
-- 启动本地 HTTP test server（Node.js `http.createServer`），提供 Lingva / MyMemory
+- 启动本地 HTTP test server（Node.js `http.createServer`），提供 MyMemory
   兼容响应格式。
 - 通过 E2E config 或环境变量将服务 base URL 指向本地 test server，
   让应用照常走真实 service adapter 和真实 HTTP 请求。

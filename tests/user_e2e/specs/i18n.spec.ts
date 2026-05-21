@@ -119,7 +119,7 @@ test.describe('@ui i18n', () => {
             await expect(translate.sourceLanguageButton()).toContainText('自动检测')
             await expect(translate.targetLanguageButton()).toContainText('简体中文')
             await expect(translate.detectedLanguage()).toContainText('检测为')
-            await expect(translate.detectedLanguage()).toContainText('英文')
+            await expect(translate.detectedLanguage()).toContainText('English')
             await expect(config.title()).toContainText('通用')
             await expect(config.nav('hotkey')).toContainText('快捷键')
             await expect(config.setting('cfg-app_language')).toContainText('简体中文')
@@ -146,13 +146,21 @@ test.describe('@ui i18n', () => {
             const updater = await omni.mockUpdate(MOCK_RELEASE)
 
             await expect(translate.sourceLanguageButton()).toContainText('Auto Detect')
-            await expect(translate.targetLanguageButton()).toContainText('Simplified Chinese')
+            await expect(translate.targetLanguageButton()).toContainText('简体中文')
             await translate.typeSource('hello world')
             await translate.clickTranslate()
             await expect(translate.detectedLanguage()).toContainText('Detected as', { timeout: 15_000 })
             await expect(translate.detectedLanguage()).toContainText('English')
             await expect(updater.body()).toContainText('Changelog')
             await expect(updater.laterButton()).toContainText('Later')
+
+            // Spec §28: 缺失 key 必须显示明确 fallback，不展示原始翻译 key。
+            const page = translate.sourceInput().page()
+            await expect(page.locator('body')).not.toContainText('welcome.translate')
+            await expect(page.locator('body')).not.toContainText('Delete_spaces')
+            await expect(page.locator('body')).not.toContainText('Delete_newline')
+            await expect(page.locator('body')).not.toContainText('source.copy')
+            await expect(page.locator('body')).not.toContainText('source.clear')
         } finally {
             await omni.stop()
         }

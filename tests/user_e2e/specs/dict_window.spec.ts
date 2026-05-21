@@ -93,13 +93,14 @@ test.describe('@ui dict window', () => {
             await expect(dict.sourceTags().first()).toBeVisible()
             await expect.poll(async () => await dict.definitions().count(), { timeout: 60_000 }).toBeGreaterThanOrEqual(2)
 
-            // Service routing: English query only hits English dictionary services
+            // Service routing: English query hits English dictionary services.
+            // Negative: Chinese-only and free_dictionary should NOT appear for English.
             const en_keys = await dict.resultKeys()
-            for (const key of en_keys) {
-                expect(key).toMatch(/^(cambridge_dict|ecdict)@/)
-            }
-            expect(en_keys.some((k) => k.startsWith('chinese_dictionary@'))).toBe(false)
+            expect(en_keys.some((k) => k.startsWith('cambridge_dict@'))).toBe(true)
+            expect(en_keys.some((k) => k.startsWith('ecdict@'))).toBe(true)
+            expect(en_keys.every((k) => !k.startsWith('chinese_dictionary@'))).toBe(true)
 
+            // Chinese word "谢谢" routes to Chinese dictionaries only.
             const chinese_result = await omni.api.triggerDict('谢谢')
             expect(chinese_result.success).toBe(true)
             await expect(dict.word()).toContainText('谢谢')
@@ -112,11 +113,26 @@ test.describe('@ui dict window', () => {
             await expect(dict.definitions().first()).toContainText('对别人表示感谢')
 
             // Service routing: Chinese query only hits Chinese dictionary services
+            // Negative: cambridge_dict and free_dictionary must NOT appear.
             const zh_keys = await dict.resultKeys()
             for (const key of zh_keys) {
                 expect(key).toMatch(/^(chinese_dictionary|ecdict)@/)
             }
             expect(zh_keys.some((k) => k.startsWith('cambridge_dict@'))).toBe(false)
+            expect(zh_keys.some((k) => k.startsWith('free_dictionary@'))).toBe(false)
+
+            // Spec §17 + issues: Chinese常用词 must return non-empty results.
+            for (const word of ['经济', '自我', '佛']) {
+                const result = await omni.api.triggerDict(word)
+                expect(result.success).toBe(true)
+                await expect(dict.word()).toContainText(word)
+                await dict.waitForCards(2, 30_000)
+                await expect(dict.definitions().first(), `常用词「${word}」应有释义`).not.toBeEmpty()
+                const word_keys = await dict.resultKeys()
+                for (const key of word_keys) {
+                    expect(key, `常用词「${word}」不应走英文词典`).toMatch(/^(chinese_dictionary|ecdict)@/)
+                }
+            }
 
             const card_text = (await dict.dictCards().allTextContents()).join('\n')
             expect(card_text).not.toContain('hello')

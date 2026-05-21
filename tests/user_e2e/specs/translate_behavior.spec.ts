@@ -378,7 +378,7 @@ test.describe('@ui translate behavior settings', () => {
             await translate.typeSource('hello fallback target')
             await translate.clickTranslate()
 
-            await expect(translate.detectedLanguage()).toContainText('英文')
+            await expect(translate.detectedLanguage()).toContainText('English')
             await expect(translate.resultBody('mymemory@e2e')).toContainText('回退到第二语言')
         } finally {
             await server?.stop()
@@ -422,8 +422,8 @@ test.describe('@ui translate behavior settings', () => {
             expect(open_result.success).toBe(true)
             const reopened = await omni.translate()
 
-            await expect(reopened.sourceLanguage()).toContainText('英文')
-            await expect(reopened.targetLanguage()).toContainText('日语')
+            await expect(reopened.sourceLanguage()).toContainText('English')
+            await expect(reopened.targetLanguage()).toContainText('日本語')
             await expect.poll(async () => {
                 const bounds = (await omni.api.windowState('translate')).bounds
                 return !!bounds

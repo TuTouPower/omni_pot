@@ -123,13 +123,30 @@
 
 ## 建议下一步（按收益高低）
 
-1. **词典服务分流强断言 + 中文常用词真实返回非空** — 直接关闭 3 条 issues。
-2. **平台化快捷键展示 negative assertion**：全局搜 `CommandOrControl` 字面量在 UI 中不出现，托盘/欢迎页/快捷键页/欢迎页快捷键卡均覆盖。
-3. **置顶按钮全窗口存在性**：词典/识别/截图翻译 spec 加 `titlebar-pin` 选择器存在与点击翻转断言。
-4. **识别/截图翻译切换语言自动重跑**：补 `recognize_window` 用例。
-5. **历史工具栏单行布局 + 启用开关置灰联动**。
-6. **关于页"导出日志"按钮 + 版本号格式**。
-7. **备份导出 zip 再导入回环测试**。
-8. **设置 → 通用页 4 项**：API 端口问号、无代理、文字一行、主题三按钮。
-9. **结果卡片"手动折叠保持态"和"重试只重跑当前实例"**。
-10. **语言检测回退链 + "我爱你"中文不误判日语**。
+1. **词典服务分流强断言 + 中文常用词真实返回非空** — 直接关闭 3 条 issues。 ✅ 已实施
+2. **平台化快捷键展示 negative assertion**：全局搜 `CommandOrControl` 字面量在 UI 中不出现，托盘/欢迎页/快捷键页/欢迎页快捷键卡均覆盖。 ✅ 已实施
+3. **置顶按钮全窗口存在性**：词典/识别/截图翻译 spec 加 `titlebar-pin` 选择器存在与点击翻转断言。 ✅ 已覆盖（dict/recognize titlebarOrder 已含 pin）
+4. **识别/截图翻译切换语言自动重跑**：补 `recognize_window` 用例。 ✅ 已实施
+5. **历史工具栏单行布局 + 启用开关置灰联动**。 ✅ 已实施
+6. **关于页"导出日志"按钮 + 版本号格式**。 ✅ 已实施（含代码修复 about.tsx platform-arch 后缀）
+7. **备份导出 zip 再导入回环测试**。 ✅ 已覆盖（config_history_backup 已有完整闭环测试）
+8. **设置 → 通用页 4 项**：API 端口问号、无代理、文字一行、主题三按钮。 ✅ 已实施
+9. **结果卡片"手动折叠保持态"和"重试只重跑当前实例"**。 ✅ 已实施
+10. **语言检测回退链 + "我爱你"中文不误判日语**。 ⏳ 待实施（需 mock 逐引擎失败的回退顺序）
+
+---
+
+## 已实施（2026-05-21）
+
+| 项 | 改动文件 | 说明 |
+|---|---|---|
+| 词典服务分流强断言 | `dict_window.spec.ts` | 英文查询 negative assertion（no chinese_dictionary）、中文查询 negative assertion（no cambridge_dict / free_dictionary）、"经济"/"自我"/"佛" 常用词非空结果断言 |
+| 平台化快捷键 negative assertion | `tray_layout.spec.ts`、`translate_welcome.spec.ts`、`config_settings.spec.ts` | 托盘弹窗、欢迎页、快捷键设置页均断言不出现 `CommandOrControl` 原始字面量 |
+| 识别/截图翻译切换语言自动重跑 | `recognize_window.spec.ts` | 截图翻译模式切换目标语言后断言 `ocr-translation` 内容更新 |
+| 翻译结果卡片手动折叠保持态 | `translate_result_cards.spec.ts` | 手动折叠后断言 aria-expanded=false，新翻译请求后断言重置为 true |
+| 翻译结果重试只重跑当前实例 | `translate_result_cards.spec.ts` | 两服务一成功一失败，retry 失败服务后断言成功服务未收到新请求（request_count=0） |
+| 设置通用页 4 项断言 | `config_settings.spec.ts` | API 端口问号按钮存在且 href 指向文档、无代理文案/控件、文字标签+同行字号、主题三按钮分段控件 |
+| 历史工具栏单行布局 + 置灰联动 | `config_history_backup.spec.ts` | bounding box y 坐标差 <30、disabled 后搜索/时间筛选/清空 disabled，re-enabled 后恢复 |
+| 关于页版本号格式 | `about.tsx`（代码修复）、`config_settings.spec.ts`（测试） | 版本显示从 `version x.y.z` 改为 `version x.y.z · platform-arch`；测试断言含 `·` 和平台后缀 |
+| 托盘弹窗文案非空 | `tray_layout.spec.ts` | 首次渲染时逐项断言 innerText.trim() 非空 |
+| i18n 缺失 key negative assertion | `i18n.spec.ts` | nb_no 回退语言下断言不出现 `welcome.translate`、`Delete_spaces`、`Delete_newline`、`source.copy`、`source.clear` 等原始 key |

@@ -167,9 +167,9 @@ test.describe('@ui config service management', () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
-                translate_service_list: ['lingva@default'],
+                translate_service_list: ['mymemory@default'],
                 service_instances: {
-                    'lingva@default': { serviceKey: 'lingva', config: {} },
+                    'mymemory@default': { serviceKey: 'mymemory', config: {} },
                 },
             },
         })
@@ -179,19 +179,18 @@ test.describe('@ui config service management', () => {
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')
 
-            await config.openServiceEditor('lingva@default')
+            await config.openServiceEditor('mymemory@default')
             await expect(config.serviceEditModal()).toBeVisible()
-            await config.fillServiceEditor('Lingva E2E', '{\n    "requestPath": "https://lingva.lunar.icu"\n}')
-            await config.fulfillLingvaTestOnce()
+            await config.fillServiceEditor('MyMemory E2E', '{}')
+            await config.fulfillMymemoryTestOnce()
             await config.testServiceConfig()
             await expect(config.serviceTestStatus()).toContainText('测试成功')
             await config.saveServiceConfig()
 
             await expect(config.serviceEditModal()).toHaveCount(0)
-            await expect(config.serviceItem('lingva@default')).toContainText('Lingva E2E')
-            await expect_service_config(omni, 'lingva@default', {
-                requestPath: 'https://lingva.lunar.icu',
-                instanceName: 'Lingva E2E',
+            await expect(config.serviceItem('mymemory@default')).toContainText('MyMemory E2E')
+            await expect_service_config(omni, 'mymemory@default', {
+                instanceName: 'MyMemory E2E',
             })
         } finally {
             await omni.stop()

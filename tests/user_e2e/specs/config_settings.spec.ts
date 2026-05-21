@@ -183,6 +183,44 @@ test.describe('@ui config settings window', () => {
         }
     })
 
+    test('user sees general page layout: API port help button, no proxy, text row, theme segmented control', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+
+        try {
+            const config = await omni.openConfig()
+
+            // Spec §9.3: 本地 API 端口标签右侧有问号按钮，点击打开 API 文档。
+            const help_link = config.page.locator('a.label-help[title="API 文档"]')
+            await expect(help_link).toBeVisible()
+            await expect(help_link).toContainText('?')
+            await expect(help_link).toHaveAttribute('href', /external_api\.md/)
+
+            // Spec §9.3: 不提供代理功能，不显示代理设置卡片。
+            await expect(config.page.locator('body')).not.toContainText('代理')
+            await expect(config.page.locator('[data-testid*="proxy"]')).toHaveCount(0)
+
+            // Spec §9.3: 标签叫"文字"不叫"字体"，字体和字号同行展示，无预览块。
+            const font_row = config.page.locator('.row').filter({ hasText: '文字' })
+            await expect(font_row).toContainText('文字')
+            await expect(font_row).not.toContainText('字体')
+            await expect(config.setting('cfg-app_font')).toBeVisible()
+            await expect(config.setting('cfg-app_font_size')).toBeVisible()
+            // Font and font-size selects share the same parent flex row.
+            const font_select_box = await config.setting('cfg-app_font').boundingBox()
+            const size_select_box = await config.setting('cfg-app_font_size').boundingBox()
+            if (!font_select_box || !size_select_box) throw new Error('font/size selects not visible')
+            expect(Math.abs(font_select_box.y - size_select_box.y), 'font and size should be on the same row')
+                .toBeLessThan(5)
+
+            // Spec §9.3: 主题用三按钮分段控件（非下拉）。
+            await expect(config.setting('cfg-app_theme-system')).toBeVisible()
+            await expect(config.setting('cfg-app_theme-light')).toBeVisible()
+            await expect(config.setting('cfg-app_theme-dark')).toBeVisible()
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user records and clears a hotkey with visible registration status', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
         const hotkey = 'hotkey_translate'
@@ -195,6 +233,10 @@ test.describe('@ui config settings window', () => {
             await bind_hotkey(config, hotkey, 'Control+Alt+Shift+F9')
             await expect(config.hotkeyStatus(hotkey)).not.toBeVisible()
             await expect_config(omni, hotkey, 'CommandOrControl+Shift+Alt+F9')
+
+            // Spec §9.6: 快捷键展示必须按平台把 CommandOrControl 解析成用户可读修饰键。
+            await expect(config.hotkeyField(hotkey)).not.toContainText('CommandOrControl')
+            await expect(config.hotkeyField(hotkey)).toContainText('Ctrl')
 
             await config.hotkeyBindButton(hotkey).click()
             await config.hotkeyField(hotkey).press('Backspace')
@@ -284,7 +326,10 @@ test.describe('@ui config settings window', () => {
             const config = await omni.openConfig()
             await config.openSection('about')
 
+            // Spec §9.10: 版本号格式带平台后缀 version x.y.z · platform-arch。
             await expect(config.aboutVersion()).toContainText(/version \d+\.\d+\.\d+/)
+            await expect(config.aboutVersion()).toContainText(/·/)
+            await expect(config.aboutVersion()).toContainText(/(win32|darwin|linux)-(x64|arm64)/)
             await expect(config.page.getByTestId('about-export-log')).toBeVisible()
             await expect(config.aboutLink('home')).toContainText('官网')
             await expect(config.aboutLink('docs')).toContainText('文档')

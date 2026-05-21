@@ -5,6 +5,18 @@ import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow } from './config_components'
 
 const VERSION = '0.1.0'
+
+function platform_arch(): string {
+    try {
+        const proc = typeof process !== 'undefined' ? process : undefined
+        if (proc?.platform && proc?.arch) return `${proc.platform}-${proc.arch}`
+    } catch { /* not in Node context */ }
+    const ua = navigator.userAgent
+    if (/Win/.test(ua)) return 'win32-x64'
+    if (/Mac/.test(ua)) return 'darwin-arm64'
+    if (/Linux/.test(ua)) return 'linux-x64'
+    return 'unknown'
+}
 const REPO_URL = 'https://github.com/TuTouPower/omni_pot'
 
 export default function AboutPage(): React.ReactElement {
@@ -49,7 +61,7 @@ export default function AboutPage(): React.ReactElement {
                     op
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Omni Pot</div>
-                <div className="hint mono" data-testid="about-version">version {VERSION}</div>
+                <div className="hint mono" data-testid="about-version">version {VERSION} · {platform_arch()}</div>
                 <div className="hint" style={{ maxWidth: 360 }}>
                     一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和内置服务设置。
                 </div>

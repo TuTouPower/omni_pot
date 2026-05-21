@@ -224,8 +224,17 @@ test.describe('@ui recognize window', () => {
         }
     })
 
-    test('screenshot translate mode target language dropdown excludes auto', async () => {
-        const omni = await AppFixture.start({ config: recognize_config })
+    test('screenshot translate mode target language dropdown excludes auto and re-translates on change', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                ...recognize_config,
+                translate_service_list: ['mymemory@default'],
+                service_instances: {
+                    ...recognize_config.service_instances,
+                    'mymemory@default': { serviceKey: 'mymemory', config: {} },
+                },
+            },
+        })
 
         try {
             const recognize = await open_recognize_with_sample(omni, 'Line one\nLine two with spaces', 'translate')
@@ -240,11 +249,25 @@ test.describe('@ui recognize window', () => {
             const auto_option = recognize.page.getByTestId('ocr-target-lang-select-option-auto')
             await expect(auto_option).toHaveCount(0)
 
-            // Select a different target language and verify the bar updates
+            // Spec §8.5: 截图翻译窗口切换翻译目标语言后必须自动重新翻译。
+            // Mock the translation API to verify re-translation is triggered.
+            await recognize.page.evaluate(() => {
+                const original_fetch = window.fetch.bind(window)
+                window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                    if (url.includes('/get') && url.includes('langpair=')) {
+                        return new Response(JSON.stringify({ responseData: { translatedText: 'TARGET_LANG_CHANGED' }, responseStatus: 200 }), { status: 200, headers: { 'content-type': 'application/json' } })
+                    }
+                    return original_fetch(input, init)
+                }
+            })
             const en_option = recognize.page.getByTestId('ocr-target-lang-select-option-en')
             await expect(en_option).toBeVisible()
             await en_option.click()
             await expect(target_select).toContainText('English')
+
+            // Spec §8.5: 切换翻译目标语言后必须自动重新翻译。
+            await expect(recognize.page.getByTestId('ocr-translation')).toContainText('TARGET_LANG_CHANGED', { timeout: 30_000 })
 
             // Source language dropdown still has 'auto'
             await recognize.clickLanguageSelect()

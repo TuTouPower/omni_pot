@@ -17,7 +17,6 @@
 | Bing Translate | 翻译 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 通过 |
 | Google Translate | 翻译 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 失败 |
 | DeepL free / DeepLX free | 翻译 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 通过 |
-| Lingva Translate | 翻译 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 失败 |
 | MyMemory | 翻译 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 通过 |
 | Cambridge Dictionary | 词典 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts)、[dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts) | 通过 |
 | Free Dictionary | 词典 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts)、[dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts) | 通过 |
@@ -27,9 +26,8 @@
 | System OCR | OCR | 否 | [recognize_window.spec.ts](../../tests/user_e2e/specs/recognize_window.spec.ts) | 通过 |
 | QR Code | OCR | 否 | [recognize_window.spec.ts](../../tests/user_e2e/specs/recognize_window.spec.ts) | 通过 |
 | Edge TTS | 语音合成 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 失败 |
-| Lingva TTS | 语音合成 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 失败 |
 
-结论：**按”无需用户配置”的口径，所有服务均已有真实路径测试覆盖。已经覆盖的服务里，当前失败的是 Google Translate、Lingva Translate、Edge TTS、Lingva TTS。**
+结论：**按”无需用户配置”的口径，所有服务均已有真实路径测试覆盖。已经覆盖的服务里，当前失败的是 Google Translate、Edge TTS。**
 
 ---
 
@@ -41,7 +39,7 @@
 OMNI_POT_EXTERNAL_SERVICE_TESTS=1 npm run test:e2e -- specs/external_services.spec.ts
 ```
 
-这套测试只覆盖无需用户配置的公网服务：Bing、Google、DeepL free、Lingva Translate、MyMemory、Cambridge Dictionary、Free Dictionary、Edge TTS、Lingva TTS。真实失败必须暴露，不能用 Playwright route mock 隐藏。
+这套测试只覆盖无需用户配置的公网服务：Bing、Google、DeepL free、MyMemory、Cambridge Dictionary、Free Dictionary、Edge TTS。真实失败必须暴露，不能用 Playwright route mock 隐藏。
 
 ---
 
@@ -114,7 +112,7 @@ OMNI_POT_EXTERNAL_SERVICE_TESTS=1 npm run test:e2e -- specs/external_services.sp
 
 ## 默认启用策略
 
-当前默认翻译服务避开已知不稳定的 Google/Lingva：
+当前默认翻译服务避开已知不稳定的 Google：
 
 - 默认翻译：Bing、DeepL free、MyMemory
 - 默认词典：Chinese Dictionary、Free Dictionary、ECDICT

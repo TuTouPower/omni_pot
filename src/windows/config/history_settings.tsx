@@ -16,7 +16,7 @@ const TIME_FILTERS = [
 
 const SVC_ABBR: Record<string, string> = {
     bing: 'BI', deepl: 'DL', google: 'GG', openai: 'AI', mymemory: 'MM',
-    free_dictionary: 'FD', geminipro: 'GP', lingva: 'LV', baidu: 'BD',
+    free_dictionary: 'FD', geminipro: 'GP', baidu: 'BD',
     tencent: 'TC', alibaba: 'AL', caiyun: 'CY', youdao: 'YD',
     sogai: 'SG', translatetranslate: 'TT', ecdict: 'EC', cambridge_dict: 'CD',
 }
@@ -215,6 +215,9 @@ export default function HistorySettings(): React.ReactElement {
                 <div className="between">
                     <div data-testid="history-count" className="hint mono">
                         显示 {(page - 1) * PAGE_SIZE + 1} – {Math.min(page * PAGE_SIZE, total)} / 共 {total.toLocaleString()} 条
+                        <span data-testid="history-current-page" data-page={page} style={{ display: 'none' }}>{page}</span>
+                        <span data-testid="history-total-pages" data-page={total_pages} style={{ display: 'none' }}>{total_pages}</span>
+                        <span data-testid="history-page" style={{ display: 'none' }}>{page} / {total_pages}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                         <button data-testid="history-prev" className="btn ghost icon sm" disabled={page <= 1 || disabled} onClick={() => { setPage(page - 1); }}>

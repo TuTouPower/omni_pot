@@ -90,6 +90,7 @@ export const cambridgeDictService: TranslateService = {
                             region: regex_capture(region_match, 1).trim(),
                             phonetic: regex_capture(symbol_match, 1).trim()
                         })
+                        if (pronunciations.length >= 2) break
                     }
                 }
             }

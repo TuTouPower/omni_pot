@@ -203,8 +203,8 @@ OMNI_POT_EXTERNAL_SERVICE_TESTS=1 npx playwright test tests/user_e2e/specs/exter
 ```
 
 > 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查。
-> 覆盖无密钥外部服务（Bing、Google、DeepL 免费、Lingva、MyMemory、Cambridge、
-> Free Dictionary、Edge TTS、Lingva TTS）。CI nightly 跑此项；PR 不跑。
+> 覆盖无密钥外部服务（Bing、Google、DeepL 免费、MyMemory、Cambridge、
+> Free Dictionary、Edge TTS）。CI nightly 跑此项；PR 不跑。
 
 ### 分层执行说明
 

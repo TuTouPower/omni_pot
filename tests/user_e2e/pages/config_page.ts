@@ -356,6 +356,27 @@ export class ConfigPage {
         }, translation)
     }
 
+    async fulfillMymemoryTestOnce(translation = '你好'): Promise<void> {
+        await this.page.evaluate((translation_text: string) => {
+            const original_fetch = window.fetch.bind(window)
+            let consumed = false
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (!consumed && url.includes('/get') && url.includes('langpair=')) {
+                    consumed = true
+                    return new Response(JSON.stringify({
+                        responseData: { translatedText: translation_text },
+                        responseStatus: 200,
+                    }), {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    })
+                }
+                return original_fetch(input, init)
+            }
+        }, translation)
+    }
+
     async dragService(sourceKey: string, targetKey: string): Promise<void> {
         const source_handle = this.serviceDragHandle(sourceKey)
         const target_item = this.serviceItem(targetKey)

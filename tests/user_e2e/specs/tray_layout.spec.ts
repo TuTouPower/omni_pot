@@ -38,6 +38,15 @@ test.describe('@ui tray popover layout', () => {
             await expect(item, `missing tray item: ${testid}`).toBeVisible()
         }
 
+        // Spec §21: 快捷键展示必须按平台转换修饰键，不得显示 CommandOrControl。
+        await expect(popover).not.toContainText('CommandOrControl')
+
+        // Spec §21: 弹窗必须在 renderer 内容就绪后显示，不允许先显示空白弹窗。
+        for (const testid of REQUIRED_ACTIONS) {
+            const item_text = await tray_page.getByTestId(testid).innerText()
+            expect(item_text.trim(), `tray item ${testid} should have visible text`).not.toBe('')
+        }
+
         // At least one visual separator between groups (matches demo design).
         const separator_count = await tray_page.locator('[data-testid="tray-separator"]').count()
         expect(separator_count, '托盘菜单需有分组分隔线').toBeGreaterThanOrEqual(2)

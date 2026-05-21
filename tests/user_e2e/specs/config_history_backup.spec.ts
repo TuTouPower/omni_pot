@@ -9,13 +9,13 @@ test.describe('@ui config history and backup settings', () => {
 
         try {
             server = await omni.startTranslationTestServer()
-            server.set_lingva_response({ translation: '历史译文', status: 200 })
+            server.set_mymemory_response({ translated_text: '历史译文', status: 200 })
 
             const translate = await omni.translate()
 
             await translate.typeSource('history source text')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@e2e')).toContainText('历史译文')
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('历史译文')
 
             const config = await omni.openConfig()
             await config.openSection('history')
@@ -23,7 +23,7 @@ test.describe('@ui config history and backup settings', () => {
             const row = config.historyRowBySource('history source text')
             await expect(config.historyRows()).toHaveCount(1)
             await expect(row.getByTestId('history-language')).toContainText(/EN.*ZH/)
-            await expect(row.getByTestId('history-service')).toContainText('lingva@e2e')
+            await expect(row.getByTestId('history-service-tile')).toContainText('mymemory@e2e')
             await expect(row.getByTestId('history-target')).toContainText('历史译文')
             await expect(row.getByTestId('history-created-at')).not.toBeEmpty()
             await expect.poll(async () => config.historyRecordCount()).toBe(1)
@@ -54,7 +54,7 @@ test.describe('@ui config history and backup settings', () => {
             const config = await omni.openConfig()
             for (let index = 1; index <= 25; index += 1) {
                 await config.addHistoryRecord({
-                    service_key: 'lingva@default',
+                    service_key: 'mymemory@default',
                     source_text: `source ${String(index)}`,
                     source_lang: 'en',
                     target_text: `译文 ${String(index)}`,
@@ -85,13 +85,13 @@ test.describe('@ui config history and backup settings', () => {
 
         try {
             server = await omni.startTranslationTestServer()
-            server.set_lingva_response({ translation: '不会写入历史', status: 200 })
+            server.set_mymemory_response({ translated_text: '不会写入历史', status: 200 })
 
             const translate = await omni.translate()
 
             await translate.typeSource('disabled history source')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@e2e')).toContainText('不会写入历史')
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('不会写入历史')
 
             const config = await omni.openConfig()
             await config.openSection('history')
@@ -103,29 +103,73 @@ test.describe('@ui config history and backup settings', () => {
         }
     })
 
+    test('history toolbar renders all controls on one row and disable switch grays out other controls', async () => {
+        const omni = await AppFixture.start({ config: { history_disable: false } })
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('history')
+
+            // Spec §9.8: 启用开关 + 搜索 + 服务筛选 + 时间筛选 + 清空一行完整展示。
+            const disable_switch = config.setting('cfg-history_disable')
+            const search = config.page.getByTestId('history-search')
+            const service_filter = config.page.getByTestId('history-service-filter')
+            const time_filter = config.page.getByTestId('history-time-filter')
+            const clear = config.page.getByTestId('history-clear')
+
+            await expect(disable_switch).toBeVisible()
+            await expect(search).toBeVisible()
+            await expect(service_filter).toBeVisible()
+            await expect(time_filter).toBeVisible()
+            await expect(clear).toBeVisible()
+
+            // All controls should share a similar y coordinate (same row).
+            const boxes = await Promise.all([
+                disable_switch.boundingBox(),
+                search.boundingBox(),
+                service_filter.boundingBox(),
+                time_filter.boundingBox(),
+                clear.boundingBox(),
+            ])
+            const y_values = boxes.filter((b): b is NonNullable<typeof b> => b !== null).map((b) => b.y)
+            const max_y_spread = Math.max(...y_values) - Math.min(...y_values)
+            expect(max_y_spread, 'history toolbar controls should be on one row').toBeLessThan(50)
+
+            // Spec §9.8: 启用关闭时其余控件置灰禁用。
+            await disable_switch.click()
+            await expect(search).toBeDisabled()
+            await expect(time_filter).toBeDisabled()
+            await expect(clear).toBeDisabled()
+
+            // Re-enable.
+            await disable_switch.click()
+            await expect(search).toBeEnabled()
+            await expect(time_filter).toBeEnabled()
+            await expect(clear).toBeEnabled()
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user creates a local backup and restores config and history after restart', async () => {
         const omni = await AppFixture.start({ config: { backup_type: 'webdav' } })
         let server: TranslationTestServer | null = null
 
         try {
             server = await omni.startTranslationTestServer()
-            server.set_lingva_response({ translation: '备份前译文', status: 200 })
+            server.set_mymemory_response({ translated_text: '备份前译文', status: 200 })
 
             const translate = await omni.translate()
             await translate.typeSource('backup history source')
             await translate.clickTranslate()
-            await expect(translate.resultBody('lingva@e2e')).toContainText('备份前译文')
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('备份前译文')
 
             const config = await omni.openConfig()
             await expect.poll(async () => config.historyRecordCount()).toBe(1)
             await config.openSection('backup')
 
             await expect(config.field('cfg-webdav_url')).toBeVisible()
-            await config.setting('cfg-backup_type').click()
-            await expect(config.selectOption('cfg-backup_type', 'webdav')).toBeVisible()
-            await expect(config.selectOption('cfg-backup_type', 'local')).toBeVisible()
-            await expect(config.selectOption('cfg-backup_type', 'aliyun')).toHaveCount(0)
-            await config.selectOption('cfg-backup_type', 'local').click()
+            await config.setting('cfg-backup_type-local').click()
             await expect(config.field('cfg-webdav_url')).toHaveCount(0)
             await expect.poll(async () => (await omni.api.getConfig()).backup_type).toBe('local')
 
