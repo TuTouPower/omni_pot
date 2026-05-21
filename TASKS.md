@@ -194,24 +194,24 @@ P1（cld3 重构）相关检测测试待 P1 完成后再补，本段不重复列
 
 - [x] **spec §5.4 结果卡片拖拽排序** — 拖拽后 `translate_service_list` 顺序更新；`translate_result_cards.spec.ts` 已覆盖启用服务排序和禁用服务穿插时的完整设置顺序
 - [x] **spec §5.4 翻译窗口 DictResult 渲染** — 翻译结果为词典型时渲染发音/释义/例句结构；`translate_result_cards.spec.ts` 已用确定性 Free Dictionary 响应覆盖
-- [ ] **spec §9.12 日志系统** — `electron-log` 轮转、renderer 日志转发、API key 脱敏；无 unit/integration 覆盖
+- [x] **spec §9.12 日志系统** — `electron-log` 轮转、renderer 日志转发、API key 脱敏；`log.test.ts` / `manager_log.test.ts` 已覆盖日志路径、5MB 轮转、打包/开发级别、renderer console 转发和敏感字段脱敏
 - [x] **spec §27 自动更新下载安装** — "立即更新"触发下载 + 进度条 + 安装；`updater_and_tray.spec.ts` 已用本地 HTTP 资产覆盖下载进度到 100% 与 E2E 安装分支
 - [x] **spec §6.2 词典源词卡片编辑重查** — `contentEditable` 编辑后 Enter 重查；`dict_window.spec.ts` 已覆盖源词编辑后重新查询并刷新结果
-- [ ] **spec §21 托盘"重启"/"退出"动作** — `tray_layout.spec.ts` 只断言菜单项存在，未触发动作
+- [x] **spec §21 托盘"重启"/"退出"动作** — `updater_and_tray.spec.ts` 已在 E2E 安全分支触发 restart/quit 并确认应用仍可响应后续托盘动作
 
 ### P5.2 有测试但断言不足
 
-- [ ] **spec §5.2 源文本 TTS 状态机** — 朗读按钮忙碌/播放态、再次点击取消、清空原文停止；`translate_source_area.spec.ts` 缺 TTS 用例
-- [ ] **spec §8.3 识别窗口"复制图片"** — 复制图片到剪贴板路径；`recognize_window.spec.ts` 只测复制文本
-- [ ] **spec §8.5 切换识别目标语言自动重翻译** — `recognize_window.spec.ts` 测了切换引擎重识别，缺切换目标语言自动重翻译
-- [ ] **spec §9.8 历史工具栏搜索/筛选** — 搜索框、服务筛选、时间筛选；`config_history_backup.spec.ts` 缺
-- [ ] **spec §5.5 欢迎页跳转快捷键 tab** — `translate_welcome.spec.ts` 只验证设置窗口打开，未断言精确落在快捷键 tab
-- [ ] **spec §10 更新器版本对比格式** — `updater_and_tray.spec.ts` 缺 `3.0.6 → 3.1.0 · 日期 · 包大小` 格式断言
+- [x] **spec §5.2 源文本 TTS 状态机** — 朗读按钮启停、播放态、再次点击取消、清空原文停止、当前文本语言选择；`translate_source_area.spec.ts` 已覆盖
+- [x] **spec §8.3 识别窗口"复制图片"** — 复制图片经主进程写入系统剪贴板，`recognize_window.spec.ts` 已通过 E2E 图片剪贴板端点断言尺寸
+- [x] **spec §8.5 切换识别目标语言自动重翻译** — `recognize_window.spec.ts` 已覆盖截图翻译模式切换目标语言后自动重新翻译
+- [x] **spec §9.8 历史工具栏搜索/筛选** — 搜索框、服务实例筛选、时间筛选；`config_history_backup.spec.ts` 已覆盖
+- [x] **spec §5.5 欢迎页跳转快捷键 tab** — `translate_welcome.spec.ts` 断言“设置快捷键”精确打开设置页 hotkey tab
+- [x] **spec §10 更新器版本对比格式** — `updater_and_tray.spec.ts` 已断言 `3.0.6 → 3.1.0 · 日期 · 包大小` 格式
 
 ### P5.3 设计文档未落地
 
-- [ ] **test_user_e2e.md §5 `data/` 目录** — 设计了样例图片、OCR 语言包目录，`tests/user_e2e/` 下不存在；要么补建、要么从设计文档移除
-- [ ] **test_user_e2e.md §5 `pages/tray.ts`** — 设计了托盘 Page Object，实际不存在（托盘测试直接走 API）；要么补建、要么从设计文档移除
+- [x] **test_user_e2e.md §5 `data/` 目录** — 文档已改为记录样例图片当前放在 `fixtures/qr_test.png`，后续大量 OCR 样图再拆 `data/`
+- [x] **test_user_e2e.md §5 `pages/tray.ts`** — 文档已改为记录托盘测试走 `/e2e/tray-action` 与 `/e2e/tray-menu`，无需 Page Object
 
 > 备注：specs/ 目录有若干文件（`translate_welcome` / `translate_entry_merge` / `translate_input_rows` / `translate_pin_topmost` / `translate_result_states` / `translate_window_constraints` / `tray_layout` / `terminology_settings` / `window_rounded_corner` / `dict_card_height` / `dict_issues`）超出 test_user_e2e.md 原始规划，是后续 issue 衍生的正向扩展，不算缺口。
 

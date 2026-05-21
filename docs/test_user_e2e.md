@@ -211,7 +211,7 @@ class TranslatePage {
   `data-result-key` / `data-result-content` / `data-result-error`
 - 词典：标题栏基础选择器、`dict-word`、`dict-card`、`dict-source-tag`
 - 识别：标题栏基础选择器、`ocr-image`、`ocr-text`、`ocr-engine-select`、
-  `ocr-lang-select`、`ocr-reocr-btn`、`ocr-newline-btn`、`ocr-space-btn`、
+  `ocr-lang-select`、`ocr-reocr-btn`、`ocr-copy-image-btn`、`ocr-newline-btn`、`ocr-space-btn`、
   `ocr-copy-btn`、`ocr-export-btn`、`ocr-translate-btn`
 - 截图：`shot-overlay`、`shot-selection`、`shot-size-label`、`shot-hint`
 - 设置：`config-wordmark`、`config-titlebar`、`config-minimize`、`config-maximize`,
@@ -220,9 +220,10 @@ class TranslatePage {
   `svc-add-option`、`svc-delete`、`svc-move-up`、`svc-move-down`、`svc-drag-handle`、
   `svc-toggle`、`svc-edit`、`svc-edit-modal`、`svc-edit-name`、`svc-edit-config`、
   `svc-test`、`svc-test-status`、`svc-edit-save`、
-  历史 `history-row` / `history-clear` / `history-edit-*` / `history-prev` / `history-next`、
+  历史 `history-row` / `history-search` / `history-service-filter` / `history-time-filter` /
+  `history-clear` / `history-edit-*` / `history-prev` / `history-next`、
   备份 `backup-create` / `backup-row` / `backup-restore-*`
-- 更新器：`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
+- 更新器：`updater-release-meta`、`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
 当前 UI 尚未实现的控件不预埋选择器：词典收藏 `dict-collect`、词典朗读 `dict-tts`。
 后续实现这些用户功能时，同步补选择器与对应用户路径 spec。
@@ -232,7 +233,7 @@ class TranslatePage {
 
 当前已有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、
 `/trigger-clipboard-translate`、`/capture-clock`、`POST /e2e/open-window`、
-`POST /e2e/reset-config`、`GET /e2e/clipboard`、`GET /e2e/window-state`、
+`POST /e2e/reset-config`、`GET /e2e/clipboard`、`GET /e2e/clipboard-image`、`GET /e2e/window-state`、
 `POST /e2e/trigger-screenshot`、`POST /e2e/trigger-input-translate`、
 `POST /e2e/tray-action`、`GET /e2e/tray-menu`、`POST /e2e/mock-update`。
 
@@ -241,7 +242,7 @@ class TranslatePage {
 | `POST /e2e/trigger-screenshot` | 触发截图（指定 `recognize` / `translate` mode） |
 | `POST /e2e/trigger-input-translate` | 触发输入翻译入口 |
 | `GET /e2e/window-state` | 查询窗口存在、可见、聚焦、置顶与 bounds 状态 |
-| `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `clipboard_monitor` / `config` / `tray_click` |
+| `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `clipboard_monitor` / `config` / `restart` / `quit` / `tray_click` |
 | `GET /e2e/tray-menu` | 读取原生托盘菜单当前文案，用于验证界面语言切换后的托盘项本地化 |
 | `POST /e2e/mock-update` | 注入一个假的“有新版本”用于更新器测试 |
 
@@ -298,7 +299,7 @@ class TranslatePage {
 - **点击翻译按钮** → 触发翻译、产出结果卡片（issue #5）
 - 翻译按钮只有翻译符号、无“翻译”文字、无独立背景，颜色为主色
 - 点击去除换行 → 源文本换行被规范化
-- 点击朗读 → 配置真实 Edge TTS 服务后触发合成，按钮进入忙碌/播放激活态；再次点击可取消；清空原文会停止朗读
+- 点击朗读 → 配置 `system_tts` 并用 Web Speech stub 控制播放，按钮进入忙碌/播放激活态；再次点击可取消；清空原文会停止朗读
 - 点击复制原文 → `readClipboard()` 等于源文本
 - 点击清空 → 源文本清空；源文本为空时清空按钮禁用
 - 键盘：`Enter` 翻译、`Shift+Enter` 换行、`Escape` 关闭
@@ -406,7 +407,7 @@ class TranslatePage {
 - **翻译页**：语言（源/目标/第二语言，**无检测引擎**）、行为（自动复制开关、增量翻译、动态翻译、自动去除换行、禁用历史）、窗口三组卡片逐项读写持久化；语言下拉项以**该语言自身文字**显示（English / 日本語 / ...），不带 AUTO/ZH 字母前缀
 - **文字识别页**：仅 4 项 —— 默认识别引擎（`recognize_engine`）、默认识别语言（`recognize_language`，默认 auto）、自动去除换行（`recognize_delete_newline`，默认 false）、自动复制（`recognize_auto_copy`，默认 true）。断言**不存在**失焦关闭、隐藏窗口、动态识别、默认导出格式、窗口/截图卡片
 - **快捷键页**：**4 个录入框**（翻译 / 词典 / 文字识别 / 截图翻译）；翻译行 UI 上同时绑定 `hotkey_selection_translate` 与 `hotkey_input_translate`；按钮在未绑定时显示"绑定"、已绑定显示"解绑"（**不出现 × 清除按钮**）；录入组合键、Backspace 清除、绑定按钮注册成功/失败提示；快捷键冲突提示出现在状态细节区域而非常驻在本页；**录入互斥**：点击翻译"绑定" → 点击词典"绑定" → 翻译自动退出录入态，词典进入录入态；绑定成功后**无"绑定成功"文字提示**
-- **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/设置目录、API 地址）
+- **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/设置目录、API 地址）；日志系统的文件路径、5MB 轮转、打包/开发级别、renderer console 转发和敏感字段脱敏由 `tests/unit/log.test.ts`、`tests/unit/windows/manager_log.test.ts` 覆盖
 - **config:changed 广播**：设置窗口改 `app_theme` → 翻译窗口主题同步变化
 
 ### 5.12 config_service_mgmt.spec.ts — 服务管理页
@@ -460,7 +461,7 @@ class TranslatePage {
 托盘：
 
 - 菜单项触发：Input Translate → 打开翻译窗口；Clipboard Monitor → 切换
-  `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口
+  `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口；Restart / Quit 在 E2E 安全分支返回成功且不结束测试进程
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 
 ### 5.17 i18n.spec.ts — 国际化
