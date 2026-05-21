@@ -244,6 +244,10 @@ export class ConfigPage {
         return this.page.evaluate(() => window.electronAPI.history.count())
     }
 
+    historyRecords(): Promise<HistoryRecord[]> {
+        return this.page.evaluate(() => window.electronAPI.history.list(1, 100))
+    }
+
     aboutLink(name: 'home' | 'docs' | 'feedback'): Locator {
         return this.page.getByTestId(`about-${name}-link`)
     }

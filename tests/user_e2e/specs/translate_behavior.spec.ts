@@ -1,26 +1,10 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { TranslationTestServer } from '../fixtures/translation_test_server'
+import type { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const WINDOW_SIZE_TOLERANCE = 8
 
-const MYMEMORY_INSTANCE = {
-    serviceKey: 'mymemory',
-    config: {},
-}
 
-function mymemory_config(config: Record<string, unknown> = {}): Record<string, unknown> {
-    return {
-        app_language: 'zh_cn',
-        dynamic_translate: false,
-        translate_detect_engine: 'local',
-        translate_source_language: 'en',
-        translate_target_language: 'zh_cn',
-        translate_service_list: ['mymemory@default'],
-        service_instances: { 'mymemory@default': MYMEMORY_INSTANCE },
-        ...config,
-    }
-}
 
 function no_service_config(config: Record<string, unknown> = {}): Record<string, unknown> {
     return {
@@ -380,6 +364,36 @@ test.describe('@ui translate behavior settings', () => {
 
             await expect(translate.detectedLanguage()).toContainText('English')
             await expect(translate.resultBody('mymemory@e2e')).toContainText('回退到第二语言')
+            expect(server.requests).toHaveLength(1)
+            expect(new URL(server.requests[0].url, server.base_url).searchParams.get('langpair')).toBe('autodetect|zh-CN')
+        } finally {
+            await server?.stop()
+            await omni.stop()
+        }
+    })
+
+    test('user sees repeated Chinese sentences detected as Chinese', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                app_language: 'zh_cn',
+                translate_detect_engine: 'local',
+                translate_source_language: 'auto',
+                translate_target_language: 'en',
+            },
+        })
+        let server: TranslationTestServer | null = null
+
+        try {
+            server = await omni.startTranslationTestServer()
+            server.set_mymemory_response({ translated_text: 'Chinese detection translation', status: 200 })
+
+            const translate = await omni.translate()
+
+            await translate.typeSource('我爱你'.repeat(80))
+            await translate.clickTranslate()
+
+            await expect(translate.detectedLanguage()).toContainText('简体中文')
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('Chinese detection translation')
         } finally {
             await server?.stop()
             await omni.stop()

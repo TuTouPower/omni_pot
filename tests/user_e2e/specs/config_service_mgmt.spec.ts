@@ -22,6 +22,13 @@ async function expect_service_config(omni: AppFixture, instance_key: string, val
     }).toEqual(value)
 }
 
+async function expect_service_config_match(omni: AppFixture, instance_key: string, value: Record<string, unknown>): Promise<void> {
+    await expect.poll(async () => {
+        const instances = (await omni.api.getConfig()).service_instances as Record<string, ServiceInstanceConfig>
+        return instances[instance_key].config
+    }).toMatchObject(value)
+}
+
 test.describe('@ui config service management', () => {
     test('user switches service categories and sees enabled service lists', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
@@ -146,15 +153,27 @@ test.describe('@ui config service management', () => {
             await expect(translate.resultCards()).toHaveCount(2)
             await expect(translate.resultCards().nth(0)).toContainText('Bing')
             await expect(translate.resultCards().nth(1)).toContainText('Google')
+            await expect.poll(() => config.serviceItemKeys()).toEqual(['bing@default', 'google@default'])
+            const original_service_list = await config.serviceItemKeys()
             await config.toggleService('bing@default')
 
             await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'false')
+            await expect(config.serviceItems()).toHaveCount(2)
+            await expect(config.serviceItem('bing@default')).toContainText('Bing')
+            await expect(config.serviceItem('google@default')).toContainText('Google')
+            expect(await config.serviceItemKeys()).toEqual(original_service_list)
+            await expect.poll(async () => (await omni.api.getConfig()).translate_service_list).toEqual(original_service_list)
+            await expect_service_config_match(omni, 'bing@default', { enable: false })
             await expect(translate.resultCards()).toHaveCount(1)
             await expect(translate.resultCards().first()).toContainText('Google')
 
             await config.toggleService('bing@default')
 
             await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
+            await expect(config.serviceItems()).toHaveCount(2)
+            expect(await config.serviceItemKeys()).toEqual(original_service_list)
+            await expect.poll(async () => (await omni.api.getConfig()).translate_service_list).toEqual(original_service_list)
+            await expect_service_config_match(omni, 'bing@default', { enable: true })
             await expect(translate.resultCards()).toHaveCount(2)
             await expect(translate.resultCards().nth(0)).toContainText('Bing')
             await expect(translate.resultCards().nth(1)).toContainText('Google')

@@ -58,7 +58,7 @@ describe('clipboard monitor suppression', () => {
         expect(mockFocusOrCreate).not.toHaveBeenCalled()
         expect(mockSendWhenReady).not.toHaveBeenCalled()
 
-        // last_text synced even during suppression — next poll sees same text
+        // The cleanup suppression window still protects immediate follow-up polls.
         mockClipboardText = 'suppressed text'
         pollClipboardMonitorOnce(mockMgr)
         expect(mockFocusOrCreate).not.toHaveBeenCalled()
@@ -102,7 +102,7 @@ describe('clipboard monitor suppression', () => {
         mockClipboardText = 'synced during suppression'
         vi.setSystemTime(5199)
         pollClipboardMonitorOnce(mockMgr)
-        // last_text synced to 'synced during suppression' even though suppressed
+        // Polls inside the cleanup window remain suppressed even after an error.
         expect(mockFocusOrCreate).not.toHaveBeenCalled()
 
         mockClipboardText = 'after throw'

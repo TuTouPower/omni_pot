@@ -47,6 +47,43 @@ test.describe('@ui config history and backup settings', () => {
         }
     })
 
+    test('translation history stores service_key by service instance key for same-service instances', async () => {
+        const server = new TranslationTestServer()
+        let omni: AppFixture | null = null
+
+        try {
+            const port = await server.start()
+            const base_url = `http://127.0.0.1:${String(port)}`
+            omni = await AppFixture.start({
+                config: {
+                    translate_source_language: 'en',
+                    translate_service_list: ['mymemory@first', 'mymemory@second'],
+                    service_instances: {
+                        'mymemory@first': { serviceKey: 'mymemory', config: { custom_url: base_url } },
+                        'mymemory@second': { serviceKey: 'mymemory', config: { custom_url: base_url } },
+                    },
+                },
+            })
+            server.set_mymemory_response({ translated_text: '同服务多实例译文', status: 200 })
+
+            const translate = await omni.translate()
+            await translate.typeSource('same service instance history source')
+            await translate.clickTranslate()
+            await expect(translate.resultBody('mymemory@first')).toContainText('同服务多实例译文')
+            await expect(translate.resultBody('mymemory@second')).toContainText('同服务多实例译文')
+
+            const config = await omni.openConfig()
+            await expect.poll(async () => config.historyRecordCount()).toBe(2)
+            const service_keys = (await config.historyRecords())
+                .map((record) => record.service_key)
+                .sort()
+            expect(service_keys).toEqual(['mymemory@first', 'mymemory@second'])
+        } finally {
+            await server.stop()
+            await omni?.stop()
+        }
+    })
+
     test('user pages through history records', async () => {
         const omni = await AppFixture.start()
 

@@ -40,6 +40,7 @@ import {
   startClipboardMonitor,
   stopClipboardMonitor
 } from './clipboard'
+import { build_csp_policy } from './csp_policy'
 
 let windowManager: WindowManager | undefined
 let db_watcher: FSWatcher | null = null
@@ -66,21 +67,12 @@ if (!gotLock) {
 
     // Security: CSP headers
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      if (app.isPackaged) {
-        callback({
-          responseHeaders: {
-            ...details.responseHeaders,
-            'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https:"]
-          }
-        })
-      } else {
-        callback({
-          responseHeaders: {
-            ...details.responseHeaders,
-            'Content-Security-Policy': ["default-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:* http://127.0.0.1:*; media-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https:"]
-          }
-        })
-      }
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [build_csp_policy(app.isPackaged)]
+        }
+      })
     })
 
     // Security: limit permission requests

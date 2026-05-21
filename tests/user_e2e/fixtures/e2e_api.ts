@@ -90,6 +90,18 @@ export class E2eApi {
         return this.requestText('/translate', text) as Promise<{ success: boolean }>
     }
 
+    async translate_via_external_api(text: string): Promise<{ success: boolean; error?: string }> {
+        return requestText(this.port, '/translate', text) as Promise<{ success: boolean; error?: string }>
+    }
+
+    async recognize_via_external_api(body?: { mode?: 'recognize' | 'translate' }): Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }> {
+        return request(this.port, 'POST', '/recognize', body) as Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }>
+    }
+
+    async get_config_via_external_api(): Promise<Record<string, unknown>> {
+        return request(this.port, 'GET', '/config') as Promise<Record<string, unknown>>
+    }
+
     async openWindow(label: string): Promise<{ success: boolean; error?: string }> {
         return this.request('POST', '/e2e/open-window', { label }) as Promise<{ success: boolean; error?: string }>
     }

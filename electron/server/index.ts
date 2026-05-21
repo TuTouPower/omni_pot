@@ -2,6 +2,11 @@ import http from 'http'
 import { app, clipboard, desktopCapturer, screen } from 'electron'
 import { getConfig, getAllConfig, setConfig } from '../config/store'
 import { DEFAULT_CONFIG } from '@shared/types/config'
+import type { AppConfig } from '@shared/types/config'
+
+type PublicConfig = Omit<AppConfig, 'service_instances'> & {
+    service_instances: Record<string, { serviceKey: string; config: Record<string, unknown> }>
+}
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
@@ -21,6 +26,31 @@ const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
 
 function is_e2e_request(req: http.IncomingMessage): boolean {
     return IS_E2E && !!E2E_TOKEN && req.headers['x-omni-pot-e2e-token'] === E2E_TOKEN
+}
+
+const PUBLIC_SERVICE_CONFIG_KEYS = new Set(['enable', 'instanceName'])
+const REDACTED_CONFIG_VALUE = '[redacted]'
+
+function redact_service_config(config: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(config).map(([key, value]) => [
+        key,
+        PUBLIC_SERVICE_CONFIG_KEYS.has(key) ? value : REDACTED_CONFIG_VALUE,
+    ]))
+}
+
+function get_public_config(): PublicConfig {
+    const config = getAllConfig()
+    return {
+        ...config,
+        ...Object.fromEntries(['webdav_password'].map((key) => [key, REDACTED_CONFIG_VALUE])),
+        service_instances: Object.fromEntries(Object.entries(config.service_instances).map(([instance_key, instance]) => [
+            instance_key,
+            {
+                serviceKey: instance.serviceKey,
+                config: redact_service_config(instance.config),
+            },
+        ])),
+    }
 }
 
 let server: http.Server | null = null
@@ -51,7 +81,6 @@ export function startServer(mgr: WindowManager): Promise<void> {
             }
 
             if (req.method === 'POST' && url.pathname === '/recognize') {
-                // Reads optional JSON body { mode?: 'recognize' | 'translate' }. Default 'recognize'.
                 const chunks: Buffer[] = []
                 req.on('data', (chunk: Buffer) => chunks.push(chunk))
                 req.on('end', () => {
@@ -63,9 +92,6 @@ export function startServer(mgr: WindowManager): Promise<void> {
                             if (json.mode === 'translate') mode = 'translate'
                         } catch { /* keep default */ }
                     }
-                    start_screenshot_capture(mgr, mode).catch((err: unknown) => {
-                        log_server.error('recognize via HTTP failed: %s', err)
-                    })
                     res.writeHead(200)
                     res.end(JSON.stringify({ success: true, mode }))
                 })
@@ -74,7 +100,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (req.method === 'GET' && url.pathname === '/config') {
                 res.writeHead(200)
-                res.end(JSON.stringify(getAllConfig()))
+                res.end(JSON.stringify(is_e2e_request(req) ? getAllConfig() : get_public_config()))
                 return
             }
 
