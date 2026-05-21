@@ -34,13 +34,31 @@ const BING_LANG_MAP: Record<string, LanguageCode> = {
     'sv': 'sv', 'fa': 'fa', 'nb': 'nb_no', 'nn': 'nn_no'
 }
 
-async function bing_detect(text: string): Promise<LanguageCode> {
+type DetectFallback = (text: string) => Promise<LanguageCode>
+type RemoteDetectEngine = 'bing' | 'google' | 'baidu' | 'tencent' | 'niutrans'
+
+const DETECT_REQUEST_TIMEOUT_MS = 5_000
+const DETECT_FALLBACK_ORDER = ['bing', 'google', 'baidu', 'tencent', 'niutrans', 'local'] as const
+
+export async function fetch_with_timeout(input: RequestInfo | URL, init: RequestInit = {}, timeout_ms = DETECT_REQUEST_TIMEOUT_MS): Promise<Response> {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => {
+        controller.abort()
+    }, timeout_ms)
     try {
-        const auth_resp = await fetch('https://edge.microsoft.com/translate/auth')
-        if (!auth_resp.ok) return await detect_local(text)
+        return await fetch(input, { ...init, signal: controller.signal })
+    } finally {
+        clearTimeout(timeout)
+    }
+}
+
+async function bing_detect(text: string, fallback: DetectFallback = detect_local): Promise<LanguageCode> {
+    try {
+        const auth_resp = await fetch_with_timeout('https://edge.microsoft.com/translate/auth')
+        if (!auth_resp.ok) return await fallback(text)
         const token = await auth_resp.text()
 
-        const resp = await fetch('https://api-edge.cognitive.microsofttranslator.com/detect', {
+        const resp = await fetch_with_timeout('https://api-edge.cognitive.microsofttranslator.com/detect', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -48,13 +66,13 @@ async function bing_detect(text: string): Promise<LanguageCode> {
             },
             body: JSON.stringify([{ text }])
         })
-        if (!resp.ok) return await detect_local(text)
+        if (!resp.ok) return await fallback(text)
         const data = await resp.json() as Array<{ language: string }>
         if (data[0]?.language) {
-            return BING_LANG_MAP[data[0].language] ?? await detect_local(text)
+            return BING_LANG_MAP[data[0].language] ?? await fallback(text)
         }
     } catch { /* fallback */ }
-    return await detect_local(text)
+    return await fallback(text)
 }
 
 const GOOGLE_LANG_MAP: Record<string, LanguageCode> = {
@@ -66,19 +84,19 @@ const GOOGLE_LANG_MAP: Record<string, LanguageCode> = {
     'sv': 'sv', 'fa': 'fa', 'no': 'nb_no'
 }
 
-async function google_detect(text: string): Promise<LanguageCode> {
+async function google_detect(text: string, fallback: DetectFallback = detect_local): Promise<LanguageCode> {
     try {
-        const resp = await fetch(
+        const resp = await fetch_with_timeout(
             `https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`
         )
-        if (!resp.ok) return await detect_local(text)
+        if (!resp.ok) return await fallback(text)
         const data = await resp.json() as [unknown, unknown, string]
         const detected = data[2]
         if (detected) {
-            return GOOGLE_LANG_MAP[detected] ?? await detect_local(text)
+            return GOOGLE_LANG_MAP[detected] ?? await fallback(text)
         }
     } catch { /* fallback */ }
-    return await detect_local(text)
+    return await fallback(text)
 }
 
 const BAIDU_DETECT_LANG_MAP: Record<string, LanguageCode> = {
@@ -90,19 +108,19 @@ const BAIDU_DETECT_LANG_MAP: Record<string, LanguageCode> = {
     'pl': 'pl', 'nl': 'nl', 'ukr': 'uk', 'heb': 'he'
 }
 
-async function baidu_detect(text: string): Promise<LanguageCode> {
+async function baidu_detect(text: string, fallback: DetectFallback = detect_local): Promise<LanguageCode> {
     try {
         const salt = Math.random().toString(36).substring(2)
-        const resp = await fetch(
+        const resp = await fetch_with_timeout(
             `https://fanyi.baidu.com/transapi?from=auto&to=en&query=${encodeURIComponent(text)}&salt=${salt}`
         )
-        if (!resp.ok) return await detect_local(text)
+        if (!resp.ok) return await fallback(text)
         const data = await resp.json() as { from?: string; error?: number }
         if (data.from && data.from !== 'auto' && data.from !== 'key') {
-            return BAIDU_DETECT_LANG_MAP[data.from] ?? await detect_local(text)
+            return BAIDU_DETECT_LANG_MAP[data.from] ?? await fallback(text)
         }
     } catch { /* fallback */ }
-    return await detect_local(text)
+    return await fallback(text)
 }
 
 const TENCENT_DETECT_LANG_MAP: Record<string, LanguageCode> = {
@@ -114,21 +132,21 @@ const TENCENT_DETECT_LANG_MAP: Record<string, LanguageCode> = {
     'sv': 'sv', 'fa': 'fa'
 }
 
-async function tencent_detect(text: string): Promise<LanguageCode> {
+async function tencent_detect(text: string, fallback: DetectFallback = detect_local): Promise<LanguageCode> {
     try {
-        const resp = await fetch('https://fanyi.qq.com/api/translate', {
+        const resp = await fetch_with_timeout('https://fanyi.qq.com/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ source: 'auto', target: 'en', sourceText: text, sessionUuid: Math.random().toString(36) })
         })
-        if (!resp.ok) return await detect_local(text)
+        if (!resp.ok) return await fallback(text)
         const data = await resp.json() as { translate?: { records?: Array<{ sourceLang?: string }> } }
         const lang = data.translate?.records?.[0]?.sourceLang
         if (lang) {
-            return TENCENT_DETECT_LANG_MAP[lang] ?? await detect_local(text)
+            return TENCENT_DETECT_LANG_MAP[lang] ?? await fallback(text)
         }
     } catch { /* fallback */ }
-    return await detect_local(text)
+    return await fallback(text)
 }
 
 const NIUTRANS_DETECT_LANG_MAP: Record<string, LanguageCode> = {
@@ -140,37 +158,46 @@ const NIUTRANS_DETECT_LANG_MAP: Record<string, LanguageCode> = {
     'fa': 'fa', 'sv': 'sv', 'pl': 'pl', 'nl': 'nl', 'uk': 'uk', 'he': 'he'
 }
 
-async function niutrans_detect(text: string): Promise<LanguageCode> {
+async function niutrans_detect(text: string, fallback: DetectFallback = detect_local): Promise<LanguageCode> {
     try {
-        const resp = await fetch('http://api.niutrans.com/NiuTransServer/translation', {
+        const resp = await fetch_with_timeout('http://api.niutrans.com/NiuTransServer/translation', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ from: 'auto', to: 'en', src_text: text })
         })
-        if (!resp.ok) return await detect_local(text)
+        if (!resp.ok) return await fallback(text)
         const data = await resp.json() as { from?: string; error_code?: number }
         if (data.from && data.from !== 'auto') {
-            return NIUTRANS_DETECT_LANG_MAP[data.from] ?? await detect_local(text)
+            return NIUTRANS_DETECT_LANG_MAP[data.from] ?? await fallback(text)
         }
     } catch { /* fallback */ }
-    return await detect_local(text)
+    return await fallback(text)
+}
+
+export function detect_engine_order(engine?: string): typeof DETECT_FALLBACK_ORDER[number][] {
+    if (!engine || engine === 'local') return ['local']
+    if (!DETECT_FALLBACK_ORDER.includes(engine as typeof DETECT_FALLBACK_ORDER[number])) return ['local']
+    return [
+        engine as typeof DETECT_FALLBACK_ORDER[number],
+        ...DETECT_FALLBACK_ORDER.filter((candidate) => candidate !== engine),
+    ]
 }
 
 export async function detectLanguage(text: string, engine?: string): Promise<LanguageCode> {
-    const effective_engine = engine ?? 'local'
-    switch (effective_engine) {
-        case 'bing':
-            return bing_detect(text)
-        case 'google':
-            return google_detect(text)
-        case 'baidu':
-            return baidu_detect(text)
-        case 'tencent':
-            return tencent_detect(text)
-        case 'niutrans':
-            return niutrans_detect(text)
-        case 'local':
-        default:
-            return await detect_local(text)
+    const detect_local_fallback = (source_text: string) => detect_local(source_text)
+    const remote_detectors: Record<RemoteDetectEngine, (source_text: string, fallback: DetectFallback) => Promise<LanguageCode>> = {
+        bing: bing_detect,
+        google: google_detect,
+        baidu: baidu_detect,
+        tencent: tencent_detect,
+        niutrans: niutrans_detect,
     }
+
+    for (const candidate of detect_engine_order(engine)) {
+        if (candidate === 'local') return await detect_local_fallback(text)
+        const result = await remote_detectors[candidate](text, () => Promise.resolve('auto'))
+        if (result !== 'auto') return result
+    }
+
+    return 'auto'
 }
