@@ -104,11 +104,13 @@ test.describe('@ui translate welcome empty state', () => {
 
             await expect(page.getByTestId('welcome-empty')).toBeVisible()
             await page.getByTestId('welcome-skip').click()
-            await expect(page.getByTestId('welcome-empty')).toHaveCount(0)
+            // Skip persists welcome_dismissed and closes the window.
+            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
 
-            await translate.typeSource('hi')
-            await translate.clickClearSource()
-            await expect(page.getByTestId('welcome-empty')).toHaveCount(0)
+            // Re-open translate — welcome should not reappear.
+            const reopened = await omni.triggerInputTranslate()
+            const reopened_page = reopened.sourceInput().page()
+            await expect(reopened_page.getByTestId('welcome-empty')).toHaveCount(0)
         } finally {
             await omni.stop()
         }

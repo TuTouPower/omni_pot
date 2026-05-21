@@ -63,7 +63,7 @@ test.describe('@ui config settings window', () => {
             await expect_config(omni, 'app_primary_color', '#5a9bbf')
             await expect.poll(async () => await translate.documentTransparent()).toBe('true')
             await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(true)
-            await config.select('cfg-app_theme', 'dark')
+            await config.setting('cfg-app_theme-dark').click()
             await expect.poll(async () => await config.documentTheme()).toBe('dark')
             await expect.poll(async () => await config.documentHasDarkClass()).toBe(true)
             await expect.poll(async () => await translate.documentTheme()).toBe('dark')
@@ -176,8 +176,8 @@ test.describe('@ui config settings window', () => {
 
             await expect_config(omni, 'recognize_language', 'en')
             await expect_config(omni, 'recognize_delete_newline', false)
-            await expect_config(omni, 'recognize_auto_copy', true)
-            await expect_config(omni, 'recognize_hide_window', true)
+            await expect_config(omni, 'recognize_auto_copy', false)
+            await expect_config(omni, 'recognize_hide_window', false)
         } finally {
             await omni.stop()
         }

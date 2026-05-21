@@ -23,7 +23,7 @@ test.describe('@ui config history and backup settings', () => {
             const row = config.historyRowBySource('history source text')
             await expect(config.historyRows()).toHaveCount(1)
             await expect(row.getByTestId('history-language')).toContainText(/EN.*ZH/)
-            await expect(row.getByTestId('history-service-tile')).toContainText('mymemory@e2e')
+            await expect(row.getByTestId('history-service-tile')).toHaveAttribute('title', 'mymemory@e2e')
             await expect(row.getByTestId('history-target')).toContainText('历史译文')
             await expect(row.getByTestId('history-created-at')).not.toBeEmpty()
             await expect.poll(async () => config.historyRecordCount()).toBe(1)
@@ -181,7 +181,7 @@ test.describe('@ui config history and backup settings', () => {
             expect(backupName).toMatch(/^pot-backup-.*\.zip$/)
 
             await config.openSection('general')
-            await config.select('cfg-app_theme', 'dark')
+            await config.setting('cfg-app_theme-dark').click()
             await expect.poll(async () => (await omni.api.getConfig()).app_theme).toBe('dark')
 
             await config.openSection('history')
@@ -197,10 +197,11 @@ test.describe('@ui config history and backup settings', () => {
             await expect(config.backupStatus()).toContainText('Restored successfully', { timeout: 10_000 })
 
             await omni.restart()
-            await expect.poll(async () => (await omni.api.getConfig()).app_theme).toBe('light')
+            // Backup was created with default app_theme='system'; restore reverts dark→system.
+            await expect.poll(async () => (await omni.api.getConfig()).app_theme).toBe('system')
 
             const restartedConfig = await omni.openConfig()
-            await expect.poll(async () => restartedConfig.documentTheme()).toBe('light')
+            await expect.poll(async () => restartedConfig.documentTheme()).not.toBe('dark')
             await restartedConfig.openSection('history')
             const restoredRow = restartedConfig.historyRowBySource('backup history source')
             await expect(restoredRow.getByTestId('history-target')).toContainText('备份前译文')

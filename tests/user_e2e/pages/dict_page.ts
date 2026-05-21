@@ -158,4 +158,22 @@ export class DictPage {
         }
         return keys
     }
+
+    /**
+     * Returns result keys for cards that have actual result content (definitions).
+     * Unlike `resultKeys()`, this excludes rendered but unqueried service cards.
+     */
+    async resultKeysWithContent(): Promise<string[]> {
+        const cards = this.dictCards()
+        const count = await cards.count()
+        const keys: string[] = []
+        for (let i = 0; i < count; i++) {
+            const card = cards.nth(i)
+            const key = await card.getAttribute('data-result-key')
+            if (!key) continue
+            const defCount = await card.getByTestId('dict-definition').count()
+            if (defCount > 0) keys.push(key)
+        }
+        return keys
+    }
 }
