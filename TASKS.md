@@ -76,9 +76,49 @@ const result = instance.findLanguage('你好世界')
 
 - [ ] 定位设置项默认值（推测在 `electron/config/` 或 `src/services/ocr/` 配置 schema）
 - [ ] 改默认值为 `false`
-- [ ] 更新 `docs/spec.md` 文字识别设置默认值描述
+- [x] 更新 `docs/spec.md` §18.2 识别设置 `recognize_delete_newline` 默认值 `true`→`false`
 - [ ] 更新 `docs/design/omni-pot/` 相关设计稿（如有标注默认值）
 - [ ] 单元/E2E 测试断言新默认值
+
+---
+
+## P1.3: 透明背景默认关闭
+
+翻译/识别等窗口的透明背景选项，当前默认开启，改为默认关闭。
+
+- [ ] 定位透明背景设置项默认值（`electron/config/` 或相关 store）
+- [ ] 改默认值为 `false`
+- [ ] 更新 `docs/spec.md` 相关默认值描述
+- [ ] 单元/E2E 测试断言新默认值
+
+---
+
+## P1.4: 设置页面 UI 精简（基于 chat12 / chat13 设计决策）
+
+来源：`docs/design/omni-pot/chats/chat12.md`、`chat13.md`。spec 已同步更新，待代码落地。
+
+### spec 已改动概要
+
+- §3.2 设置窗口默认尺寸 800×600 → 720×740（无最小尺寸约束）
+- §9.4 翻译设置：删除"检测引擎"、"记住语言选择"；"自动复制"改为开关样式
+- §9.5 文字识别设置：精简为 4 项（默认识别引擎 / 默认识别语言 / 自动去除换行 / 自动复制），删除"动态识别"、"默认导出格式"、"窗口"、"截图"、"失焦时关闭"、"识别后隐藏窗口"
+- §18.2 配置表：删除 `translate_detect_engine`、`translate_remember_language`、`recognize_close_on_blur`、`recognize_hide_window`；新增 `recognize_engine`；`translate_auto_copy` 类型由枚举改为 boolean，默认 `false`；`recognize_delete_newline` 默认 `true`→`false`
+
+### 代码任务清单
+
+- [ ] 配置 schema 删除四个 key（`translate_detect_engine` / `translate_remember_language` / `recognize_close_on_blur` / `recognize_hide_window`），新增 `recognize_engine`
+- [ ] `translate_auto_copy` 由枚举改 boolean；触发 store / IPC / 翻译流程引用点更新
+- [ ] `src/windows/config/translate_settings.tsx`：移除检测引擎、记住语言选择 UI；自动复制改 Switch 控件
+- [ ] `src/windows/config/recognize_settings.tsx`：仅保留 4 项；自动复制结果→"自动复制"；下拉控件 220px 对齐；删除窗口/截图卡片
+- [ ] `electron/config/store.ts` 默认值同步
+- [ ] 设置窗口默认尺寸改 720×740（`electron/windows/` 或 `shared/` 中相关常量）
+- [ ] 任何读取被删除 key 的代码点（如 detect.ts 读 `translate_detect_engine`）一并清理，与 P1 cld3 重构协同
+- [ ] 更新设计稿（`docs/design/omni-pot/`）和 demo_todo 同步偏差备忘
+- [ ] 单元/E2E 测试更新断言：
+  - `tests/integration/test_config_defaults.test.ts` — 删除/重命名 4 个 key 的默认值断言、`translate_auto_copy` boolean、`recognize_delete_newline=false`
+  - `tests/user_e2e/specs/translate_behavior.spec.ts` — 删除 `translate_remember_language` 用例；`translate_auto_copy` 改 boolean 写法
+  - `tests/user_e2e/specs/config_settings.spec.ts` — 翻译页删检测引擎/记住语言断言；文字识别页改 4 项断言；自动复制改开关样式断言
+  - `tests/user_e2e/specs/translate_source_area.spec.ts`、`translate_language_area.spec.ts`、`translate_result_cards.spec.ts`、`i18n.spec.ts`、`updater_and_tray.spec.ts` — 凡引用被删 key 处一并清理
 
 ---
 
@@ -114,7 +154,7 @@ const result = instance.findLanguage('你好世界')
 - [ ] **dist 打包 smoke**：`npm run dist` 后验证首次启动、托盘、快捷键、截图、设置、识别窗口，并确认 `better-sqlite3` 的 `*.node` 位于 `app.asar.unpacked` 且词典/历史数据库可正常打开
 - [ ] **置顶按钮全窗口存在性视觉一致性**：E2E 已覆盖 dict/recognize titlebar `pin` 存在性与翻转，仍需 dist 实物视觉确认翻译、词典、文字识别、截图翻译四窗口样式一致
 - [ ] **置顶按钮图钉竖线视觉**：当前路径 `M12 16v6` 已含竖线，用户反馈仍缺失；dist 实物确认，必要时调整 strokeWidth 或 path
-- [ ] **去除换行 / 去除空格图标与 demo 一致**：`Icons.Newline` / `Icons.Space` 已按 demo 的 `MdSmartButton` / `CgSpaceBetween` 重绘，dist 实物确认一致性
+- [ ] **去除换行 / 去除空格图标与 demo 一致**：设计稿用 `MdSmartButton`（react-icons/md）和 `CgSpaceBetween`（react-icons/cg），当前代码用自绘 SVG `Icons.Newline` / `Icons.Space`，形状不同。需重绘 SVG 还原 react-icons 的形状，或直接引入 react-icons 依赖
 
 ---
 
@@ -174,3 +214,18 @@ P1（cld3 重构）相关检测测试待 P1 完成后再补，本段不重复列
 - [ ] **test_user_e2e.md §5 `pages/tray.ts`** — 设计了托盘 Page Object，实际不存在（托盘测试直接走 API）；要么补建、要么从设计文档移除
 
 > 备注：specs/ 目录有若干文件（`translate_welcome` / `translate_entry_merge` / `translate_input_rows` / `translate_pin_topmost` / `translate_result_states` / `translate_window_constraints` / `tray_layout` / `terminology_settings` / `window_rounded_corner` / `dict_card_height` / `dict_issues`）超出 test_user_e2e.md 原始规划，是后续 issue 衍生的正向扩展，不算缺口。
+
+---
+
+## P6: 测试文档与代码一致性（2026-05-21 test docs ↔ tests/ 审计）
+
+`docs/test.md` / `docs/test_user_e2e.md` 已直接同步：
+
+- test.md §1 测试分层增加 `tests/detect/`、`tests/chinese_dict/` 顶层目录；运行命令的 vitest 路径同步
+- test_user_e2e.md §3 目录结构对齐实际：移除未落地的 `pages/tray.ts` / `data/`，补 `translation_test_server.ts` / `qr_test.png` / `global_setup.ts`；specs 列表说明实际 29 个
+- §5.7 translate_behavior：移除 `translate_remember_language`；`translate_auto_copy` 由枚举改 boolean
+- §5.9 recognize_window：配置联动改用新的 `recognize_engine` / `recognize_language` / `recognize_delete_newline=false` / `recognize_auto_copy`
+- §5.11 config_settings：翻译页删检测引擎/记住语言；文字识别页改 4 项
+- §8 标题 `issues.md 对应关系` → `issues 对应关系`，说明 issues 已归档
+
+代码侧的测试更新合并在 P1.4 测试任务清单中，本段不重复列。

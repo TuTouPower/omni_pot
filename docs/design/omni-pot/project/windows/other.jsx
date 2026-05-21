@@ -363,20 +363,20 @@ const TrayMenu = () => {
     </div>
   );
   return (
-    <div style={{ width: 296, background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 10, padding: 4, boxShadow:'0 12px 32px rgba(0,0,0,0.12)' }}>
+    <div style={{ width: 332, background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 10, padding: 4, boxShadow:'0 12px 32px rgba(0,0,0,0.12)' }}>
       <div style={{ padding:'8px 12px', display:'flex', alignItems:'center', gap:8, borderBottom:'1px solid var(--line)', marginBottom: 4 }}>
         <div className="op-wordmark">Omni Pot</div>
         <div style={{flex:1}}/>
         <span className="hint mono">3.1.0</span>
       </div>
-      <Item icon={<Icons.Translate/>} label="翻译" kbd="Ctrl+Alt+T"/>
-      <Item icon={<Icons.Type/>} label="词典" kbd="Ctrl+Alt+D"/>
-      <Item icon={<Icons.Camera/>} label="文字识别" kbd="Ctrl+Alt+S"/>
-      <Item icon={<Icons.Image/>} label="截图翻译" kbd="Ctrl+Alt+Shift+S"/>
+      <Item icon={<Icons.Translate/>} label="翻译" kbd="Ctrl + Alt + T"/>
+      <Item icon={<Icons.Type/>} label="词典" kbd="Ctrl + Alt + D"/>
+      <Item icon={<Icons.Camera/>} label="文字识别" kbd="Ctrl + Alt + S"/>
+      <Item icon={<Icons.Image/>} label="截图翻译" kbd="Ctrl + Alt + Shift + S"/>
       <div className="div" style={{margin:'4px 8px'}}/>
       <Item check={true} label="剪贴板监听"/>
       <div className="div" style={{margin:'4px 8px'}}/>
-      <Item icon={<Icons.Settings/>} label="设置" kbd="Ctrl+Alt+,"/>
+      <Item icon={<Icons.Settings/>} label="设置" kbd="Ctrl + Alt + ,"/>
       <Item icon={<Icons.Cloud/>} label="检查更新"/>
       <Item icon={<Icons.Info/>} label="查看日志"/>
       <div className="div" style={{margin:'4px 8px'}}/>

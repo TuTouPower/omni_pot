@@ -156,31 +156,26 @@ function App() {
         </DCSection>
 
         <DCSection id="config" title="04 · 设置窗口" subtitle="左侧导航 + 右侧内容。7 个子页面，覆盖所有用户偏好与服务管理">
-          <DCArtboard id="cfg-general" label="通用" width={780} height={560}>
-            <ConfigWindow initial="general" />
+          <DCArtboard id="cfg-general" label="通用" width={720} height={740}><ConfigWindow initial="general" />
           </DCArtboard>
-          <DCArtboard id="cfg-translate" label="翻译" width={780} height={560}>
-            <ConfigWindow initial="translate" />
+          <DCArtboard id="cfg-translate" label="翻译" width={720} height={740}><ConfigWindow initial="translate" />
           </DCArtboard>
-          <DCArtboard id="cfg-hotkey" label="快捷键" width={780} height={560}>
-            <ConfigWindow initial="hotkey" />
+          <DCArtboard id="cfg-recognize" label="文字识别" width={720} height={740}><ConfigWindow initial="recognize" />
           </DCArtboard>
-          <DCArtboard id="cfg-service" label="服务管理" width={780} height={560}>
-            <ConfigWindow initial="service" />
+          <DCArtboard id="cfg-hotkey" label="快捷键" width={720} height={740}><ConfigWindow initial="hotkey" />
           </DCArtboard>
-          <DCArtboard id="cfg-history" label="历史记录" width={780} height={560}>
-            <ConfigWindow initial="history" />
+          <DCArtboard id="cfg-service" label="服务管理" width={720} height={740}><ConfigWindow initial="service" />
           </DCArtboard>
-          <DCArtboard id="cfg-backup" label="备份" width={780} height={560}>
-            <ConfigWindow initial="backup" />
+          <DCArtboard id="cfg-history" label="历史记录" width={720} height={740}><ConfigWindow initial="history" />
           </DCArtboard>
-          <DCArtboard id="cfg-about" label="关于" width={780} height={560}>
-            <ConfigWindow initial="about" />
+          <DCArtboard id="cfg-backup" label="备份" width={720} height={740}><ConfigWindow initial="backup" />
+          </DCArtboard>
+          <DCArtboard id="cfg-about" label="关于" width={720} height={740}><ConfigWindow initial="about" />
           </DCArtboard>
         </DCSection>
 
         <DCSection id="ambient" title="05 · 后台 · 托盘 · 更新" subtitle="不常出现但必须做好的边角料">
-          <DCArtboard id="tray" label="系统托盘菜单" width={300} height={440}>
+          <DCArtboard id="tray" label="系统托盘菜单" width={360} height={440}>
             <div style={{ padding: 16, background: '#f0eee9', height: '100%', borderRadius: 12, display: 'flex', justifyContent: 'center', paddingTop: 32 }}>
               <TrayMenu />
             </div>
@@ -312,8 +307,13 @@ function TranslateEmptyState() {
         <div style={{ fontSize: 13, fontWeight: 600 }}>{title}</div>
         <div className="hint" style={{ marginTop: 1 }}>{sub}</div>
       </div>
-      <div style={{ display: 'flex', gap: 2 }}>
-        {kbd.map((k, i) => <kbd key={i} style={{ fontSize: 10.5 }}>{k}</kbd>)}
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        {kbd.map((k, i) => (
+          <React.Fragment key={i}>
+            <kbd style={{ fontSize: 10.5 }}>{k}</kbd>
+            {i < kbd.length - 1 && <span className="hint" style={{ fontSize: 10.5 }}>+</span>}
+          </React.Fragment>
+        ))}
       </div>
     </div>;
 
@@ -329,7 +329,7 @@ function TranslateEmptyState() {
           </div>
         </div>
         <Item icon={<Icons.Translate size={16} />} title="翻译" sub="选中文本时翻译该文本；未选中时弹出空翻译窗口" kbd={['Ctrl', 'Alt', 'T']} />
-        <Item icon={<Icons.Type size={16} />} title="词典" sub="选中字词查询字典词典" kbd={['Ctrl', 'Alt', 'D']} />
+        <Item icon={<Icons.Type size={16} />} title="词典" sub="选中字词查询词典释义" kbd={['Ctrl', 'Alt', 'D']} />
         <Item icon={<Icons.Camera size={16} />} title="文字识别" sub="截图后将文字提取到识别窗口" kbd={['Ctrl', 'Alt', 'S']} />
         <Item icon={<Icons.Image size={16} />} title="截图翻译" sub="截图、识别并直接翻译结果" kbd={['Ctrl', 'Alt', 'Shift', 'S']} />
         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 4 }}>

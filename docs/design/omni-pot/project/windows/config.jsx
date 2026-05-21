@@ -116,7 +116,7 @@ const PageGeneral = () => {
         <Row label="开机自启" sub="登录系统后在后台启动 Omni Pot"><Switch on={autostart} onChange={setAutostart}/></Row>
         <Row label="启动时检查更新"><Switch on={check} onChange={setCheck}/></Row>
         <Row label="界面语言">
-          <Select value="zh_CN" options={[{value:'zh_CN',label:'简体中文'},{value:'zh_TW',label:'繁體中文'},{value:'en',label:'English'},{value:'ja_JP',label:'日本語'},{value:'ko_KR',label:'한국어'},{value:'fr_FR',label:'Français'},{value:'de_DE',label:'Deutsch'}]} style={{minWidth:160}}/>
+          <Select value="zh_CN" options={[{value:'zh_CN',label:'简体中文'},{value:'zh_TW',label:'繁體中文'},{value:'en',label:'English'},{value:'ja_JP',label:'日本語'},{value:'ko_KR',label:'한국어'},{value:'fr_FR',label:'Français'},{value:'de_DE',label:'Deutsch'}]} style={{width:180}}/>
         </Row>
         <div className="row" style={{ minHeight: 36 }}>
           <div className="label">
@@ -142,7 +142,7 @@ const PageGeneral = () => {
             </span>
             <span className="sub">供外部脚本调用，修改后需重启</span>
           </div>
-          <div className="field" style={{ width: 140 }}><input className="mono" defaultValue="20202" /></div>
+          <div className="field" style={{ width: 180 }}><input className="mono" defaultValue="20202" /></div>
         </div>
       </Card>
 
@@ -167,20 +167,12 @@ const PageGeneral = () => {
         <Row label="主色调" sub="应用于按钮、链接与高亮等强调元素"><PrimaryPicker/></Row>
         <Row label="透明背景" sub="毛玻璃效果，部分平台可能影响性能"><Switch on={transparent} onChange={setTransparent}/></Row>
       </Card>
-
-      <Card title="网络代理">
-        <Row label="启用代理"><Switch on={proxy} onChange={setProxy}/></Row>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 120px', gap: 8, opacity: proxy ? 1 : 0.5 }}>
-          <div className="field"><input placeholder="http://127.0.0.1" defaultValue="http://127.0.0.1"/></div>
-          <div className="field"><input className="mono" placeholder="端口" defaultValue="7890"/></div>
-        </div>
-      </Card>
     </div>
   );
 };
 
 const PageTranslate = () => {
-  const [stateMap, setStateMap] = useStateC({ auto_copy:'disable', history:false, incr:false, dyn:false, del:true, remember:false, pos:'mouse', size:true, blur:true, top:false, hideS:false, hideL:false, hideW:false });
+  const [stateMap, setStateMap] = useStateC({ auto_copy:false, history:false, incr:false, dyn:false, del:true, remember:false, pos:'mouse', size:true, blur:true, top:false, hideS:false, hideL:false, hideW:false });
   const set = (k,v) => setStateMap(s => ({...s, [k]: v}));
   return (
     <div className="stack gap-12">
@@ -188,28 +180,13 @@ const PageTranslate = () => {
         <Row label="源语言"><LangSelect value="auto" codes={['auto','en','zh_cn','ja','ko']} style={{minWidth:180}}/></Row>
         <Row label="目标语言"><LangSelect value="zh_cn" codes={['zh_cn','en','ja','ko','fr']} style={{minWidth:180}}/></Row>
         <Row label="第二语言" sub="检测到目标语言相同时切换到此语言"><LangSelect value="en" codes={['en','zh_cn','ja']} style={{minWidth:180}}/></Row>
-        <Row label="检测引擎" sub="失败时按选项顺序依次回退">
-          <Select value="bing" options={[
-            {value:'bing',label:'Bing'},
-            {value:'google',label:'Google'},
-            {value:'baidu',label:'百度'},
-            {value:'tencent',label:'腾讯'},
-            {value:'niutrans',label:'小牛'},
-            {value:'local',label:'本地 (Lingua)'},
-          ]} style={{minWidth:180}}/>
-        </Row>
       </Card>
 
       <Card title="行为">
-        <Row label="自动复制">
-          <Select value={stateMap.auto_copy} onChange={v=>set('auto_copy',v)} options={[
-            {value:'disable',label:'关闭'},{value:'source',label:'源文本'},{value:'target',label:'第一个译文'},{value:'source_target',label:'源 + 译文'}
-          ]} style={{minWidth:180}}/>
-        </Row>
+        <Row label="自动复制"><Switch on={stateMap.auto_copy} onChange={v=>set('auto_copy',v)}/></Row>
         <Row label="增量翻译" sub="新选取的文本追加到现有源文本而非替换"><Switch on={stateMap.incr} onChange={v=>set('incr',v)}/></Row>
         <Row label="动态翻译" sub="输入时自动翻译（1s 防抖）"><Switch on={stateMap.dyn} onChange={v=>set('dyn',v)}/></Row>
         <Row label="自动去除换行"><Switch on={stateMap.del} onChange={v=>set('del',v)}/></Row>
-        <Row label="记住语言选择"><Switch on={stateMap.remember} onChange={v=>set('remember',v)}/></Row>
         <Row label="禁用历史记录"><Switch on={stateMap.history} onChange={v=>set('history',v)}/></Row>
       </Card>
 
@@ -229,7 +206,7 @@ const PageTranslate = () => {
 };
 
 const PageRecognize = () => {
-  const [s, setS] = useStateC({ rmNL:false, copy:true, blur:false, hide:false, dyn:false });
+  const [s, setS] = useStateC({ rmNL:false, copy:true, blur:true, hide:true });
   const set = (k,v) => setS(p => ({...p, [k]:v}));
   return (
     <div className="stack gap-12">
@@ -240,34 +217,11 @@ const PageRecognize = () => {
             {value:'tesseract',label:'Tesseract'},
             {value:'openai_compatible',label:'AI 视觉 · Qwen2.5-VL'},
             {value:'baidu_accurate_ocr',label:'百度高精度'},
-          ]} style={{minWidth:220}}/>
+          ]} style={{width:220}}/>
         </Row>
-        <Row label="默认识别语言"><LangSelect value="auto" codes={['auto','en','zh_cn','zh_tw','ja','ko','fr','de','es']} style={{minWidth:180}}/></Row>
+        <Row label="默认识别语言"><LangSelect value="auto" codes={['auto','en','zh_cn','zh_tw','ja','ko','fr','de','es']} style={{width:220}}/></Row>
         <Row label="自动去除换行" sub="识别后合并被物理换行打断的段落"><Switch on={s.rmNL} onChange={v=>set('rmNL',v)}/></Row>
-        <Row label="自动复制结果"><Switch on={s.copy} onChange={v=>set('copy',v)}/></Row>
-        <Row label="动态识别" sub="截图选区变化时重新识别"><Switch on={s.dyn} onChange={v=>set('dyn',v)}/></Row>
-      </Card>
-
-      <Card title="窗口">
-        <Row label="失焦时关闭"><Switch on={s.blur} onChange={v=>set('blur',v)}/></Row>
-        <Row label="识别后隐藏窗口" sub="后台完成识别并通过通知告知"><Switch on={s.hide} onChange={v=>set('hide',v)}/></Row>
-        <Row label="默认导出格式">
-          <Select value="md" options={[{value:'md',label:'Markdown (.md)'},{value:'txt',label:'纯文本 (.txt)'},{value:'docx',label:'Word (.docx)'},{value:'doc',label:'Word 97-2003 (.doc)'}]} style={{minWidth:200}}/>
-        </Row>
-      </Card>
-
-      <Card title="截图">
-        <Row label="截图后动作">
-          <Select value="recognize" options={[
-            {value:'recognize',label:'识别文本'},
-            {value:'recognize_translate',label:'识别并翻译'},
-            {value:'clipboard',label:'只复制图片'},
-          ]} style={{minWidth:200}}/>
-        </Row>
-        <Row label="提示条" sub="在选区上方显示快捷键提示"><Switch on={true}/></Row>
-        <Row label="选区描边颜色">
-          <Select value="primary" options={[{value:'primary',label:'跟随主色调'},{value:'red',label:'红色'},{value:'green',label:'绿色'},{value:'white',label:'白色'}]} style={{minWidth:160}}/>
-        </Row>
+        <Row label="自动复制"><Switch on={s.copy} onChange={v=>set('copy',v)}/></Row>
       </Card>
     </div>
   );
@@ -297,7 +251,7 @@ const PageHotkey = () => {
     <div className="stack gap-12">
       <Card title="全局快捷键" hint="按下组合键以录入 · Backspace 清除">
         <HK label="翻译" sub={['选中文本时翻译该文本；','未选中时弹出空翻译窗口供输入；','剪贴板监听时，自动翻译剪贴板。']} value="Ctrl+Alt+T" />
-        <HK label="词典" sub="选中字词查询字典词典" value="Ctrl+Alt+D" />
+        <HK label="词典" sub="选中字词查询词典释义" value="Ctrl+Alt+D" />
         <HK label="文字识别" sub="截图后将文字提取到识别窗口" value="Ctrl+Alt+S" />
         <HK label="截图翻译" sub="截图、识别并自动翻译" value="" />
       </Card>
@@ -559,9 +513,9 @@ const ConfigWindow = ({ initial = 'translate' }) => {
       {/* Settings has no pin/lock — it's a regular app window with the
          standard min/max/close trio in the top-right. */}
       <TitlebarLeft mode={'设置 · ' + (cur?.label || '')} noPin chrome="wmctl" />
-      <div style={{ display:'flex', flex:1, minHeight: 0 }}>
+      <div style={{ display:'flex', flex:1, minHeight: 0, padding: '0 0 10px 10px', gap: 0 }}>
         {/* Sidebar — narrower (no pin row anymore, content starts at the top) */}
-        <div style={{ width: 184, background: 'var(--bg-card)', borderRight: '1px solid var(--line-soft)', display:'flex', flexDirection:'column' }}>
+        <div style={{ width: 132, background: 'var(--bg-card)', borderRight: '1px solid var(--line-soft)', display:'flex', flexDirection:'column' }}>
           <div style={{ padding: '8px 6px', display:'flex', flexDirection:'column', gap: 2, flex:1 }}>
             {NAV.map(n => (
               <button key={n.id} onClick={()=>setPage(n.id)}

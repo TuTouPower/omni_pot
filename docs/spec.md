@@ -144,7 +144,7 @@ enum WindowLabel {
 | 截图 | `screenshot` | 全屏 | — | 启动时隐藏预加载，触发后始终置顶显示，截图后自动关闭 |
 | 识别 / 截图翻译 | `recognize` | 800×400 | — | 未固定时失焦自动关闭；文字识别与截图翻译共用同一个截图翻译窗口布局 |
 | 词典 | `dict` | 400×500（快捷键）/ 350×420（HTTP） | — | 未固定时失焦自动关闭、可置顶 |
-| 设置 | `config` | 800×600 | 800×400 | — |
+| 设置 | `config` | 720×740 | — | — |
 | 更新器 | `updater` | 600×400 | — | — |
 
 > 所有窗口均为 frameless（`frame: false`），使用自绘标题栏。
@@ -523,17 +523,21 @@ CC-CEDICT 首次启动：`electron/main.ts` 调用 `auto_import_if_needed()`，
 
 ### 9.4 设置页: 翻译
 
-- **语言卡片**：源语言、目标语言、第二语言、检测引擎。语言下拉项**以该语言自身文字显示**（如 `English` / `日本語` / `한국어`），不统一翻译为当前界面语言；不带 AUTO/ZH 等字母前缀；下拉以 portal 渲染到 body，避免被卡片裁切
-- **行为卡片**：自动复制、增量翻译、动态翻译、自动去除换行、记住语言选择、禁用历史记录
+- **语言卡片**：源语言、目标语言、第二语言。语言下拉项**以该语言自身文字显示**（如 `English` / `日本語` / `한국어`），不统一翻译为当前界面语言；不带 AUTO/ZH 等字母前缀；下拉以 portal 渲染到 body，避免被卡片裁切。检测引擎不在此处暴露给用户（语言检测由 cld3-asm 本地完成，见 §17）
+- **行为卡片**：自动复制（开关样式，与文字识别页保持一致）、增量翻译、动态翻译、自动去除换行、禁用历史记录
 - **窗口卡片**：窗口位置（鼠标位置 / 上次位置）、记住窗口大小、失焦时关闭、始终置顶、隐藏源文本、隐藏语言选择、翻译后隐藏窗口
 
 ### 9.5 设置页: 文字识别
 
-先按最小集合实现：默认识别语言、自动去除换行、自动复制结果、失焦时关闭、识别后隐藏窗口。
+仅四项：
 
-默认值：默认识别语言为“自动检测”；自动去除换行、自动复制结果、失焦时关闭、识别后隐藏窗口默认开启。
+- **默认识别引擎**（`recognize_engine`）：从已注册 OCR 服务实例中选择
+- **默认识别语言**（`recognize_language`）：默认 `'auto'`（自动检测）
+- **自动去除换行**（`recognize_delete_newline`）：开关，**默认关闭**
+- **自动复制**（`recognize_auto_copy`）：开关，默认开启（UI 标签为"自动复制"，不再叫"自动复制结果"）
 
-设计稿中额外出现的默认识别引擎、动态识别、默认导出格式、截图后动作、提示条、选区描边颜色等扩展字段暂不作为当前必须实现项。
+「默认识别引擎」「默认识别语言」两个下拉控件宽度对齐（设计稿统一 220px）。
+不实现动态识别、默认导出格式、截图后动作、提示条、选区描边颜色、失焦时关闭、识别后隐藏窗口、窗口卡片、截图卡片等扩展字段。
 
 ### 9.6 设置页: 快捷键
 
@@ -790,15 +794,14 @@ interface DictResult {
 
 **文件**: `src/services/detect.ts`
 
-源语言为 `auto` 时调用语言检测，决定实际源语言。可用检测引擎由
-`translate_detect_engine` 配置（默认 `bing`）：
+源语言为 `auto` 时调用语言检测，决定实际源语言。检测引擎不暴露在设置页 UI，由项目固定为 cld3-asm 本地检测：
 
-- 在线引擎：bing、google、baidu、tencent、niutrans
+- 在线引擎：bing、google、baidu、tencent、niutrans（旧实现，P1 cld3 重构将移除）
 - 离线引擎：local（cld3-asm WASM 神经网络，19 种 BCP-47 映射覆盖 18 种语言；WASM 加载失败或检测不可靠时自动回退到 Unicode 正则）
 
 配置项 `detect_cld3_enabled`（默认 `true`）可运行时禁用 cld3，回退到纯正则检测。
 
-**失败回退**：用户配置的检测引擎调用失败时，按以下顺序依次尝试其他引擎，直到任一成功为止：
+**失败回退**（旧远程引擎链，P1 cld3 重构将整体移除，目标态为 cld3 → regex 两级兜底）：
 `bing → google → baidu → tencent → niutrans → local`。
 全部失败时，源语言保留为 `auto`，由翻译服务自身处理（不阻塞翻译流程）。
 
@@ -846,13 +849,11 @@ interface DictResult {
 | `translate_source_language` | string | `'auto'` | 默认源语言 |
 | `translate_target_language` | string | `'zh_cn'` | 默认目标语言 |
 | `translate_second_language` | string | `'en'` | 回退目标语言 |
-| `translate_detect_engine` | string | `'bing'` | 语言检测引擎 |
-| `translate_auto_copy` | `'disable'\|'source'\|'target'\|'source_target'` | `'disable'` | 自动复制 |
+| `translate_auto_copy` | boolean | `false` | 自动复制（开关；开 = 复制译文，关 = 不复制） |
 | `incremental_translate` | boolean | `false` | 增量翻译 |
 | `history_disable` | boolean | `false` | 禁用历史记录 |
 | `dynamic_translate` | boolean | `false` | 输入时自动翻译（1s 防抖） |
 | `translate_delete_newline` | boolean | `false` | 去除源文本换行 |
-| `translate_remember_language` | boolean | `false` | 记住语言选择 |
 | `translate_window_position` | `'mouse'\|'pre_state'` | `'mouse'` | 窗口位置模式 |
 | `translate_remember_window_size` | boolean | `false` | 记住窗口大小 |
 | `translate_pinned` | boolean | `false` | 固定翻译窗口，防止失焦自动关闭 |
@@ -874,11 +875,10 @@ interface DictResult {
 
 | 键 | 类型 | 默认值 |
 |---|---|---|
+| `recognize_engine` | string | 首个已注册 OCR 服务的 key |
 | `recognize_language` | string | `'auto'` |
-| `recognize_delete_newline` | boolean | `true` |
+| `recognize_delete_newline` | boolean | `false` |
 | `recognize_auto_copy` | boolean | `true` |
-| `recognize_close_on_blur` | boolean | `true` |
-| `recognize_hide_window` | boolean | `true` |
 
 #### 快捷键设置
 

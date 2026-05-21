@@ -36,40 +36,25 @@ E2E 框架为 **Playwright**（`@playwright/test` + Electron）。`locator` API 
 
 ```
 tests/user_e2e/
-├── playwright.config.ts     # Playwright 配置：projects(core/ui/full)、reporter、超时、artifact
+├── global_setup.ts         # Playwright globalSetup：每次命令开始时执行一次 electron-vite build
 ├── fixtures/
-│   ├── electron_app.ts      # 启动/停止 Electron：_electron.launch()，独立端口 + 独立 userData
-│   ├── app_fixture.ts       # AppFixture：封装 ElectronApplication + 多窗口 Page + 配置读写 + 重置
-│   └── e2e_api.ts           # 封装 E2E HTTP 端点调用（触发选区/字典/截图、读剪贴板、重置配置等）
-├── pages/                   # Page Object：每个窗口一个，基于 Playwright locator
+│   ├── electron_app.ts     # 启动/停止 Electron：_electron.launch()，独立端口 + 独立 userData
+│   ├── app_fixture.ts      # AppFixture：封装 ElectronApplication + 多窗口 Page + 配置读写 + 重置
+│   ├── e2e_api.ts          # 封装 E2E HTTP 端点调用
+│   ├── translation_test_server.ts  # 本地可控翻译响应 HTTP 服务（loading / retry / 长文本控制）
+│   ├── test.ts             # Playwright test fixture 入口
+│   └── qr_test.png         # QR 识别用例样图
+├── pages/                  # Page Object：每个窗口一个，基于 Playwright locator
 │   ├── translate_page.ts
 │   ├── dict_page.ts
 │   ├── recognize_page.ts
 │   ├── screenshot_page.ts
 │   ├── config_page.ts
-│   ├── updater_page.ts
-│   └── tray.ts
-├── specs/                   # 测试用例文件（见第 5 节）
-│   ├── app_lifecycle.spec.ts
-│   ├── translate_core.spec.ts
-│   ├── translate_titlebar.spec.ts
-│   ├── translate_source_area.spec.ts
-│   ├── translate_result_cards.spec.ts
-│   ├── translate_language_area.spec.ts
-│   ├── translate_behavior.spec.ts
-│   ├── dict_window.spec.ts
-│   ├── recognize_window.spec.ts
-│   ├── screenshot_window.spec.ts
-│   ├── screenshot_latency.spec.ts
-│   ├── config_settings.spec.ts
-│   ├── config_service_mgmt.spec.ts
-│   ├── config_history_backup.spec.ts
-│   ├── external_http_api.spec.ts
-│   ├── external_services.spec.ts
-│   ├── updater_and_tray.spec.ts
-│   └── i18n.spec.ts
-└── data/                    # 测试夹具数据（样例图片、OCR 语言包等）
+│   └── updater_page.ts
+└── specs/                  # 测试用例文件（见第 5 节；当前实际 29 个 spec，含设计文档列出的 17 个 + issue 衍生的 12 个）
 ```
+
+> 历史规划的 `pages/tray.ts` 与 `data/` 目录未落地：托盘走 `/e2e/tray-action` 与 `/e2e/tray-menu` HTTP 端点，无需 Page Object；样例图片直接放在 `fixtures/qr_test.png`。后续若有大量 OCR 样图，再独立拆 `data/` 目录。
 
 ---
 
@@ -357,10 +342,9 @@ class TranslatePage {
 - `hide_source`：划词/API/剪贴板翻译时隐藏源文本区；输入翻译强制显示
 - `incremental_translate`：true 追加、false 替换
 - `translate_delete_newline`：true 时换行被规范化
-- `translate_auto_copy`：`source` / `target` / `source_target` / `disable` 四种
+- `translate_auto_copy`：开关式 boolean —— true 复制译文到剪贴板，false 不复制（旧的 `'source'/'target'/'source_target'/'disable'` 枚举已在 spec §18.2 改为 boolean，相关用例需同步重写）
 - `dynamic_translate`：true 时输入停顿 1s 自动翻译
 - `translate_remember_window_size`：resize 后尺寸写入配置
-- `translate_remember_language`：重开窗口语言被记住
 - 第二语言回退：检测语言 == 目标语言时改用 `translate_second_language`
 
 ### 5.8 dict_window.spec.ts — 词典窗口
@@ -398,7 +382,7 @@ class TranslatePage {
   - **翻译按钮**（仅文字识别模式，位于"去除换行"左侧） → 文字送到翻译窗口并触发翻译
 - 信息精简：断言**不显示**图片尺寸、类型、识别字数、耗时
 - 服务真实覆盖：用户切换 system / tesseract 引擎；切换到 Tesseract 后自动重新识别并得到真实识别文本
-- `recognize_delete_newline` / `recognize_auto_copy` 配置联动
+- `recognize_engine` / `recognize_language` / `recognize_delete_newline`（默认 false）/ `recognize_auto_copy` 配置联动
 
 ### 5.10 screenshot_window.spec.ts / screenshot_latency.spec.ts — 截图窗口
 
@@ -419,8 +403,8 @@ class TranslatePage {
 - 点击各导航项切换页面，激活项高亮、图标主色
 - **通用页**：界面语言归"应用"卡片；外观卡片含主题/主色/文字（字体+字号）/透明/托盘点击行为；应用卡片含 API 端口/开机自启/检查更新
   逐项读写 → 断言 `config.json` 持久化
-- **翻译页**：语言、行为、窗口三组卡片逐项读写持久化；语言下拉项以**该语言自身文字**显示（English / 日本語 / ...），不带 AUTO/ZH 字母前缀
-- **文字识别页**：识别语言、去换行、自动复制、失焦关闭、隐藏窗口读写
+- **翻译页**：语言（源/目标/第二语言，**无检测引擎**）、行为（自动复制开关、增量翻译、动态翻译、自动去除换行、禁用历史）、窗口三组卡片逐项读写持久化；语言下拉项以**该语言自身文字**显示（English / 日本語 / ...），不带 AUTO/ZH 字母前缀
+- **文字识别页**：仅 4 项 —— 默认识别引擎（`recognize_engine`）、默认识别语言（`recognize_language`，默认 auto）、自动去除换行（`recognize_delete_newline`，默认 false）、自动复制（`recognize_auto_copy`，默认 true）。断言**不存在**失焦关闭、隐藏窗口、动态识别、默认导出格式、窗口/截图卡片
 - **快捷键页**：**4 个录入框**（翻译 / 词典 / 文字识别 / 截图翻译）；翻译行 UI 上同时绑定 `hotkey_selection_translate` 与 `hotkey_input_translate`；按钮在未绑定时显示"绑定"、已绑定显示"解绑"（**不出现 × 清除按钮**）；录入组合键、Backspace 清除、绑定按钮注册成功/失败提示；快捷键冲突提示出现在状态细节区域而非常驻在本页；**录入互斥**：点击翻译"绑定" → 点击词典"绑定" → 翻译自动退出录入态，词典进入录入态；绑定成功后**无"绑定成功"文字提示**
 - **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/设置目录、API 地址）
 - **config:changed 广播**：设置窗口改 `app_theme` → 翻译窗口主题同步变化
@@ -558,7 +542,9 @@ class TranslatePage {
 
 ---
 
-## 8. issues.md 对应关系
+## 8. issues 对应关系
+
+> 历史 issues 记录已归档到 `docs/archive/closed_issues/`，以下编号 #1–#8 引用早期 issues 列表：
 
 | issue | 描述 | 对应 spec |
 |---|---|---|
