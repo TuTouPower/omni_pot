@@ -630,7 +630,7 @@ renderer: useConfigStore
 | 操作按钮 | `稍后提醒`（关闭窗口）、`立即更新`（触发应用内下载安装；下载中按钮禁用并显示"下载中…"） |
 
 状态：加载中 → 更新详情 / 检查失败 / 已是最新版本 / 下载中 / 下载完成待安装。
-下载流程由 `electron/updater/index.ts` 实现，使用 GitHub release assets 作为下载源。
+下载流程由 `electron/updater/index.ts` 实现，使用 GitHub release assets 作为下载源；生产环境只接受 `TuTouPower/omni_pot` 的 GitHub release asset URL 及 GitHub 返回的可信下载重定向，不能信任 renderer 传入的任意下载 URL。
 
 ---
 
@@ -1091,7 +1091,8 @@ export async function getSelectedText(): Promise<string>
 - 启动时 `checkForUpdate()` 请求 GitHub Releases API 获取最新版本
 - 比较版本号，有更新则创建更新器窗口
 - 更新器窗口显示版本对比（含包大小）、release notes、下载进度条
-- 用户点击"立即更新"后从 release assets 下载安装包，下载完成后启动安装/替换流程
+- 用户点击"立即更新"后从 `TuTouPower/omni_pot` GitHub release assets 下载安装包，下载完成后启动安装/替换流程
+- 生产下载 URL 必须是本仓库 GitHub release asset 或 GitHub 返回的可信下载重定向；E2E 环境才允许 localhost HTTP 资产
 
 ---
 

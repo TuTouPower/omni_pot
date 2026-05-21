@@ -192,11 +192,11 @@ P1（cld3 重构）相关检测测试待 P1 完成后再补，本段不重复列
 
 ### P5.1 spec 完全无覆盖（优先）
 
-- [ ] **spec §5.4 结果卡片拖拽排序** — 拖拽后 `translate_service_list` 顺序更新；无 E2E/unit 覆盖。新增 `translate_result_cards.spec.ts` 用例
-- [ ] **spec §5.4 翻译窗口 DictResult 渲染** — 翻译结果为词典型时渲染发音/释义/例句结构；`translate_result_cards.spec.ts` 目前只测字符串结果
+- [x] **spec §5.4 结果卡片拖拽排序** — 拖拽后 `translate_service_list` 顺序更新；`translate_result_cards.spec.ts` 已覆盖启用服务排序和禁用服务穿插时的完整设置顺序
+- [x] **spec §5.4 翻译窗口 DictResult 渲染** — 翻译结果为词典型时渲染发音/释义/例句结构；`translate_result_cards.spec.ts` 已用确定性 Free Dictionary 响应覆盖
 - [ ] **spec §9.12 日志系统** — `electron-log` 轮转、renderer 日志转发、API key 脱敏；无 unit/integration 覆盖
-- [ ] **spec §27 自动更新下载安装** — "立即更新"触发下载 + 进度条 + 安装；`updater_and_tray.spec.ts` 只覆盖渲染与"稍后提醒"
-- [ ] **spec §6.2 词典源词卡片编辑重查** — `contentEditable` 编辑后 Enter 重查；`dict_window.spec.ts` 未覆盖
+- [x] **spec §27 自动更新下载安装** — "立即更新"触发下载 + 进度条 + 安装；`updater_and_tray.spec.ts` 已用本地 HTTP 资产覆盖下载进度到 100% 与 E2E 安装分支
+- [x] **spec §6.2 词典源词卡片编辑重查** — `contentEditable` 编辑后 Enter 重查；`dict_window.spec.ts` 已覆盖源词编辑后重新查询并刷新结果
 - [ ] **spec §21 托盘"重启"/"退出"动作** — `tray_layout.spec.ts` 只断言菜单项存在，未触发动作
 
 ### P5.2 有测试但断言不足
