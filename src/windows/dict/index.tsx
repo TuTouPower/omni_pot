@@ -345,7 +345,7 @@ export default function DictWindow(): React.ReactElement {
     }, [alwaysOnTop, setConfig])
 
     const collection_available = enabledCollectionServiceList.length > 0
-    const ttsServiceList = useConfigStore((s) => s.config.tts_service_list ?? [])
+    const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
     const ttsAvailable = ttsServiceList.length > 0
 
     const handleCollect = useCallback(async (instanceKey: string) => {
@@ -380,14 +380,11 @@ export default function DictWindow(): React.ReactElement {
         })
     }, [])
 
-    const stopTts = useCallback(() => {
+    const handleTts = useCallback((text: string) => {
         ttsRequestRef.current += 1
         ttsCleanupRef.current?.()
         ttsCleanupRef.current = null
         setTtsPlayingKey(null)
-    }, [])
-
-    const handleTts = useCallback((text: string) => {
         if (!text.trim() || ttsServiceList.length === 0) return
 
         const instanceKey = ttsServiceList[0]
@@ -443,13 +440,13 @@ export default function DictWindow(): React.ReactElement {
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault()
-            const text = inputRef.current?.textContent?.trim() ?? ''
+            const text = inputRef.current?.textContent.trim() ?? ''
             if (text) handleLookup(text).catch(console.error)
         }
     }, [handleLookup])
 
     const handleLookupClick = useCallback(() => {
-        const text = inputRef.current?.textContent?.trim() ?? word.trim()
+        const text = inputRef.current?.textContent.trim() ?? word.trim()
         if (text) handleLookup(text).catch(console.error)
     }, [word, handleLookup])
 

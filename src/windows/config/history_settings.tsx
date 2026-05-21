@@ -225,11 +225,11 @@ export default function HistorySettings(): React.ReactElement {
                         </button>
                         {page_numbers().map((p, idx) => (
                             typeof p === 'string'
-                                ? <span key={`ellipsis-${idx}`} className="hint" style={{ padding: '0 4px' }}>…</span>
+                                ? <span key={`ellipsis-${String(idx)}`} className="hint" style={{ padding: '0 4px' }}>…</span>
                                 : (
                                     <button
                                         key={p}
-                                        data-testid={`history-page-${p}`}
+                                        data-testid={`history-page-${String(p)}`}
                                         className={p === page ? 'btn sm' : 'btn ghost sm'}
                                         style={p === page ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)', borderColor: 'transparent' } : undefined}
                                         disabled={disabled}

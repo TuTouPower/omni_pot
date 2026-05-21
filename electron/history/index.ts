@@ -64,7 +64,7 @@ function build_where_clause(filters?: HistoryQueryFilters): { clause: string; pa
     }
     if (filters?.days && filters.days > 0) {
         conditions.push("created_at >= datetime('now', 'localtime', ?)")
-        params.push(`-${filters.days} days`)
+        params.push(`-${String(filters.days)} days`)
     }
     const clause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : ''
     return { clause, params }

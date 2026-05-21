@@ -462,7 +462,7 @@ export default function RecognizeWindow(): React.ReactElement {
         if (ocrRequestIdRef.current === requestId) {
             setIsRecognizing(false)
         }
-    }, [imageBase64, effectiveService, selectedLanguage, service_instances, config.recognize_language, config.recognize_auto_copy, config.recognize_delete_newline, mode, bumpOcrRequestId, handleNormalizeText, doTranslate])
+    }, [imageBase64, effectiveService, selectedLanguage, service_instances, config.recognize_language, config.recognize_auto_copy, mode, bumpOcrRequestId, handleNormalizeText, doTranslate])
 
     // Auto-re-translate when target language changes in translate mode
     useEffect(() => {

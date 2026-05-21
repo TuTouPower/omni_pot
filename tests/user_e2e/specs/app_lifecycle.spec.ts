@@ -33,12 +33,6 @@ async function expect_window_focused(omni: AppFixture, label: WindowLabel): Prom
     await expect.poll(async () => (await omni.api.windowState(label)).focused).toBe(true)
 }
 
-async function open_recognize_from_screenshot(omni: AppFixture): Promise<void> {
-    const screenshot = await omni.triggerScreenshot('recognize')
-    await expect(screenshot.hint()).toContainText('拖动选取区域')
-    await screenshot.drag_and_release(40, 40, 180, 130)
-}
-
 test.describe('@core app lifecycle', () => {
     test('returning user starts the app and sees the default translate window without first-run config', async () => {
         const omni = await AppFixture.start()

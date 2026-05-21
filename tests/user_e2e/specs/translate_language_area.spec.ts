@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { TranslationTestServer } from '../fixtures/translation_test_server'
+import type { TranslationTestServer } from '../fixtures/translation_test_server'
 import type { TranslatePage } from '../pages/translate_page'
 
 async function first_visible_result_text(translate: TranslatePage): Promise<string> {

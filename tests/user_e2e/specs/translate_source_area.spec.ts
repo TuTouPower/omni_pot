@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import type { TranslationTestServer } from '../fixtures/translation_test_server'
 
 test.describe('@ui translate source area', () => {
     test('user can edit, normalize, copy, and clear source text', async ({ omni }) => {
@@ -71,7 +72,7 @@ test.describe('@ui translate source area', () => {
                 dynamic_translate: false,
             },
         })
-        let server: import('../fixtures/translation_test_server').TranslationTestServer | null = null
+        let server: TranslationTestServer | null = null
 
         try {
             server = await omni.startTranslationTestServer()

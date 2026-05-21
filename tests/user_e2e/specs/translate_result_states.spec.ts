@@ -8,7 +8,7 @@
 
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { TranslationTestServer } from '../fixtures/translation_test_server'
+import type { TranslationTestServer } from '../fixtures/translation_test_server'
 
 test.describe('@ui translate result card states', () => {
     test('retry button re-triggers translation after a failure (stubbed - local HTTP server)', async () => {
@@ -63,7 +63,7 @@ test.describe('@ui translate result card states', () => {
             await translate.clickTranslate()
 
             // Wait for the request to arrive at the server
-            await expect.poll(() => server!.request_count, { timeout: 30_000 }).toBeGreaterThanOrEqual(1)
+            await expect.poll(() => Promise.resolve(server?.request_count ?? 0), { timeout: 30_000 }).toBeGreaterThanOrEqual(1)
 
             // While the request is in flight: card shows loading indicator,
             // the result body is collapsed (not visible), no error.

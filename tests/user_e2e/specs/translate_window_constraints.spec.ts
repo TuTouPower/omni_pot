@@ -11,7 +11,7 @@
 
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { TranslationTestServer } from '../fixtures/translation_test_server'
+import type { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const RESIZE_TOLERANCE_PX = 4
 

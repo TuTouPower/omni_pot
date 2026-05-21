@@ -8,8 +8,7 @@ const VERSION = '0.1.0'
 
 function platform_arch(): string {
     try {
-        const proc = typeof process !== 'undefined' ? process : undefined
-        if (proc?.platform && proc?.arch) return `${proc.platform}-${proc.arch}`
+        return `${process.platform}-${process.arch}`
     } catch { /* not in Node context */ }
     const ua = navigator.userAgent
     if (/Win/.test(ua)) return 'win32-x64'
@@ -36,7 +35,7 @@ export default function AboutPage(): React.ReactElement {
     const handleExportLog = (): void => {
         setExporting(true)
         window.electronAPI.log.export().then((result) => {
-            if (result.success) {
+            if (result.success && result.path) {
                 window.electronAPI.shell.openExternal(`file://${result.path}`).catch(() => undefined)
             }
         }).catch(() => undefined).finally(() => { setExporting(false); })

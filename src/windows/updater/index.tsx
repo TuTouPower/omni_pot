@@ -123,13 +123,13 @@ export default function UpdaterWindow(): React.ReactElement {
             if (typeof formatted === 'string') {
                 // Links: [text](url)
                 const link_parts: React.ReactNode[] = []
-                let remaining = formatted as string
+                const remaining = formatted
                 const link_re = /\[([^\]]+)\]\(([^)]+)\)/g
                 let last = 0
                 let match = link_re.exec(remaining)
                 while (match) {
                     if (match.index > last) link_parts.push(remaining.slice(last, match.index))
-                    link_parts.push(<a key={`${i}-link-${String(link_parts.length)}`} href={match[2]} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-primary)' }}>{match[1]}</a>)
+                    link_parts.push(<a key={`${String(i)}-link-${String(link_parts.length)}`} href={match[2]} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-primary)' }}>{match[1]}</a>)
                     last = link_re.lastIndex
                     match = link_re.exec(remaining)
                 }

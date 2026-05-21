@@ -43,10 +43,13 @@ export function registerShellHandlers(): void {
             }
             if (files.length === 0) return { success: false, error: 'No log files found in the last 7 days' }
             const win = BrowserWindow.getFocusedWindow()
-            const result = await dialog.showSaveDialog(win!, {
+            const options = {
                 defaultPath: `omni-pot-logs-${new Date().toISOString().slice(0, 10)}.zip`,
                 filters: [{ name: 'ZIP', extensions: ['zip'] }],
-            })
+            }
+            const result = win
+                ? await dialog.showSaveDialog(win, options)
+                : await dialog.showSaveDialog(options)
             if (result.canceled || !result.filePath) return { success: false, error: 'Cancelled' }
             create_zip(files, result.filePath)
             return { success: true, path: result.filePath }

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global fetch, URLSearchParams, console, process, setTimeout */
 /**
  * Test pot-app plugin APIs to check which are free and currently working.
  * Tests translation: EN->ZH ("hello") and ZH->EN ("你好")

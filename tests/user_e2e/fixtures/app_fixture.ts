@@ -169,11 +169,11 @@ export class AppFixture {
      */
     async startTranslationTestServer(): Promise<TranslationTestServer> {
         const server = new TranslationTestServer()
-        const port = await server.start()
+        await server.start()
         const base_url = server.base_url
 
         // Read current config to merge service instances (setConfig replaces entire value)
-        const current_config = await this.api.getConfig() as Record<string, unknown>
+        const current_config = await this.api.getConfig()
         const current_instances = (current_config['service_instances'] ?? {}) as Record<string, unknown>
 
         await this.api.setConfig({

@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { TranslationTestServer } from '../fixtures/translation_test_server'
+import type { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const test_service_config = {
     app_language: 'zh_cn',
@@ -191,7 +191,7 @@ test.describe('@ui translate result cards', () => {
             await omni.api.setConfig({
                 translate_service_list: ['mymemory@e2e', 'bing@default'],
                 service_instances: {
-                    ...(await omni.api.getConfig() as Record<string, unknown>)['service_instances'] as Record<string, unknown>,
+                    ...(await omni.api.getConfig())['service_instances'] as Record<string, unknown>,
                     'bing@default': { serviceKey: 'bing', config: {} },
                 },
             })

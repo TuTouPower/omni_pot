@@ -41,8 +41,12 @@ export function registerBackupHandlers(): void {
         if (result.canceled || result.filePaths.length === 0) {
             return { success: false, error: 'cancelled' }
         }
+        const backup_path = result.filePaths[0]
+        if (!backup_path) {
+            return { success: false, error: 'cancelled' }
+        }
         try {
-            const restored = restore_from_zip_path(result.filePaths[0]!)
+            const restored = restore_from_zip_path(backup_path)
             return { success: true, restored_files: restored.restored_files }
         } catch (err) {
             return { success: false, error: String(err) }

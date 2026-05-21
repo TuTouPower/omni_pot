@@ -276,9 +276,8 @@ export default function ServiceSettings(): React.ReactElement {
         const idx = serviceList.indexOf(instanceKey)
         if (idx <= 0) return
         const newList = [...serviceList]
-        const tmp = newList[idx]!
-        newList[idx] = newList[idx - 1]!
-        newList[idx - 1] = tmp
+        const [moved] = newList.splice(idx, 1) as [string]
+        newList.splice(idx - 1, 0, moved)
         useConfigStore.getState().set(activeTab, newList)
     }
 
@@ -286,9 +285,8 @@ export default function ServiceSettings(): React.ReactElement {
         const idx = serviceList.indexOf(instanceKey)
         if (idx < 0 || idx >= serviceList.length - 1) return
         const newList = [...serviceList]
-        const tmp = newList[idx]!
-        newList[idx] = newList[idx + 1]!
-        newList[idx + 1] = tmp
+        const [moved] = newList.splice(idx, 1) as [string]
+        newList.splice(idx + 1, 0, moved)
         useConfigStore.getState().set(activeTab, newList)
     }
 
