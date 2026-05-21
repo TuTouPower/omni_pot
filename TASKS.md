@@ -2,37 +2,23 @@
 
 > 合并自原 `PLAN.md`、`docs/review.md`、`docs/issues.md`。
 > **权威来源**: 功能定义以 `docs/spec.md` 为准，测试设计以 `docs/test_user_e2e.md` 为准。
-> 已完成项归档见 `docs/archive/plan_archive.md`、`docs/archive/plan_archive_2.md`、`docs/archive/plan_archive_3.md`、`docs/archive/closed_issues/`。
+> 已完成项归档见 `docs/archive/plan_archives/`、`docs/archive/closed_issues/`。
 
 ---
 
 ## 当前状态
 
-第二轮代码修复 ✅ (6/6)、第二轮测试加固 ✅ (5/5)、第三轮测试整改 ✅ (9/9)、第四轮 review 覆盖加固 ✅ (10/10)。
-详见 `docs/archive/plan_archive_3.md`。
+- 第二轮代码修复 ✅ (6/6)、第二轮测试加固 ✅ (5/5)、第三轮测试整改 ✅ (9/9)、第四轮 review 覆盖加固 ✅ (10/10)。详见 `docs/archive/plan_archives/plan_archive_3.md`。
+- 文档结构整理 ✅（2026-05-21）：`docs/external_services/` 全部历史研究归档到 `docs/archive/external_services/`（目录已移除）；`docs/archive/` 按 `handoffs/` / `reviews/` / `plan_archives/` 子目录组织。
 
 ---
 
-## P1: 自动化测试待办
+## P1: 语言检测重构（cld3-asm 替换远程 API 回退链）
 
-### T1 语言检测回退链 + "我爱你"中文不误判日语
-
-- spec §17：**失败回退链 `bing → google → baidu → tencent → niutrans → local`**
-- spec §5.4：**中文长句不被误判为日语**（如重复 "我爱你"）
-- spec §17：检测引擎与目标语言相同 → 回退到 `translate_second_language`
-- 现状：`tests/detect/cld3.test.ts` 仅 cld3 单测；回退链未端到端覆盖
-
-- [ ] 单元层 mock 模拟逐个引擎失败，断言回退顺序
-- [ ] E2E 加 "我爱你×N → 检测为中文" 断言
-- [ ] `translate_behavior.spec.ts` 中检测引擎=目标语言的强断言确认
-
----
-
-## T2 语言检测替换为 cld3-asm，移除远程 API 回退链
-
-> 测试报告见 `docs/external_services/lang_detect_api_test_20260521.md`。
-> 结论：5 个远程检测 API（Bing/Google/Baidu/Tencent/NiuTrans）在当前环境全部不可用，
+> 测试报告：`docs/archive/external_services/lang_detect_api_test_20260521.md`。
+> 结论：5 个远程检测 API（Bing/Google/Baidu/Tencent/NiuTrans）在当前环境全部不可用；
 > cld3-asm 15 种语言 30/30 全部正确，体积 6.3MB，初始化 7ms，速度最快。
+> spec §17 / §5.4 的"回退链 + 中文不误判日语"要求改由 cld3-asm 单一引擎满足，远程回退链整体移除。
 
 ### 范围
 
@@ -41,22 +27,21 @@
   - 移除 `bing_detect`、`google_detect`、`baidu_detect`、`tencent_detect`、`niutrans_detect` 五个远程检测函数
   - 移除 `fetch_with_timeout`、`DETECT_REQUEST_TIMEOUT_MS`、`DETECT_FALLBACK_ORDER`
   - 移除所有 `*_LANG_MAP`（BING_LANG_MAP、GOOGLE_LANG_MAP、BAIDU_DETECT_LANG_MAP 等）
-  - 移除 `RemoteDetectEngine` 类型、`DetectFallback` 类型
-  - 移除 `detect_engine_order` 函数
-  - 新增 `detect_cld3()` 函数：使用 cld3-asm WASM 检测，返回 BCP-47 代码，映射到项目 `LanguageCode`
+  - 移除 `RemoteDetectEngine` 类型、`DetectFallback` 类型、`detect_engine_order` 函数
+  - 新增 `detect_cld3()`：使用 cld3-asm WASM 检测，返回 BCP-47 代码，映射到项目 `LanguageCode`
   - 新增 BCP-47 → 项目语言码映射表（复用 cld3 测试中验证的映射）
   - `detectLanguage(text, engine?)` 简化为：cld3 为主，regex 兜底（cld3 加载失败时）
   - engine 参数保留但仅支持 `'local'`（cld3+regex）一种模式，或考虑移除 engine 参数
 - **重写 `electron/detect/index.ts`**：
-  - 移除 IPC `detect.local` 的 regex 实现，改为调用 cld3
+  - IPC `detect.local` 的 regex 实现改为调用 cld3
   - 保留 regex 作为 cld3 WASM 加载失败的最终兜底
 - **更新测试**：
   - 重写 `tests/unit/services/test_detect.test.ts`：移除远程引擎 mock 测试，新增 cld3 检测测试
-  - 更新 E2E 检测相关断言
+  - 补 E2E："我爱你×N → 检测为中文"断言、检测引擎=目标语言时回退 `translate_second_language` 的强断言
 - **更新文档**：
-  - `docs/spec.md` §17 语言检测：移除远程 API 回退链描述，改为 cld3 本地检测
-  - `docs/external_service_catalog.md`：语言检测部分更新为 cld3-asm
-  - `docs/external_services/lang_detect_api_test_20260521.md`：标记 cld3-asm 已采纳
+  - `docs/spec.md` §17：移除远程 API 回退链描述，改为 cld3 本地检测
+  - `docs/external_service_catalog.md` §1.1：语言检测部分更新为 cld3-asm
+  - `docs/external_services/lang_detect_api_test_20260521.md`：标记 cld3-asm 已采纳（注：该文件已归档到 `docs/archive/external_services/`）
 
 ### cld3-asm API 备忘
 
@@ -71,14 +56,29 @@ const result = instance.findLanguage('你好世界')
 - BCP-47 代码映射：`zh` → `zh_cn`、`pt` → `pt_pt`、`no` → `nb_no`、`zh-Hant` → `zh_tw` 等
 - v4 API：返回 `is_reliable`（小写下划线），无 `.delete()` / `.destroy()` 方法
 
+### 任务清单
+
 - [ ] 安装 cld3-asm，加入 package.json dependencies
 - [ ] 重写 src/services/detect.ts（移除远程 API，新增 cld3，保留 regex 兜底）
 - [ ] 重写 electron/detect/index.ts（IPC 层改用 cld3）
 - [ ] 重写 tests/unit/services/test_detect.test.ts
-- [ ] 更新 E2E 检测相关测试
+- [ ] 补 E2E："我爱你"中文断言、检测引擎=目标语言回退断言
 - [ ] 更新 docs/spec.md §17
-- [ ] 更新 docs/external_service_catalog.md
-- [ ] 更新 docs/external_services/lang_detect_api_test_20260521.md
+- [ ] 更新 docs/external_service_catalog.md §1.1
+- [ ] 更新 docs/archive/external_services/lang_detect_api_test_20260521.md（标记已采纳）
+
+---
+
+## P1.2: 文字识别"自动去除换行"默认关闭
+
+设置页 → 文字识别设置里的"自动去除换行"选项，当前默认开启，改为默认关闭。
+当前无用户，无需迁移本地配置。
+
+- [ ] 定位设置项默认值（推测在 `electron/config/` 或 `src/services/ocr/` 配置 schema）
+- [ ] 改默认值为 `false`
+- [ ] 更新 `docs/spec.md` 文字识别设置默认值描述
+- [ ] 更新 `docs/design/omni-pot/` 相关设计稿（如有标注默认值）
+- [ ] 单元/E2E 测试断言新默认值
 
 ---
 
@@ -118,9 +118,9 @@ const result = instance.findLanguage('你好世界')
 
 ---
 
-## P5: 免费翻译 / 词典服务集成（待用户允许后再做）
+## P4: 免费翻译 / 词典服务集成（待用户允许后再做）
 
-来源：`docs/external_services/pot_plugin_api_test_results.md`（2026-05-19 测试）。
+来源：`docs/archive/external_services/pot_plugin_api_test_results.md`（2026-05-19 测试），分类详见 `docs/external_service_catalog.md` §1.2/§1.3。
 将 pot-app 社区验证过的免费、无需 API key 的服务接入 omni_pot。
 **未经用户明确允许，暂不主动开工**；先记录在此作为后续任务。
 
@@ -137,10 +137,40 @@ const result = instance.findLanguage('你好世界')
 - [ ] **Free Dictionary API** — 英文词义/音标/例句（当前项目已有集成，确认是否最新）
 - [ ] **Tatoeba 例句查询** — 多语言例句搜索引擎，适合做辅助功能
 
-各服务 API 格式、请求/响应示例、注意事项详见 `docs/external_services/pot_plugin_api_test_results.md`。
-
 ---
 
 ## 已知环境问题（不修，仅跟踪）
 
 - **谷歌翻译当前环境失败**：保留为已知问题，不用 mock 隐藏；需要在网络可达的环境复测，或更换默认免费引擎。
+
+---
+
+## P5: 测试覆盖缺口（2026-05-21 spec ↔ tests 审计）
+
+来源：对照 `docs/spec.md` / `docs/test.md` / `docs/test_user_e2e.md` 与 `tests/` 下 62 个测试文件审计得出。
+P1（cld3 重构）相关检测测试待 P1 完成后再补，本段不重复列。
+
+### P5.1 spec 完全无覆盖（优先）
+
+- [ ] **spec §5.4 结果卡片拖拽排序** — 拖拽后 `translate_service_list` 顺序更新；无 E2E/unit 覆盖。新增 `translate_result_cards.spec.ts` 用例
+- [ ] **spec §5.4 翻译窗口 DictResult 渲染** — 翻译结果为词典型时渲染发音/释义/例句结构；`translate_result_cards.spec.ts` 目前只测字符串结果
+- [ ] **spec §9.12 日志系统** — `electron-log` 轮转、renderer 日志转发、API key 脱敏；无 unit/integration 覆盖
+- [ ] **spec §27 自动更新下载安装** — "立即更新"触发下载 + 进度条 + 安装；`updater_and_tray.spec.ts` 只覆盖渲染与"稍后提醒"
+- [ ] **spec §6.2 词典源词卡片编辑重查** — `contentEditable` 编辑后 Enter 重查；`dict_window.spec.ts` 未覆盖
+- [ ] **spec §21 托盘"重启"/"退出"动作** — `tray_layout.spec.ts` 只断言菜单项存在，未触发动作
+
+### P5.2 有测试但断言不足
+
+- [ ] **spec §5.2 源文本 TTS 状态机** — 朗读按钮忙碌/播放态、再次点击取消、清空原文停止；`translate_source_area.spec.ts` 缺 TTS 用例
+- [ ] **spec §8.3 识别窗口"复制图片"** — 复制图片到剪贴板路径；`recognize_window.spec.ts` 只测复制文本
+- [ ] **spec §8.5 切换识别目标语言自动重翻译** — `recognize_window.spec.ts` 测了切换引擎重识别，缺切换目标语言自动重翻译
+- [ ] **spec §9.8 历史工具栏搜索/筛选** — 搜索框、服务筛选、时间筛选；`config_history_backup.spec.ts` 缺
+- [ ] **spec §5.5 欢迎页跳转快捷键 tab** — `translate_welcome.spec.ts` 只验证设置窗口打开，未断言精确落在快捷键 tab
+- [ ] **spec §10 更新器版本对比格式** — `updater_and_tray.spec.ts` 缺 `3.0.6 → 3.1.0 · 日期 · 包大小` 格式断言
+
+### P5.3 设计文档未落地
+
+- [ ] **test_user_e2e.md §5 `data/` 目录** — 设计了样例图片、OCR 语言包目录，`tests/user_e2e/` 下不存在；要么补建、要么从设计文档移除
+- [ ] **test_user_e2e.md §5 `pages/tray.ts`** — 设计了托盘 Page Object，实际不存在（托盘测试直接走 API）；要么补建、要么从设计文档移除
+
+> 备注：specs/ 目录有若干文件（`translate_welcome` / `translate_entry_merge` / `translate_input_rows` / `translate_pin_topmost` / `translate_result_states` / `translate_window_constraints` / `tray_layout` / `terminology_settings` / `window_rounded_corner` / `dict_card_height` / `dict_issues`）超出 test_user_e2e.md 原始规划，是后续 issue 衍生的正向扩展，不算缺口。

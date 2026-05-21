@@ -31,7 +31,7 @@
 | 服务 | 结果 | 错误类型 |
 |---|---|---|
 | Bing Detect | **不可用** | 首次 429 限流，后续 400 Bad Request 或超时 |
-| Google Detect | **不可用** | 全部超时（8s），当前网络不可达 |
+| Google Detect | **不可用**（直连）/ **可用（走代理 10808）** | 直连超时；走代理可达，详见第 6 节 |
 | Baidu Detect | **不可用** | 错误码 1022（反爬），中文返回 undefined |
 | Tencent Detect | **不可用** | HTTP 405 Method Not Allowed，接口疑似下线 |
 | NiuTrans Detect | **不可用** | 错误码 13002，无 key 路径已失效 |
@@ -145,7 +145,72 @@ Chrome 的 Language Detector API（`self.translation.createDetector()`）属于 
 
 如果未来 Chrome Language Detector API 成为稳定标准，可以考虑在 Electron 的渲染进程中启用它作为额外检测源。但当前阶段，使用 cld3-asm 或 fasttext-wasm 更可靠。
 
-## 5. 结论
+## 6. Google Translate gtx API（lingva-scraper 底层）
+
+> lingva-scraper 是 lingva-translate 的核心依赖，本质是抓取 Google Translate 网页/接口。
+> 语言检测完全由 Google Translate 完成（`source=auto` 时返回 `detectedSource`），lingva-scraper 仅做解析透传。
+>
+> 测试方式：直接调用 `translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=...`，走 SOCKS5 代理 `127.0.0.1:10808`。
+
+### 连通性
+
+| 条件 | 结果 |
+|---|---|
+| 无代理 | **不可达**（超时），当前网络环境无法直连 Google |
+| 走代理 10808 | **可用**，延迟约 1-3 秒/请求 |
+
+### 准确率（15 种语言 × 短+长 = 30 组）
+
+| 语言 | 短文本 | 长文本 | 备注 |
+|---|---|---|---|
+| 简体中文 | ✅ zh-CN | ✅ zh-CN | 返回 `zh-CN` 而非 `zh`，语言本身正确 |
+| 英文 | ✅ en | ✅ en | |
+| 法文 | ✅ fr | ✅ fr | |
+| 阿拉伯文 | ✅ ar | ✅ ar | |
+| 日文 | ✅ ja | ✅ ja | |
+| 西班牙文 | ✅ es | ✅ es | |
+| 韩文 | ✅ ko | ✅ ko | |
+| 德文 | ✅ de | ✅ de | |
+| 俄文 | ✅ ru | ✅ ru | |
+| 泰文 | ✅ th | ✅ th | |
+| 越南文 | ✅ vi | ✅ vi | |
+| 印地文 | ✅ hi | ✅ hi | |
+| 葡萄牙文 | ✅ pt | ✅ pt-PT | 长文本返回 `pt-PT`（欧洲葡语），语言正确 |
+| 意大利文 | ✅ it | ✅ it | |
+| 土耳其文 | ✅ tr | ✅ tr | |
+
+语言判断准确率 **30/30**。3 个返回了更精确的 locale 码（`zh-CN`、`pt-PT`），不影响实际使用（做 locale→LanguageCode 映射即可）。
+
+### 速度
+
+| 指标 | 值 |
+|---|---|
+| 短文本延迟 | 约 1000-1100ms（含代理+网络） |
+| 长文本延迟 | 约 1200-3100ms（含代理+网络） |
+| 限流风险 | 高频调用可能被 Google 限流 |
+
+### 与本地方案对比
+
+| 维度 | Google gtx (lingva-scraper) | cld3-asm | fasttext-wasm |
+|---|---|---|---|
+| 准确率 | 30/30 | 30/30 | 30/30 |
+| 延迟 | 1000-3100ms（需代理+网络） | **0.03-0.12ms**（本地） | 0.06-0.45ms（本地） |
+| 初始化 | 无 | 7ms | 238-285ms |
+| 离线可用 | 否 | 是 | 是 |
+| 代理依赖 | 是（中国大陆需代理访问 Google） | 否 | 否 |
+| 包体积 | 0（远程 API） | 6.3 MB | 3.0-4.75 MB |
+
+### 结论
+
+Google Translate gtx 语言检测准确率与本地 cld3-asm / fasttext-wasm 相当（30/30），但：
+- 延迟高 3-4 个数量级（秒级 vs 微秒级）
+- 中国大陆必须走代理，增加复杂度和不确定性
+- 高频使用可能被 Google 限流
+- 不支持离线场景
+
+**不适合作为 omni_pot 的主要语言检测方案**，但可作为翻译 API 调用时的附带检测结果使用（调用翻译时 `source=auto`，Google 返回的 `detectedSource` 可直接复用，零额外开销）。
+
+## 7. 结论
 
 ### 推荐排序
 
@@ -160,5 +225,6 @@ Chrome 的 Language Detector API（`self.translation.createDetector()`）属于 
 | 方案 | 原因 |
 |---|---|
 | franc 全系列 | 短文本准确率极差，阿拉伯文/印地文长短文本均误判 |
-| 远程 API | 当前环境全部不可用，即使可用也不稳定 |
+| 远程 API（Bing/Google/Baidu/Tencent/NiuTrans） | 当前环境全部不可用，即使可用也不稳定 |
+| Google gtx / lingva-scraper | 准确率 30/30 但延迟秒级、需代理、有限流风险；仅适合翻译调用时附带复用 detectedSource，不适合独立检测 |
 | Chrome Language Detector API | 实验性 API，需要 Chromium flag，不稳定 |

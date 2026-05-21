@@ -232,11 +232,14 @@
 
 ## 6. 资料来源
 
-- `docs/external_services/external_services.md`
-- `docs/external_services/api_test_results.md`
-- `docs/external_services/pot_plugin_api_test_results.md`
-- `docs/external_services/dict_service_test_results.md`
-- `docs/external_services/chinese_dictionary_data_source.md`
-- `docs/external_services/language_detection_comparison.md`
-- `docs/external_services/deepl_free_jsonrpc_limits.md`
-- `docs/external_services/translation_dictionary_apis.md`
+历史研究/测试快照（全部归档于 `docs/archive/external_services/`，作 catalog 溯源）：
+
+- `lang_detect_api_test_20260521.md`（2026-05-21 远程检测 API + cld3-asm 实测）
+- `external_services.md`
+- `api_test_results.md`
+- `pot_plugin_api_test_results.md`
+- `dict_service_test_results.md`
+- `chinese_dictionary_data_source.md`
+- `language_detection_comparison.md`
+- `deepl_free_jsonrpc_limits.md`
+- `translation_dictionary_apis.md`
