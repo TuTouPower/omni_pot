@@ -8,7 +8,7 @@
 
 ## 当前状态
 
-第二轮代码修复 ✅ (6/6)、第二轮测试加固 ✅ (5/5)、第三轮测试整改 ✅ (9/9)、第四轮 review 覆盖加固 ✅ (9/10)。
+第二轮代码修复 ✅ (6/6)、第二轮测试加固 ✅ (5/5)、第三轮测试整改 ✅ (9/9)、第四轮 review 覆盖加固 ✅ (10/10)。
 详见 `docs/archive/plan_archive_3.md`。
 
 ---
@@ -34,21 +34,21 @@
 
 | 项 | spec 章节 | 现状 |
 |---|---|---|
-| HTTP API 端点 `POST /translate`、`GET /config`、`/recognize` stub 行为 | §20 | 未见专门集成测；E2E 仅用 `/trigger-*` 路径 |
-| 选中文本 fallback 链（UIA → Ctrl+C → sentinel → restore） | §24 | `tests/unit/selection/clipboard.test.ts` 覆盖局部 |
-| CSP 策略（`connect-src` https、`media-src blob:`、`worker-src blob:`、WASM 执行） | §3.4 | 未见验证 |
-| better-sqlite3 native rebuild + 打包 unpacked（issue #1） | §29 | 走 dist smoke，未自动化 |
-| 翻译历史按**实例 key** 存 `service_key`（同服务多实例） | §25 | 未见专门断言 |
-| 服务实例 `config.enable=false` 时**保留在列表中但不参与执行** | §12.3 | `config_service_mgmt.spec.ts` 有启停，需确认"保留在列表"断言 |
-| 剪贴板抑制窗口（划词翻译 Ctrl+C 回退期间不误触发监听） | §23 | 单测覆盖局部 |
+| HTTP API 端点 `POST /translate`、`GET /config`、`/recognize` stub 行为 | §20 | `tests/user_e2e/specs/external_http_api.spec.ts` 覆盖外部 HTTP 集成边界 |
+| 选中文本 fallback 链（UIA → Ctrl+C → sentinel → restore） | §24 | `tests/unit/selection/windows.test.ts` 覆盖 UIA 不可用 → Ctrl+C 剪贴板回退，`tests/unit/selection/clipboard.test.ts` 覆盖 sentinel → restore；真实 OS 级 UIA/Ctrl+C E2E 需人工/实机验证 |
+| CSP 策略（`connect-src` https、`media-src blob:`、`worker-src blob:`、WASM 执行） | §3.4 | `tests/unit/csp_policy.test.ts` 覆盖 packaged / development CSP 指令 |
+| better-sqlite3 native rebuild + 打包 unpacked（issue #1） | §29 | `tests/unit/packaging/native_modules.test.ts` 静态覆盖 `better-sqlite3` 依赖、`electron-builder install-app-deps`、`npmRebuild=true`、`asarUnpack: **/*.node` 与 `run_dist.mjs` electron-builder 路径；真实 `app.asar.unpacked` 产物仍需 dist smoke 人工/实机确认 |
+| 翻译历史按**实例 key** 存 `service_key`（同服务多实例） | §25 | `config_history_backup.spec.ts` 覆盖同服务多实例历史 `service_key` |
+| 服务实例 `config.enable=false` 时**保留在列表中但不参与执行** | §12.3 | `config_service_mgmt.spec.ts` 覆盖启停后保留在服务列表、配置列表不变、结果卡片仅展示启用服务 |
+| 剪贴板抑制窗口（划词翻译 Ctrl+C 回退期间不误触发监听） | §23 | `tests/unit/selection/windows.test.ts` 覆盖 Windows UIA 不可用时传入抑制包装，`tests/unit/selection/clipboard.test.ts` 覆盖 Ctrl+C fallback sentinel/restore 期间剪贴板监听不触发；真实 OS 级 Ctrl+C/剪贴板 E2E 不自动化，避免污染用户剪贴板和焦点 |
 
-- [ ] HTTP API 端点集成测试
-- [ ] 选中文本 fallback 链 E2E 完整覆盖
-- [ ] CSP 策略验证
-- [ ] better-sqlite3 native rebuild 自动化
-- [ ] 翻译历史实例 key 专门断言
-- [ ] 服务实例 enable=false 保留列表断言
-- [ ] 剪贴板抑制窗口 E2E
+- [x] HTTP API 端点集成测试
+- [x] 选中文本 fallback 链单元/集成覆盖（真实 OS 级 UIA/Ctrl+C E2E 不自动化，避免影响用户剪贴板和焦点）
+- [x] CSP 策略验证
+- [x] better-sqlite3 native rebuild 静态自动化（完整打包产物仍需 dist smoke 人工/实机验证）
+- [x] 翻译历史实例 key 专门断言
+- [x] 服务实例 enable=false 保留列表断言
+- [x] 剪贴板抑制窗口单元/集成覆盖（真实 OS 级 Ctrl+C/剪贴板 E2E 不自动化，避免影响用户剪贴板和焦点）
 
 ---
 
@@ -57,7 +57,7 @@
 需在 Windows dist 产物中人工确认：
 
 - [ ] **TTS 实机发声**：翻译/词典/识别窗口点击朗读，确认有声音
-- [ ] **dist 打包 smoke**：`npm run dist` 后验证首次启动、托盘、快捷键、截图、设置、识别窗口
+- [ ] **dist 打包 smoke**：`npm run dist` 后验证首次启动、托盘、快捷键、截图、设置、识别窗口，并确认 `better-sqlite3` 的 `*.node` 位于 `app.asar.unpacked` 且词典/历史数据库可正常打开
 - [ ] **置顶按钮全窗口存在性视觉一致性**：E2E 已覆盖 dict/recognize titlebar `pin` 存在性与翻转，仍需 dist 实物视觉确认翻译、词典、文字识别、截图翻译四窗口样式一致
 - [ ] **置顶按钮图钉竖线视觉**：当前路径 `M12 16v6` 已含竖线，用户反馈仍缺失；dist 实物确认，必要时调整 strokeWidth 或 path
 - [ ] **去除换行 / 去除空格图标与 demo 一致**：`Icons.Newline` / `Icons.Space` 已按 demo 的 `MdSmartButton` / `CgSpaceBetween` 重绘，dist 实物确认一致性

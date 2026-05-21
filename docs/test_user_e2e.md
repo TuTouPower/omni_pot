@@ -64,6 +64,7 @@ tests/user_e2e/
 │   ├── config_settings.spec.ts
 │   ├── config_service_mgmt.spec.ts
 │   ├── config_history_backup.spec.ts
+│   ├── external_http_api.spec.ts
 │   ├── external_services.spec.ts
 │   ├── updater_and_tray.spec.ts
 │   └── i18n.spec.ts
@@ -264,7 +265,7 @@ class TranslatePage {
 
 ---
 
-## 5. 测试文件规划（15 个 spec）
+## 5. 测试文件规划
 
 当前基础版 fixture：常规用例每个测试启动独立实例 → `resetConfig()` →
 用例用 PO 操作与断言 → 测试结束停止实例并清理 userData。生命周期类用例可手动 `AppFixture.start()`，以覆盖首次运行、窗口常驻等启动状态。Playwright `workers: 1`，固定顺序，无 shuffle。
@@ -451,13 +452,19 @@ class TranslatePage {
 - 恢复 → 配置与历史记录被覆盖
 - 备份内容含设置与 CC-CEDICT 数据库
 
-### 5.14 external_services.spec.ts — 外部服务真实连通性
+### 5.14 external_http_api.spec.ts — 外部 HTTP API 集成边界
+
+- 覆盖 spec §20 的公开 HTTP API：`POST /translate`、`GET /config`、`POST /recognize`
+- 不带 `OMNI_POT_E2E_TOKEN` 调用公开端点，验证它们不依赖 E2E-only `/trigger-*` 路径
+- `POST /translate` 断言请求体文本进入翻译窗口源文本区；`GET /config` 返回公开配置且敏感字段脱敏；`POST /recognize` 返回当前 stub JSON（`success: true` + mode）
+
+### 5.15 external_services.spec.ts — 外部服务真实连通性
 
 - 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查
 - 覆盖无密钥外部服务：Bing、Google、DeepL 免费模式、MyMemory、Cambridge、Free Dictionary、Edge TTS
 - 不使用 route/mock；公共服务不可达时测试应失败并暴露具体服务
 
-### 5.15 updater_and_tray.spec.ts — 更新器 + 托盘
+### 5.16 updater_and_tray.spec.ts — 更新器 + 托盘
 
 更新器（用 `/e2e/mock-update` 注入假版本）：
 
@@ -471,7 +478,7 @@ class TranslatePage {
   `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 
-### 5.16 i18n.spec.ts — 国际化
+### 5.17 i18n.spec.ts — 国际化
 
 - 切换 `app_language`（en ↔ zh_cn）→ 所有已打开窗口 UI 文案即时切换，无需重启
 - 中文下关键文案正确：自动检测、简体中文、检测为英文、各设置页标签、托盘项

@@ -38,13 +38,14 @@ curl -X POST -d '{"text":"australia"}' -H 'Content-Type: application/json' http:
 
 ### `POST /recognize` — 文字识别（占位）
 
-- 当前为占位实现，返回 `{ "success": true, "message": "recognize stub" }`。
+- 当前为占位实现，读取可选 JSON `{ "mode": "recognize" | "translate" }`，默认 `recognize`。
+- 响应：`{ "success": true, "mode": "recognize" }` 或 `{ "success": true, "mode": "translate" }`。
 - 真实文字识别触发请使用全局快捷键或托盘菜单；后续会替换为实际实现。
 
-### `GET /config` — 读取全部配置
+### `GET /config` — 读取公开配置
 
-- 响应：完整 `AppConfig` JSON。
-- 用于外部工具读取当前快捷键、服务列表、窗口尺寸等设置。
+- 响应：公开 `AppConfig` JSON；`webdav_password` 与服务实例配置中的密码、secret、token、API key 等敏感字段返回 `[redacted]`。
+- 用于外部工具读取当前快捷键、服务列表、窗口尺寸等非敏感设置。
 
 ```bash
 curl http://127.0.0.1:20202/config | jq '.hotkey_selection_translate'

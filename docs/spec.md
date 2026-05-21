@@ -945,7 +945,7 @@ interface DictResult {
 | POST | `/` | 翻译请求体文本 |
 | POST | `/translate` | 翻译请求体文本 |
 | POST | `/recognize` | 预留（当前为 stub） |
-| GET | `/config` | 返回全部配置 JSON |
+| GET | `/config` | 返回敏感字段脱敏后的公开配置 JSON |
 | GET | `/history` | 预留（当前为 stub） |
 
 E2E 测试专用端点（仅 `OMNI_POT_E2E` 环境变量启用）：

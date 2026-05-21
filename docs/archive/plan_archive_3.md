@@ -133,9 +133,9 @@
 
 ---
 
-## 第四轮 review.md 覆盖加固 ✅ (9/10)
+## 第四轮 review.md 覆盖加固 ✅ (10/10)
 
-按 `docs/review.md` 2026-05-21 审查清单完成 9 项；剩余项见当前 PLAN.md。
+按 `docs/review.md` 2026-05-21 审查清单完成 10 项。
 
 | 项 | 改动文件 | 说明 |
 |---|---|---|
@@ -150,3 +150,4 @@
 | 托盘弹窗文案非空 | `tray_layout.spec.ts` | 首次渲染时逐项断言 innerText.trim() 非空 |
 | i18n 缺失 key negative assertion | `i18n.spec.ts` | nb_no 回退下不出现 `welcome.translate` 等原始 key |
 | ecdict 源标签 / 备份恢复 app_theme | `dict_window.spec.ts`、`config_history_backup.spec.ts` | 源标签按 spec §32 显示 ECDict；备份默认 app_theme=system，恢复后回到 system |
+| 服务实例禁用保留断言 | `config_service_mgmt.spec.ts` | `config.enable=false` 后服务仍在列表和 `translate_service_list` 中，但结果卡片仅展示启用服务 |
