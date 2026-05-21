@@ -538,13 +538,21 @@ export class TranslatePage {
     }
 
     async fulfill_free_dictionary_once(result: unknown): Promise<void> {
-        await this.page.route('https://api.dictionaryapi.dev/api/v2/entries/en/*', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify(result),
-            })
-        }, { times: 1 })
+        await this.page.evaluate((mock_body: unknown) => {
+            const original_fetch = window.fetch.bind(window)
+            let consumed = false
+            window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+                if (!consumed && url.startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
+                    consumed = true
+                    return new Response(JSON.stringify(mock_body), {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    })
+                }
+                return original_fetch(input, init)
+            }
+        }, result)
     }
 
     async waitForNoDetectedLanguage(duration = 2_000): Promise<void> {

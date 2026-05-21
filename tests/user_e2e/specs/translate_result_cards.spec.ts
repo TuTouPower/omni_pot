@@ -291,10 +291,18 @@ test.describe('@ui translate result cards', () => {
             await expect(config.serviceItems().nth(2)).toContainText('Bing')
 
             await config.clickClose()
-            await translate.drag_result_card('bing@default', 'google@default')
+            const open_result = await omni.api.openWindow('translate')
+            expect(open_result.success).toBe(true)
+            const translate_after_config = await omni.translate()
+            await translate_after_config.typeSource('hello')
+            await expect(translate_after_config.resultCards()).toHaveCount(2)
+            await expect(translate_after_config.resultCards().nth(0)).toContainText('Google')
+            await expect(translate_after_config.resultCards().nth(1)).toContainText('Bing')
 
-            await expect(translate.resultCards().nth(0)).toContainText('Bing')
-            await expect(translate.resultCards().nth(1)).toContainText('Google')
+            await translate_after_config.drag_result_card('bing@default', 'google@default')
+
+            await expect(translate_after_config.resultCards().nth(0)).toContainText('Bing')
+            await expect(translate_after_config.resultCards().nth(1)).toContainText('Google')
             const config_after_reverse = await omni.openConfig()
             await config_after_reverse.openSection('service')
             await expect(config_after_reverse.serviceItems().nth(0)).toContainText('Bing')
@@ -321,6 +329,26 @@ test.describe('@ui translate result cards', () => {
 
             try {
                 const translate = await omni.translate()
+                await translate.fulfill_free_dictionary_once([
+                    {
+                        word: 'hello',
+                        phonetic: '/həˈləʊ/',
+                        phonetics: [
+                            { text: '/həˈloʊ/', audio: 'https://example.test/hello-us.mp3' },
+                        ],
+                        meanings: [
+                            {
+                                partOfSpeech: 'noun',
+                                definitions: [
+                                    {
+                                        definition: 'A greeting or expression of goodwill.',
+                                        example: 'She said hello to everyone in the room.',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ])
 
                 await translate.typeSource('hello')
                 await translate.clickTranslate()
@@ -328,6 +356,8 @@ test.describe('@ui translate result cards', () => {
                 await expect(translate.resultCard('free_dictionary@default')).toBeVisible()
                 await expect(translate.resultBody('free_dictionary@default')).toContainText('noun', { timeout: 45_000 })
                 await expect(translate.resultBody('free_dictionary@default')).toContainText('greeting', { timeout: 45_000 })
+                await expect(translate.resultBody('free_dictionary@default')).toContainText('/həˈləʊ/')
+                await expect(translate.resultBody('free_dictionary@default')).toContainText('She said hello')
             } finally {
                 await omni.stop()
             }
