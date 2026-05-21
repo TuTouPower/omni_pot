@@ -1129,15 +1129,8 @@ export async function getSelectedText(): Promise<string>
 
 ## 30. 测试策略
 
-遵循 `CLAUDE.md`：完好的单元测试、集成测试、端到端测试，尽量少用 mock，多用真实环境，
-覆盖 SPEC 的所有功能和所有 UI。
-
-- **单元测试（Vitest）**：服务接口、工具函数、状态管理逻辑
-- **集成测试（Vitest）**：IPC 通信、配置读写、数据库操作、选中文本提取的主方案/回退切换
-- **E2E 测试（Playwright）**：窗口行为、翻译流程、OCR 流程、字典流程、剪贴板流程
-- 无需密钥的外部服务（Bing、DeepL 免费模式、MyMemory、Google、Free Dictionary、Cambridge、Edge TTS）需要真实连通性测试；需要密钥的服务使用契约测试和配置校验
-- 覆盖率目标：80%+
-- E2E 通过 HTTP server 的 `OMNI_POT_E2E` 专用端点注入文本、触发流程
+测试分层、运行命令、mock 准则与 E2E 设计详见 `docs/test.md` 与 `docs/test_user_e2e.md`。
+原则：少 mock、多真实环境，覆盖本规格的所有功能与 UI，覆盖率目标 80%+。
 
 ---
 

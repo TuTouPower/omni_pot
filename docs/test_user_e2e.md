@@ -8,28 +8,11 @@
 
 ---
 
-## 1. 为什么从头重做
+## 1. 框架选型
 
-旧 `tests/user_e2e/01_all_critical_paths.test.ts` 曾存在结构性问题，已随 Playwright 迁移删除：
-
-| 问题 | 后果 |
-|---|---|
-| 单文件 600 行，CP1–CP6 全塞一起 | 难维护、难定位失败、无法独立运行 |
-| 两套重复 helper（`test_utils.ts` 全局单例 + 测试文件内联 `ctx_*`） | 维护负担翻倍、行为不一致 |
-| `shuffle()` 随机执行顺序 | 失败不可复现 |
-| serial / parallel 模式逻辑混在测试体里 | 测试逻辑被基础设施噪音淹没 |
-| 大量裸 `setTimeout(r, 300)` | flaky |
-| 断言靠 DOM 字符串匹配（`textContent.includes('翻译失败')`） | UI 一改就碎，且测不到真实交互 |
-| 只测“文本进→结果出”的数据流 | **完全不测 UI 交互** —— issues.md 里 8 个 bug 全部漏网 |
-
-所以本设计**不保留**现有文件，基于 **Playwright** 重建一套分层、可维护、覆盖完整的体系。
-
-> **为什么用 Playwright 而非继续自研 Vitest + CDP**：Playwright 的 `locator` API 能稳定
-> 表达用户看到/点击的元素，自动等待机制比自写 CDP 轮询更稳，内置 screenshot / trace /
-> video / HTML report 便于定位 UI 回归，Page Object 写法成熟。现有 Vitest + CDP 实现仅作
-> 迁移前的历史参考；其中 Electron 启动、端口分配、HTTP readiness、E2E 环境变量等经验可
-> 迁移到 Playwright fixture。不再扩展自研 CDP selector/click/drag helper，不再以
-> `vitest.e2e.config.ts` 作为用户 E2E 配置。
+E2E 框架为 **Playwright**（`@playwright/test` + Electron）。`locator` API 稳定表达
+用户视角，自动等待优于自写 CDP 轮询，内置 screenshot / trace / video / HTML report
+便于定位 UI 回归，Page Object 写法成熟。旧 Vitest + CDP E2E 已删除，迁移历史见 git log。
 
 ---
 
@@ -401,18 +384,19 @@ class TranslatePage {
 - 通过截图或 `open-window` 打开窗口；分别覆盖 `recognize` 与 `translate` 两种模式
 - 第一排：标题栏模式标签分别为 `文字识别` / `截图翻译`，置顶/关闭可用；**断言整页不出现 "OCR" 字面量**
 - 第二排：左图右文 —— 左侧图片卡片显示截图，右侧文本卡片显示识别结果且可编辑；`translate` 模式右侧多一张翻译卡片，与识别卡背景/字色/标签视觉一致
-- 第三排操作区交互（文字识别模式按钮顺序：`复制图片 → 识别引擎下拉 → 重新识别 → 自动检测 | 翻译 → 去除换行 → 去除空格 → 复制 → 导出`；截图翻译模式按钮顺序：`复制图片 → 识别引擎下拉 → 重新识别 → 自动检测 → 转换符号 → 简体中文 → 重新翻译 | 去除换行 → 去除空格 → 复制 → 导出`）：
+- 第三排操作区交互（文字识别模式按钮顺序：`复制图片 → 识别引擎下拉 → 自动检测 | 翻译 → 去除换行 → 去除空格 → 复制 → 导出`；截图翻译模式按钮顺序：`复制图片 → 识别引擎下拉 → 自动检测 → 转换符号 → 简体中文 | 去除换行 → 去除空格 → 复制 → 导出`）：
   - **复制图片** → 剪贴板包含图片
   - 识别引擎下拉 → 切换服务
   - 语言下拉（自动检测 / 简体中文）使用 pill 样式，下拉项**不带 AUTO/ZH 字母前缀**，可切换
-  - **重新识别 / 重新翻译**为**带文字 pill 按钮**（非纯图标） → 点击重跑
+  - **切换识别语言后自动重新识别**（无独立"重新识别"按钮）；截图翻译模式下，切换识别语言自动重新识别并刷新翻译，切换目标语言自动重新翻译（无独立"重新翻译"按钮）
+  - **断言整页不存在"重新识别" / "重新翻译"独立按钮**
   - **去除换行** → 结果换行被去除
   - **去除空格** → 结果空格被去除
   - **复制** → 剪贴板为识别文本
   - **导出**为导出符号（非云符号），下拉含 md/txt/docx/doc
   - **翻译按钮**（仅文字识别模式，位于"去除换行"左侧） → 文字送到翻译窗口并触发翻译
 - 信息精简：断言**不显示**图片尺寸、类型、识别字数、耗时
-- 服务真实覆盖：用户切换 system / tesseract 引擎；Tesseract 重新识别得到真实识别文本
+- 服务真实覆盖：用户切换 system / tesseract 引擎；切换到 Tesseract 后自动重新识别并得到真实识别文本
 - `recognize_delete_newline` / `recognize_auto_copy` 配置联动
 
 ### 5.10 screenshot_window.spec.ts / screenshot_latency.spec.ts — 截图窗口
@@ -552,36 +536,7 @@ class TranslatePage {
 
 ## 7. 运行与 CI
 
-### 前置准备
-
-```bash
-npm install
-npm run build:chinese-dict   # 生成 chinese_dict.db（词典相关 E2E 测试依赖）
-npm run build:cc-cedict      # 生成 cc_cedict.db（词典相关 E2E 测试依赖）
-```
-
-> 词典 DB 不提交到仓库（gitignored）。`npm run dist` 自动运行上述两步；
-> 纯 E2E 测试路径需手动运行一次。词典 E2E spec 在 DB 缺失时直接报错并提示运行命令。
-
-### 运行命令
-
-`package.json` 脚本：
-
-```
-test:e2e            # 全部 spec（Playwright full project）
-test:e2e:core       # @core 标签（app_lifecycle + translate_core），PR 快速门禁
-test:e2e:ui         # @ui 标签（translate_* + dict + recognize + screenshot + config_*）
-test:e2e -- <file>  # 单文件调试
-```
-
-### 可选：外部服务连通性测试
-
-```bash
-OMNI_POT_EXTERNAL_SERVICE_TESTS=1 npx playwright test tests/user_e2e/specs/external_services.spec.ts
-```
-
-> 默认跳过。设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查。
-> CI nightly 跑此项；PR 不跑。
+运行命令、前置准备、外部服务连通性测试见 `docs/test.md §5`，本文不重复。
 
 ### CI 策略
 

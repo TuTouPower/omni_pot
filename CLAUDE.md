@@ -22,6 +22,8 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 | `npm test` | 运行单元测试 |
 | `npm run test:e2e` | 运行端到端测试 |
 | `npm run test:e2e:core` | 运行核心 e2e 测试 |
+| `npm run test:e2e:ui` | 运行 UI 回归 e2e 测试 |
+| `npm run dist:dir` | 构建 unpacked 目录产物，用于本地打包 smoke |
 | `npm run start` | 预览构建产物 |
 | `npm run build:chinese-dict` | 生成 `resources/data/dict/chinese_dict.db`（86MB，gitignored） |
 | `npm run build:cc-cedict` | 生成 `resources/data/dict/cc_cedict.db`（24MB，gitignored） |
