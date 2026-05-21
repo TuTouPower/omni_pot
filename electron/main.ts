@@ -8,6 +8,7 @@ import { initLog, log } from './log'
 
 const log_main = log.scope('main')
 
+app.name = 'Omni Pot'
 log_main.info('starting...')
 import { createTray, setWindowManagerForTray } from './tray'
 import {
