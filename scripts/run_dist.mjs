@@ -16,6 +16,19 @@ function run(command, args) {
     return process.exitCode === undefined
 }
 
+function clear_failed_exit_code() {
+    process.exitCode = undefined
+}
+
+function run_with_better_sqlite3_rebuild(command, args) {
+    if (run(command, args)) return true
+    process.stderr.write('[dist] better-sqlite3 may be compiled for a different Node/Electron ABI; rebuilding and retrying once\n')
+    clear_failed_exit_code()
+    if (!run(npm_cmd, ['rebuild', 'better-sqlite3'])) return false
+    clear_failed_exit_code()
+    return run(command, args)
+}
+
 try {
     const steps = [
         [npm_cmd, ['run', 'dist:check-locks']],
@@ -27,7 +40,11 @@ try {
     ]
 
     for (const [command, args] of steps) {
-        if (!run(command, args)) break
+        const should_retry_after_rebuild = command === npm_cmd && args.length >= 2 && args[0] === 'run' && args[1].startsWith('build:')
+        const ok = should_retry_after_rebuild
+            ? run_with_better_sqlite3_rebuild(command, args)
+            : run(command, args)
+        if (!ok) break
     }
 } finally {
     run('node', ['scripts/restart_dist_app.mjs', ...(is_dir ? ['--dir'] : [])])
