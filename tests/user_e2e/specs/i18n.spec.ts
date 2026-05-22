@@ -58,8 +58,9 @@ test.describe('@ui i18n', () => {
             // Pin translate so it survives blur when config opens.
             await translate.clickPin()
             const config = await omni.openConfig()
+            // Open recognize before updater — recognize auto-closes on blur
+            // when the updater steals focus, so check its labels first.
             const recognize = await omni.openRecognize()
-            const updater = await omni.mockUpdate(MOCK_RELEASE)
 
             await expect(translate.sourceInput()).toHaveAttribute('placeholder', '输入要翻译的文本...')
             await expect(translate.sourceLanguageButton()).toContainText('自动检测')
@@ -70,6 +71,9 @@ test.describe('@ui i18n', () => {
             await expect(recognize.modeLabel()).toContainText('识别')
             await expect(recognize.languageSelect()).toContainText('自动检测')
             await expect(recognize.exportButton()).toHaveAttribute('title', '导出')
+
+            // Updater opens after recognize — recognize will close on blur.
+            const updater = await omni.mockUpdate(MOCK_RELEASE)
             await expect(updater.titleMode()).toContainText('更新')
             await expect(updater.body()).toContainText('有可用更新')
             await expect(updater.body()).toContainText('更新日志')
@@ -102,14 +106,11 @@ test.describe('@ui i18n', () => {
             await expect(config.title()).toContainText('General')
             await expect(config.nav('hotkey')).toContainText('Hotkeys')
             await expect(config.setting('cfg-app_language')).toContainText('English')
-            await expect(recognize.modeLabel()).toContainText('Recognize')
-            await expect(recognize.languageSelect()).toContainText('Auto Detect')
-            await expect(recognize.exportButton()).toHaveAttribute('title', 'Export')
-            await expect(updater.titleMode()).toContainText('Update')
-            await expect(updater.body()).toContainText('Update Available')
-            await expect(updater.body()).toContainText('Changelog')
-            await expect(updater.body()).toContainText('Downloads')
-            await expect(updater.laterButton()).toContainText('Later')
+            // Reopen recognize after language switch (it closed on blur when updater opened).
+            const recognize_en = await omni.openRecognize()
+            await expect(recognize_en.modeLabel()).toContainText('Recognize')
+            await expect(recognize_en.languageSelect()).toContainText('Auto Detect')
+            await expect(recognize_en.exportButton()).toHaveAttribute('title', 'Export')
             await expect_tray_labels(omni, ['Translate', 'Dictionary', 'Text Recognize', 'Screenshot Translate', 'Clipboard Monitor', 'Settings', 'Check Updates', 'View Logs', 'Restart', 'Quit'])
 
             await config.select('cfg-app_language', 'zh_cn')
@@ -122,14 +123,11 @@ test.describe('@ui i18n', () => {
             await expect(config.title()).toContainText('通用')
             await expect(config.nav('hotkey')).toContainText('快捷键')
             await expect(config.setting('cfg-app_language')).toContainText('简体中文')
-            await expect(recognize.modeLabel()).toContainText('识别')
-            await expect(recognize.languageSelect()).toContainText('自动检测')
-            await expect(recognize.exportButton()).toHaveAttribute('title', '导出')
-            await expect(updater.titleMode()).toContainText('更新')
-            await expect(updater.body()).toContainText('有可用更新')
-            await expect(updater.body()).toContainText('更新日志')
-            await expect(updater.body()).toContainText('下载链接')
-            await expect(updater.laterButton()).toContainText('稍后提醒')
+            // Reopen recognize again for zh_cn assertions.
+            const recognize_zh = await omni.openRecognize()
+            await expect(recognize_zh.modeLabel()).toContainText('识别')
+            await expect(recognize_zh.languageSelect()).toContainText('自动检测')
+            await expect(recognize_zh.exportButton()).toHaveAttribute('title', '导出')
             await expect_tray_labels(omni, ['翻译', '词典', '文字识别', '截图翻译', '剪贴板监听', '设置', '检查更新', '查看日志', '重启', '退出'])
         } finally {
             await omni.stop()

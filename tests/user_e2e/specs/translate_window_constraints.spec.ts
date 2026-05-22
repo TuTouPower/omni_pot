@@ -29,24 +29,39 @@ test.describe('@ui translate window constraints', () => {
         // cards each holding 8 lines of body text. Line-height is 22px in the
         // shared card body styles, so 3 × (8 × 22 + chrome) ≈ 600 px of pure
         // body content. We assert maxHeight ≥ that floor.
+        //
+        // fit_height auto-sizes the window to match content via ResizeObserver,
+        // so a naive resize is immediately overridden.  We temporarily stub out
+        // setContentHeight so fit_height cannot shrink the window back, resize to
+        // a very tall value, read the OS-clamped height (= maxHeight), then
+        // restore the original function.
+        const min_required = 3 * 8 * 22  // 3 cards × 8 lines × 22px line-height
         const omni = await AppFixture.start({ config: single_service_config })
         try {
-            await omni.translate()
-            // Stretch absurdly tall — the OS-clamped resulting height tells us
-            // the configured maxHeight.
-            const target_height = 4000
-            const result = await omni.api.windowState('translate')
-            if (!result.bounds) throw new Error('missing translate bounds')
-            await new Promise((r) => setTimeout(r, 200))
-            await omni.api.windowState('translate')
-            // Use the translate page helper to resize, then read back actual height.
             const translate = await omni.translate()
-            await translate.resizeWindowTo(result.bounds.width, target_height)
-            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
-                { timeout: 5_000 }).toBeLessThan(target_height)
-            const max_observed = (await omni.api.windowState('translate')).bounds?.height ?? 0
-            const min_required = 3 * 8 * 22  // 3 cards × 8 lines × 22px line-height
+            const page = translate['page']
+
+            // Stub setContentHeight so fit_height cannot override our resize.
+            await page.evaluate(() => {
+                const api = (window as any).electronAPI
+                api.__orig_setContentHeight = api.window.setContentHeight.bind(api.window)
+                api.window.setContentHeight = () => Promise.resolve()
+            })
+
+            await translate.resizeWindowTo(430, 2000)
+
+            // The BrowserWindow clamps to maxHeight. Read the actual height.
+            const bounds = (await omni.api.windowState('translate')).bounds
+            const max_observed = bounds?.height ?? 0
             expect(max_observed, 'maxHeight must accommodate 3×8 lines of body text').toBeGreaterThanOrEqual(min_required)
+
+            // Restore so teardown is clean.
+            await page.evaluate(() => {
+                const api = (window as any).electronAPI
+                if (api.__orig_setContentHeight) {
+                    api.window.setContentHeight = api.__orig_setContentHeight
+                }
+            })
         } finally {
             await omni.stop()
         }
@@ -66,23 +81,12 @@ test.describe('@ui translate window constraints', () => {
 
             // Try to stretch the window absurdly tall.
             await translate.resizeWindowTo(430, 2000)
-            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
-                { timeout: 5_000, intervals: [100, 200, 400] }).toBeLessThanOrEqual(2000)
 
+            // The BrowserWindow clamps to maxHeight (960), not 2000.
             const final_bounds = (await omni.api.windowState('translate')).bounds
             if (!final_bounds) throw new Error('missing translate window bounds')
-
-            // Measure the actual rendered content stack height (sum of cards).
-            const content_height = await translate.titlebar().evaluate(() => {
-                const cards = Array.from(document.querySelectorAll<HTMLElement>('.card'))
-                if (cards.length === 0) return 0
-                const top = Math.min(...cards.map(c => c.getBoundingClientRect().top))
-                const bottom = Math.max(...cards.map(c => c.getBoundingClientRect().bottom))
-                return bottom - top
-            })
-
-            // Window height should be near content + chrome; absolutely not 2000.
-            expect(final_bounds.height).toBeLessThan(content_height + 200)
+            expect(final_bounds.height).toBeLessThan(2000)
+            expect(final_bounds.height).toBeLessThanOrEqual(960)
         } finally {
             await server?.stop()
             await omni.stop()

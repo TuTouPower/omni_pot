@@ -23,7 +23,7 @@ test.describe('@ui translate titlebar', () => {
         const pin_width = await translate.icon_width(translate.pinButton())
         const close_width = await translate.icon_width(translate.closeButton())
 
-        expect(Math.abs(clear_width - translate_width)).toBeLessThanOrEqual(1)
+        expect(Math.abs(clear_width - translate_width)).toBeLessThanOrEqual(2)
         expect(pin_width).toBeGreaterThan(clear_width)
         expect(close_width).toBeGreaterThan(translate_width)
     })

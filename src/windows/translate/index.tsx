@@ -603,7 +603,7 @@ export default function TranslateWindow(): React.ReactElement {
                 <span className="op-mode" data-testid="titlebar-mode">{t('translate')}</span>
                 <div style={{ flex: 1 }} />
                 <button className="op-close" title={t('close')} data-testid="titlebar-close" onClick={() => { handleClose().catch(console.error); }}>
-                    <Icons.Close size={18} />
+                    <Icons.Close size={20} />
                 </button>
             </div>
 
