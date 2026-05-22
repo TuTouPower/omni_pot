@@ -146,7 +146,7 @@ export default function HotkeySettings(): React.ReactElement {
             <ConfigCard title={t('hotkey.title', { defaultValue: '快捷键' })} hint="按下组合键以录入 · Backspace 清除">
                 <HotkeyField
                     label={t('hotkey.translate', { defaultValue: '翻译' })}
-                    sub="选中文本则直接翻译，无选中则打开输入窗口"
+                    sub={"选中文本时翻译该文本\n未选中时弹出空翻译窗口\n剪贴板监听开启时自动翻译剪贴板新文本"}
                     configKey="hotkey_translate"
                     activeField={activeField}
                     onStartCapture={handleStartCapture}

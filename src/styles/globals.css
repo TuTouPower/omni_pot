@@ -417,6 +417,7 @@ select {
     font-size: 11px;
     color: var(--text-mute);
     margin-top: 2px;
+    white-space: pre-line;
 }
 
 .label-help {
