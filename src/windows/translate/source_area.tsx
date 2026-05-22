@@ -140,7 +140,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     }, [sourceText, setSourceText])
 
     const handleDeleteSpace = useCallback(() => {
-        setSourceText(sourceText.replace(/\s+/g, ''))
+        setSourceText(sourceText.replace(/ +/g, ''))
     }, [sourceText, setSourceText])
 
     const handleClear = useCallback(() => {

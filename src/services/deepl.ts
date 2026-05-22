@@ -96,50 +96,83 @@ async function translate_free(
   const source_lang = get_free_lang_code(from)
   const target_lang = get_free_lang_code(to)
 
-  const i_count = get_i_count(text)
-  const id = get_random_id()
+  const parts = text.split('\n').map(line => line.trim() === '' ? '\n' : line)
+  const translated_parts: string[] = []
 
-  const post_data = {
-    jsonrpc: '2.0',
-    method: 'LMT_handle_texts',
-    id,
-    params: {
-      splitting: 'newlines',
-      lang: {
-        source_lang_user_selected: source_lang,
-        target_lang: target_lang
-      },
-      texts: [{ text, requestAlternatives: 3 }],
-      timestamp: get_timestamp(i_count)
+  for (const part of parts) {
+    if (!part.trim()) {
+      translated_parts.push('')
+      continue
     }
-  }
 
-  const resp = await fetch('https://www2.deepl.com/jsonrpc', {
-    method: 'POST',
-    headers: DEEPL_FREE_HEADERS,
-    body: format_post_json(post_data)
-  })
+    const i_count = get_i_count(part)
+    const id = get_random_id()
 
-  if (!resp.ok) {
-    throw new Error(`DeepL free API error: ${String(resp.status)}`)
-  }
-
-  const data = (await resp.json()) as {
-    result?: {
-      texts?: Array<{ text: string }>
+    const post_data = {
+      jsonrpc: '2.0',
+      method: 'LMT_handle_jobs',
+      id,
+      params: {
+        commonJobParams: {
+          mode: 'translate',
+          formality: 'undefined' as const,
+          transcribe_as: 'romanize',
+          advancedMode: false,
+          textType: 'plaintext',
+          wasSpoken: false
+        },
+        lang: {
+          source_lang_user_selected: source_lang === 'auto' ? 'auto' : source_lang,
+          target_lang: target_lang,
+          ...(source_lang !== 'auto' && { source_lang_computed: source_lang })
+        },
+        jobs: [{
+          kind: 'default',
+          preferred_num_beams: 4,
+          raw_en_context_before: [] as string[],
+          raw_en_context_after: [] as string[],
+          sentences: [{ prefix: '', text: part, id: 0 }]
+        }],
+        timestamp: get_timestamp(i_count)
+      }
     }
-    error?: { message: string }
+
+    const resp = await fetch('https://www2.deepl.com/jsonrpc', {
+      method: 'POST',
+      headers: DEEPL_FREE_HEADERS,
+      body: format_post_json(post_data)
+    })
+
+    if (!resp.ok) {
+      throw new Error(`DeepL free API error: ${String(resp.status)}`)
+    }
+
+    const data = (await resp.json()) as {
+      result?: {
+        translations?: Array<{
+          beams: Array<{ sentences: Array<{ text: string }> }>
+        }>
+      }
+      error?: { message: string }
+    }
+
+    if (data.error) {
+      throw new Error(`DeepL free API error: ${data.error.message}`)
+    }
+
+    const translations = data.result?.translations
+    if (!translations || translations.length === 0) {
+      throw new Error('DeepL free API: no translation returned')
+    }
+
+    let part_result = ''
+    for (const t of translations) {
+      part_result += (t.beams[0]?.sentences[0]?.text ?? '') + ' '
+    }
+    translated_parts.push(part_result.trim())
   }
 
-  if (data.error) {
-    throw new Error(`DeepL free API error: ${data.error.message}`)
-  }
-
-  const translation = data.result?.texts?.[0]?.text
-  if (!translation) {
-    throw new Error('DeepL free API: no translation returned')
-  }
-  return translation.trim()
+  return translated_parts.join('\n')
 }
 
 function getApiUrl(type: string, customUrl?: string): string {
