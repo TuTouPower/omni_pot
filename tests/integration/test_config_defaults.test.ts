@@ -27,7 +27,7 @@ describe('Config defaults', () => {
         expect(DEFAULT_CONFIG.transparent).toBe(false)
         expect(DEFAULT_CONFIG.check_update).toBe(true)
         expect(DEFAULT_CONFIG.server_port).toBe(20202)
-        expect(DEFAULT_CONFIG.clipboard_monitor).toBe(false)
+        expect(DEFAULT_CONFIG.clipboard_monitor).toBe(true)
         expect(DEFAULT_CONFIG.auto_start).toBe(false)
         expect(DEFAULT_CONFIG.tray_click_event).toBe('show_config')
         expect(DEFAULT_CONFIG.dict_chinese_enabled).toBe(true)
@@ -43,7 +43,7 @@ describe('Config defaults', () => {
         expect(DEFAULT_CONFIG.dynamic_translate).toBe(false)
         expect(DEFAULT_CONFIG.translate_delete_newline).toBe(false)
         expect(DEFAULT_CONFIG.translate_window_position).toBe('mouse')
-        expect(DEFAULT_CONFIG.translate_remember_window_size).toBe(false)
+        expect(DEFAULT_CONFIG.translate_remember_window_size).toBe(true)
         expect(DEFAULT_CONFIG.translate_pinned).toBe(false)
         expect(DEFAULT_CONFIG.translate_always_on_top).toBe(false)
         expect(DEFAULT_CONFIG.hide_source).toBe(false)
@@ -61,6 +61,10 @@ describe('Config defaults', () => {
         expect(DEFAULT_CONFIG.recognize_engine).toBe('tesseract@default')
         expect(DEFAULT_CONFIG.recognize_delete_newline).toBe(false)
         expect(DEFAULT_CONFIG.recognize_auto_copy).toBe(true)
+        expect(DEFAULT_CONFIG.recognize_always_on_top).toBe(false)
+        expect(DEFAULT_CONFIG.recognize_pinned).toBe(false)
+        expect(DEFAULT_CONFIG.dict_always_on_top).toBe(false)
+        expect(DEFAULT_CONFIG.dict_pinned).toBe(false)
     })
 
     it('hotkeys default to empty', () => {

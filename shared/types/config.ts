@@ -39,8 +39,10 @@ export interface AppConfig {
   translate_window_position_y: number
 
   dict_always_on_top: boolean
+  dict_pinned: boolean
 
   recognize_always_on_top: boolean
+  recognize_pinned: boolean
   recognize_remember_window_size: boolean
   recognize_window_width: number
   recognize_window_height: number
@@ -104,7 +106,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   transparent: false,
   check_update: true,
   server_port: 20202,
-  clipboard_monitor: false,
+  clipboard_monitor: true,
 
   translate_source_language: 'auto',
   translate_target_language: 'zh_cn',
@@ -116,7 +118,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   translate_delete_newline: false,
 
   translate_window_position: 'mouse',
-  translate_remember_window_size: false,
+  translate_remember_window_size: true,
   translate_pinned: false,
   translate_always_on_top: false,
   hide_source: false,
@@ -135,9 +137,11 @@ export const DEFAULT_CONFIG: AppConfig = {
   translate_window_position_y: 0,
 
   dict_always_on_top: false,
+  dict_pinned: false,
 
   recognize_always_on_top: false,
-  recognize_remember_window_size: false,
+  recognize_pinned: false,
+  recognize_remember_window_size: true,
   recognize_window_width: 860,
   recognize_window_height: 520,
 
