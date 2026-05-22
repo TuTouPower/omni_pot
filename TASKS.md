@@ -158,74 +158,64 @@
 - [ ] **Papago (Naver)** — 多语言，需动态 HMAC token 流程
 
 
-## P9: System OCR 跨平台适配
+## P9: System OCR 跨平台适配 ✅
 
 **目标**：根据平台决定是否提供 System OCR 选项，Tesseract 保持默认 OCR 引擎。
 
-### P9.1 macOS System OCR 实现
+### P9.1 macOS System OCR 实现 ✅
 
 macOS 10.15+ 内置 Vision 框架（`VNRecognizeTextRequest`），识别质量优秀。
 
-- [ ] `electron/ipc/ocr_handlers.ts` — 新增 `macos_ocr()` 函数，通过 Swift CLI 工具或 Python pyobjc 调用 Vision 框架
-  - 方案 A（推荐）：编译一个轻量 Swift CLI（`scripts/` 下），通过 `execFile` 调用
-  - 方案 B：通过 `python3 -c "..."` + pyobjc 调用（macOS 自带 Python 可能无 pyobjc，需额外判断）
-- [ ] `electron/ipc/ocr_handlers.ts` — `registerOcrHandlers` 中 `platform === 'darwin'` 分支调用 `macos_ocr()`
-- [ ] macOS 支持的语言列表与 Windows 不同（Vision 框架支持的语言集），需单独定义
+- [x] `scripts/macos_ocr.swift` — Swift CLI 调用 Vision 框架
+- [x] `electron/ipc/ocr_handlers.ts` — 新增 `macos_ocr()` 函数，通过 `swift` 执行 CLI
+- [x] `electron/ipc/ocr_handlers.ts` — `platform === 'darwin'` 分支调用 `macos_ocr()`
+- [x] macOS 支持的语言列表单独定义（Vision 框架支持 12 种语言 vs Windows 23 种）
 
-### P9.2 平台条件化 System OCR 可见性
+### P9.2 平台条件化 System OCR 可见性 ✅
 
-- [ ] `src/services/ocr/system.ts` — 根据 `navigator.platform` 或 IPC 查询当前平台，Linux 时不导出/注册该服务
-- [ ] `src/services/ocr/index.ts` — `registerAllOcrServices()` 中条件注册：Windows + macOS 注册 System OCR，Linux 跳过
-- [ ] `shared/types/config.ts` — `recognize_service_list` 默认值保持 `['tesseract@default']`（不变，Tesseract 作为默认）
+- [x] `src/services/ocr/system.ts` — 根据 `navigator.platform` 区分 macOS/Windows 语言列表
+- [x] `src/services/ocr/index.ts` — `registerAllOcrServices()` 中条件注册：Windows + macOS 注册 System OCR，Linux 跳过
+- [x] `shared/types/config.ts` — `recognize_service_list` 默认值保持 `['tesseract@default']`（不变）
 
-### P9.3 Linux 路径处理
+### P9.3 Linux 路径处理 ✅
 
-当前 `linux_ocr()` 直接调外部 `tesseract` 命令行，不是真正的系统能力：
+- [x] 移除 `ocr_handlers.ts` 中的 `linux_ocr()` 函数（Tesseract 已通过 tesseract.js 在渲染进程独立实现）
+- [x] Linux 下 System OCR 选项完全不出现，用户使用默认的 Tesseract 即可
 
-- [ ] 移除 `ocr_handlers.ts` 中的 `linux_ocr()` 函数（Tesseract 已通过 tesseract.js 在渲染进程独立实现）
-- [ ] Linux 下 System OCR 选项完全不出现，用户使用默认的 Tesseract 即可
+### P9.4 文档同步 ✅
 
-### P9.4 文档同步
-
-- [ ] `docs/spec.md` §14 OCR 服务清单 — 标注 System OCR 仅 Windows + macOS 可用，Linux 不提供
-- [ ] `docs/spec.md` §8.2 文字识别模式按钮 — 确认"选择识别引擎"下拉框的平台行为描述
-- [ ] `docs/external_service_catalog.md` — System OCR 条目补充平台限制说明
-- [ ] `docs/spec.md` §8.5 OCR 执行细节 — 补充 macOS Vision 框架路径说明
+- [x] `docs/spec.md` §14 OCR 服务清单 — 标注 System OCR 仅 Windows + macOS 可用
+- [x] `docs/spec.md` §8.5 OCR 执行细节 — 补充 macOS Vision 框架路径说明
+- [x] `docs/external_service_catalog.md` — System OCR 条目补充平台限制说明
 
 ---
 
-## P10: 日志系统补全
+## P10: 日志系统补全 ✅
 
-### 现状
+### 实现方案
 
-主进程有 electron-log 日志（`%APPDATA%/omni_pot/logs/main.log`），覆盖：启动流程、窗口创建/关闭/ready、快捷键注册、HTTP server、词典 DB 加载。
+渲染进程通过 `log:write` IPC 通道将日志写入主进程 `main.log`，scope 前缀 `renderer:`。
+`src/utils/logger.ts` 提供 `create_logger(scope)` 工厂函数，各窗口/服务按需创建 scoped logger。
 
-**渲染进程完全没有日志系统**——翻译/词典/识别窗口的服务调用、语言检测、错误全部是 `console.error` 吞掉，不写文件、不上报主进程。无法通过日志排查用户反馈的功能问题。
+### P10.1 渲染进程关键路径日志 ✅
 
-主进程也有盲区：翻译请求/响应、配置变更、服务错误详情均无记录。
+- [x] 翻译流程：请求发起（源文本摘要、源/目标语言、服务数量）、语言检测结果、每个服务的失败详情
+- [x] 词典流程：查询词、检测语言、每个服务的失败详情
+- [x] 识别流程：使用的 OCR 引擎、识别语言、耗时、结果长度、失败详情
+- [x] TTS 流程：朗读文本摘要、语言、播放错误
 
-### 需要补的内容
+### P10.2 服务错误详情 ✅
 
-#### P10.1 渲染进程关键路径日志（通过 IPC 写入 main.log）
+- [x] 翻译/词典/识别 catch 块记录错误信息（error.message），不再吞掉
 
-- [ ] 翻译流程：请求发起（源文本摘要、源/目标语言）、语言检测结果、每个服务的成功/失败/耗时
-- [ ] 词典流程：查询词、检测语言、选用的服务列表、每个服务的成功/失败/耗时
-- [ ] 识别流程：使用的 OCR 引擎、识别语言、耗时、结果长度
-- [ ] TTS 流程：朗读文本摘要、使用的 voice、成功/失败
+### P10.3 配置变更日志 ✅
 
-#### P10.2 服务错误详情
+- [x] `electron/config/store.ts` `setConfig()` 记录变更的 key（通过 electron-log redact hook 自动脱敏）
 
-- [ ] 所有 `catch` 块记录错误信息（HTTP status、error message、超时），不只是吞掉
-- [ ] 网络错误区分：超时 / 429 限流 / DNS 失败 / 其他
+### P10.4 主进程补盲 ✅
 
-#### P10.3 配置变更日志
-
-- [ ] `useConfigStore.set()` 调用时记录 key + old value → new value（敏感字段如 API key 脱敏）
-
-#### P10.4 主进程补盲
-
-- [ ] 快捷键触发时记录 action name + 读取的文本摘要
-- [ ] 剪贴板监听触发时记录文本摘要
+- [x] 快捷键触发时记录 action name
+- [x] 剪贴板监听触发时记录文本摘要
 
 ---
 

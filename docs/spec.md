@@ -488,6 +488,7 @@ CC-CEDICT 首次启动：`electron/main.ts` 调用 `auto_import_if_needed()`，
 - `recognize_auto_copy=true` 时最终 OCR 文本复制到剪贴板
 - 可切换 OCR 服务；文字识别窗口中切换识别语言后必须自动重新识别，不要求用户再手动点击重新识别
 - 截图翻译窗口中切换识别语言或翻译目标语言后必须自动重新执行对应流程：识别语言变化触发重新识别并刷新翻译，翻译目标语言变化触发重新翻译
+- **System OCR 平台支持**：Windows 使用 WinRT `OcrEngine`（PowerShell 调用），macOS 使用 Vision 框架（`VNRecognizeTextRequest`，通过 Swift CLI 调用），Linux 不提供 System OCR（用户使用 Tesseract）
 
 ---
 
@@ -771,7 +772,7 @@ interface DictResult {
 | 13 | 讯飞 LaTeX | `iflytek_latex_ocr` | 数学公式 → LaTeX |
 | 14 | Simple LaTeX | `simple_latex_ocr` | SimpleTex API，公式 → LaTeX |
 | 15 | 二维码 | `qrcode` | 二维码识别 |
-| 16 | 系统 OCR | `system` | Windows WinRT / macOS 原生 / Linux tesseract CLI |
+| 16 | 系统 OCR | `system` | Windows WinRT / macOS Vision 框架（仅 Windows + macOS 可用，Linux 不提供） |
 
 ---
 

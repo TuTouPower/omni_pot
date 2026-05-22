@@ -66,7 +66,7 @@
 | 服务/能力 | 状态 | 备注 |
 |---|---|---|
 | QR Code | 当前代码存在 | 本地二维码解析；无需 key、无需网络。 |
-| System OCR | 当前代码存在 | 调用系统文字识别能力；无需 key，效果取决于操作系统支持。 |
+| System OCR | 当前代码存在 | 调用系统文字识别能力；无需 key，仅 Windows（WinRT）+ macOS（Vision 框架）可用，Linux 不提供。 |
 | Tesseract | 当前代码存在 | 本地 OCR；无需 key，依赖本地训练数据/模型文件，详见本地服务分类。 |
 
 ### 1.5 朗读
@@ -109,7 +109,7 @@
 | 服务/方案 | 状态 | 本地依赖 | 备注 |
 |---|---|---|---|
 | Tesseract | 当前代码存在 | 本地 OCR 引擎/训练数据 | 无 key、无网络；属于本地模型能力。 |
-| System OCR | 当前代码存在 | 操作系统 OCR 能力 | 无 key；依赖系统平台能力。 |
+| System OCR | 当前代码存在 | 操作系统 OCR 能力 | 无 key；仅 Windows + macOS，Linux 不提供。 |
 | Rapid OCR | 资料中离线候选 | 本地模型 | pot-app 插件资料中提及，未作为当前已注册实现列入。 |
 | Paddle OCR | 资料中离线候选 | PaddlePaddle + 模型 | pot-app 插件资料中提及，未作为当前已注册实现列入。 |
 
