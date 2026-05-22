@@ -4,6 +4,9 @@ import { existsSync } from 'fs'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
 import { getConfig, setConfig } from '../config/store'
+import { get_translate_window_options } from './translate_options'
+import { get_recognize_window_options } from './recognize_options'
+import { get_dict_window_options } from './dict_options'
 import { log } from '../log'
 
 const log_wm = log.scope('wm')
@@ -240,6 +243,30 @@ export class WindowManager {
       const queue = this.pendingQueue.get(label) ?? []
       queue.push({ channel, args })
       this.pendingQueue.set(label, queue)
+    }
+  }
+
+  rebuildForTransparencyChange(): void {
+    const labels_to_rebuild: WindowLabel[] = [
+      WindowLabel.TRANSLATE, WindowLabel.RECOGNIZE, WindowLabel.DICT, WindowLabel.CONFIG,
+    ]
+    const options_map: Record<string, () => WindowOptions> = {
+      [WindowLabel.TRANSLATE]: get_translate_window_options,
+      [WindowLabel.RECOGNIZE]: get_recognize_window_options,
+      [WindowLabel.DICT]: get_dict_window_options,
+      [WindowLabel.CONFIG]: () => ({ label: WindowLabel.CONFIG, width: 720, height: 740 }),
+    }
+
+    for (const label of labels_to_rebuild) {
+      const win = this.getWindow(label)
+      if (!win) continue
+      log_wm.info('rebuilding window for transparency change:', label)
+      const bounds = win.getBounds()
+      win.close()
+      const opts = options_map[label]?.()
+      if (!opts) continue
+      const rebuilt = this.createWindow(opts)
+      rebuilt.setBounds(bounds)
     }
   }
 }

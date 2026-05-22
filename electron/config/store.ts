@@ -189,10 +189,20 @@ function saveToDisk(): void {
     }, 300)
 }
 
+type ConfigChangeListener = (key: ConfigKey, value: unknown) => void
+const config_change_listeners: ConfigChangeListener[] = []
+
+export function onConfigChanged(listener: ConfigChangeListener): void {
+    config_change_listeners.push(listener)
+}
+
 function broadcastChange(key: ConfigKey, value: unknown): void {
     for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed()) {
             win.webContents.send('config:changed', key, value)
         }
+    }
+    for (const listener of config_change_listeners) {
+        listener(key, value)
     }
 }

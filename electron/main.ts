@@ -3,7 +3,7 @@ import { basename, dirname } from 'path'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { attach_translate_resize_persistence, get_translate_window_options } from './windows/translate_options'
-import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config, getUserDataDir } from './config/store'
+import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config, getUserDataDir, onConfigChanged } from './config/store'
 import { initLog, log } from './log'
 
 const log_main = log.scope('main')
@@ -88,6 +88,10 @@ if (!gotLock) {
     const manager = new WindowManager()
     windowManager = manager
     preload_screenshot_window(manager)
+
+    onConfigChanged((key) => {
+        if (key === 'transparent') manager.rebuildForTransparencyChange()
+    })
 
     setWindowManagerForTray(manager)
     setWindowManagerForHotkey(manager)
