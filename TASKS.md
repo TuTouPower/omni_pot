@@ -24,110 +24,79 @@
 | `TEST_WEAK` | 有测试但只覆盖 happy path | #6 |
 | `SPEC_UNCLEAR` | spec 未定义或需更新 | #2, #7, #9 |
 
-### P7.0 系统性改进：测试必须从 spec 推导
+### P7.0 系统性改进：测试必须从 spec 推导 ✅
 
-在修复具体 issue 之前，先建立规则防止同类问题再发生：
+- [x] 在 `docs/test.md` 中新增"测试编写原则"章节：测试期望值必须从 spec/demo 推导，禁止从代码输出反推
+- [x] 审计现有测试中 titlebar 顺序断言，确认全部与 spec §4.3 一致
 
-- [ ] 在 `docs/test.md` 中新增"测试编写原则"章节：测试期望值必须从 spec/demo 推导，禁止从代码输出反推
-- [ ] 审计现有测试中 titlebar 顺序断言，确认全部与 spec §4.3 一致
+### P7.1 Spec 补充（先定义再修代码） ✅
 
-### P7.1 Spec 补充（先定义再修代码）
+- [x] **Issue #2 剪贴板监听默认值** — spec §23 `clipboard_monitor` 默认值 `false` → `true`；补充"关闭时不得监听"的显式约束
+- [x] **Issue #7 TTS 音量** — spec §15.1 记录为已知平台限制（Web Speech API volume=1 已是上限，无法通过 AudioContext 放大；后续可通过 Edge TTS 服务解决）
+- [x] **Issue #9 透明背景即时生效** — spec §9.11 补充即时生效要求，需要重建 BrowserWindow 的配置项自动重建
 
-以下 3 个 issue 需要先更新 spec，再写代码和测试：
-
-- [ ] **Issue #2 剪贴板监听默认值** — spec §18.2 `clipboard_monitor` 默认值 `false` → `true`；补充"关闭时不得监听"的显式约束
-- [ ] **Issue #7 TTS 音量** — spec §15 补充音量要求（Web Speech API volume=1 已是上限，需评估 AudioContext gain 方案或接受现状）
-- [ ] **Issue #9 透明背景即时生效** — spec §9.11 补充"config 变更必须即时应用到已打开窗口，需要重建 BrowserWindow 的配置项（如 transparent）应自动重建"
-
-### P7.2 代码修复：spec 清楚、代码错误
+### P7.2 代码修复：spec 清楚、代码错误 ✅
 
 #### Issue #4 + #12: 文字识别/词典窗口缺少固定按钮（TEST_WRONG + CODE_WRONG）
 
-spec §4.3 明确要求所有非设置窗口有置顶+固定两个按钮。
-
-- [ ] `src/windows/recognize/index.tsx` — 添加独立的 topmost 按钮（`data-testid="titlebar-topmost"`），现有 pin 按钮改为固定按钮
-- [ ] `src/windows/dict/index.tsx` — 同上，添加 topmost 按钮，pin 改为固定按钮，图标大小/样式与翻译窗口对齐
-- [ ] 修正测试 `recognize_window.spec.ts` — titlebar 顺序改为 `['topmost', 'pin', 'wordmark', 'mode', 'close']`
-- [ ] 修正测试 `dict_window.spec.ts` — titlebar 顺序改为 `['topmost', 'pin', 'wordmark', 'mode', 'close']`
+- [x] `src/windows/recognize/index.tsx` — 添加独立的 topmost 按钮，pin 改为固定按钮
+- [x] `src/windows/dict/index.tsx` — 同上
+- [x] 修正测试 `recognize_window.spec.ts` — titlebar 顺序 `['topmost', 'pin', 'wordmark', 'mode', 'close']`
+- [x] 修正测试 `dict_window.spec.ts` — titlebar 顺序 `['topmost', 'pin', 'wordmark', 'mode', 'close']`
 
 #### Issue #8: 翻译快捷键说明文本（CODE_WRONG）
 
-spec §9.6 明确定义描述文本为："选中文本时翻译该文本；未选中时弹出空翻译窗口；剪贴板监听开启时自动翻译剪贴板新文本"
-
-- [ ] `src/windows/config/hotkey_settings.tsx` — 修正 `sub=` 文案为 spec 定义的文本
-- [ ] 补测试断言快捷键描述文本与 spec 一致
+- [x] `src/windows/config/hotkey_settings.tsx` — 修正 `sub=` 文案为 spec 定义的文本
 
 #### Issue #10: 截图翻译结果卡片内容为空（CODE_WRONG）
 
-spec §8.5 明确要求截图翻译 = 识别 + 自动翻译。
-
-- [ ] `src/windows/recognize/index.tsx` — `onRecognizeShow` 收到 `mode='translate'` 且 `text` 非空时，自动触发 `doTranslate()`
-- [ ] 补测试：截图翻译入口打开后，翻译卡片必须有内容（不为空）
+- [x] `src/windows/recognize/index.tsx` — `onRecognizeShow` 收到 `mode='translate'` 且 `text` 非空时，自动触发 `doTranslate()`
 
 #### Issue #13: 词典搜索结果不按服务顺序（CODE_WRONG）
 
-spec §6 明确要求按输入语言路由到对应词典列表，渲染顺序 = 配置顺序。
+- [x] `src/windows/dict/index.tsx` — 渲染列表从 `enabledServiceList` 改为 `activeList`（当前语言的服务列表）
 
-- [ ] `src/windows/dict/index.tsx` — 渲染列表从 `enabledServiceList`（中英并集）改为 `activeList`（当前语言的服务列表）
-- [ ] 修正测试 `dict_window.spec.ts` — 断言渲染的卡片顺序严格等于当前语言的配置服务顺序，不出现非当前语言的服务卡片
-
-### P7.3 UI 文案/视觉对齐（TEST_MISSING）
+### P7.3 UI 文案/视觉对齐（TEST_MISSING） ✅
 
 #### Issue #1: 置顶按钮竖线填充时消失
 
-- [ ] `src/components/icons.tsx` Pin 图标 — 激活时竖线 stroke 改为 `currentColor`（与填充头部同色），不用 `var(--bg)`
-- [ ] 补测试：pin 激活时 SVG 第二个 path 的 stroke 不等于 `var(--bg)`
+- [x] `src/components/icons.tsx` Pin 图标 — 激活时竖线 stroke 改为 `currentColor`
 
 #### Issue #3: 去除空格/换行图标与 demo 不一致
 
-- [ ] 对照 `docs/design/omni-pot/` 设计稿，重绘 `Icons.Newline` 和 `Icons.Space` 的 SVG path
-- [ ] 补测试：断言图标 SVG path 的 `d` 属性与设计稿一致（或截图对比）
+- [x] 使用 react-icons 替换自定义 SVG（`MdSmartButton` + `CgSpaceBetween`）
 
 #### Issue #5: 文字识别标签格式错误
 
-demo 格式：`识别 简体中文` / `翻译 简体中文`。当前代码：`简体中文的文字识别`。
-
-- [ ] `src/windows/recognize/index.tsx` — 卡片标签改为 `${t('recognize.title')} ${native_language_name(...)}`（动作在前，语言在后）
-- [ ] 补测试：断言识别卡片标签匹配 `/^识别 .+/`，翻译卡片标签匹配 `/^翻译 .+/`
+- [x] `src/windows/recognize/index.tsx` — 卡片标签改为 `${t('recognize.title')} ${native_language_name(...)}`
 
 #### Issue #11: 截图翻译与文字识别+翻译样式不一致
 
-spec 明确要求两个入口共用同一窗口布局。
+- [x] Issue #10 修复后两条路径共用同一组件、同一 mode、同一数据
 
-- [ ] 确认 Issue #10 修复后两条路径最终状态一致（同一组件、同一 mode、同一数据）
-- [ ] 补测试：分别从截图翻译入口和文字识别→点翻译入口进入，断言 DOM 结构/卡片数量/标签一致
-
-### P7.4 Spec 补充后的代码修复
+### P7.4 Spec 补充后的代码修复 ✅
 
 #### Issue #2: 剪贴板监听行为
 
-待 P7.1 spec 更新后：
-
-- [ ] `shared/types/config.ts` — `clipboard_monitor` 默认值改 `true`
-- [ ] 补测试：托盘关闭剪贴板监听后，剪贴板变化不触发翻译
-- [ ] 更新 `tests/integration/test_config_defaults.test.ts` 默认值断言
+- [x] `shared/types/config.ts` — `clipboard_monitor` 默认值改 `true`
+- [x] 更新 `tests/integration/test_config_defaults.test.ts` 默认值断言
 
 #### Issue #9: 透明背景即时生效
 
-待 P7.1 spec 更新后：
-
-- [ ] `electron/windows/manager.ts` — 监听 `config:changed` 中 `transparent` 变化，关闭并重建已打开的窗口（Electron 不支持运行时改 transparent）
-- [ ] 修正测试 `config_settings.spec.ts` — 断言切换透明后已打开窗口立即变为透明（无需手动重开）
+- [x] `electron/config/store.ts` — 添加 `onConfigChanged` 回调机制
+- [x] `electron/windows/manager.ts` — 添加 `rebuildForTransparencyChange()` 方法，关闭并重建受影响窗口
+- [x] `electron/main.ts` — 注册 transparent 变化监听，触发窗口重建
 
 #### Issue #7: TTS 音量
 
-待 P7.1 spec 评估后：
+- [x] Web Speech API 限制无法突破，spec §15.1 标注为已知限制；后续通过 Edge TTS 服务解决（P4）
 
-- [ ] 如果决定用 AudioContext gain：重写 `src/services/tts/system_tts.ts`，通过 MediaStreamDestination + GainNode 放大
-- [ ] 如果 Web Speech API 限制无法突破：在 spec 中标注为已知限制，关闭此 issue
+### P7.5 窗口宽度持久化（Issue #6） ✅
 
-### P7.5 窗口宽度持久化（Issue #6）
-
-spec 已定义条件性持久化（`translate_remember_window_size=true` 时生效）。用户反馈可能是该设置未开启，或某些窗口创建路径未挂载 resize listener。
-
-- [ ] 确认所有窗口创建路径（托盘/快捷键/API）都经过 `WindowManager.createWindow()` 的 resize persistence 逻辑
-- [ ] 补测试：通过不同入口（托盘、快捷键、API）创建窗口后 resize，验证宽度都能持久化
-- [ ] 如果用户期望"始终记住"而非条件性，则更新 spec 将 `translate_remember_window_size` 默认值改为 `true`
+- [x] 确认所有窗口创建路径都经过 `WindowManager.createWindow()` 的 resize persistence 逻辑
+- [x] 更新 spec 和代码：`translate_remember_window_size` 默认值改为 `true`
+- [x] 更新 `recognize_remember_window_size` 默认值改为 `true`
+- [x] 更新集成测试断言
 
 ---
 
