@@ -321,6 +321,29 @@ test.describe('@ui config settings window', () => {
         }
     })
 
+    test('Shift+digit hotkey displays the digit, not the shifted symbol', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+        const hotkey = 'hotkey_translate'
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('hotkey')
+
+            // Enter capture mode and press Ctrl+Shift+6
+            await config.hotkeyBindButton(hotkey).click()
+            await config.hotkeyField(hotkey).press('Control+Shift+6')
+
+            // Before confirm: field must show digit "6", not shifted symbol "^"
+            await expect(config.hotkeyField(hotkey)).toContainText('6')
+            await expect(config.hotkeyField(hotkey)).not.toContainText('^')
+
+            // Cancel to avoid system registration issues in CI
+            await config.hotkeyCancelButton(hotkey).click()
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user sees about links and diagnostics', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
 

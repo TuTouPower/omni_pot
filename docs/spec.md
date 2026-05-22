@@ -548,6 +548,8 @@ CC-CEDICT 首次启动：`electron/main.ts` 调用 `auto_import_if_needed()`，
 
 录入行为：捕获组合键、Backspace 清除、绑定按钮在主进程注册、成功 / 失败提示；已被其他应用占用时在"状态细节"区域以红色提示，**不在快捷键设置页常驻展示**。快捷键展示必须按平台把 `CommandOrControl` 解析成用户可读修饰键，并使用简洁、带空格的格式：Windows / Linux 显示 `Ctrl + Alt + T`，macOS 显示 `Cmd + Opt + T`。Wayland 限制属于故障排查或文档说明，不放快捷键页。
 
+**按键捕获规则**：使用 `KeyboardEvent.code`（物理按键）而非 `KeyboardEvent.key`（字符）来确定非修饰键。这确保 Shift+6 存储为 `Shift+6` 而非 `Shift+^`，用户看到的始终是物理按键标识（数字、字母、符号键名）。
+
 ### 9.7 设置页: 服务
 
 Tabs 切换**六类服务**：翻译 / 中文词典 / 英文词典 / 文字识别 / 语音朗读 / 收藏。页面整体布局、服务卡片、字段展示和交互必须按 `docs/design/omni-pot/` 设计稿对齐。

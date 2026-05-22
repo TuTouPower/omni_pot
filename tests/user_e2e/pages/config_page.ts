@@ -76,6 +76,10 @@ export class ConfigPage {
         return this.page.getByTestId(`cfg-${configKey}-confirm`)
     }
 
+    hotkeyCancelButton(configKey: string): Locator {
+        return this.page.getByTestId(`cfg-${configKey}-cancel`)
+    }
+
     hotkeyStatus(configKey: string): Locator {
         return this.page.getByTestId(`cfg-${configKey}-status`)
     }

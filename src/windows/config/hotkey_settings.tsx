@@ -12,6 +12,22 @@ interface HotkeyFieldProps {
     onStartCapture: (key: string) => void
 }
 
+function keyFromCode(code: string, fallback: string): string {
+    if (code.startsWith('Digit')) return code.slice(5)
+    if (code.startsWith('Key')) return code.slice(3)
+    if (code.startsWith('Numpad')) return 'Num' + code.slice(6)
+    if (code === 'Space') return 'Space'
+    if (code.startsWith('Arrow')) return code
+    if (code.startsWith('F') && /^F\d+$/.test(code)) return code
+    const map: Record<string, string> = {
+        Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']',
+        Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',',
+        Period: '.', Slash: '/', Backquote: '`',
+    }
+    if (map[code]) return map[code]
+    return fallback.length === 1 ? fallback.toUpperCase() : fallback
+}
+
 function buildAccelerator(e: React.KeyboardEvent): string {
     const parts: string[] = []
     if (e.ctrlKey || e.metaKey) parts.push('CommandOrControl')
@@ -19,12 +35,9 @@ function buildAccelerator(e: React.KeyboardEvent): string {
     if (e.altKey) parts.push('Alt')
 
     const ignored = new Set(['Control', 'Shift', 'Alt', 'Meta'])
-    let key = e.key
-    if (key === ' ') key = 'Space'
-    if (key.length === 1) key = key.toUpperCase()
-
-    if (!ignored.has(e.key) && key) {
-        parts.push(key)
+    if (!ignored.has(e.key)) {
+        const key = keyFromCode(e.code, e.key)
+        if (key) parts.push(key)
     }
 
     return parts.join('+')
