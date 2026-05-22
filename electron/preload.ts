@@ -24,6 +24,8 @@ const api: Omit<ElectronAPI, 'ready'> = {
   log: {
     getDir: () => ipcRenderer.invoke('log:getDir'),
     export: () => ipcRenderer.invoke('log:export'),
+    write: (level: string, scope: string, message: string, ...args: unknown[]) =>
+      ipcRenderer.invoke('log:write', level, scope, message, ...args),
   },
   config: {
     get: (key) => ipcRenderer.invoke('config:get', key),

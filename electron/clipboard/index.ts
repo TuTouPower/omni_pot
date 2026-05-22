@@ -2,6 +2,9 @@ import { clipboard } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
+import { log } from '../log'
+
+const log_clipboard = log.scope('clipboard')
 
 let last_text = ''
 let interval_id: ReturnType<typeof setInterval> | null = null
@@ -25,6 +28,7 @@ export function pollClipboardMonitorOnce(mgr: WindowManager): void {
 
     if (current !== last_text && current.trim()) {
         last_text = current
+        log_clipboard.info('monitor triggered: text=%s', current.slice(0, 50))
         mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', current)
     }

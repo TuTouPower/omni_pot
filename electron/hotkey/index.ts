@@ -36,13 +36,13 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
     case 'hotkey_translate':
     case 'hotkey_selection_translate':
     case 'hotkey_input_translate':
-      return () => { triggerTranslateEntry(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
+      return () => { log_hotkey.info('triggered: %s', name); triggerTranslateEntry(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_recognize':
-      return () => { start_screenshot_capture(mgr, 'recognize').catch((err: unknown) => { log_hotkey.error(err) }) }
+      return () => { log_hotkey.info('triggered: %s', name); start_screenshot_capture(mgr, 'recognize').catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_translate':
-      return () => { start_screenshot_capture(mgr, 'translate').catch((err: unknown) => { log_hotkey.error(err) }) }
+      return () => { log_hotkey.info('triggered: %s', name); start_screenshot_capture(mgr, 'translate').catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_selection_dictionary':
-      return () => { triggerSelectionDictionary(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
+      return () => { log_hotkey.info('triggered: %s', name); triggerSelectionDictionary(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     default:
       return () => {}
   }

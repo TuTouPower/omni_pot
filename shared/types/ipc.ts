@@ -38,6 +38,7 @@ export interface ElectronAPI {
   log: {
     getDir(): Promise<string>
     export(): Promise<{ success: boolean; path?: string; error?: string }>
+    write(level: string, scope: string, message: string, ...args: unknown[]): Promise<void>
   }
   config: {
     get(key: ConfigKey): Promise<unknown>

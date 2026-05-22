@@ -9,9 +9,12 @@ import { detectLanguage } from '../../services/detect'
 import { native_language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
 import { LANGUAGE_CODES } from '@shared/types/language'
+import { create_logger } from '../../utils/logger'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
+
+const log = create_logger('recognize')
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -470,8 +473,11 @@ export default function RecognizeWindow(): React.ReactElement {
 
         const instance_config: ServiceConfig = get_service_config(service_instances, instance_key)
         try {
+            log.info('ocr start: engine=%s, lang=%s', svc_key, lang)
+            const start = Date.now()
             const result = await service.recognize(imageBase64, lang, instance_config)
             if (ocrRequestIdRef.current !== requestId) return
+            log.info('ocr done: engine=%s, elapsed=%dms, length=%d', svc_key, Date.now() - start, (result || '').length)
             const next_text = handleNormalizeText(result || '')
             setRecognizedText(next_text)
             if (config.recognize_auto_copy && next_text) {
@@ -483,8 +489,8 @@ export default function RecognizeWindow(): React.ReactElement {
                 await doTranslate(next_text, lang, requestId)
                 setIsTranslating(false)
             }
-        } catch {
-            // keep existing text on failure
+        } catch (err) {
+            log.error('ocr failed: engine=%s, error=%s', svc_key, err instanceof Error ? err.message : String(err))
         }
         if (ocrRequestIdRef.current === requestId) {
             setIsRecognizing(false)

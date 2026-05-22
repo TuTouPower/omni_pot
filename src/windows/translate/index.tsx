@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Icons } from '../../components/icons'
 import { Titlebar } from '../../components/titlebar'
 import { SourceArea } from './source_area'
 import { LanguageArea } from './language_area'
@@ -12,9 +11,12 @@ import { translateServiceRegistry } from '../../services/registry'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { detectLanguage } from '../../services/detect'
 import { getServiceKey } from '@shared/types/service'
+import { create_logger } from '../../utils/logger'
 import type { DictResult, ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 import type { LanguageCode } from '@shared/types/language'
+
+const log = create_logger('translate')
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -127,6 +129,9 @@ export default function TranslateWindow(): React.ReactElement {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
         if (!textToTranslate.trim()) return
 
+        log.info('translate start: src=%s→%s, text=%s, services=%d',
+            sourceLanguage, targetLanguage, textToTranslate.slice(0, 50), enabledServiceList.length)
+
         const id = nextRequestId()
         setIsTranslating(true)
         clearResults()
@@ -135,7 +140,10 @@ export default function TranslateWindow(): React.ReactElement {
 
         const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate) : null
         if (useTranslateStore.getState().requestId !== id) return
-        if (detected) setDetectedLanguage(detected)
+        if (detected) {
+            log.info('detected language: %s', detected)
+            setDetectedLanguage(detected)
+        }
 
         let effectiveTarget = targetLanguage
         if (sourceLanguage === 'auto' && detected && detected === targetLanguage) {
@@ -180,7 +188,8 @@ export default function TranslateWindow(): React.ReactElement {
                         setResult(instanceKey, result)
                     }
                 }
-            } catch {
+            } catch (err) {
+                log.error('service %s failed: %s', instanceKey, err instanceof Error ? err.message : String(err))
                 resultsMap[instanceKey] = null
                 if (useTranslateStore.getState().requestId === id) {
                     setResult(instanceKey, null)

@@ -1,6 +1,6 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { getUserDataDir } from '../config/store'
-import { getLogDir } from '../log'
+import { getLogDir, log } from '../log'
 import { create_zip } from '../backup/index'
 import type { BackupFile } from '../backup/index'
 import { readdirSync, readFileSync, lstatSync } from 'fs'
@@ -56,5 +56,14 @@ export function registerShellHandlers(): void {
         } catch (err) {
             return { success: false, error: String(err) }
         }
+    })
+
+    ipcMain.handle('log:write', (_event, level: string, scope: string, message: string, ...args: unknown[]): void => {
+        const scoped = log.scope(`renderer:${scope}`)
+        const fn = level === 'error' ? scoped.error
+            : level === 'warn' ? scoped.warn
+            : level === 'debug' ? scoped.debug
+            : scoped.info
+        fn(message, ...args)
     })
 }

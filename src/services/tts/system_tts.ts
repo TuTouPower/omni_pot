@@ -1,5 +1,8 @@
 import type { TtsService, TtsPlaybackHandle } from '@shared/types/tts_service'
 import type { LanguageCode } from '@shared/types/language'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('tts')
 
 /**
  * System TTS — speaks through the host's built-in speech synthesizer using the
@@ -73,6 +76,7 @@ export const systemTtsService: TtsService = {
     languages: SYSTEM_TTS_LANGUAGES,
 
     play(text: string, language: LanguageCode): TtsPlaybackHandle {
+        log.info('play: lang=%s, text=%s', language, text.slice(0, 50))
         const utterance = new SpeechSynthesisUtterance(text)
         utterance.lang = to_bcp47(language)
         const initial_voice = pick_voice(utterance.lang)
@@ -87,7 +91,10 @@ export const systemTtsService: TtsService = {
             resolve_done?.()
         }
         utterance.onend = cleanup
-        utterance.onerror = cleanup
+        utterance.onerror = (ev) => {
+            log.error('playback error: %s', (ev as SpeechSynthesisErrorEvent).error ?? 'unknown')
+            cleanup()
+        }
 
         // Voices may load asynchronously on first use; wait briefly if empty.
         if (!initial_voice) {

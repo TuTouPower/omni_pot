@@ -2,7 +2,10 @@ import { app, BrowserWindow } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import { DEFAULT_CONFIG, DEFAULT_SERVICE_INSTANCES, APP_PRIMARY_COLORS } from '@shared/types/config'
+import { log } from '../log'
 import type { AppConfig, ConfigKey } from '@shared/types/config'
+
+const log_config = log.scope('config')
 
 interface PersistedShape extends Partial<AppConfig> {
     __initialized?: boolean
@@ -145,6 +148,7 @@ export function getConfig(key: ConfigKey): unknown {
 }
 
 export function setConfig(key: ConfigKey, value: unknown): void {
+    log_config.info('set %s', key)
     ;(data as Record<string, unknown>)[key] = value
     saveToDisk()
     broadcastChange(key, value)

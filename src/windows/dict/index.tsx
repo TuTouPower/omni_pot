@@ -14,9 +14,12 @@ import { collectionServiceRegistry } from '../../services/index'
 import { detectLanguage } from '../../services/detect'
 import { native_language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
+import { create_logger } from '../../utils/logger'
 import type { DictResult, ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 import type { LanguageCode } from '@shared/types/language'
+
+const log = create_logger('dict')
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -273,6 +276,7 @@ export default function DictWindow(): React.ReactElement {
         const lookupWord = trimmed.split(' ')[0] ?? ''
         const detected = await detectLanguage(lookupWord)
         if (lookup_request_ref.current !== request_id) return
+        log.info('lookup: word=%s, detected=%s', lookupWord, detected)
         setDetectedLanguage(detected)
         sourceLangRef.current = detected
 
@@ -300,7 +304,8 @@ export default function DictWindow(): React.ReactElement {
                 } else {
                     setResult(instanceKey, null)
                 }
-            } catch {
+            } catch (err) {
+                log.error('dict service %s failed: %s', instanceKey, err instanceof Error ? err.message : String(err))
                 if (lookup_request_ref.current === request_id) {
                     setResult(instanceKey, null)
                 }
