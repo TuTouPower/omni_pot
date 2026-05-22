@@ -16,6 +16,11 @@ import { simpleLatexOcrService } from './simple_latex_ocr'
 import { qrcodeOcrService } from './qrcode'
 import { systemOcrService } from './system'
 
+function is_system_ocr_available(): boolean {
+    const platform = navigator.platform?.toLowerCase() ?? ''
+    return platform.startsWith('win') || platform.startsWith('mac')
+}
+
 export function registerAllOcrServices(): void {
     ocrServiceRegistry.register(tesseractOcrService)
     ocrServiceRegistry.register(baiduOcrService)
@@ -32,5 +37,7 @@ export function registerAllOcrServices(): void {
     ocrServiceRegistry.register(iflytekLatexOcrService)
     ocrServiceRegistry.register(simpleLatexOcrService)
     ocrServiceRegistry.register(qrcodeOcrService)
-    ocrServiceRegistry.register(systemOcrService)
+    if (is_system_ocr_available()) {
+        ocrServiceRegistry.register(systemOcrService)
+    }
 }

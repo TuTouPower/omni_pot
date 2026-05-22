@@ -72,24 +72,31 @@ $result.Text
     })
 }
 
-async function linux_ocr(image_path: string, lang: string): Promise<string> {
-    const args = [image_path, 'stdout']
-    if (lang && lang !== 'auto') {
-        const tesseract_lang = lang.split('-')[0] ?? lang
-        args.push('-l', tesseract_lang)
+const MACOS_VISION_LANGUAGES = new Set([
+    'en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'ko-KR', 'fr-FR', 'es-ES', 'ru-RU',
+    'de-DE', 'it-IT', 'pt-PT', 'pt-BR',
+])
+
+function normalize_macos_ocr_language(lang: string): string {
+    if (!lang) return ''
+    if (MACOS_VISION_LANGUAGES.has(lang)) return lang
+    const prefix = lang.split('-')[0] ?? ''
+    for (const supported of MACOS_VISION_LANGUAGES) {
+        if (supported.startsWith(prefix + '-')) return supported
     }
+    return ''
+}
+
+async function macos_ocr(image_path: string, lang: string): Promise<string> {
+    const bcp47 = normalize_macos_ocr_language(lang)
+    const swift_path = join(__dirname, '..', '..', 'scripts', 'macos_ocr.swift')
+    const args = ['swift', swift_path, image_path]
+    if (bcp47) args.push(bcp47)
 
     return new Promise((resolve, reject) => {
-        execFile('tesseract', args, { timeout: 30000 }, (err, stdout, stderr) => {
+        execFile(args[0]!, args.slice(1), { timeout: 30000 }, (err, stdout, stderr) => {
             if (err) {
-                const msg = stderr.trim() || err.message
-                if (msg.includes('os error 2')) {
-                    reject(new Error('Tesseract not installed'))
-                } else if (msg.includes('data')) {
-                    reject(new Error(`Language data not installed. Install tesseract-ocr-${lang}`))
-                } else {
-                    reject(new Error(msg))
-                }
+                reject(new Error(stderr.trim() || err.message))
                 return
             }
             resolve(stdout.trim())
@@ -126,8 +133,8 @@ export function registerOcrHandlers(manager: WindowManager): void {
         try {
             if (platform === 'win32') {
                 return await windows_ocr(tmp_path, lang)
-            } else if (platform === 'linux') {
-                return await linux_ocr(tmp_path, lang)
+            } else if (platform === 'darwin') {
+                return await macos_ocr(tmp_path, lang)
             } else {
                 throw new Error('System OCR not supported on this platform')
             }
