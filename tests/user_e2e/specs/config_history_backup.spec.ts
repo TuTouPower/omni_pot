@@ -209,6 +209,22 @@ test.describe('@ui config history and backup settings', () => {
             await expect(time_filter).toBeVisible()
             await expect(clear).toBeVisible()
 
+            // Spec §9.8 + demo: 第一个标签是"启用"（正向语义）
+            const toolbar = disable_switch.locator('..')
+            await expect(toolbar.locator('> span').first()).toContainText('启用')
+
+            // Demo: 搜索框内有搜索图标
+            const search_wrapper = search.locator('..')
+            await expect(search_wrapper.locator('svg')).toBeVisible()
+
+            // Demo: 时间筛选选项为"全部时间/今天/本周/本月"
+            const time_options = time_filter.locator('option')
+            await expect(time_options).toHaveCount(4)
+            await expect(time_options.nth(0)).toHaveText('全部时间')
+            await expect(time_options.nth(1)).toHaveText('今天')
+            await expect(time_options.nth(2)).toHaveText('本周')
+            await expect(time_options.nth(3)).toHaveText('本月')
+
             // All controls should share a similar y coordinate (same row).
             const boxes = await Promise.all([
                 disable_switch.boundingBox(),

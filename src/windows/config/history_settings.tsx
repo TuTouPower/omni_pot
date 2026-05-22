@@ -9,9 +9,9 @@ const PAGE_SIZE = 20
 
 const TIME_FILTERS = [
     { value: 0, label: '全部时间' },
-    { value: 1, label: '最近 1 天' },
-    { value: 7, label: '最近 7 天' },
-    { value: 30, label: '最近 30 天' },
+    { value: 1, label: '今天' },
+    { value: 7, label: '本周' },
+    { value: 30, label: '本月' },
 ] as const
 
 const SVC_ABBR: Record<string, string> = {
@@ -105,16 +105,17 @@ export default function HistorySettings(): React.ReactElement {
                 display: 'flex',
                 gap: 8,
                 alignItems: 'center',
-                flexWrap: 'wrap',
+                flexWrap: 'nowrap',
                 padding: '8px 12px',
                 background: 'var(--bg-card)',
                 border: '1px solid var(--line)',
                 borderRadius: 10,
             }}>
-                <ConfigSwitch on={historyDisable} onChange={setHistoryDisable} testId="cfg-history_disable" />
-                <span style={{ fontSize: 12, color: 'var(--text-dim)', marginRight: 4 }}>{t('history.disable', { defaultValue: '禁用历史记录' })}</span>
-                <div style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />
-                <div className="field" style={{ flex: 1, minWidth: 160, opacity: disabled ? 0.5 : 1 }}>
+                <span style={{ fontSize: 12.5, color: !historyDisable ? 'var(--text)' : 'var(--text-dim)', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('history.enable', { defaultValue: '启用' })}</span>
+                <ConfigSwitch on={!historyDisable} onChange={(v) => { setHistoryDisable(!v); }} testId="cfg-history_disable" />
+                <div style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px', flexShrink: 0 }} />
+                <div className="field" style={{ flex: '1 1 120px', minWidth: 0, opacity: disabled ? 0.5 : 1 }}>
+                    <Icons.Search size={13} style={{ color: 'var(--text-mute)', flexShrink: 0 }} />
                     <input
                         data-testid="history-search"
                         placeholder={t('ui.search', { defaultValue: '搜索...' })}
@@ -129,7 +130,7 @@ export default function HistorySettings(): React.ReactElement {
                     value={serviceFilter}
                     onChange={(e) => { setServiceFilter(e.target.value); setPage(1); }}
                     disabled={disabled}
-                    style={{ fontSize: 12, opacity: disabled ? 0.5 : 1, background: 'var(--bg-sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', color: 'var(--text)' }}
+                    style={{ fontSize: 12, opacity: disabled ? 0.5 : 1, background: 'var(--bg-sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', color: 'var(--text)', flexShrink: 0 }}
                 >
                     <option value="">全部服务</option>
                     {serviceOptions.map((service_key) => (
@@ -141,14 +142,14 @@ export default function HistorySettings(): React.ReactElement {
                     value={timeFilter}
                     onChange={(e) => { setTimeFilter(Number(e.target.value)); setPage(1); }}
                     disabled={disabled}
-                    style={{ fontSize: 12, opacity: disabled ? 0.5 : 1, background: 'var(--bg-sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', color: 'var(--text)' }}
+                    style={{ fontSize: 12, opacity: disabled ? 0.5 : 1, background: 'var(--bg-sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', color: 'var(--text)', flexShrink: 0 }}
                 >
                     {TIME_FILTERS.map((f) => (
                         <option key={f.value} value={f.value}>{f.label}</option>
                     ))}
                 </select>
                 <div style={{ flex: 1 }} />
-                <button data-testid="history-clear" className="btn sm danger" onClick={() => { handle_clear().catch(console.error); }} disabled={disabled} style={{ opacity: disabled ? 0.5 : 1 }}>
+                <button data-testid="history-clear" className="btn sm danger" onClick={() => { handle_clear().catch(console.error); }} disabled={disabled} style={{ opacity: disabled ? 0.5 : 1, flexShrink: 0, whiteSpace: 'nowrap' }}>
                     <Icons.Trash size={12} />
                     {t('history.clear', { defaultValue: '清空' })}
                 </button>
