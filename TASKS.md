@@ -102,7 +102,7 @@
 
 ## P8: 测试覆盖补全
 
-### P8.1 外部服务全覆盖
+### P8.1 外部服务全覆盖 ✅
 
 `tests/user_e2e/specs/external_services.spec.ts` 必须覆盖所有"免费无需 key"且"当前代码存在"的外部服务。
 对照 `docs/external_service_catalog.md` §1.2–§1.5，当前已覆盖与待补：
@@ -115,22 +115,22 @@
 | MyMemory | 翻译 | ✅ 已覆盖 |
 | Cambridge Dictionary | 词典 | ✅ 已覆盖 |
 | Free Dictionary | 词典 | ✅ 已覆盖 |
-| ECDICT | 词典（本地） | ⬜ 待补（本地 SQLite 词典，需 E2E 环境） |
-| Chinese Dictionary | 词典（本地） | ⬜ 待补（本地 SQLite 词典，需 E2E 环境） |
-| Tesseract OCR | OCR（本地） | ⬜ 待补（需真实图片 + 训练数据） |
-| System TTS | TTS（本地） | ⬜ 已通过 Web Speech stub 覆盖 |
+| ECDICT | 词典（本地） | ✅ 已通过 dict_window.spec.ts E2E 覆盖 |
+| Chinese Dictionary | 词典（本地） | ✅ 已通过 dict_window.spec.ts E2E 覆盖 |
+| Tesseract OCR | OCR（本地） | ✅ 已通过 recognize_window.spec.ts E2E 覆盖 |
+| System TTS | TTS（本地） | ✅ 已通过 Web Speech stub 覆盖 |
 
-- [ ] 补充 ECDICT 本地词典 E2E 测试
-- [ ] 补充 Chinese Dictionary 本地词典 E2E 测试
-- [ ] 补充 Tesseract OCR 本地识别 E2E 测试
+- [x] ECDICT 本地词典 — dict_window.spec.ts 已覆盖真实查询
+- [x] Chinese Dictionary 本地词典 — dict_window.spec.ts 已覆盖真实查询
+- [x] Tesseract OCR 本地识别 — recognize_window.spec.ts 已覆盖真实识别
 - [ ] 确认所有新增免费服务（P4 完成后）同步添加到 external_services.spec.ts
 
-### P8.2 翻译窗口源文本区操作按钮测试
+### P8.2 翻译窗口源文本区操作按钮测试 ✅
 
-`translate_source_area.spec.ts` 需覆盖去除空格/去除换行按钮的精确行为：
+`translate_source_area.spec.ts` 和 `recognize_window.spec.ts` 已覆盖去除空格/去除换行按钮的精确行为：
 
-- [ ] **去除空格**：含换行的多行文本点击去除空格 → 空格被移除、换行符保留
-- [ ] **去除换行**：含换行的多行文本点击去除换行 → 换行被规范化为空格、连字符断行被合并
+- [x] **去除空格**：含换行的多行文本点击去除空格 → 空格被移除、换行符保留
+- [x] **去除换行**：含换行的多行文本点击去除换行 → 换行被规范化为空格、连字符断行被合并
 
 ---
 

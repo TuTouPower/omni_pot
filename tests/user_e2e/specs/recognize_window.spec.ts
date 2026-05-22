@@ -107,12 +107,12 @@ test.describe('@ui recognize window', () => {
             await recognize.clickDeleteNewline()
             await expect(recognize.text()).toHaveValue('Line one Line two with spaces')
 
-            await recognize.setText('A B\nC')
+            await recognize.setText('A B\nC D')
             await recognize.clickDeleteSpace()
-            await expect(recognize.text()).toHaveValue('ABC')
+            await expect(recognize.text()).toHaveValue('AB\nCD')
 
             await recognize.clickCopy()
-            await expect.poll(async () => (await omni.api.readClipboard()).text).toBe('ABC')
+            await expect.poll(async () => (await omni.api.readClipboard()).text).toBe('AB\nCD')
 
             await recognize.click_copy_image()
             await expect.poll(async () => (await omni.api.read_clipboard_image()).is_empty).toBe(false)

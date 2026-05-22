@@ -29,6 +29,22 @@ test.describe('@ui translate source area', () => {
         await expect(translate.sourceTtsButton()).toBeDisabled()
     })
 
+    test('delete space removes only spaces, preserves newlines', async ({ omni }) => {
+        const translate = await omni.translate()
+
+        await translate.typeSource('hello world\nfoo bar')
+        await translate.clickDeleteSpace()
+        await expect(translate.sourceInput()).toHaveValue('helloworld\nfoobar')
+    })
+
+    test('delete newline normalizes line breaks into single space', async ({ omni }) => {
+        const translate = await omni.translate()
+
+        await translate.typeSource('hello\nworld\n\nfoo')
+        await translate.clickDeleteNewline()
+        await expect(translate.sourceInput()).toHaveValue('hello world foo')
+    })
+
     test('source input caps growth at eight lines and scrolls internally', async ({ omni }) => {
         const translate = await omni.translate()
 

@@ -195,6 +195,10 @@ export class TranslatePage {
         return this.page.getByTestId('source-newline-btn').click()
     }
 
+    clickDeleteSpace(): Promise<void> {
+        return this.page.getByTestId('source-space-btn').click()
+    }
+
     clickSourceTts(): Promise<void> {
         return this.page.getByTestId('source-tts-btn').click()
     }
