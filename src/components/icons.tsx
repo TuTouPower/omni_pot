@@ -1,4 +1,6 @@
 import React from 'react'
+import { MdSmartButton } from 'react-icons/md'
+import { CgSpaceBetween } from 'react-icons/cg'
 
 interface IconProps {
     size?: number
@@ -35,7 +37,7 @@ export const Icons = {
     Pin: ({ size = 15, strokeWidth = 1.85, fill = false, style, className }: IconProps) => (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
             <path d="M8 3h8l-1.5 6 2.5 4H7l2.5-4L8 3z" fill={fill ? 'currentColor' : 'none'} />
-            <path d="M12 16v6" stroke={fill ? 'var(--bg)' : 'currentColor'} />
+            <path d="M12 16v6" />
         </svg>
     ),
     Lock: ({ size = 15, strokeWidth = 1.85, fill = false, style, className }: IconProps) => (
@@ -45,21 +47,11 @@ export const Icons = {
             <path d="M12 15v3" stroke={fill ? 'var(--bg)' : 'currentColor'} />
         </svg>
     ),
-    // MdSmartButton: rounded rect + 3 lines + arrow
-    Newline: ({ size = 17, strokeWidth = 1.65, style, className }: IconProps) => (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
-            <rect x="2" y="2" width="20" height="20" rx="4" />
-            <path d="M7 8h10M7 12h6" />
-            <path d="M15 14v4M13 16l2 2 2-2" />
-        </svg>
+    Newline: ({ size = 17, style, className }: IconProps) => (
+        <MdSmartButton size={size} style={style} className={className} />
     ),
-    // CgSpaceBetween: 2 vertical bars + 3 horizontal lines
-    Space: ({ size = 17, strokeWidth = 1.65, style, className }: IconProps) => (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
-            <rect x="2" y="4" width="4" height="16" rx="1" />
-            <rect x="18" y="4" width="4" height="16" rx="1" />
-            <path d="M8 9h8M8 12h8M8 15h8" />
-        </svg>
+    Space: ({ size = 17, style, className }: IconProps) => (
+        <CgSpaceBetween size={size} style={style} className={className} />
     ),
     Bell: (p: IconProps) => <Icon {...p} d={["M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9", "M14 21a2 2 0 01-4 0"]} />,
     Translate: (p: IconProps) => <Icon {...p} d={["M4 5h10", "M9 4v2c0 4-3 8-7 8", "M14 19l3-8 3 8", "M15 16h4", "M5 8c0 3 4 7 8 7"]} />,
