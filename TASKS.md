@@ -164,6 +164,42 @@
 
 ---
 
+## P9: System OCR 跨平台适配
+
+**目标**：根据平台决定是否提供 System OCR 选项，Tesseract 保持默认 OCR 引擎。
+
+### P9.1 macOS System OCR 实现
+
+macOS 10.15+ 内置 Vision 框架（`VNRecognizeTextRequest`），识别质量优秀。
+
+- [ ] `electron/ipc/ocr_handlers.ts` — 新增 `macos_ocr()` 函数，通过 Swift CLI 工具或 Python pyobjc 调用 Vision 框架
+  - 方案 A（推荐）：编译一个轻量 Swift CLI（`scripts/` 下），通过 `execFile` 调用
+  - 方案 B：通过 `python3 -c "..."` + pyobjc 调用（macOS 自带 Python 可能无 pyobjc，需额外判断）
+- [ ] `electron/ipc/ocr_handlers.ts` — `registerOcrHandlers` 中 `platform === 'darwin'` 分支调用 `macos_ocr()`
+- [ ] macOS 支持的语言列表与 Windows 不同（Vision 框架支持的语言集），需单独定义
+
+### P9.2 平台条件化 System OCR 可见性
+
+- [ ] `src/services/ocr/system.ts` — 根据 `navigator.platform` 或 IPC 查询当前平台，Linux 时不导出/注册该服务
+- [ ] `src/services/ocr/index.ts` — `registerAllOcrServices()` 中条件注册：Windows + macOS 注册 System OCR，Linux 跳过
+- [ ] `shared/types/config.ts` — `recognize_service_list` 默认值保持 `['tesseract@default']`（不变，Tesseract 作为默认）
+
+### P9.3 Linux 路径处理
+
+当前 `linux_ocr()` 直接调外部 `tesseract` 命令行，不是真正的系统能力：
+
+- [ ] 移除 `ocr_handlers.ts` 中的 `linux_ocr()` 函数（Tesseract 已通过 tesseract.js 在渲染进程独立实现）
+- [ ] Linux 下 System OCR 选项完全不出现，用户使用默认的 Tesseract 即可
+
+### P9.4 文档同步
+
+- [ ] `docs/spec.md` §14 OCR 服务清单 — 标注 System OCR 仅 Windows + macOS 可用，Linux 不提供
+- [ ] `docs/spec.md` §8.2 文字识别模式按钮 — 确认"选择识别引擎"下拉框的平台行为描述
+- [ ] `docs/external_service_catalog.md` — System OCR 条目补充平台限制说明
+- [ ] `docs/spec.md` §8.5 OCR 执行细节 — 补充 macOS Vision 框架路径说明
+
+---
+
 ## 已知环境问题（不修，仅跟踪）
 
 - **谷歌翻译当前环境失败**：保留为已知问题，不用 mock 隐藏；需要在网络可达的环境复测，或更换默认免费引擎。

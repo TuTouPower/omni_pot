@@ -498,7 +498,7 @@ export default function DictWindow(): React.ReactElement {
                 pinned={pinned}
                 onToggleTopmost={handleToggleAlwaysOnTop}
                 onTogglePin={handleTogglePin}
-                modeLabel={t('dict', { defaultValue: '词典' })}
+                modeLabel={t('dict.title', { defaultValue: '词典' })}
                 onClose={handleClose}
             />
 
