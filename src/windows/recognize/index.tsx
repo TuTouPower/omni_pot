@@ -524,7 +524,7 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [recognizedText])
 
     const handleDeleteAllSpaces = useCallback(() => {
-        setRecognizedText(recognizedText.replace(/\s+/g, ''))
+        setRecognizedText(recognizedText.replace(/ +/g, ''))
     }, [recognizedText])
 
     const handleClose = useCallback(() => {

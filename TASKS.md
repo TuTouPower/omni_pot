@@ -31,7 +31,7 @@
 
 ### P7.1 Spec 补充（先定义再修代码） ✅
 
-- [x] **Issue #2 剪贴板监听默认值** — spec §23 `clipboard_monitor` 默认值 `false` → `true`；补充"关闭时不得监听"的显式约束
+- [x] **Issue #2 剪贴板监听默认值** — spec §23 `clipboard_monitor` 默认值改为 `false`；补充"关闭时不得监听"的显式约束
 - [x] **Issue #7 TTS 音量** — spec §15.1 记录为已知平台限制（Web Speech API volume=1 已是上限，无法通过 AudioContext 放大；后续可通过 Edge TTS 服务解决）
 - [x] **Issue #9 透明背景即时生效** — spec §9.11 补充即时生效要求，需要重建 BrowserWindow 的配置项自动重建
 
@@ -97,6 +97,40 @@
 - [x] 更新 spec 和代码：`translate_remember_window_size` 默认值改为 `true`
 - [x] 更新 `recognize_remember_window_size` 默认值改为 `true`
 - [x] 更新集成测试断言
+
+---
+
+## P8: 测试覆盖补全
+
+### P8.1 外部服务全覆盖
+
+`tests/user_e2e/specs/external_services.spec.ts` 必须覆盖所有"免费无需 key"且"当前代码存在"的外部服务。
+对照 `docs/external_service_catalog.md` §1.2–§1.5，当前已覆盖与待补：
+
+| 服务 | 类型 | 状态 |
+|---|---|---|
+| Bing Translate | 翻译 | ✅ 已覆盖 |
+| Google Translate | 翻译 | ✅ 已覆盖 |
+| DeepL free | 翻译 | ✅ 已覆盖（含长文本、葡语变体） |
+| MyMemory | 翻译 | ✅ 已覆盖 |
+| Cambridge Dictionary | 词典 | ✅ 已覆盖 |
+| Free Dictionary | 词典 | ✅ 已覆盖 |
+| ECDICT | 词典（本地） | ⬜ 待补（本地 SQLite 词典，需 E2E 环境） |
+| Chinese Dictionary | 词典（本地） | ⬜ 待补（本地 SQLite 词典，需 E2E 环境） |
+| Tesseract OCR | OCR（本地） | ⬜ 待补（需真实图片 + 训练数据） |
+| System TTS | TTS（本地） | ⬜ 已通过 Web Speech stub 覆盖 |
+
+- [ ] 补充 ECDICT 本地词典 E2E 测试
+- [ ] 补充 Chinese Dictionary 本地词典 E2E 测试
+- [ ] 补充 Tesseract OCR 本地识别 E2E 测试
+- [ ] 确认所有新增免费服务（P4 完成后）同步添加到 external_services.spec.ts
+
+### P8.2 翻译窗口源文本区操作按钮测试
+
+`translate_source_area.spec.ts` 需覆盖去除空格/去除换行按钮的精确行为：
+
+- [ ] **去除空格**：含换行的多行文本点击去除空格 → 空格被移除、换行符保留
+- [ ] **去除换行**：含换行的多行文本点击去除换行 → 换行被规范化为空格、连字符断行被合并
 
 ---
 

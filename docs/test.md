@@ -72,6 +72,8 @@
 ### 禁止 mock 的场景
 
 - 免费、无需密钥的翻译/词典服务必须走真实 API（`external_services.spec.ts`）。
+  **所有**"免费无需 key"且"当前代码存在"的外部服务都必须有对应测试用例；
+  新增免费服务时必须同步添加到 `external_services.spec.ts`。
 - UI 状态测试（loading / retry / 卡片高度 / 动态翻译 / 历史写入）应使用**本地可控 HTTP 服务**控制响应，不能 mock 应用内部 service adapter 或 fetch。
 - 本地 OCR 测试应使用真实图片 + 真实识别链路，不能 mock 识别结果。
 
@@ -217,8 +219,10 @@ OMNI_POT_EXTERNAL_SERVICE_TESTS=1 npx playwright test tests/user_e2e/specs/exter
 ```
 
 > 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查。
-> 覆盖无密钥外部服务（Bing、Google、DeepL 免费、MyMemory、Cambridge、
-> Free Dictionary、Edge TTS）。CI nightly 跑此项；PR 不跑。
+> 覆盖所有"免费无需 key"且"当前代码存在"的外部服务（对照 `docs/external_service_catalog.md`）：
+> Bing、Google、DeepL 免费（含长文本/葡语变体）、MyMemory、Cambridge Dictionary、
+> Free Dictionary。本地服务（ECDICT、Chinese Dictionary、Tesseract）通过 E2E 环境覆盖。
+> CI nightly 跑此项；PR 不跑。新增免费服务时必须同步添加到此 spec。
 
 ### 分层执行说明
 
