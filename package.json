@@ -94,12 +94,14 @@
       "**/*.node"
     ],
     "npmRebuild": true,
+    "afterPack": "scripts/after_pack.mjs",
     "win": {
       "icon": "public/logos/logo.ico",
       "target": [
         "nsis",
         "portable"
-      ]
+      ],
+      "executableName": "Omni Pot"
     },
     "nsis": {
       "oneClick": false,
@@ -130,6 +132,7 @@
     "knip": "^6.14.0",
     "playwright": "^1.60.0",
     "postcss": "^8.5.14",
+    "rcedit": "^5.0.2",
     "tailwindcss": "^4.2.4",
     "tsx": "^4.22.0",
     "typescript": "^6.0.3",

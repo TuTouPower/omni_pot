@@ -175,7 +175,113 @@
 
 ---
 
-## 5. 运行命令
+## 5. 目录结构与文件说明
+
+### 5.1 `tests/unit/` — 单元测试 (Vitest)
+
+纯函数、模块逻辑，不依赖 Electron 运行时。
+
+| 文件/目录 | 测试内容 |
+|---|---|
+| `services/test_bing.ts` | Bing 翻译服务适配器 |
+| `services/test_deepl.ts` | DeepL 翻译服务适配器 |
+| `services/test_google.ts` | Google 翻译服务适配器 |
+| `services/test_registry.ts` | 服务注册表 |
+| `services/test_detect.test.ts` | 语言检测逻辑 |
+| `services/test_case_cycle.test.ts` | 大小写循环转换 |
+| `selection/index.test.ts` | 选区读取入口 |
+| `selection/clipboard.test.ts` | 剪贴板读取 |
+| `selection/clipboard_monitor.test.ts` | 剪贴板监听 |
+| `selection/windows.test.ts` | Windows 平台选区 |
+| `windows/test_manager.ts` | 窗口管理器 |
+| `windows/manager_log.test.ts` | 窗口管理器日志 |
+| `windows/screenshot_crop.test.ts` | 截图裁剪算法 |
+| `stores/test_translate_store.ts` | Zustand 翻译 store |
+| `ipc/ocr_handlers.test.ts` | OCR IPC 处理器（mock Electron） |
+| `packaging/native_modules.test.ts` | 打包产物结构校验 |
+| `csp_policy.test.ts` | CSP 策略生成 |
+| `log.test.ts` | 日志模块 |
+| `lib/test_crypto.ts` | 加密工具函数 |
+
+### 5.2 `tests/integration/` — 集成测试 (Vitest)
+
+能在 Node 环境真实运行的主进程模块，不 mock 核心逻辑。
+
+| 文件 | 测试内容 |
+|---|---|
+| `test_config.test.ts` | 配置读写、持久化 |
+| `test_config_defaults.test.ts` | 所有配置项默认值与 spec 一致性 |
+
+### 5.3 `tests/detect/` — 语言检测数据测试 (Vitest)
+
+| 文件 | 测试内容 |
+|---|---|
+| `cld3.test.ts` | CLD3 语言检测准确性 |
+
+### 5.4 `tests/chinese_dict/` — 中文词典构建测试 (Vitest)
+
+| 文件 | 测试内容 |
+|---|---|
+| `build.test.ts` | `chinese_dict.db` 构建脚本正确性 |
+
+### 5.5 `tests/user_e2e/` — 用户端到端测试 (Playwright + 真实 Electron)
+
+启动真实 Electron 实例，模拟用户操作。
+
+#### 基础设施 (`fixtures/` + `pages/`)
+
+| 文件 | 作用 |
+|---|---|
+| `fixtures/app_fixture.ts` | 启动/停止 Electron 实例、提供 API |
+| `fixtures/e2e_api.ts` | E2E HTTP 端点封装 |
+| `fixtures/electron_app.ts` | Electron 进程管理 |
+| `fixtures/translation_test_server.ts` | 本地可控 HTTP 翻译服务（控制延迟/响应） |
+| `fixtures/test.ts` | Playwright test fixture 定义 |
+| `pages/translate_page.ts` | 翻译窗口 Page Object |
+| `pages/dict_page.ts` | 词典窗口 Page Object |
+| `pages/recognize_page.ts` | 文字识别窗口 Page Object |
+| `pages/screenshot_page.ts` | 截图窗口 Page Object |
+| `pages/config_page.ts` | 设置窗口 Page Object |
+| `pages/updater_page.ts` | 更新窗口 Page Object |
+| `global_setup.ts` | 测试前自动 `electron-vite build` |
+
+#### Spec 文件 (`specs/`)
+
+| 文件 | 覆盖内容 |
+|---|---|
+| `app_lifecycle.spec.ts` | 启动、托盘、退出、多实例 |
+| `translate_core.spec.ts` | 翻译核心路径（输入→翻译→结果） |
+| `translate_source_area.spec.ts` | 源文本区操作（去空格、去换行、复制、清空、TTS） |
+| `translate_behavior.spec.ts` | 动态翻译、快捷键触发、剪贴板翻译 |
+| `translate_language_area.spec.ts` | 语言选择、自动检测、方向切换 |
+| `translate_result_cards.spec.ts` | 结果卡片（复制、收藏、TTS、重试） |
+| `translate_result_states.spec.ts` | 加载态、错误态、空态 |
+| `translate_welcome.spec.ts` | 欢迎空状态 |
+| `translate_titlebar.spec.ts` | 标题栏按钮（置顶、固定、关闭） |
+| `translate_pin_topmost.spec.ts` | 固定/置顶独立状态 |
+| `translate_window_constraints.spec.ts` | 窗口尺寸、滚动、自适应高度 |
+| `translate_input_rows.spec.ts` | 输入框行数增长/上限 |
+| `translate_entry_merge.spec.ts` | 多次触发翻译的合并行为 |
+| `dict_window.spec.ts` | 词典窗口完整流程（查词、中英分流、服务排序） |
+| `dict_card_height.spec.ts` | 词典卡片高度自适应 |
+| `dict_issues.spec.ts` | 词典已知问题回归 |
+| `recognize_window.spec.ts` | 文字识别窗口（OCR 引擎切换、语言、翻译模式） |
+| `screenshot_window.spec.ts` | 截图框选 |
+| `screenshot_latency.spec.ts` | 截图延迟 |
+| `config_settings.spec.ts` | 设置页面各项配置 |
+| `config_service_mgmt.spec.ts` | 服务管理（添加/删除/排序实例） |
+| `config_history_backup.spec.ts` | 历史记录、备份恢复 |
+| `terminology_settings.spec.ts` | 术语表设置 |
+| `external_services.spec.ts` | 真实外部服务连通性（Bing、DeepL、MyMemory、Cambridge、Free Dict） |
+| `external_http_api.spec.ts` | 主进程 HTTP API 端点 |
+| `i18n.spec.ts` | 多语言切换、翻译完整性 |
+| `updater_and_tray.spec.ts` | 更新检查、托盘弹窗 |
+| `tray_layout.spec.ts` | 托盘布局 |
+| `window_rounded_corner.spec.ts` | 窗口圆角 |
+
+---
+
+## 6. 运行命令
 
 ### 前置准备
 
