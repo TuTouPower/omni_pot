@@ -32,6 +32,7 @@ function run_with_better_sqlite3_rebuild(command, args) {
 try {
     const steps = [
         [npm_cmd, ['run', 'dist:check-locks']],
+        ['node', ['scripts/ensure_node_abi.mjs']],
         [npm_cmd, ['run', 'build:chinese-dict']],
         [npm_cmd, ['run', 'build:cc-cedict']],
         [npm_cmd, ['run', 'build']],
@@ -40,10 +41,7 @@ try {
     ]
 
     for (const [command, args] of steps) {
-        const should_retry_after_rebuild = command === npm_cmd && args.length >= 2 && args[0] === 'run' && args[1].startsWith('build:')
-        const ok = should_retry_after_rebuild
-            ? run_with_better_sqlite3_rebuild(command, args)
-            : run(command, args)
+        const ok = run(command, args)
         if (!ok) break
     }
 } finally {

@@ -18,12 +18,12 @@
     "deadcode": "knip",
     "security": "npm audit --audit-level=high",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run deadcode && npm run security && npm test",
-    "test": "vitest run",
-    "test:e2e": "npx playwright test --project=full",
-    "test:e2e:core": "npx playwright test --project=core",
-    "test:e2e:ui": "npx playwright test --project=ui --pass-with-no-tests",
-    "build:chinese-dict": "npx tsx scripts/build_chinese_dict.ts",
-    "build:cc-cedict": "npx tsx scripts/build_cc_cedict.ts",
+    "test": "node scripts/ensure_node_abi.mjs && vitest run",
+    "test:e2e": "node scripts/ensure_electron_abi.mjs && npx playwright test --project=full",
+    "test:e2e:core": "node scripts/ensure_electron_abi.mjs && npx playwright test --project=core",
+    "test:e2e:ui": "node scripts/ensure_electron_abi.mjs && npx playwright test --project=ui --pass-with-no-tests",
+    "build:chinese-dict": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dict.ts",
+    "build:cc-cedict": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_cc_cedict.ts",
     "start": "electron-vite preview"
   },
   "dependencies": {
