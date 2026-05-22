@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
+import { Titlebar } from '../../components/titlebar'
 import { SvcTile, svcLabel } from '../../components/svc_tile'
 import { DndContext, closestCenter, PointerSensor, type DragEndEvent, type SensorDescriptor, type SensorOptions } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -216,11 +217,19 @@ export default function DictWindow(): React.ReactElement {
         () => allDictionaryInstances.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [allDictionaryInstances, serviceInstances]
     )
+    const activeList = useMemo(() => {
+        if (!detectedLanguage) return enabledServiceList
+        const isEn = detectedLanguage === 'en'
+        const langList = isEn ? enServiceList : zhServiceList
+        return langList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false)
+    }, [detectedLanguage, enabledServiceList, enServiceList, zhServiceList, serviceInstances])
     const enabledCollectionServiceList = useMemo(
         () => collectionServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [collectionServiceList, serviceInstances]
     )
     const alwaysOnTop = useConfigStore((s) => s.config.dict_always_on_top)
+    const configPinned = useConfigStore((s) => s.config.dict_pinned)
+    const pinned = configPinned || alwaysOnTop
     const setConfig = useConfigStore((s) => s.set)
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
@@ -337,6 +346,9 @@ export default function DictWindow(): React.ReactElement {
 
     const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
     const handleTogglePin = useCallback(() => {
+        setConfig('dict_pinned', !configPinned)
+    }, [configPinned, setConfig])
+    const handleToggleAlwaysOnTop = useCallback(() => {
         const next = !alwaysOnTop
         window.electronAPI.window.setAlwaysOnTop(next)
             .then(() => { setConfig('dict_always_on_top', next) })
@@ -457,12 +469,12 @@ export default function DictWindow(): React.ReactElement {
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         const { active, over } = event
         if (!over || active.id === over.id) return
-        const oldIdx = enabledServiceList.indexOf(String(active.id))
-        const newIdx = enabledServiceList.indexOf(String(over.id))
+        const oldIdx = activeList.indexOf(String(active.id))
+        const newIdx = activeList.indexOf(String(over.id))
         if (oldIdx === -1 || newIdx === -1) return
 
-        const enabledSet = new Set(enabledServiceList)
-        const enabledList = [...enabledServiceList]
+        const enabledSet = new Set(activeList)
+        const enabledList = [...activeList]
         const [moved] = enabledList.splice(oldIdx, 1) as [string]
         enabledList.splice(newIdx, 0, moved)
 
@@ -476,30 +488,19 @@ export default function DictWindow(): React.ReactElement {
 
         useConfigStore.getState().set('dictionary_service_list', updateList(zhServiceList))
         useConfigStore.getState().set('english_dictionary_service_list', updateList(enServiceList))
-    }, [enabledServiceList, zhServiceList, enServiceList])
+    }, [activeList, zhServiceList, enServiceList])
 
     return (
         <div className="op-window">
             {/* Titlebar */}
-            <div className="op-titlebar">
-                <button
-                    className="ic-btn"
-                    title="置顶"
-                    data-testid="titlebar-pin"
-                    onClick={handleTogglePin}
-                    style={{ color: alwaysOnTop ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                >
-                    <Icons.Pin size={14} fill={alwaysOnTop} />
-                </button>
-                <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
-                    Omni Pot
-                </div>
-                <span className="op-mode" data-testid="titlebar-mode">词典</span>
-                <div style={{ flex: 1 }} />
-                <button className="ic-btn" title="关闭" data-testid="titlebar-close" onClick={handleClose}>
-                    <Icons.Close size={14} />
-                </button>
-            </div>
+            <Titlebar
+                alwaysOnTop={alwaysOnTop}
+                pinned={pinned}
+                onToggleTopmost={handleToggleAlwaysOnTop}
+                onTogglePin={handleTogglePin}
+                modeLabel={t('dict', { defaultValue: '词典' })}
+                onClose={handleClose}
+            />
 
             <div style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Source word card */}
@@ -578,9 +579,9 @@ export default function DictWindow(): React.ReactElement {
 
                 {/* Results with DnD */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={enabledServiceList} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={activeList} strategy={verticalListSortingStrategy}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {enabledServiceList.map((instanceKey) => {
+                            {activeList.map((instanceKey) => {
                                 const hasResult = Object.prototype.hasOwnProperty.call(results, instanceKey)
                                 return (
                                     <SortableDictCard

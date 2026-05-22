@@ -19,6 +19,10 @@ export class DictPage {
         return this.page.getByTestId('titlebar-pin')
     }
 
+    topmostButton(): Locator {
+        return this.page.getByTestId('titlebar-topmost')
+    }
+
     closeButton(): Locator {
         return this.page.getByTestId('titlebar-close')
     }
@@ -120,6 +124,7 @@ export class DictPage {
 
     titlebarOrder(): Promise<string[]> {
         const items = [
+            { name: 'topmost', locator: this.topmostButton() },
             { name: 'pin', locator: this.pinButton() },
             { name: 'wordmark', locator: this.wordmark() },
             { name: 'mode', locator: this.modeLabel() },

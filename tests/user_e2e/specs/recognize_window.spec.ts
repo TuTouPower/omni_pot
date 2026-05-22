@@ -83,7 +83,7 @@ test.describe('@ui recognize window', () => {
             expect(viewport.scrollHeight).toBeLessThanOrEqual(viewport.innerHeight + 1)
             expect(viewport.shellBottom).toBeGreaterThanOrEqual(viewport.innerHeight - 1)
             await expect(recognize.modeLabel()).toContainText('识别')
-            expect(await recognize.titlebarOrder()).toEqual(['pin', 'wordmark', 'mode', 'close'])
+            expect(await recognize.titlebarOrder()).toEqual(['topmost', 'pin', 'wordmark', 'mode', 'close'])
             await expect(recognize.image().locator('img')).toBeVisible()
             await expect(recognize.text()).toHaveValue('Line one\nLine two with spaces')
 

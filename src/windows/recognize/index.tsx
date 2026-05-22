@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
+import { Titlebar } from '../../components/titlebar'
 import { useConfigStore } from '../../stores/config_store'
 import { ocrServiceRegistry, translateServiceRegistry } from '../../services/registry'
 import { detectLanguage } from '../../services/detect'
@@ -281,6 +282,8 @@ export default function RecognizeWindow(): React.ReactElement {
     const [recognizedText, setRecognizedText] = useState<string>('')
     const [translatedText, setTranslatedText] = useState<string>('')
     const [alwaysOnTop, setAlwaysOnTop] = useState(() => useConfigStore.getState().config.recognize_always_on_top)
+    const configPinned = useConfigStore((s) => s.config.recognize_pinned)
+    const pinned = configPinned || alwaysOnTop
     const [selectedService, setSelectedService] = useState<string>(() => useConfigStore.getState().config.recognize_engine)
     const [selectedLanguage, setSelectedLanguage] = useState<string>(() => useConfigStore.getState().config.recognize_language)
     const [targetLanguage, setTargetLanguage] = useState<string>('')
@@ -382,6 +385,18 @@ export default function RecognizeWindow(): React.ReactElement {
         autoOcrImageRef.current = auto_ocr_key
         handleRecognize().catch(console.error)
     }, [mode, imageBase64, recognizedText, recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Auto-translate when screenshot translate opens with pre-recognized text
+    useEffect(() => {
+        if (mode !== 'translate') return
+        if (!recognizedText) return
+        if (recognizeShowId === 0) return
+        const requestId = bumpOcrRequestId()
+        setIsTranslating(true)
+        doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
+            .finally(() => { setIsTranslating(false); })
+            .catch(console.error)
+    }, [recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // ---- Translate (used in translate mode) ----
     const doTranslate = useCallback(async (text: string, sourceLang: LanguageCode, requestId: number): Promise<void> => {
@@ -517,6 +532,10 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [])
 
     const handleTogglePin = useCallback(() => {
+        useConfigStore.getState().set('recognize_pinned', !configPinned)
+    }, [configPinned])
+
+    const handleToggleAlwaysOnTop = useCallback(() => {
         const next = !alwaysOnTop
         setAlwaysOnTop(next)
         window.electronAPI.window.setAlwaysOnTop(next)
@@ -544,39 +563,14 @@ export default function RecognizeWindow(): React.ReactElement {
     return (
         <div className="op-window">
             {/* Titlebar */}
-            <div className="op-titlebar">
-                <div style={{ display: 'flex', gap: 2, WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                    <button
-                        title={t('translate_settings.always_on_top')}
-                        data-testid="titlebar-pin"
-                        aria-pressed={alwaysOnTop}
-                        onClick={handleTogglePin}
-                        style={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: 6,
-                            display: 'grid',
-                            placeItems: 'center',
-                            color: 'var(--brand-primary)',
-                            background: 'transparent',
-                            border: 0,
-                            padding: 0,
-                            WebkitAppRegion: 'no-drag' as const,
-                            cursor: 'pointer'
-                        } as React.CSSProperties}
-                    >
-                        <Icons.Pin size={25} fill={alwaysOnTop} />
-                    </button>
-                </div>
-                <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
-                    Omni Pot
-                </div>
-                <span className="op-mode" data-testid="titlebar-mode">{modeLabel}</span>
-                <div style={{ flex: 1 }} />
-                <button className="op-close" title={t('close')} data-testid="titlebar-close" onClick={handleClose}>
-                    <Icons.Close size={18} />
-                </button>
-            </div>
+            <Titlebar
+                alwaysOnTop={alwaysOnTop}
+                pinned={pinned}
+                onToggleTopmost={handleToggleAlwaysOnTop}
+                onTogglePin={handleTogglePin}
+                modeLabel={modeLabel}
+                onClose={handleClose}
+            />
 
             {/* Dual-pane: image | text */}
             <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 0, gap: 10, padding: '4px 10px 8px' }}>
@@ -617,7 +611,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         {/* Recognized text card */}
                         <div className="card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                             <div style={{ padding: '6px 14px 0', fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                                {detectedSourceLang ? `${native_language_name(t, detectedSourceLang)}${t('of_separator', { defaultValue: '的' })}${t('recognize.title')}` : t('recognize.title')}
+                                {detectedSourceLang ? `${t('recognize.title')} ${native_language_name(t, detectedSourceLang)}` : t('recognize.title')}
                             </div>
                             <textarea
                                 data-testid="ocr-text"
@@ -643,7 +637,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         {/* Translation result card */}
                         <div className="card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                             <div style={{ padding: '6px 14px 0', fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                                {detectedSourceLang ? `${native_language_name(t, (effectiveTargetLang ?? effectiveTarget) as LanguageCode)}${t('of_separator', { defaultValue: '的' })}${t('translate')}` : t('translate')}
+                                {detectedSourceLang ? `${t('translate')} ${native_language_name(t, (effectiveTargetLang ?? effectiveTarget) as LanguageCode)}` : t('translate')}
                             </div>
                             <div
                                 data-testid="ocr-translation"

@@ -58,7 +58,7 @@ test.describe('@ui dict window', () => {
 
             await expect(dict.wordmark()).toContainText('Omni Pot')
             await expect(dict.modeLabel()).toContainText('词典')
-            expect(await dict.titlebarOrder()).toEqual(['pin', 'wordmark', 'mode', 'close'])
+            expect(await dict.titlebarOrder()).toEqual(['topmost', 'pin', 'wordmark', 'mode', 'close'])
             await expect(dict.word()).toContainText('hello')
             await expect(dict.searchInputs()).toHaveCount(0)
             await expect(dict.newlineButtons()).toHaveCount(0)
