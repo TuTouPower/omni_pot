@@ -106,7 +106,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   transparent: false,
   check_update: true,
   server_port: 20202,
-  clipboard_monitor: true,
+  clipboard_monitor: false,
 
   translate_source_language: 'auto',
   translate_target_language: 'zh_cn',

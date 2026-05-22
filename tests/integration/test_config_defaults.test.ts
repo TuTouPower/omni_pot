@@ -27,7 +27,7 @@ describe('Config defaults', () => {
         expect(DEFAULT_CONFIG.transparent).toBe(false)
         expect(DEFAULT_CONFIG.check_update).toBe(true)
         expect(DEFAULT_CONFIG.server_port).toBe(20202)
-        expect(DEFAULT_CONFIG.clipboard_monitor).toBe(true)
+        expect(DEFAULT_CONFIG.clipboard_monitor).toBe(false)
         expect(DEFAULT_CONFIG.auto_start).toBe(false)
         expect(DEFAULT_CONFIG.tray_click_event).toBe('show_config')
         expect(DEFAULT_CONFIG.dict_chinese_enabled).toBe(true)
