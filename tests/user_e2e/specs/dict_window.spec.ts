@@ -1,30 +1,16 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { build_free_dictionary_init_script, free_dictionary_reconcile_payload } from '../fixtures/stub_payloads'
 
-const free_dictionary_init_script = `
-(() => {
-    const original_fetch = window.fetch.bind(window)
-    window.fetch = async (input, init) => {
-        const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-        if (url.startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
-            return new Response(JSON.stringify([{
-                word: 'hello',
-                phonetic: '/həˈləʊ/',
-                phonetics: [{ text: '/həˈloʊ/', audio: 'https://example.test/hello-us.mp3' }],
-                meanings: [{
-                    partOfSpeech: 'noun',
-                    definitions: [{
-                        definition: 'A greeting or expression of goodwill.',
-                        example: 'She said hello to everyone in the room.',
-                    }],
-                }],
-            }]), { status: 200, headers: { 'content-type': 'application/json' } })
-        }
-        return original_fetch(input, init)
-    }
-})()
-`
+const free_dictionary_init_script = build_free_dictionary_init_script()
+const free_dictionary_config = {
+    dictionary_service_list: [],
+    english_dictionary_service_list: ['free_dictionary@default'],
+    service_instances: {
+        'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+    },
+}
 
 async function wait_for_dict_ready(page: Page): Promise<void> {
     await expect.poll(async () => page.evaluate(() => window.electronAPI.dict.check().then((result) => result.ready)), { timeout: 45_000 }).toBe(true)
@@ -162,9 +148,7 @@ test.describe('@ui dict window', () => {
             const chinese_result = await omni.api.triggerDict('谢谢')
             expect(chinese_result.success).toBe(true)
             await expect(dict.word()).toContainText('谢谢')
-            // Both chinese_dictionary AND CC-CEDICT (ecdict) now serve zh queries.
-            // Note: All enabled services render cards (union of zh+en lists),
-            // so there are 3 source tags (chinese_dictionary + ecdict + cambridge_dict).
+            // Both chinese_dictionary AND ECDICT now serve zh queries.
             await dict.waitForCards(2, 30_000)
             await expect(dict.sourceTags().first()).toBeVisible()
             const source_text = (await dict.sourceTags().allTextContents()).join(' ')
@@ -182,7 +166,7 @@ test.describe('@ui dict window', () => {
             }
 
             // Spec §17 + issues: Chinese常用词 must return non-empty results.
-            for (const word of ['经济', '自我', '佛']) {
+            for (const word of ['经济', '自我', '佛', '我']) {
                 const result = await omni.api.triggerDict(word)
                 expect(result.success).toBe(true)
                 await expect(dict.word()).toContainText(word)
@@ -196,6 +180,29 @@ test.describe('@ui dict window', () => {
 
             const card_text = (await dict.dictCards().allTextContents()).join('\n')
             expect(card_text).not.toContain('hello')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('dict header card shows pronunciation and POS tags without clipping', async () => {
+        const omni = await AppFixture.start({
+            init_script: build_free_dictionary_init_script({ reconcile: free_dictionary_reconcile_payload }),
+            config: free_dictionary_config,
+        })
+
+        try {
+            await omni.api.triggerDict('reconcile')
+            const dict = await omni.dict()
+            await expect(dict.word()).toHaveText('reconcile', { timeout: 10_000 })
+
+            const meta_elements = dict['page'].locator('[data-testid="dict-pronunciation"], [data-testid="dict-pos-tag"]')
+            await expect(meta_elements.first(), '词典卡片应展示读音/词性 chip').toBeVisible({ timeout: 10_000 })
+
+            const count = await meta_elements.count()
+            for (let i = 0; i < count; i += 1) {
+                await expect(meta_elements.nth(i), `第 ${String(i)} 个元数据 chip 应可见`).toBeVisible()
+            }
         } finally {
             await omni.stop()
         }

@@ -23,11 +23,11 @@ E2E 框架为 **Playwright**（`@playwright/test` + Electron）。`locator` API 
 2. **测真实交互**：用真实鼠标/键盘事件点击真实元素，而非调用 `electronAPI` 绕过 UI。
    按钮失效类 bug（issues #4 #5）只有点真按钮才能抓到。
    **不写脱离用户视角的冒烟测试或接口测试** —— 每个用例都是“用户做了某操作 → 看到某结果”。
-   服务可用性不靠直接调 service API 验证，而靠“用户在窗口里翻译/查词/识别 → 看到结果卡片”来验证。
+   普通 E2E 服务行为不靠直接调 service API 验证，而靠“用户在窗口里翻译/查词/识别 → 看到结果卡片”来验证；真实公网连通性由 `external_services.spec.ts` 作为 adapter 级健康检查单独覆盖，其他外部服务响应来源按 §4.6 的本地 stub 边界执行。
 3. **稳定可复现**：固定执行顺序、显式等待条件、稳定的 `data-testid` 选择器、
    每个用例独立且自带配置重置。
 4. **分层**：基础设施 / 页面对象 / 测试用例三层分离，测试体只表达“测什么”。
-5. **真实环境优先**：免费服务真实 API 调用；付费服务才 mock（遵循 `CLAUDE.md`）。
+5. **真实环境优先**：本地能力真实测试；真实外部网络只出现在 `external_services.spec.ts`，其他 spec 使用本地可控桩（遵循 `CLAUDE.md` 与 `docs/test.md §2.1`）。
 6. **一个 spec 一个关注点**：文件名即覆盖范围，失败一眼定位。
 
 ---
@@ -51,7 +51,7 @@ tests/user_e2e/
 │   ├── screenshot_page.ts
 │   ├── config_page.ts
 │   └── updater_page.ts
-└── specs/                  # 测试用例文件（见第 5 节；当前实际 29 个 spec，含设计文档列出的 17 个 + issue 衍生的 12 个）
+└── specs/                  # 测试用例文件（见第 5 节；当前实际 26 个 spec，含设计文档列出的 17 个 + issue 衍生的 9 个）
 ```
 
 > 历史规划的 `pages/tray.ts` 与 `data/` 目录未落地：托盘走 `/e2e/tray-action` 与 `/e2e/tray-menu` HTTP 端点，无需 Page Object；样例图片直接放在 `fixtures/qr_test.png`。后续若有大量 OCR 样图，再独立拆 `data/` 目录。
@@ -249,6 +249,15 @@ class TranslatePage {
 **(c) 独立 userData**：已通过 `OMNI_POT_USER_DATA` 从 Playwright fixture 传给 main 进程，
 每个测试使用独立临时目录，关闭时清理。
 
+### 4.6 本地 stub 策略摘要
+
+除 `external_services.spec.ts` 外，E2E spec 不直接访问真实公网翻译/词典/文字识别服务：
+
+- `TranslationTestServer`：默认优先方案。用于翻译成功、loading、retry、长文本布局、动态翻译 debounce、历史写入等需要真实 service adapter + 可控 HTTP 响应的路径。
+- init script `fetch` override：用于只需控制 renderer 侧请求结果的 UI 状态测试，例如 Web Speech / 浏览器能力差异或局部错误态。
+- `page.route().fulfill()`：用于单页、单请求的临时拦截；测试名或注释需标注 `stubbed`，不能替代 service adapter 覆盖。
+- DeepL 长文本、葡语变体等公共 provider 行为归 `external_services.spec.ts`，不要在其他 spec 重复真实公网检查。
+
 ---
 
 ## 5. 测试文件规划
@@ -275,8 +284,7 @@ class TranslatePage {
 - 外部脚本通过 HTTP API 发文本（`POST /translate`）
 - 用户复制文字、剪贴板监听自动翻译（`clipboard_monitor`）
 - 用户截图做截图翻译（截图 → 文字识别 → 翻译，CP4）
-- **默认免费翻译服务真实出结果**（覆盖 issue #3）：用户启用 bing / deepl(free) / mymemory 实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都
-  显示真实译文，无“翻译失败”；所有无密钥外部服务的逐项连通性由 `external_services.spec.ts` 覆盖
+- 默认翻译服务通过本地 HTTP stub 产出可控结果：用户启用多个翻译实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都显示译文，无“翻译失败”；默认免费翻译服务真实出结果由 `external_services.spec.ts` 覆盖
 - 翻译成功写入历史；`history_disable=true` 时不写
 - `requestId`：用户连续两次翻译，旧结果不覆盖新结果
 - 流式服务（如已配置 openai 实例）结果卡片增量更新
@@ -353,11 +361,11 @@ class TranslatePage {
 
 - `/trigger-dict` 打开词典窗口
 - 标题栏：置顶 → wordmark → 模式标签 `词典`，右上角关闭按钮
-- 查英文词（`hello`）：**只渲染英文词典**（free_dictionary），断言**不渲染任何中文词典卡片**
+- 查英文词（`hello`）：本地 stub 模拟英文词典（free_dictionary）响应，断言**不渲染任何中文词典卡片**
 - 查中文词：**只渲染中文词典**（chinese_dictionary / ecdict 中文释义），断言**不渲染任何英文词典卡片**
 - 查中文词"经济"/"学习"等常用字词：中文词典卡片出现且含真实内容
-- 服务分流通过 `data-result-key` 验证：英文查询的卡片 key 均以 `cambridge_dict@` 或 `ecdict@` 开头；中文查询的卡片 key 均以 `chinese_dictionary@` 或 `ecdict@` 开头
-- 多词典并行真实出结果：用户启用 free_dictionary / ecdict / cambridge_dict，查英文词后所有英文词典服务渲染含真实内容的卡片
+- 服务分流通过 `data-result-key` 验证：英文查询的卡片 key 均以 `free_dictionary@` 或 `ecdict@` 开头；中文查询的卡片 key 均以 `chinese_dictionary@` 或 `ecdict@` 开头
+- 多词典并行出结果：本地 stub 模拟 free_dictionary 响应，ECDICT 走真实本地词典；查英文词后所有英文词典服务渲染含内容的卡片
 - **无搜索框**：断言窗口内不存在搜索输入框
 - **无换行符号**：断言不存在去换行按钮
 - **无词形变化卡片**：断言不存在词形变化区块
@@ -383,12 +391,12 @@ class TranslatePage {
   - **导出**为导出符号（非云符号），下拉含 md/txt/docx/doc
   - **翻译按钮**（仅文字识别模式，位于"去除换行"左侧） → 文字送到翻译窗口并触发翻译
 - 信息精简：断言**不显示**图片尺寸、类型、识别字数、耗时
-- 服务真实覆盖：用户切换 system / tesseract 引擎；切换到 Tesseract 后自动重新识别并得到真实识别文本
+- 本地识别覆盖：用户切换 system / tesseract 引擎；切换到 Tesseract 后自动重新识别并得到真实识别文本；外部 OCR 服务由本地 stub 模拟响应
 - `recognize_engine` / `recognize_language` / `recognize_delete_newline`（默认 false）/ `recognize_auto_copy` 配置联动
 
-### 5.10 screenshot_window.spec.ts / screenshot_latency.spec.ts — 截图窗口
+### 5.10 screenshot_window.spec.ts — 截图窗口
 
-- `screenshot_latency.spec.ts`：触发截图后会先抓取桌面图再显示 SCREENSHOT 窗口，窗口应在 3000ms 内可见，用于守护截图 OCR 唤起卡顿回归且避免把截图遮罩截入背景
+- 触发截图后会先抓取桌面图再显示 SCREENSHOT 窗口，窗口应在 3000ms 内可见，用于守护截图 OCR 唤起卡顿回归且避免把截图遮罩截入背景
 - 触发截图 → 创建全屏 SCREENSHOT 窗口，全屏且置顶
 - 屏幕图像作背景，其上有半透明遮罩
 - 鼠标拖拽创建选区 → 出现主色描边、四角句柄、尺寸标签
@@ -440,17 +448,20 @@ class TranslatePage {
 - 恢复 → 配置与历史记录被覆盖
 - 备份内容含设置与 CC-CEDICT 数据库
 
-### 5.14 external_http_api.spec.ts — 外部 HTTP API 集成边界
+### 5.14 app_http_api.spec.ts — 应用 HTTP API 集成边界
 
 - 覆盖 spec §20 的公开 HTTP API：`POST /translate`、`GET /config`、`POST /recognize`
+- 文件名使用 `app_http_api`，避免与真实外部服务连通性 spec 混淆
 - 不带 `OMNI_POT_E2E_TOKEN` 调用公开端点，验证它们不依赖 E2E-only `/trigger-*` 路径
 - `POST /translate` 断言请求体文本进入翻译窗口源文本区；`GET /config` 返回公开配置且敏感字段脱敏；`POST /recognize` 返回当前 stub JSON（`success: true` + mode）
 
 ### 5.15 external_services.spec.ts — 外部服务真实连通性
 
+- 仓库中唯一直接调用真实公共服务的 spec；所有服务可用性回归都归这里，不在 `@core` / `@ui` 重复真实公网检查
 - 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查
-- 覆盖无密钥外部服务：Bing、Google、DeepL 免费模式、MyMemory、Cambridge、Free Dictionary、Edge TTS
+- 覆盖无密钥外部服务：Bing、Google、DeepL 免费模式（含长文本 / 葡语变体）、MyMemory、Cambridge、Free Dictionary
 - 不使用 route/mock；公共服务不可达时测试应失败并暴露具体服务
+- 默认免费翻译服务真实连通性（覆盖 issue #3）：直接调用 bing / deepl(free) / mymemory 等 service adapter，验证公共 provider 当前可用；UI roundtrip 由本地 stub 的 `@core` / `@ui` 用例覆盖
 
 ### 5.16 updater_and_tray.spec.ts — 更新器 + 托盘
 
@@ -466,6 +477,7 @@ class TranslatePage {
 - 菜单项触发：Input Translate → 打开翻译窗口；Clipboard Monitor → 切换
   `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口；Restart / Quit 在 E2E 安全分支返回成功且不结束测试进程
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
+- 托盘弹窗渲染完整菜单项、分组分隔线、平台化快捷键文案，且底部菜单项不被裁剪
 
 ### 5.17 i18n.spec.ts — 国际化
 
@@ -473,6 +485,16 @@ class TranslatePage {
 - 中文下关键文案正确：自动检测、简体中文、检测为英文、各设置页标签、托盘项
 - 英文下对应英文文案
 - 回退链：未翻译的 key 回退到默认语言
+
+### 5.18 window_rounded_corner.spec.ts — 窗口圆角背景
+
+- 翻译窗口与设置窗口根节点圆角为 10px
+- `<html>` / `<body>` 背景在圆角处保持透明，不露出白色直角背景
+
+### 5.19 terminology_settings.spec.ts — 设置术语一致性
+
+- 设置窗口、托盘菜单、翻译窗口不出现旧术语“配置”
+- 托盘菜单仍显示“Settings”或“设置”入口
 
 ---
 
@@ -501,8 +523,8 @@ class TranslatePage {
 
 ### 6.4 真实环境 vs 桩
 
-- 全部测试模拟真实用户操作，免费服务在”用户翻译/查词/识别”流程中被真实调用。
-- 付费服务（需密钥）E2E 不覆盖，由单元测试 mock。
+- 全部测试模拟真实用户操作；除 `external_services.spec.ts` 外，外部翻译/词典/文字识别服务用本地可控 stub 模拟响应。
+- 本地能力真实测试：ECDICT、`chinese_dictionary`、Tesseract、System TTS。
 - 更新检查：`/e2e/mock-update` 注入假”有新版本”数据，避免依赖真实 GitHub release ——
   这只是数据桩，用户操作（点更新器按钮）仍是真实的；下载 URL 在生产环境限制为本仓库 GitHub release asset 与 GitHub 可信重定向，测试环境才允许 localhost HTTP 资产。
 - 截图/OCR：真实路径优先；CI 无显示器时降级为窗口创建与取消路径。
@@ -539,7 +561,7 @@ class TranslatePage {
 - Playwright 当前由 fixture 为每个测试启动独立 Electron 实例、独立端口、独立 userData。
 - Playwright `workers: 1`，用例固定顺序执行。
 - `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
-- CI：PR 跑 `core + ui`；nightly 跑 full（含外部服务连通性）。
+- CI：PR 跑 `core + ui`（离线通过）；nightly 另跑 `external_services.spec.ts`（需要网络）。
 - issues #1（better-sqlite3 缺失）、#2（双击两次启动）属打包/启动问题，
   E2E 难直接覆盖 → 使用 `npm run dist:dir` 生成 unsigned unpacked 包做本地 smoke 验证，
   或 CI 单独加“打包产物启动验证”作业
@@ -555,7 +577,7 @@ class TranslatePage {
 |---|---|---|
 | #1 | better-sqlite3 模块缺失 | 打包配置 + `npm run dist:dir` / CI 打包启动验证 |
 | #2 | 双击两次才启动 | `npm run dist:dir` / CI 打包启动验证（E2E 难直接覆盖） |
-| #3 | Bing 翻译失败 | `translate_core.spec.ts`（全部免费翻译服务用例） |
+| #3 | Bing 翻译失败 | `external_services.spec.ts`（真实公共服务连通性） |
 | #4 | 置顶/关闭按钮失效 | `translate_titlebar.spec.ts` |
 | #5 | 翻译按钮点击无效 | `translate_source_area.spec.ts` |
 | #6 | `zh_cn` / `auto detect` 未中文化 | `translate_language_area.spec.ts` |
@@ -570,7 +592,7 @@ class TranslatePage {
    `e2e_api` / 多窗口 Page Object，以及源码侧 `data-testid`、E2E 端点扩充、
    独立 userData 支持（第 4.5 节）。
 2. **P0 守护已知 bug**：`translate_titlebar` / `translate_source_area` /
-   `translate_language_area` / `translate_core`（免费服务用例）—— 直接覆盖 issues #3–#8。
+   `translate_language_area` / `translate_core`（本地 stub 服务路径）/ `external_services`（真实免费服务连通性）—— 覆盖 issues #3–#8。
 3. **P1 核心窗口**：`translate_core` / `translate_result_cards` / `dict_window` /
    `recognize_window` / `config_settings`。
 4. **P1 行为与窗口**：`translate_behavior` / `screenshot_window` / `app_lifecycle`。

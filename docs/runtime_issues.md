@@ -180,3 +180,31 @@ renderer ready: recognize
 2. 截图选择窗口背景始终是触发前的桌面画面，不包含 Omni Pot 自己的截图遮罩窗口。
 3. OCR 为空时，结果窗口仍能显示裁剪后的截图。
 4. `%APPDATA%\omni_pot\logs\main.log` 中窗口创建、renderer ready 和 IPC 发送顺序符合预期。
+
+## 3. 外部服务 opt-in 健康检查现网失败
+
+### 现象
+
+2026-05-23 运行 `npm run test:e2e:external` 时，`external_services.spec.ts` 的真实公网服务检查结果为：6 passed、3 failed、1 skipped。
+
+失败项：
+
+- Google Translate：`Google Translate failed`
+- DeepL free long single paragraph text：`DeepL free API error: 429`
+- DeepL free Portuguese variant：`DeepL free API error: 429`
+
+通过项包括 Bing Translate、DeepL free 基础短文本、DeepL free long multi-paragraph text、MyMemory、Cambridge Dictionary、Free Dictionary。
+
+### 影响范围
+
+这些失败只影响 opt-in 的 `@external` 真实公网健康检查；`npm run test:e2e:core` 与 `npm run test:e2e:ui` 已改为本地可控 stub / 本地能力路径，不依赖这些公网服务可达性。
+
+### 当前判断
+
+Google Translate 失败是已知现网问题；DeepL free 429 表明当前环境或上游接口触发限流。不能用 mock 隐藏真实公网健康检查失败，后续应在网络可达且限流恢复的环境复测。
+
+### 后续验证
+
+1. 在网络可达环境重新运行 `npm run test:e2e:external`。
+2. 如果 DeepL 429 持续出现，评估是否需要降低 nightly 频率或拆分长文本/变体检查节奏，但不要迁回 `@core` / `@ui`。
+3. 若 Google Translate 恢复，更新本节与 `TASKS.md` 的已知环境问题记录。

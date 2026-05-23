@@ -19,6 +19,10 @@ export default defineConfig({
             grep: /@ui/,
         },
         {
+            name: 'external',
+            grep: /@external/,
+        },
+        {
             name: 'full',
         },
     ],

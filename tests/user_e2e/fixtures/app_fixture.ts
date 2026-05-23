@@ -8,6 +8,7 @@ import { ScreenshotPage } from '../pages/screenshot_page'
 import { ConfigPage } from '../pages/config_page'
 import { UpdaterPage } from '../pages/updater_page'
 import { TranslationTestServer } from './translation_test_server'
+import { build_free_dictionary_init_script, free_dictionary_hello_payload, type FreeDictionaryEntryPayload } from './stub_payloads'
 
 export class AppFixture {
     app: ElectronApplication
@@ -164,30 +165,39 @@ export class AppFixture {
 
     /**
      * Start a local HTTP test server and configure the app to route
-     * Lingva/MyMemory translations through it. Returns the server for
-     * tests to control responses and inspect requests.
+     * MyMemory translations through it. Returns the server for tests
+     * to control responses and inspect requests.
      */
-    async startTranslationTestServer(): Promise<TranslationTestServer> {
+    async startTranslationTestServer(instances: string[] = ['mymemory@e2e']): Promise<TranslationTestServer> {
         const server = new TranslationTestServer()
         await server.start()
         const base_url = server.base_url
 
-        // Read current config to merge service instances (setConfig replaces entire value)
         const current_config = await this.api.getConfig()
         const current_instances = (current_config['service_instances'] ?? {}) as Record<string, unknown>
+        const stub_instances = Object.fromEntries(instances.map((instance) => [
+            instance,
+            {
+                serviceKey: 'mymemory',
+                config: { custom_url: base_url, api_key: instance },
+            },
+        ]))
 
         await this.api.setConfig({
             service_instances: {
                 ...current_instances,
-                'mymemory@e2e': {
-                    serviceKey: 'mymemory',
-                    config: { custom_url: base_url },
-                },
+                ...stub_instances,
             },
-            translate_service_list: ['mymemory@e2e'],
+            translate_service_list: instances,
         })
 
         return server
+    }
+
+    async startDictTestServer(payload_by_word: Partial<Record<string, FreeDictionaryEntryPayload[]>> = { hello: free_dictionary_hello_payload }): Promise<void> {
+        const init_script = build_free_dictionary_init_script(payload_by_word)
+        await this.app.context().addInitScript({ content: init_script })
+        this.init_script = this.init_script ? `${this.init_script}\n${init_script}` : init_script
     }
 
     async resetConfig(): Promise<void> {

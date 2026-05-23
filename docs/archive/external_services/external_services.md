@@ -20,7 +20,7 @@
 | MyMemory | 翻译 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts) | 通过 |
 | Cambridge Dictionary | 词典 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts)、[dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts) | 通过 |
 | Free Dictionary | 词典 | 是 | [external_services.spec.ts](../../tests/user_e2e/specs/external_services.spec.ts)、[dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts) | 通过 |
-| Chinese Dictionary | 词典 | 否 | [dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts)、[dict_issues.spec.ts](../../tests/user_e2e/specs/dict_issues.spec.ts) | 通过 |
+| Chinese Dictionary | 词典 | 否 | [dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts) | 通过 |
 | ECDICT | 词典 | 否 | [dict_window.spec.ts](../../tests/user_e2e/specs/dict_window.spec.ts) | 通过 |
 | Tesseract | OCR | 否 | [recognize_window.spec.ts](../../tests/user_e2e/specs/recognize_window.spec.ts) | 通过 |
 | System OCR | OCR | 否 | [recognize_window.spec.ts](../../tests/user_e2e/specs/recognize_window.spec.ts) | 通过 |

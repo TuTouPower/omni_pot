@@ -33,6 +33,7 @@ export class TranslationTestServer {
     // Controllable responses
     private lingva_response: LingvaResponseControl | null = null
     private mymemory_response: MyMemoryResponseControl | null = null
+    private mymemory_responses_by_key = new Map<string, MyMemoryResponseControl | null>()
 
     // Request tracking
     readonly requests: TestServerRequest[] = []
@@ -87,7 +88,10 @@ export class TranslationTestServer {
 
         // MyMemory: /get?q=...&langpair=...
         if (url.pathname === '/get') {
-            const ctrl = this.mymemory_response
+            const key = url.searchParams.get('key')
+            const ctrl = key && this.mymemory_responses_by_key.has(key)
+                ? this.mymemory_responses_by_key.get(key)
+                : this.mymemory_response
             if (!ctrl) {
                 res.writeHead(500, { 'content-type': 'application/json' })
                 res.end(JSON.stringify({ responseStatus: 500 }))
@@ -141,7 +145,11 @@ export class TranslationTestServer {
         }
     }
 
-    set_mymemory_response(response: MyMemoryResponseControl | null): void {
+    set_mymemory_response(response: MyMemoryResponseControl | null, instance_key?: string): void {
+        if (instance_key) {
+            this.mymemory_responses_by_key.set(instance_key, response)
+            return
+        }
         this.mymemory_response = response
     }
 

@@ -7,6 +7,8 @@ const screenshot_config = {
     service_instances: {},
 }
 
+const LATENCY_BUDGET_MS = 3000
+
 const screenshot_ocr_config = {
     recognize_service_list: ['baidu_ocr@disabled', 'baidu_accurate_ocr@enabled'],
     service_instances: {
@@ -56,6 +58,25 @@ async function expected_image_size(screenshot: { device_scale_factor: () => Prom
 }
 
 test.describe('@ui screenshot window', () => {
+    test.describe('@regression screenshot launch latency', () => {
+        test('screenshot overlay is visible within 3000ms after trigger', async () => {
+            const omni = await AppFixture.start({ config: screenshot_config })
+            try {
+                const started_at = Date.now()
+                const trigger = omni.api.triggerScreenshot('recognize')
+                await expect.poll(async () => (await omni.api.windowState('screenshot')).visible, {
+                    intervals: [20, 40, 80],
+                    timeout: LATENCY_BUDGET_MS,
+                }).toBe(true)
+                expect(Date.now() - started_at).toBeLessThan(LATENCY_BUDGET_MS)
+                const result = await trigger
+                expect(result.success).toBe(true)
+            } finally {
+                await omni.stop()
+            }
+        })
+    })
+
     test('user opens screenshot overlay and sees drag selection affordances', async () => {
         const omni = await AppFixture.start({ config: screenshot_config })
 
@@ -136,7 +157,7 @@ test.describe('@ui screenshot window', () => {
         }
     })
 
-    test('user captures screenshot and sees enabled OCR result while disabled service is skipped', async () => {
+    test('user captures screenshot and sees enabled OCR result while disabled service is skipped (stubbed)', async () => {
         const omni = await AppFixture.start({ config: screenshot_ocr_config })
 
         try {

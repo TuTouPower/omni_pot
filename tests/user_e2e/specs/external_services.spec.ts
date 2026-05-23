@@ -10,6 +10,50 @@ const deepl_long_multi_paragraph_text = 'Hello,\n\nI would like to request a man
 const deepl_long_single_paragraph_text = 'This synthetic customer support paragraph describes an unavailable example workspace, a manual review request, and a prorated refund request for a fictional subscription period. '.repeat(6)
 const deepl_portuguese_variant_text = 'The bus arrives at the station.'
 
+const external_service_cases = [
+    { catalog_section: '1.2', name: 'Bing Translate', run: () => bingService.translate('hello world', 'en', 'zh_cn', {}) },
+    { catalog_section: '1.2', name: 'Google Translate', run: () => googleService.translate('hello world', 'en', 'zh_cn', {}) },
+    { catalog_section: '1.2', name: 'DeepL free', run: () => deeplService.translate('hello world', 'en', 'zh_cn', { type: 'deeplx_free' }) },
+    {
+        catalog_section: '1.2',
+        name: 'DeepL free long multi-paragraph text',
+        source_text: deepl_long_multi_paragraph_text,
+        target_contains_cjk: true,
+        run: () => deeplService.translate(
+            deepl_long_multi_paragraph_text,
+            'en',
+            'zh_cn',
+            { type: 'deeplx_free' }
+        )
+    },
+    {
+        catalog_section: '1.2',
+        name: 'DeepL free long single paragraph text',
+        source_text: deepl_long_single_paragraph_text,
+        target_contains_cjk: true,
+        run: () => deeplService.translate(
+            deepl_long_single_paragraph_text,
+            'en',
+            'zh_cn',
+            { type: 'deeplx_free' }
+        )
+    },
+    {
+        catalog_section: '1.2',
+        name: 'DeepL free Portuguese variant',
+        source_text: deepl_portuguese_variant_text,
+        run: () => deeplService.translate(
+            deepl_portuguese_variant_text,
+            'en',
+            'pt_br',
+            { type: 'deeplx_free' }
+        )
+    },
+    { catalog_section: '1.2', name: 'MyMemory', run: () => mymemoryService.translate('hello world', 'en', 'zh_cn', {}) },
+    { catalog_section: '1.3', name: 'Cambridge Dictionary', run: () => cambridgeDictService.translate('hello', 'en', 'zh_cn', {}) },
+    { catalog_section: '1.3', name: 'Free Dictionary', run: () => freeDictionaryService.translate('hello', 'en', 'zh_cn', {}) },
+] as const
+
 function normalize_text(value: string): string {
     return value.replace(/\s+/g, ' ').trim()
 }
@@ -39,62 +83,27 @@ function expect_zh_translation(value: unknown, source_text: string): void {
 
 test.describe('@external external service health', () => {
     test.describe.configure({ retries: 2 })
+    test.skip(process.env.OMNI_POT_EXTERNAL_SERVICE_TESTS !== '1', 'Set OMNI_POT_EXTERNAL_SERVICE_TESTS=1 to run real public service checks')
 
-    for (const { name, run, source_text, target_contains_cjk } of [
-        { name: 'Bing Translate', run: () => bingService.translate('hello world', 'en', 'zh_cn', {}) },
-        { name: 'Google Translate', run: () => googleService.translate('hello world', 'en', 'zh_cn', {}) },
-        { name: 'DeepL free', run: () => deeplService.translate('hello world', 'en', 'zh_cn', { type: 'deeplx_free' }) },
-        {
-            name: 'DeepL free long multi-paragraph text',
-            source_text: deepl_long_multi_paragraph_text,
-            target_contains_cjk: true,
-            run: () => deeplService.translate(
-                deepl_long_multi_paragraph_text,
-                'en',
-                'zh_cn',
-                { type: 'deeplx_free' }
-            )
-        },
-        {
-            name: 'DeepL free long single paragraph text',
-            source_text: deepl_long_single_paragraph_text,
-            target_contains_cjk: true,
-            run: () => deeplService.translate(
-                deepl_long_single_paragraph_text,
-                'en',
-                'zh_cn',
-                { type: 'deeplx_free' }
-            )
-        },
-        {
-            name: 'DeepL free Portuguese variant',
-            source_text: deepl_portuguese_variant_text,
-            run: () => deeplService.translate(
-                deepl_portuguese_variant_text,
-                'en',
-                'pt_br',
-                { type: 'deeplx_free' }
-            )
-        },
-        { name: 'MyMemory', run: () => mymemoryService.translate('hello world', 'en', 'zh_cn', {}) },
-        { name: 'Cambridge Dictionary', run: () => cambridgeDictService.translate('hello', 'en', 'zh_cn', {}) },
-        { name: 'Free Dictionary', run: () => freeDictionaryService.translate('hello', 'en', 'zh_cn', {}) },
-    ] as const) {
-        test(`${name} returns a real result`, async () => {
+    for (const { catalog_section, name, run, source_text, target_contains_cjk } of external_service_cases) {
+        test(`${name} returns a real result (catalog §${catalog_section})`, async () => {
             test.setTimeout(120_000)
             const result = await run()
 
-            if (source_text) {
+            const expected_source_text = typeof source_text === 'string' ? source_text : undefined
+            if (expected_source_text) {
                 if (target_contains_cjk) {
-                    expect_zh_translation(result, source_text)
+                    expect_zh_translation(result, expected_source_text)
                 } else {
-                    expect_translated_text(result, source_text)
+                    expect_translated_text(result, expected_source_text)
                 }
             } else {
                 expect_result(result)
             }
         })
     }
+
+    test.skip('OCR, TTS, and detection external service placeholders stay here when public providers are added', () => {})
 
     // TTS is now provided by system_tts (Web Speech API → OS engine). It can
     // only be exercised inside a renderer, not from a Node test runner; the

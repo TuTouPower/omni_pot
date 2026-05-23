@@ -11,6 +11,7 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { build_free_dictionary_init_script, free_dictionary_run_payload } from '../fixtures/stub_payloads'
 
 async function wait_for_dict_card(page: Page): Promise<void> {
     // At least 2 cards: source card + result card (pronunciation card may also appear)
@@ -24,11 +25,12 @@ test.describe('@ui dict card height auto-fits content', () => {
 
     test('all definitions for a many-sense word render inside the card without clipping', async () => {
         const omni = await AppFixture.start({
+            init_script: build_free_dictionary_init_script({ run: free_dictionary_run_payload }),
             config: {
                 dictionary_service_list: [],
-                english_dictionary_service_list: ['cambridge_dict@default'],
+                english_dictionary_service_list: ['free_dictionary@default'],
                 service_instances: {
-                    'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
+                    'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
                 },
             },
         })
@@ -44,9 +46,9 @@ test.describe('@ui dict card height auto-fits content', () => {
             const definitions_card = page.locator('[data-testid="dict-card"]').nth(card_count - 1)
             const definitions = definitions_card.locator('[data-testid="dict-definition"]')
 
-            // "run" has many senses in Cambridge Dictionary — require at least 3.
+            // The local free_dictionary stub returns multiple senses for "run".
             const count = await definitions.count()
-            expect(count, 'cambridge_dict should return multiple senses for "run"').toBeGreaterThanOrEqual(3)
+            expect(count, 'free_dictionary stub should return multiple senses for "run"').toBeGreaterThanOrEqual(3)
 
             const card_box = await definitions_card.boundingBox()
             if (!card_box) throw new Error('missing definitions card box')
@@ -61,8 +63,12 @@ test.describe('@ui dict card height auto-fits content', () => {
             }
 
             // The card must not impose a fixed max-height that would truncate content.
-            const max_height = await definitions_card.evaluate((el) => window.getComputedStyle(el).maxHeight)
-            expect(['none', '', 'auto']).toContain(max_height)
+            const max_heights = await page.locator('[data-testid="dict-card"]').evaluateAll(
+                (cards) => cards.map((card) => window.getComputedStyle(card).maxHeight),
+            )
+            for (const max_height of max_heights) {
+                expect(['none', '', 'auto'], `dict-card has a clipping max-height: ${max_height}`).toContain(max_height)
+            }
         } finally {
             await omni.stop()
         }

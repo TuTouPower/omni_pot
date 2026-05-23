@@ -11,6 +11,19 @@ const TEST_CONFIG = {
 
 type WindowLabel = 'translate' | 'config' | 'updater' | 'screenshot' | 'tray'
 
+const REQUIRED_TRAY_ACTIONS = [
+    'tray-action-input_translate',
+    'tray-action-dictionary',
+    'tray-action-ocr_recognize',
+    'tray-action-screenshot_translate',
+    'tray-action-clipboard_monitor',
+    'tray-action-config',
+    'tray-action-check_update',
+    'tray-action-view_log',
+    'tray-action-restart',
+    'tray-action-quit',
+] as const
+
 async function start_update_asset_server(body: Buffer): Promise<{ url: string; requests: string[]; stop(): Promise<void> }> {
     const requests: string[] = []
     const server = http.createServer((req, res) => {
@@ -162,11 +175,40 @@ test.describe('@ui updater and tray', () => {
             expect(result.success).toBe(true)
             await expect_window_visible(omni, 'tray')
             const tray_page = await omni.waitForWindow(/#tray/)
-            await expect(tray_page.getByTestId('tray-popover')).toBeVisible()
+            const popover = tray_page.getByTestId('tray-popover')
+            await expect(popover).toBeVisible()
             await expect(tray_page.getByTestId('tray-action-input_translate')).toContainText('翻译')
             await expect(tray_page.getByTestId('tray-action-ocr_recognize')).toContainText('文字识别')
             await expect(tray_page.getByTestId('tray-action-clipboard_monitor')).toContainText('剪贴板监听')
-            await expect(tray_page.getByTestId('tray-popover')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+            await expect(popover).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+            await expect(popover).not.toContainText('CommandOrControl')
+
+            for (const testid of REQUIRED_TRAY_ACTIONS) {
+                const item = tray_page.getByTestId(testid)
+                await expect(item, `missing tray item: ${testid}`).toBeVisible()
+                const item_text = await item.innerText()
+                expect(item_text.trim(), `tray item ${testid} should have visible text`).not.toBe('')
+            }
+
+            const separator_count = await tray_page.locator('[data-testid="tray-separator"]').count()
+            expect(separator_count, '托盘菜单需有分组分隔线').toBeGreaterThanOrEqual(2)
+
+            const popover_box = await popover.boundingBox()
+            const quit_box = await tray_page.getByTestId('tray-action-quit').boundingBox()
+            if (!popover_box) throw new Error('missing tray popover box')
+            if (!quit_box) throw new Error('missing tray quit item box')
+            expect(quit_box.y + quit_box.height).toBeLessThanOrEqual(popover_box.y + popover_box.height + 1)
+
+            const item_locators = REQUIRED_TRAY_ACTIONS.map((id) => tray_page.getByTestId(id))
+            const item_boxes = await Promise.all(item_locators.map(async (locator) => locator.boundingBox()))
+            for (let i = 0; i < item_boxes.length - 1; i += 1) {
+                const top = item_boxes[i]
+                const bottom = item_boxes[i + 1]
+                if (!top || !bottom) continue
+                const gap = bottom.y - (top.y + top.height)
+                expect(gap, `tray item gap between ${REQUIRED_TRAY_ACTIONS[i]} and ${REQUIRED_TRAY_ACTIONS[i + 1]} is too large`)
+                    .toBeLessThanOrEqual(20)
+            }
         } finally {
             await omni.stop()
         }

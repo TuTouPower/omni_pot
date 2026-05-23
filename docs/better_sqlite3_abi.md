@@ -65,6 +65,7 @@ npm rebuild better-sqlite3
 npm run test:e2e
 npm run test:e2e:core
 npm run test:e2e:ui
+npm run test:e2e:external
 npx electron-builder install-app-deps
 npm run dist
 ```
@@ -88,6 +89,7 @@ npm run dist
   - `postinstall`: `electron-builder install-app-deps`
   - `test`: `vitest run`
   - `test:e2e`: `npx playwright test --project=full`
+  - `test:e2e:external`: `npx playwright test --project=external`
   - `build:chinese-dict`: `npx tsx scripts/build_chinese_dict.ts`
   - `build:cc-cedict`: `npx tsx scripts/build_cc_cedict.ts`
 - `scripts/build_chinese_dict.ts`
@@ -100,7 +102,7 @@ npm run dist
   - Electron 主进程中 import `better-sqlite3`，运行中文词典查询。
 - `electron/history/index.ts`
   - Electron 主进程中 import `better-sqlite3`，运行历史记录数据库。
-- `tests/chinese_dict/build.test.ts`
+- `tests/integration/chinese_dict_build.test.ts`
   - Vitest / Node 进程中 import `better-sqlite3`，检查生成的中文词典 DB。
 
 ## 解决方案：入口自动切 ABI（方案 A）
@@ -110,7 +112,7 @@ npm run dist
 每个 npm script 在执行前自动确保 `better-sqlite3` 处于正确的 ABI，开发者无需手动记忆或切换。
 
 - **Node 侧命令**（`test`、`build:chinese-dict`、`build:cc-cedict`）：入口前置 `npm rebuild better-sqlite3`。
-- **Electron 侧命令**（`test:e2e`、`test:e2e:core`、`test:e2e:ui`）：入口前置 `npx electron-builder install-app-deps`。
+- **Electron 侧命令**（`test:e2e`、`test:e2e:core`、`test:e2e:ui`、`test:e2e:external`）：入口前置 `npx electron-builder install-app-deps`。
 - **dist**：`run_dist.mjs` 已有分阶段逻辑，在词典构建前确保 Node ABI，electron-builder 自身会切到 Electron ABI，无需额外处理。
 
 ### 实施细节
