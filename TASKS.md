@@ -7,130 +7,9 @@
 
 ## 当前状态
 
-- P1–P2、P5–P6 全部完成 ✅，归档见 `docs/archive/plan_archives/plan_archive_4.md`。
-- 2026-05-22 用户反馈 13 个问题（`docs/issues.md`），经 spec/test/code 三方对照分析，定位根因如下。
-
----
-
-## P7: 用户反馈问题修复（2026-05-22）
-
-### 诊断结论
-
-| 根因类型 | 含义 | 涉及 issues |
-|---|---|---|
-| `TEST_WRONG` | 测试断言了错误行为，锁定了 bug | #4, #12 |
-| `CODE_WRONG` | spec 清楚但代码写错 | #8, #10, #13 |
-| `TEST_MISSING` | 功能对但 UI 文案/视觉/格式无断言 | #1, #3, #5, #11 |
-| `TEST_WEAK` | 有测试但只覆盖 happy path | #6 |
-| `SPEC_UNCLEAR` | spec 未定义或需更新 | #2, #7, #9 |
-
-### P7.0 系统性改进：测试必须从 spec 推导 ✅
-
-- [x] 在 `docs/test.md` 中新增"测试编写原则"章节：测试期望值必须从 spec/demo 推导，禁止从代码输出反推
-- [x] 审计现有测试中 titlebar 顺序断言，确认全部与 spec §4.3 一致
-
-### P7.1 Spec 补充（先定义再修代码） ✅
-
-- [x] **Issue #2 剪贴板监听默认值** — spec §23 `clipboard_monitor` 默认值改为 `false`；补充"关闭时不得监听"的显式约束
-- [x] **Issue #7 TTS 音量** — spec §15.1 记录为已知平台限制（Web Speech API volume=1 已是上限，无法通过 AudioContext 放大；后续可通过 Edge TTS 服务解决）
-- [x] **Issue #9 透明背景即时生效** — spec §9.11 补充即时生效要求，需要重建 BrowserWindow 的配置项自动重建
-
-### P7.2 代码修复：spec 清楚、代码错误 ✅
-
-#### Issue #4 + #12: 文字识别/词典窗口缺少固定按钮（TEST_WRONG + CODE_WRONG）
-
-- [x] `src/windows/recognize/index.tsx` — 添加独立的 topmost 按钮，pin 改为固定按钮
-- [x] `src/windows/dict/index.tsx` — 同上
-- [x] 修正测试 `recognize_window.spec.ts` — titlebar 顺序 `['topmost', 'pin', 'wordmark', 'mode', 'close']`
-- [x] 修正测试 `dict_window.spec.ts` — titlebar 顺序 `['topmost', 'pin', 'wordmark', 'mode', 'close']`
-
-#### Issue #8: 翻译快捷键说明文本（CODE_WRONG）
-
-- [x] `src/windows/config/hotkey_settings.tsx` — 修正 `sub=` 文案为 spec 定义的文本
-
-#### Issue #10: 截图翻译结果卡片内容为空（CODE_WRONG）
-
-- [x] `src/windows/recognize/index.tsx` — `onRecognizeShow` 收到 `mode='translate'` 且 `text` 非空时，自动触发 `doTranslate()`
-
-#### Issue #13: 词典搜索结果不按服务顺序（CODE_WRONG）
-
-- [x] `src/windows/dict/index.tsx` — 渲染列表从 `enabledServiceList` 改为 `activeList`（当前语言的服务列表）
-
-### P7.3 UI 文案/视觉对齐（TEST_MISSING） ✅
-
-#### Issue #1: 置顶按钮竖线填充时消失
-
-- [x] `src/components/icons.tsx` Pin 图标 — 激活时竖线 stroke 改为 `currentColor`
-
-#### Issue #3: 去除空格/换行图标与 demo 不一致
-
-- [x] 使用 react-icons 替换自定义 SVG（`MdSmartButton` + `CgSpaceBetween`）
-
-#### Issue #5: 文字识别标签格式错误
-
-- [x] `src/windows/recognize/index.tsx` — 卡片标签改为 `${t('recognize.title')} ${native_language_name(...)}`
-
-#### Issue #11: 截图翻译与文字识别+翻译样式不一致
-
-- [x] Issue #10 修复后两条路径共用同一组件、同一 mode、同一数据
-
-### P7.4 Spec 补充后的代码修复 ✅
-
-#### Issue #2: 剪贴板监听行为
-
-- [x] `shared/types/config.ts` — `clipboard_monitor` 默认值改 `true`
-- [x] 更新 `tests/integration/test_config_defaults.test.ts` 默认值断言
-
-#### Issue #9: 透明背景即时生效
-
-- [x] `electron/config/store.ts` — 添加 `onConfigChanged` 回调机制
-- [x] `electron/windows/manager.ts` — 添加 `rebuildForTransparencyChange()` 方法，关闭并重建受影响窗口
-- [x] `electron/main.ts` — 注册 transparent 变化监听，触发窗口重建
-
-#### Issue #7: TTS 音量
-
-- [x] Web Speech API 限制无法突破，spec §15.1 标注为已知限制；后续通过 Edge TTS 服务解决（P4）
-
-### P7.5 窗口宽度持久化（Issue #6） ✅
-
-- [x] 确认所有窗口创建路径都经过 `WindowManager.createWindow()` 的 resize persistence 逻辑
-- [x] 更新 spec 和代码：`translate_remember_window_size` 默认值改为 `true`
-- [x] 更新 `recognize_remember_window_size` 默认值改为 `true`
-- [x] 更新集成测试断言
-
----
-
-## P8: 测试覆盖补全
-
-### P8.1 外部服务全覆盖 ✅
-
-`tests/user_e2e/specs/external_services.spec.ts` 必须覆盖所有"免费无需 key"且"当前代码存在"的外部服务。
-对照 `docs/external_service_catalog.md` §1.2–§1.5，当前已覆盖与待补：
-
-| 服务 | 类型 | 状态 |
-|---|---|---|
-| Bing Translate | 翻译 | ✅ 已覆盖 |
-| Google Translate | 翻译 | ✅ 已覆盖 |
-| DeepL free | 翻译 | ✅ 已覆盖（含长文本、葡语变体） |
-| MyMemory | 翻译 | ✅ 已覆盖 |
-| Cambridge Dictionary | 词典 | ✅ 已覆盖 |
-| Free Dictionary | 词典 | ✅ 已覆盖 |
-| ECDICT | 词典（本地） | ✅ 已通过 dict_window.spec.ts E2E 覆盖 |
-| Chinese Dictionary | 词典（本地） | ✅ 已通过 dict_window.spec.ts E2E 覆盖 |
-| Tesseract OCR | OCR（本地） | ✅ 已通过 recognize_window.spec.ts E2E 覆盖 |
-| System TTS | TTS（本地） | ✅ 已通过 Web Speech stub 覆盖 |
-
-- [x] ECDICT 本地词典 — dict_window.spec.ts 已覆盖真实查询
-- [x] Chinese Dictionary 本地词典 — dict_window.spec.ts 已覆盖真实查询
-- [x] Tesseract OCR 本地识别 — recognize_window.spec.ts 已覆盖真实识别
-- [ ] 确认所有新增免费服务（P4 完成后）同步添加到 external_services.spec.ts
-
-### P8.2 翻译窗口源文本区操作按钮测试 ✅
-
-`translate_source_area.spec.ts` 和 `recognize_window.spec.ts` 已覆盖去除空格/去除换行按钮的精确行为：
-
-- [x] **去除空格**：含换行的多行文本点击去除空格 → 空格被移除、换行符保留
-- [x] **去除换行**：含换行的多行文本点击去除换行 → 换行被规范化为空格、连字符断行被合并
+- P1–P2、P5–P6 已归档：`docs/archive/plan_archives/plan_archive_4.md`。
+- P7–P11 已完成部分已归档：`docs/archive/plan_archives/plan_archive_5.md`。
+- 当前清单只保留未完成、待用户授权或需要复测的事项。
 
 ---
 
@@ -138,9 +17,9 @@
 
 需在 Windows dist 产物中人工确认：
 
-- [ ] **TTS 实机发声**：翻译/词典/识别窗口点击朗读，确认有声音
-- [ ] **dist 打包 smoke**：`npm run dist` 后验证首次启动、托盘、快捷键、截图、设置、识别窗口，并确认 `better-sqlite3` 的 `*.node` 位于 `app.asar.unpacked` 且词典/历史数据库可正常打开
-- [ ] **P7 修复后视觉验证**：确认置顶/固定按钮四窗口一致、图钉竖线可见、去除换行/空格图标与 demo 一致
+- [ ] **TTS 实机发声**：翻译/词典/识别窗口点击朗读，确认有声音。
+- [ ] **dist 打包 smoke**：`npm run dist` 后验证首次启动、托盘、快捷键、截图、设置、识别窗口，并确认 `better-sqlite3` 的 `*.node` 位于 `app.asar.unpacked` 且词典/历史数据库可正常打开。
+- [ ] **P7 修复后视觉验证**：确认置顶/固定按钮四窗口一致、图钉竖线可见、去除换行/空格图标与 demo 一致。
 
 ---
 
@@ -151,74 +30,35 @@
 
 ### 翻译服务（免费无 key，已验证可用）
 
-- [ ] **火山翻译 (Volcengine)** — 最简单，纯 JSON POST，零签名
-- [ ] **腾讯交互翻译 (Transmart)** — 稳定，固定 client_key
-- [ ] **腾讯翻译君 (Tencent WeChat)** — 稳定，GET 请求，模拟微信小程序
-- [ ] **彩云小译 (Caiyun)** — 稳定，内置 token（有失效风险）
-- [ ] **Papago (Naver)** — 多语言，需动态 HMAC token 流程
+- [ ] **火山翻译 (Volcengine)** — 最简单，纯 JSON POST，零签名。
+- [ ] **腾讯交互翻译 (Transmart)** — 稳定，固定 client_key。
+- [ ] **腾讯翻译君 (Tencent WeChat)** — 稳定，GET 请求，模拟微信小程序。
+- [ ] **彩云小译 (Caiyun)** — 稳定，内置 token（有失效风险）。
+- [ ] **Papago (Naver)** — 多语言，需动态 HMAC token 流程。
 
+### P4 后续测试要求
 
-## P9: System OCR 跨平台适配 ✅
-
-**目标**：根据平台决定是否提供 System OCR 选项，Tesseract 保持默认 OCR 引擎。
-
-### P9.1 macOS System OCR 实现 ✅
-
-macOS 10.15+ 内置 Vision 框架（`VNRecognizeTextRequest`），识别质量优秀。
-
-- [x] `scripts/macos_ocr.swift` — Swift CLI 调用 Vision 框架
-- [x] `electron/ipc/ocr_handlers.ts` — 新增 `macos_ocr()` 函数，通过 `swift` 执行 CLI
-- [x] `electron/ipc/ocr_handlers.ts` — `platform === 'darwin'` 分支调用 `macos_ocr()`
-- [x] macOS 支持的语言列表单独定义（Vision 框架支持 12 种语言 vs Windows 23 种）
-
-### P9.2 平台条件化 System OCR 可见性 ✅
-
-- [x] `src/services/ocr/system.ts` — 根据 `navigator.platform` 区分 macOS/Windows 语言列表
-- [x] `src/services/ocr/index.ts` — `registerAllOcrServices()` 中条件注册：Windows + macOS 注册 System OCR，Linux 跳过
-- [x] `shared/types/config.ts` — `recognize_service_list` 默认值改为 `['tesseract@default', 'system@default', 'qrcode@default']`
-
-### P9.3 Linux 路径处理 ✅
-
-- [x] 移除 `ocr_handlers.ts` 中的 `linux_ocr()` 函数（Tesseract 已通过 tesseract.js 在渲染进程独立实现）
-- [x] Linux 下 System OCR 选项完全不出现，用户使用默认的 Tesseract 即可
-
-### P9.4 文档同步 ✅
-
-- [x] `docs/spec.md` §14 OCR 服务清单 — 标注 System OCR 仅 Windows + macOS 可用
-- [x] `docs/spec.md` §8.5 OCR 执行细节 — 补充 macOS Vision 框架路径说明
-- [x] `docs/external_service_catalog.md` — System OCR 条目补充平台限制说明
+- [ ] 新增任何免费无需 key 且当前代码存在的外部服务时，同步添加到 `tests/user_e2e/specs/external_services.spec.ts`。
+- [ ] 同步更新 `docs/external_service_catalog.md`、`docs/test.md`、`docs/test_user_e2e.md` 中的服务覆盖说明。
 
 ---
 
-## P10: 日志系统补全 ✅
+## P11 后续测试整理
 
-### 实现方案
+P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
-渲染进程通过 `log:write` IPC 通道将日志写入主进程 `main.log`，scope 前缀 `renderer:`。
-`src/utils/logger.ts` 提供 `create_logger(scope)` 工厂函数，各窗口/服务按需创建 scoped logger。
-
-### P10.1 渲染进程关键路径日志 ✅
-
-- [x] 翻译流程：请求发起（源文本摘要、源/目标语言、服务数量）、语言检测结果、每个服务的失败详情
-- [x] 词典流程：查询词、检测语言、每个服务的失败详情
-- [x] 识别流程：使用的 OCR 引擎、识别语言、耗时、结果长度、失败详情
-- [x] TTS 流程：朗读文本摘要、语言、播放错误
-
-### P10.2 服务错误详情 ✅
-
-- [x] 翻译/词典/识别 catch 块记录错误信息（error.message），不再吞掉
-
-### P10.3 配置变更日志 ✅
-
-- [x] `electron/config/store.ts` `setConfig()` 记录变更的 key（通过 electron-log redact hook 自动脱敏）
-
-### P10.4 主进程补盲 ✅
-
-- [x] 快捷键触发时记录 action name
-- [x] 剪贴板监听触发时记录文本摘要
+- [ ] **外部服务 opt-in 复测**：联网环境重新运行 `npm run test:e2e:external`，确认真实外部服务健康检查是否恢复全绿。
+  - 2026-05-23 运行结果：6 passed / 3 failed / 1 skipped。
+  - 失败项：Google Translate；DeepL free long single paragraph；DeepL free Portuguese variant（429）。
+  - 详情见 `docs/runtime_issues.md` §3。
+- [ ] **`i18n.spec.ts` 文案来源审计**：复核所有断言文案是否从 `src/locales/*.json` 单一来源推导，避免硬编码字符串与 locale 文件漂移。
+- [ ] **`@core` 标签收敛**：`@core` 只保留最小关键路径（启动 → 翻译窗口可见 → 本地 stub 译文出现 → 关闭），其他 UI 细节迁到 `@ui`。
+- [ ] **timeout 标准化**：按 `docs/test_user_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
 
 ---
 
 ## 已知环境问题（不修，仅跟踪）
 
 - **谷歌翻译当前环境失败**：保留为已知问题，不用 mock 隐藏；需要在网络可达的环境复测，或更换默认免费引擎。
+- **DeepL free 当前环境限流**：`npm run test:e2e:external` 中长文本和葡语变体用例出现 429；只影响 opt-in 外部服务健康检查，不影响 `@core` / `@ui`。
+- **`cld3-asm` 依赖链 moderate audit 提示**：`npm audit --audit-level=high` 通过；npm 给出的 `--force` 修复会引入 breaking change，暂不自动修。
