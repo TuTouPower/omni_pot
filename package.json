@@ -93,7 +93,7 @@
     "asarUnpack": [
       "**/*.node"
     ],
-    "npmRebuild": true,
+    "npmRebuild": false,
     "afterPack": "scripts/after_pack.mjs",
     "win": {
       "icon": "public/logos/logo.ico",

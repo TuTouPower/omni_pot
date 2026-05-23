@@ -2,19 +2,21 @@ import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const sqlite_check_script = "new (require('better-sqlite3'))(':memory:').close()"
 
 // Must instantiate Database to trigger native binding load;
 // require('better-sqlite3') only loads the JS wrapper.
-const check = spawnSync(
-    process.execPath,
-    ['-e', "new (require('better-sqlite3'))(':memory:').close()"],
-    { stdio: 'pipe' }
+const electron_check = spawnSync(
+    require('electron'),
+    ['-e', sqlite_check_script],
+    { stdio: 'pipe', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }
 )
 
-// If Node can load the native binding, it's Node ABI — rebuild for Electron.
-// If Node cannot load it, it's already Electron ABI — nothing to do.
-if (check.status === 0) {
-    process.stderr.write('[abi] better-sqlite3 is Node ABI, switching to Electron ABI...\n')
+if (electron_check.status !== 0) {
+    process.stderr.write('[abi] better-sqlite3 is not compatible with Electron, rebuilding...\n')
 
     // electron-builder install-app-deps uses prebuild-install which may
     // download a Node-ABI prebuilt instead of rebuilding.  Use node-gyp
@@ -29,13 +31,14 @@ if (check.status === 0) {
     }
 
     const npx_cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+    const target_arch = process.env['npm_config_arch'] ?? process.arch
     const better_sqlite3_dir = resolve(process.cwd(), 'node_modules/better-sqlite3')
     const rebuild = spawnSync(
         npx_cmd,
         [
             'node-gyp', 'rebuild', '--release',
             `--target=${electron_version}`,
-            '--arch=x64',
+            `--arch=${target_arch}`,
             '--dist-url=https://electronjs.org/headers',
             '--build-from-source',
         ],

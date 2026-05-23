@@ -54,6 +54,8 @@ describe('Config defaults', () => {
     it('window size defaults', () => {
         expect(DEFAULT_CONFIG.translate_window_width).toBe(350)
         expect(DEFAULT_CONFIG.translate_window_height).toBe(420)
+        expect(DEFAULT_CONFIG.dict_window_width).toBe(350)
+        expect(DEFAULT_CONFIG.dict_window_height).toBe(420)
     })
 
     it('recognize settings have correct defaults', () => {

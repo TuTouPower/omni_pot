@@ -397,6 +397,46 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
+    test('user resizes dictionary and translate windows independently', async () => {
+        const omni = await AppFixture.start({
+            config: no_service_config({
+                translate_remember_window_size: true,
+                welcome_dismissed: true,
+                translate_window_width: 350,
+                translate_window_height: 420,
+                dict_window_width: 350,
+                dict_window_height: 420,
+            }),
+        })
+
+        try {
+            const translate = await omni.translate()
+
+            await translate.resizeWindowTo(520, 560)
+            await expect.poll(async () => {
+                const config = await omni.api.getConfig()
+                return typeof config.translate_window_width === 'number'
+                    && Math.abs(config.translate_window_width - 520) <= WINDOW_SIZE_TOLERANCE
+                    && config.dict_window_width === 350
+            }).toBe(true)
+
+            const open_dict_result = await omni.api.openWindow('dict')
+            expect(open_dict_result.success).toBe(true)
+            const dict = await omni.dict()
+
+            await dict.resizeWindowTo(470, 520)
+            await expect.poll(async () => {
+                const config = await omni.api.getConfig()
+                return typeof config.translate_window_width === 'number'
+                    && typeof config.dict_window_width === 'number'
+                    && Math.abs(config.translate_window_width - 520) <= WINDOW_SIZE_TOLERANCE
+                    && Math.abs(config.dict_window_width - 470) <= WINDOW_SIZE_TOLERANCE
+            }).toBe(true)
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user reopens translate window with remembered size', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({

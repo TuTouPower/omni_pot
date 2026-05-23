@@ -354,7 +354,7 @@ class TranslatePage {
 - `translate_delete_newline`：true 时换行被规范化
 - `translate_auto_copy`：开关式 boolean —— true 复制译文到剪贴板，false 不复制
 - `dynamic_translate`：true 时输入停顿 1s 自动翻译
-- `translate_remember_window_size`：resize 后尺寸写入配置
+- `translate_remember_window_size`：resize 后尺寸写入配置；翻译窗口和词典窗口宽度分别写入 `translate_window_width` / `dict_window_width`，互不影响
 - 第二语言回退：检测语言 == 目标语言时改用 `translate_second_language`
 
 ### 5.8 dict_window.spec.ts — 词典窗口

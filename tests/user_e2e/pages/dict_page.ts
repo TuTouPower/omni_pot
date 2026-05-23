@@ -137,6 +137,12 @@ export class DictPage {
         await this.word().press('Enter')
     }
 
+    async resizeWindowTo(width: number, height: number): Promise<void> {
+        await this.page.evaluate((size) => { window.resizeTo(size.width, size.height) }, { width, height })
+        const viewport = await this.page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }))
+        await this.page.setViewportSize(viewport)
+    }
+
     // Dict cards
     dictCards(): Locator {
         return this.page.locator('[data-testid="dict-card"]')

@@ -6,7 +6,7 @@ import { WindowLabel } from './types'
 import { getConfig, setConfig } from '../config/store'
 import { get_translate_window_options } from './translate_options'
 import { get_recognize_window_options } from './recognize_options'
-import { get_dict_window_options } from './dict_options'
+import { get_dict_window_options, attach_dict_resize_persistence } from './dict_options'
 import { log } from '../log'
 
 const log_wm = log.scope('wm')
@@ -147,10 +147,13 @@ export class WindowManager {
     }
 
     // Attach resize persistence for windows that support it
-    if (opts.label === WindowLabel.TRANSLATE || opts.label === WindowLabel.DICT) {
+    if (opts.label === WindowLabel.TRANSLATE) {
       if (getConfig('translate_remember_window_size') && !win.listenerCount('resize')) {
         win.on('resize', () => { const [w, h] = win.getSize(); setConfig('translate_window_width', w); setConfig('translate_window_height', h) })
       }
+    }
+    if (opts.label === WindowLabel.DICT) {
+      attach_dict_resize_persistence(win)
     }
     if (opts.label === WindowLabel.RECOGNIZE) {
       if (getConfig('recognize_remember_window_size') && !win.listenerCount('resize')) {

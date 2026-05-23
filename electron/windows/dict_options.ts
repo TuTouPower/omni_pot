@@ -1,4 +1,5 @@
-import { getConfig } from '../config/store'
+import type { BrowserWindow } from 'electron'
+import { getConfig, setConfig } from '../config/store'
 import { WindowLabel, type WindowOptions } from './types'
 
 const DICT_MIN_WIDTH = 280
@@ -6,8 +7,8 @@ const DICT_MIN_HEIGHT = 320
 
 export function get_dict_window_options(): WindowOptions {
     const remember_size = getConfig('translate_remember_window_size') as boolean
-    const width = remember_size ? (getConfig('translate_window_width') as number) : 350
-    const height = remember_size ? (getConfig('translate_window_height') as number) : 420
+    const width = remember_size ? (getConfig('dict_window_width') as number) : 350
+    const height = remember_size ? (getConfig('dict_window_height') as number) : 420
     return {
         label: WindowLabel.DICT,
         width: Math.max(width, DICT_MIN_WIDTH),
@@ -17,4 +18,13 @@ export function get_dict_window_options(): WindowOptions {
         maxHeight: 960,
         alwaysOnTop: getConfig('dict_always_on_top') as boolean,
     }
+}
+
+export function attach_dict_resize_persistence(win: BrowserWindow): void {
+    if (!getConfig('translate_remember_window_size') || win.listenerCount('resize')) return
+    win.on('resize', () => {
+        const [width, height] = win.getSize()
+        setConfig('dict_window_width', width)
+        setConfig('dict_window_height', height)
+    })
 }

@@ -16,6 +16,7 @@ const typed_should_start_app = should_start_app as unknown as ShouldStartApp
 const ROOT_DIR = join(__dirname, '..', '..', '..')
 const PACKAGE_JSON_PATH = join(ROOT_DIR, 'package.json')
 const RUN_DIST_PATH = join(ROOT_DIR, 'scripts', 'run_dist.mjs')
+const ENSURE_ELECTRON_ABI_PATH = join(ROOT_DIR, 'scripts', 'ensure_electron_abi.mjs')
 
 type PackageJson = {
     dependencies?: Record<string, string>
@@ -32,12 +33,12 @@ function read_package_json(): PackageJson {
 }
 
 describe('native module packaging', () => {
-    it('rebuilds better-sqlite3 for Electron and unpacks native binaries from asar', () => {
+    it('keeps native modules unpacked and leaves ABI rebuild to dist scripts', () => {
         const package_json = read_package_json()
 
         expect(package_json.dependencies).toHaveProperty('better-sqlite3')
         expect(package_json.scripts?.postinstall).toBe('electron-builder install-app-deps')
-        expect(package_json.build?.npmRebuild).toBe(true)
+        expect(package_json.build?.npmRebuild).toBe(false)
         expect(package_json.build?.asar).toBe(true)
         expect(package_json.build?.asarUnpack).toContain('**/*.node')
     })
@@ -52,11 +53,29 @@ describe('native module packaging', () => {
         expect(dist_dir_tokens).toEqual(['node', 'scripts/run_dist.mjs', '--dir'])
 
         const build_step_index = run_dist.search(/['"]run['"]\s*,\s*['"]build['"]/)
+        const electron_abi_index = run_dist.search(/['"]node['"]\s*,\s*\[\s*['"]scripts\/ensure_electron_abi\.mjs['"]\s*\]/)
         const electron_builder_index = run_dist.search(
             /\[\s*npx_cmd\s*,\s*\[[\s\S]*?['"]electron-builder['"][\s\S]*?is_dir[\s\S]*?['"]--dir['"][\s\S]*?\]\s*\]/,
         )
         expect(build_step_index).toBeGreaterThanOrEqual(0)
-        expect(electron_builder_index).toBeGreaterThan(build_step_index)
+        expect(electron_abi_index).toBeGreaterThan(build_step_index)
+        expect(electron_builder_index).toBeGreaterThan(electron_abi_index)
+    })
+
+    it('verifies better-sqlite3 with Electron before packaging', () => {
+        const ensure_electron_abi = readFileSync(ENSURE_ELECTRON_ABI_PATH, 'utf8')
+
+        expect(ensure_electron_abi).toContain("spawnSync(\n    require('electron')")
+        expect(ensure_electron_abi).toContain("new (require('better-sqlite3'))(':memory:').close()")
+        expect(ensure_electron_abi).toContain("ELECTRON_RUN_AS_NODE: '1'")
+        expect(ensure_electron_abi).toMatch(/electron_check\.status\s*!==\s*0/)
+    })
+
+    it('rebuilds better-sqlite3 for the current architecture', () => {
+        const ensure_electron_abi = readFileSync(ENSURE_ELECTRON_ABI_PATH, 'utf8')
+
+        expect(ensure_electron_abi).toContain('process.env[\'npm_config_arch\'] ?? process.arch')
+        expect(ensure_electron_abi).not.toContain('--arch=x64')
     })
 
     it('passes always-start only after a successful dist build', () => {
