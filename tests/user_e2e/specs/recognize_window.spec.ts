@@ -36,6 +36,18 @@ const qrcode_config = {
     },
 }
 
+const qrcode_auto_detect_config = {
+    app_language: 'zh_cn',
+    recognize_engine: 'baidu_ocr@default',
+    recognize_service_list: ['baidu_ocr@default'],
+    service_instances: {
+        'baidu_ocr@default': {
+            serviceKey: 'baidu_ocr',
+            config: { client_id: 'enabled', client_secret: 'enabled' },
+        },
+    },
+}
+
 const qrcode_image = 'iVBORw0KGgoAAAANSUhEUgAAASIAAAEiCAIAAADS3EjhAAAEgUlEQVR4nO3dSW7DMBAAQSvI/7+s/IAIoHS4qOqexZYbc/CAvO77/gClr/S3AzKD/2CaQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQe77M8l1XZ+z3Pc95b0a/93uZ3d0Z89ozDSDnMwgJzPIyQxyMoOczCAnM8jJDHIyg3O3QNb8tn5s1lbEmrsantHvmWaQkxnkZAY5mUFOZpCTGeRkBjmZQU5m8NYtkLFu72HWZsOTEzt2fEXnbZ+MmWaQkxnkZAY5mUFOZpCTGeRkBjmZQU5mkNtyC2RHa97qsuNGxY5MM8jJDHIyg5zMICczyMkMcjKDnMwgJzPI2QLZ3qwbYfg90wxyMoOczCAnM8jJDHIyg5zMICczyMkMcltugex4gsWO//MTb3u9Y6YZ5GQGOZlBTmaQkxnkZAY5mUFOZpCTGbx1C+S88y26m1me3AjzxHnPqGOaQU5mkJMZ5GQGOZlBTmaQkxnkZAY5mUHucmbDCmZtVHj6/8M0g5zMICczyMkMcjKDnMwgJzPIyQxyMoNzzwJ5svfQ7S502xg7nvZx3vOdxTSDnMwgJzPIyQxyMoOczCAnM8jJDHIyg7eeBTJrG6O7t2XWzsSaOyJjT97nWU9wzDSDnMwgJzPIyQxyMoOczCAnM8jJDHIyg9yBWyBr7mqsuckx6+lfx72iMdMMcjKDnMwgJzPIyQxyMoOczCAnM8jJDN66BdLpzoqYdZ5Ht0HilJG/YppBTmaQkxnkZAY5mUFOZpCTGeRkBjmZQe77s6Ru72HWzsTYrHtbZt2Pcy151kvHNIOczCAnM8jJDHIyg5zMICczyMkMcjKD3OvOApll1m5Kp9sCuY/7TJpmkJMZ5GQGOZlBTmaQkxnkZAY5mUFOZnDuWSBrbjbsuBWx4zt5v2yDxDSDnMwgJzPIyQxyMoOczCAnM5AZ7M80g7feCLPmd/ndvsWse2q6V7Tme3VP+lyZZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmbw1i2QNTcMut+85nkes/YtrmzrZRbTDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyW26BnKfbEVnzbIzzTvsYM80gJzPIyQxyMoOczCAnM8jJDHIyg5zMIGcLZHtrbpB0Pzu25o6IaQY5mUFOZpCTGeRkBjmZQU5mkJMZ5GQGuS23QNY872HNW0523NU47+mbZpCTGeRkBjmZQU5mkJMZ5GQGOZlBTmbw1i2QJ1sCO1pzV2Ns1t+9ljztY8w0g5zMICczyMkMcjKDnMwgJzPIyQxyMoPctea35nAS0wxyMoOczCAnM8jJDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyMoOczCAnM8jJDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyMoOczCAnM8jJDHIyg5zMICczyMkMcjKDnMwgJzPIyQxyMoOczOBT+wFmUwFSAjkJ1wAAAABJRU5ErkJggg=='
 
 async function sample_ocr_image(page: Page): Promise<string> {
@@ -204,6 +216,44 @@ test.describe('@ui recognize window', () => {
             await expect.poll(async () => (await recognize.getText()).length > 0,
                 { timeout: 30_000 }).toBe(true)
             await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('user gets QR content automatically even when selected OCR engine is not QR Code', async () => {
+        const omni = await AppFixture.start({
+            config: qrcode_auto_detect_config,
+            init_script: `
+                window.__baidu_ocr_request_count = 0;
+                const original_fetch = window.fetch.bind(window);
+                const mock_response = (data) => new Response(JSON.stringify(data), {
+                    status: 200,
+                    headers: { 'content-type': 'application/json' },
+                });
+                window.fetch = async (input, init) => {
+                    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+                    if (url.startsWith('https://aip.baidubce.com/oauth/2.0/token')) {
+                        window.__baidu_ocr_request_count += 1;
+                        return mock_response({ access_token: 'e2e-token', expires_in: 3600 });
+                    }
+                    if (url.startsWith('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic')) {
+                        window.__baidu_ocr_request_count += 1;
+                        return mock_response({ words_result: [{ words: '普通 OCR 结果不应显示' }] });
+                    }
+                    return original_fetch(input, init);
+                };
+            `,
+        })
+
+        try {
+            const recognize = await open_recognize_with_image(omni, qrcode_image, '')
+
+            await expect(recognize.engineSelect()).toContainText('百度文字识别')
+            await expect.poll(async () => (await recognize.getText()).length > 0,
+                { timeout: 30_000 }).toBe(true)
+            await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
+            await expect.poll(async () => recognize.page.evaluate(() => (window as unknown as { __baidu_ocr_request_count?: number }).__baidu_ocr_request_count ?? 0)).toBe(0)
         } finally {
             await omni.stop()
         }
