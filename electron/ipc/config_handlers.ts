@@ -1,6 +1,6 @@
 import { ipcMain, app } from 'electron'
 import type { ConfigKey } from '@shared/types/config'
-import { getConfig, setConfig, getAllConfig } from '../config/store'
+import { getConfig, setConfig, getAllConfig, getUserDataDir } from '../config/store'
 import { rebuildMenu } from '../tray'
 
 function apply_auto_start(enabled: boolean): void {
@@ -23,6 +23,7 @@ export function registerConfigHandlers(): void {
     }
   })
   ipcMain.handle('config:getAll', () => getAllConfig())
+  ipcMain.handle('config:getUserDir', () => getUserDataDir())
 
   // Apply auto_start on startup
   if (getConfig('auto_start') && !process.env['OMNI_POT_E2E']) {

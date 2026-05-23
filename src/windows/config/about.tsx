@@ -22,6 +22,7 @@ export default function AboutPage(): React.ReactElement {
     const { t } = useTranslation()
     const [serverPort] = useConfig('server_port')
     const apiUrl = `http://127.0.0.1:${String(serverPort)}`
+    const [configDir, setConfigDir] = useState('...')
     const [logDir, setLogDir] = useState('...')
     const [exporting, setExporting] = useState(false)
     const openExternal = (url: string): void => {
@@ -30,6 +31,7 @@ export default function AboutPage(): React.ReactElement {
 
     useEffect(() => {
         window.electronAPI.log.getDir().then(setLogDir).catch(() => { setLogDir('unknown'); })
+        window.electronAPI.config.getUserDir().then(setConfigDir).catch(() => { setConfigDir('unknown'); })
     }, [])
 
     const handleExportLog = (): void => {
@@ -82,27 +84,30 @@ export default function AboutPage(): React.ReactElement {
             </div>
 
             <ConfigCard title="诊断">
-                <ConfigRow label="版本">
-                    <div className="mono hint" data-testid="about-diagnostic-version" style={{ marginRight: 8 }}>{VERSION}</div>
-                </ConfigRow>
-                <ConfigRow label="设置目录">
-                    <div className="mono hint" data-testid="about-config-dir" style={{ marginRight: 8 }}>userData/config.json</div>
-                </ConfigRow>
                 <ConfigRow label="日志目录">
                     <div className="mono hint" data-testid="about-log-dir" style={{ marginRight: 8 }}>{logDir}</div>
-                </ConfigRow>
-                <ConfigRow label="本机 API">
-                    <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>
-                    <button className="ic-btn" title="复制" data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).catch(() => undefined); }}>
+                    <button className="ic-btn" title="复制路径" data-testid="about-copy-log-dir" onClick={() => { window.electronAPI.text.writeClipboard(logDir).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>
-                <div style={{ padding: '8px 0 0' }}>
+                <ConfigRow label="设置目录">
+                    <div className="mono hint" data-testid="about-config-dir" style={{ marginRight: 8 }}>{configDir}</div>
+                    <button className="ic-btn" title="复制路径" data-testid="about-copy-config-dir" onClick={() => { window.electronAPI.text.writeClipboard(configDir).catch(() => undefined); }}>
+                        <Icons.Copy size={12} />
+                    </button>
+                </ConfigRow>
+                <ConfigRow label="本机 API">
+                    <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>
+                    <button className="ic-btn" title="复制路径" data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).catch(() => undefined); }}>
+                        <Icons.Copy size={12} />
+                    </button>
+                </ConfigRow>
+                <ConfigRow label="日志" sub="最近 7 天的日志打包为 zip，可附在反馈中">
                     <button className="btn sm" data-testid="about-export-log" disabled={exporting} onClick={handleExportLog}>
+                        <Icons.Export size={12} />
                         {exporting ? '导出中...' : t('about.export_log', { defaultValue: '导出日志' })}
                     </button>
-                    <div className="hint" style={{ fontSize: 11, marginTop: 4 }}>最近 7 天的日志打包为 zip，可附在反馈中</div>
-                </div>
+                </ConfigRow>
             </ConfigCard>
         </div>
     )

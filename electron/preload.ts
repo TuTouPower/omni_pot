@@ -31,6 +31,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
     get: (key) => ipcRenderer.invoke('config:get', key),
     set: (key, value) => ipcRenderer.invoke('config:set', key, value),
     getAll: () => ipcRenderer.invoke('config:getAll'),
+    getUserDir: () => ipcRenderer.invoke('config:getUserDir'),
     onChange: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, key: ConfigKey, value: unknown) =>
         { callback(key, value); }
