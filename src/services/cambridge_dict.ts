@@ -79,20 +79,25 @@ export const cambridgeDictService: TranslateService = {
 
             if (first_entry) {
                 first_entry = false
-                const pron_pattern = /(<span[^>]*dpron-i[^>]*>)([\s\S]*?)<\/span>\s*<\/span>/g
+                const pron_pattern = /class="[^"]*dpron-i[^>]*>([\s\S]*?)<\/span>\s*<\/span>/g
                 let pron_match: RegExpExecArray | null
                 while ((pron_match = pron_pattern.exec(entry_html)) !== null) {
-                    const tag = regex_capture(pron_match, 1)
-                    const block = regex_capture(pron_match, 2)
+                    const block = regex_capture(pron_match, 1)
                     const region_match = block.match(/class="region[^"]*"[^>]*>([^<]*)</)
                     const symbol_match = block.match(/class="[^"]*\bipa\b[^"]*"[^>]*>([^<]*)/)
                         ?? block.match(/class="pron[^"]*"[^>]*>\/([^<]*)/)
                     if (region_match && symbol_match) {
-                        const audio_src = tag.match(/data-src-mp3="([^"]*)"/)
+                        const audio_src = block.match(/<source[^>]*type="audio\/mpeg"[^>]*src="([^"]*)"/)
+                            ?? block.match(/data-src-mp3="([^"]*)"/)
+                        const audio_url = audio_src
+                            ? (regex_capture(audio_src, 1).startsWith('http')
+                                ? regex_capture(audio_src, 1).trim()
+                                : `https://dictionary.cambridge.org${regex_capture(audio_src, 1).trim()}`)
+                            : undefined
                         pronunciations.push({
                             region: regex_capture(region_match, 1).trim(),
                             phonetic: regex_capture(symbol_match, 1).trim(),
-                            audioUrl: audio_src ? regex_capture(audio_src, 1).trim() : undefined
+                            audioUrl: audio_url
                         })
                         if (pronunciations.length >= 2) break
                     }
