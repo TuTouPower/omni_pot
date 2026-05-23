@@ -57,7 +57,7 @@ export const freeDictionaryService: TranslateService = {
                 for (const p of entry.phonetics) {
                     if (p.text && !pronunciations.some((pr) => pr.phonetic === p.text)) {
                         const region = p.audio?.includes('-us') ? 'US' : p.audio?.includes('-uk') ? 'UK' : ''
-                        pronunciations.push({ region, phonetic: p.text })
+                        pronunciations.push({ region, phonetic: p.text, audioUrl: p.audio || undefined })
                     }
                 }
             }
