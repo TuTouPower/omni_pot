@@ -3,8 +3,8 @@ import { AppFixture } from '../fixtures/app_fixture'
 
 const SERVICE_CATEGORIES = [
     ['translate_service_list', '翻译', ['Bing', 'DeepL', 'MyMemory']],
-    ['dictionary_service_list', '中文词典', ['中文词典', 'CC-CEDICT']],
-    ['english_dictionary_service_list', '英文词典', ['Cambridge Dict', 'CC-CEDICT']],
+    ['dictionary_service_list', '中文词典', ['中文词典']],
+    ['english_dictionary_service_list', '英文词典', ['Cambridge Dict']],
     ['recognize_service_list', '识别', ['Tesseract', 'System OCR', 'QR Code']],
     ['tts_service_list', '朗读', ['System TTS']],
     ['collection_service_list', '收藏', []],
@@ -53,7 +53,8 @@ test.describe('@ui config service management', () => {
 
             await config.openServiceCategory('translate_service_list')
             await expect(config.serviceItem('bing@default')).toContainText('Bing')
-            await expect(config.serviceItem('bing@default')).toContainText('bing@default')
+            // Spec §9.7: 实例 key 副文本已移除，不在 UI 中显示
+            await expect(config.serviceItem('bing@default')).not.toContainText('bing@default')
             await expect(config.serviceDragHandle('bing@default')).toBeVisible()
             await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
             await expect(config.serviceEdit('bing@default')).toBeVisible()

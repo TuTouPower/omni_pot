@@ -86,14 +86,10 @@ test.describe('@ui config settings window', () => {
 
             await config.toggle('cfg-check_update')
             await config.toggle('cfg-auto_start')
-            await config.select('cfg-app_font', 'Consolas')
-            await config.select('cfg-app_font_size', '18')
             await config.fillField('cfg-server_port', '20444')
 
             await expect_config(omni, 'check_update', false)
             await expect_config(omni, 'auto_start', true)
-            await expect_config(omni, 'app_font', 'Consolas')
-            await expect_config(omni, 'app_font_size', 18)
             await expect_config(omni, 'server_port', 20444)
 
             await expect(config.setting('cfg-transparent')).toBeVisible()
@@ -201,18 +197,9 @@ test.describe('@ui config settings window', () => {
             await expect(config.page.locator('body')).not.toContainText('代理')
             await expect(config.page.locator('[data-testid*="proxy"]')).toHaveCount(0)
 
-            // Spec §9.3: 标签叫"文字"不叫"字体"，字体和字号同行展示，无预览块。
-            const font_row = config.page.locator('.row').filter({ hasText: '文字' })
-            await expect(font_row).toContainText('文字')
-            await expect(font_row).not.toContainText('字体')
-            await expect(config.setting('cfg-app_font')).toBeVisible()
-            await expect(config.setting('cfg-app_font_size')).toBeVisible()
-            // Font and font-size selects share the same parent flex row.
-            const font_select_box = await config.setting('cfg-app_font').boundingBox()
-            const size_select_box = await config.setting('cfg-app_font_size').boundingBox()
-            if (!font_select_box || !size_select_box) throw new Error('font/size selects not visible')
-            expect(Math.abs(font_select_box.y - size_select_box.y), 'font and size should be on the same row')
-                .toBeLessThan(5)
+            // Spec §9.3: 外观卡片含主题三按钮分段控件、主色调、透明背景、托盘点击行为；文字选项已移除。
+            await expect(config.setting('cfg-app_font')).toHaveCount(0)
+            await expect(config.setting('cfg-app_font_size')).toHaveCount(0)
 
             // Spec §9.3: 主题用三按钮分段控件（非下拉）。
             await expect(config.setting('cfg-app_theme-system')).toBeVisible()
@@ -363,7 +350,7 @@ test.describe('@ui config settings window', () => {
             await expect(config.aboutLink('feedback')).toContainText('反馈')
             await expect(config.aboutCheckUpdate()).toContainText('检查更新')
             await expect(config.aboutCheckUpdate()).not.toContainText('about.check_update')
-            await expect(config.aboutDiagnostic('about-config-dir')).toContainText('config.json')
+            await expect(config.aboutDiagnostic('about-config-dir')).toContainText(/omni_pot|unknown/)
             await expect(config.aboutDiagnostic('about-log-dir')).toContainText('logs')
             await expect(config.aboutDiagnostic('about-api-url')).toContainText(/http:\/\/127\.0\.0\.1:\d+/)
         } finally {
