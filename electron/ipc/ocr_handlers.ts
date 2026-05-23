@@ -90,11 +90,11 @@ function normalize_macos_ocr_language(lang: string): string {
 async function macos_ocr(image_path: string, lang: string): Promise<string> {
     const bcp47 = normalize_macos_ocr_language(lang)
     const swift_path = join(__dirname, '..', '..', 'scripts', 'macos_ocr.swift')
-    const args = ['swift', swift_path, image_path]
+    const args = [swift_path, image_path]
     if (bcp47) args.push(bcp47)
 
     return new Promise((resolve, reject) => {
-        execFile(args[0]!, args.slice(1), { timeout: 30000 }, (err, stdout, stderr) => {
+        execFile('swift', args, { timeout: 30000 }, (err, stdout, stderr) => {
             if (err) {
                 reject(new Error(stderr.trim() || err.message))
                 return

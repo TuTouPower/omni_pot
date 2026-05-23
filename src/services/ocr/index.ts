@@ -17,7 +17,7 @@ import { qrcodeOcrService } from './qrcode'
 import { systemOcrService } from './system'
 
 function is_system_ocr_available(): boolean {
-    const platform = navigator.platform?.toLowerCase() ?? ''
+    const platform = navigator.platform.toLowerCase()
     return platform.startsWith('win') || platform.startsWith('mac')
 }
 

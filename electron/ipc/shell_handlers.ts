@@ -60,10 +60,14 @@ export function registerShellHandlers(): void {
 
     ipcMain.handle('log:write', (_event, level: string, scope: string, message: string, ...args: unknown[]): void => {
         const scoped = log.scope(`renderer:${scope}`)
-        const fn = level === 'error' ? scoped.error
-            : level === 'warn' ? scoped.warn
-            : level === 'debug' ? scoped.debug
-            : scoped.info
-        fn(message, ...args)
+        if (level === 'error') {
+            scoped.error(message, ...args)
+        } else if (level === 'warn') {
+            scoped.warn(message, ...args)
+        } else if (level === 'debug') {
+            scoped.debug(message, ...args)
+        } else {
+            scoped.info(message, ...args)
+        }
     })
 }

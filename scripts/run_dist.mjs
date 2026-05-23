@@ -16,19 +16,6 @@ function run(command, args) {
     return process.exitCode === undefined
 }
 
-function clear_failed_exit_code() {
-    process.exitCode = undefined
-}
-
-function run_with_better_sqlite3_rebuild(command, args) {
-    if (run(command, args)) return true
-    process.stderr.write('[dist] better-sqlite3 may be compiled for a different Node/Electron ABI; rebuilding and retrying once\n')
-    clear_failed_exit_code()
-    if (!run(npm_cmd, ['rebuild', 'better-sqlite3'])) return false
-    clear_failed_exit_code()
-    return run(command, args)
-}
-
 try {
     const steps = [
         [npm_cmd, ['run', 'dist:check-locks']],

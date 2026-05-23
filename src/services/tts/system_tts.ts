@@ -92,7 +92,7 @@ export const systemTtsService: TtsService = {
         }
         utterance.onend = cleanup
         utterance.onerror = (ev) => {
-            log.error('playback error: %s', (ev as SpeechSynthesisErrorEvent).error ?? 'unknown')
+            log.error('playback error: %s', ev.error)
             cleanup()
         }
 

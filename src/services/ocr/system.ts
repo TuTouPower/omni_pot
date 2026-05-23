@@ -13,7 +13,7 @@ const MACOS_LANGUAGES: LanguageCode[] = [
 ]
 
 function get_platform_languages(): LanguageCode[] {
-    const platform = navigator.platform?.toLowerCase() ?? ''
+    const platform = navigator.platform.toLowerCase()
     if (platform.startsWith('mac')) return MACOS_LANGUAGES
     return WINDOWS_LANGUAGES
 }
