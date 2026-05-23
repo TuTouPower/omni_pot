@@ -18,45 +18,17 @@ const PRIMARY_COLOR_VALUES: Array<{ key: string; value: AppPrimaryColor; fallbac
 
 const LANGUAGE_VALUES = ['zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'de'] as const
 
-const FONT_SIZE_OPTIONS = [10, 12, 13, 14, 16, 18, 20, 24].map((s) => ({ value: String(s), label: `${String(s)}px` }))
-
-const FONT_OPTIONS = [
-    { value: 'default', label: '系统默认' },
-    { value: 'Arial', label: 'Arial' },
-    { value: 'Consolas', label: 'Consolas' },
-    { value: 'Courier New', label: 'Courier New' },
-    { value: 'Georgia', label: 'Georgia' },
-    { value: 'Microsoft YaHei', label: 'Microsoft YaHei' },
-    { value: 'PingFang SC', label: 'PingFang SC' },
-    { value: 'SimHei', label: 'SimHei' },
-    { value: 'SimSun', label: 'SimSun' },
-    { value: 'Monaco', label: 'Monaco' },
-    { value: 'Segoe UI', label: 'Segoe UI' },
-    { value: 'Tahoma', label: 'Tahoma' },
-    { value: 'Times New Roman', label: 'Times New Roman' },
-    { value: 'Trebuchet MS', label: 'Trebuchet MS' },
-    { value: 'Verdana', label: 'Verdana' },
-    { value: 'Noto Sans SC', label: 'Noto Sans SC' },
-    { value: 'Noto Sans JP', label: 'Noto Sans JP' },
-    { value: 'Noto Sans KR', label: 'Noto Sans KR' },
-]
-
 export default function GeneralPage(): React.ReactElement {
     const { t } = useTranslation()
     const [appLanguage, setAppLanguage] = useConfig('app_language')
     const [appTheme, setAppTheme] = useConfig('app_theme')
     const [appPrimaryColor, setAppPrimaryColor] = useConfig('app_primary_color')
-    const [appFont, setAppFont] = useConfig('app_font')
-    const [fontSize, setFontSize] = useConfig('app_font_size')
     const [transparent, setTransparent] = useConfig('transparent')
     const [checkUpdate, setCheckUpdate] = useConfig('check_update')
     const [serverPort, setServerPort] = useConfig('server_port')
     const [autoStart, setAutoStart] = useConfig('auto_start')
     const [trayClickEvent, setTrayClickEvent] = useConfig('tray_click_event')
     const languageOptions = LANGUAGE_VALUES.map((value) => ({ value, label: t(`general.app_language_${value}`) }))
-    const fontOptions = FONT_OPTIONS.map((option) => option.value === 'default'
-        ? { ...option, label: t('general.font_default') }
-        : option)
 
     return (
         <div className="stack gap-12">
@@ -149,24 +121,6 @@ export default function GeneralPage(): React.ReactElement {
                                 }}
                             />
                         ))}
-                    </div>
-                </ConfigRow>
-                <ConfigRow label={t('general.font_family', { defaultValue: '文字' })}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                        <ConfigSelect
-                            value={appFont}
-                            onChange={setAppFont}
-                            options={fontOptions}
-                            testId="cfg-app_font"
-                            style={{ minWidth: 140 }}
-                        />
-                        <ConfigSelect
-                            value={String(fontSize)}
-                            onChange={(v) => { setFontSize(Number(v)); }}
-                            options={FONT_SIZE_OPTIONS}
-                            testId="cfg-app_font_size"
-                            style={{ width: 110 }}
-                        />
                     </div>
                 </ConfigRow>
                 <ConfigRow label={t('general.transparent', { defaultValue: '透明背景' })} sub={t('general.transparent_sub')}>

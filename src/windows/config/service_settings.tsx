@@ -25,11 +25,6 @@ const CATEGORY_TABS = [
     { key: 'collection_service_list' as ServiceCategory, labelKey: 'service.collection', label: '收藏' },
 ]
 
-const SERVICE_TAGS: Record<string, string> = {
-    ecdict: 'OFFLINE',
-    system: 'PLATFORM',
-}
-
 function getRegistryForCategory(category: ServiceCategory) {
     switch (category) {
         case 'translate_service_list': return translateServiceRegistry
@@ -80,7 +75,6 @@ interface ServiceItemRowProps {
     canMoveDown: boolean
     name: string
     svcKey: string
-    tag?: string
     onToggle: (instanceKey: string) => void
     onEdit: (instanceKey: string) => void
     onRemove: (instanceKey: string) => void
@@ -96,7 +90,6 @@ function ServiceItemRow({
     canMoveDown,
     name,
     svcKey,
-    tag,
     onToggle,
     onEdit,
     onRemove,
@@ -133,11 +126,9 @@ function ServiceItemRow({
             >
                 {svcKey.slice(0, 2).toUpperCase()}
             </div>
-            <div className="stack" style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{name}</div>
-                <div className="hint mono" style={{ fontSize: 10.5 }}>{instanceKey}</div>
             </div>
-            {tag && <span className="chip mono" style={{ fontSize: 9.5 }}>{tag}</span>}
             <ConfigSwitch on={isEnabled} onChange={() => { onToggle(instanceKey); }} testId="svc-toggle" />
             <button
                 data-testid="svc-move-up"
@@ -420,7 +411,6 @@ export default function ServiceSettings(): React.ReactElement {
                                         canMoveDown={serviceList.indexOf(instanceKey) < serviceList.length - 1}
                                         name={getInstanceName(instanceKey)}
                                         svcKey={svcKey}
-                                        tag={SERVICE_TAGS[svcKey]}
                                         onToggle={toggleService}
                                         onEdit={openEdit}
                                         onRemove={removeService}

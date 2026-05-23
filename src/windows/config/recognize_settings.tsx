@@ -39,7 +39,7 @@ export default function RecognizeSettings(): React.ReactElement {
                 <ConfigRow label={t('recognize.delete_newline', { defaultValue: '自动去除换行' })}>
                     <ConfigSwitch on={deleteNewline} onChange={setDeleteNewline} testId="cfg-recognize_delete_newline" />
                 </ConfigRow>
-                <ConfigRow label={t('copy', { defaultValue: '自动复制' })}>
+                <ConfigRow label={t('recognize.auto_copy_result', { defaultValue: '自动复制结果' })}>
                     <ConfigSwitch on={autoCopy} onChange={setAutoCopy} testId="cfg-recognize_auto_copy" />
                 </ConfigRow>
             </ConfigCard>
