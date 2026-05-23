@@ -4,6 +4,9 @@ import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 import { map_cover_rect_to_image_rect } from './crop'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('screenshot')
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -70,6 +73,7 @@ export default function ScreenshotWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.ocr.onScreenshotShow((base64, m) => {
+            log.info('received screenshot:show, base64 length =', base64.length, 'mode =', m)
             setBackground(base64)
             setMode(m)
         })

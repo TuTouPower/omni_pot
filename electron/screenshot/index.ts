@@ -1,8 +1,10 @@
 import { desktopCapturer, screen, type BrowserWindow } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
+import { log } from '../log'
 
 export async function capture_screenshot(): Promise<string> {
+    log.info('[screenshot] capture_screenshot: start')
     const primary_display = screen.getPrimaryDisplay()
     const { width, height } = primary_display.size
     const scale_factor = primary_display.scaleFactor
@@ -21,7 +23,9 @@ export async function capture_screenshot(): Promise<string> {
     }
 
     const thumbnail = source.thumbnail
-    return thumbnail.toPNG().toString('base64')
+    const base64 = thumbnail.toPNG().toString('base64')
+    log.info('[screenshot] capture_screenshot: done, base64 length =', base64.length)
+    return base64
 }
 
 function get_screenshot_window_options(width: number, height: number, show: boolean) {
@@ -54,14 +58,16 @@ export async function start_screenshot_capture(
         const display = screen.getPrimaryDisplay()
         const { width, height } = display.size
 
-        win = manager.focusOrCreate(WindowLabel.SCREENSHOT, get_screenshot_window_options(width, height, true))
+        // Capture the desktop before showing the screenshot window,
+        // so the overlay window itself is never included in the capture.
+        const base64 = await capture_screenshot()
 
+        win = manager.focusOrCreate(WindowLabel.SCREENSHOT, get_screenshot_window_options(width, height, true))
         win.setBounds({ x: display.bounds.x, y: display.bounds.y, width, height })
         win.show()
         win.focus()
 
-        await new Promise((resolve) => setTimeout(resolve, 50))
-        const base64 = await capture_screenshot()
+        log.info('[screenshot] sending screenshot:show, base64 length =', base64.length, 'mode =', mode)
         manager.sendWhenReady(WindowLabel.SCREENSHOT, 'screenshot:show', base64, mode)
         return true
     } catch {

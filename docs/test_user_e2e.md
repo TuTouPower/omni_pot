@@ -388,7 +388,7 @@ class TranslatePage {
 
 ### 5.10 screenshot_window.spec.ts / screenshot_latency.spec.ts — 截图窗口
 
-- `screenshot_latency.spec.ts`：触发截图后 SCREENSHOT 窗口应在 300ms 内可见，用于守护截图 OCR 唤起卡顿回归
+- `screenshot_latency.spec.ts`：触发截图后会先抓取桌面图再显示 SCREENSHOT 窗口，窗口应在 3000ms 内可见，用于守护截图 OCR 唤起卡顿回归且避免把截图遮罩截入背景
 - 触发截图 → 创建全屏 SCREENSHOT 窗口，全屏且置顶
 - 屏幕图像作背景，其上有半透明遮罩
 - 鼠标拖拽创建选区 → 出现主色描边、四角句柄、尺寸标签
