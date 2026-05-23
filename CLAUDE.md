@@ -16,7 +16,7 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 |---|---|
 | `npm run dev` | 启动开发模式（热重载） |
 | `npm run build` | 构建（不打包） |
-| `npm run dist` | 构建 + 打包（NSIS 安装版 + 便携版；若既有 release 产物被 Omni Pot 占用，会在打包前自动关闭 Omni Pot，并在打包完成后重启新产物） |
+| `npm run dist` | 构建 + 打包（NSIS 安装版 + 便携版；Windows 上成功后自动启动新产物；若既有 release 产物被 Omni Pot 占用，会在打包前自动关闭） |
 | `npm run typecheck` | TypeScript 类型检查 |
 | `npm run lint` | ESLint 检查 |
 | `npm test` | 运行单元测试 |
@@ -24,7 +24,7 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 | `npm run test:e2e:core` | 运行核心 e2e 测试 |
 | `npm run test:e2e:ui` | 运行 UI 回归 e2e 测试 |
 | `npm run test:e2e:external` | 运行真实外部服务连通性 e2e 测试（需要网络） |
-| `npm run dist:dir` | 构建 unpacked 目录产物，用于本地打包 smoke |
+| `npm run dist:dir` | 构建 unpacked 目录产物，用于本地打包 smoke；Windows 上成功后自动启动 unpacked 应用 |
 | `npm run start` | 预览构建产物 |
 | `npm run build:chinese-dict` | 生成 `resources/data/dict/chinese_dict.db`（86MB，gitignored） |
 | `npm run build:cc-cedict` | 生成 `resources/data/dict/cc_cedict.db`（24MB，gitignored） |

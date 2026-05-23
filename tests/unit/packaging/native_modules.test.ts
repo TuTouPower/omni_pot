@@ -2,6 +2,17 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
+import { app_candidates, should_start_app } from '../../../scripts/restart_dist_app.mjs'
+import { restart_args } from '../../../scripts/run_dist.mjs'
+
+type AppCandidates = (repo_root: string, output_dir: string, product_name: string, version: string, is_dir: boolean) => string[]
+type RestartArgs = (is_dir: boolean, completed_ok: boolean) => string[]
+type ShouldStartApp = (platform: string, always_start: boolean, restart_state_exists: boolean) => boolean
+
+const typed_app_candidates = app_candidates as unknown as AppCandidates
+const typed_restart_args = restart_args as unknown as RestartArgs
+const typed_should_start_app = should_start_app as unknown as ShouldStartApp
+
 const ROOT_DIR = join(__dirname, '..', '..', '..')
 const PACKAGE_JSON_PATH = join(ROOT_DIR, 'package.json')
 const RUN_DIST_PATH = join(ROOT_DIR, 'scripts', 'run_dist.mjs')
@@ -41,8 +52,36 @@ describe('native module packaging', () => {
         expect(dist_dir_tokens).toEqual(['node', 'scripts/run_dist.mjs', '--dir'])
 
         const build_step_index = run_dist.search(/['"]run['"]\s*,\s*['"]build['"]/)
-        const electron_builder_index = run_dist.search(/\[\s*npx_cmd\s*,\s*\[[\s\S]*?['"]electron-builder['"][\s\S]*?is_dir[\s\S]*?['"]--dir['"][\s\S]*?\]\s*\]/)
+        const electron_builder_index = run_dist.search(
+            /\[\s*npx_cmd\s*,\s*\[[\s\S]*?['"]electron-builder['"][\s\S]*?is_dir[\s\S]*?['"]--dir['"][\s\S]*?\]\s*\]/,
+        )
         expect(build_step_index).toBeGreaterThanOrEqual(0)
         expect(electron_builder_index).toBeGreaterThan(build_step_index)
+    })
+
+    it('passes always-start only after a successful dist build', () => {
+        expect(typed_restart_args(false, true)).toEqual(['scripts/restart_dist_app.mjs', '--always'])
+        expect(typed_restart_args(false, false)).toEqual(['scripts/restart_dist_app.mjs'])
+        expect(typed_restart_args(true, true)).toEqual(['scripts/restart_dist_app.mjs', '--dir', '--always'])
+        expect(typed_restart_args(true, false)).toEqual(['scripts/restart_dist_app.mjs', '--dir'])
+    })
+
+    it('starts on Windows after a successful dist or previous release close', () => {
+        expect(typed_should_start_app('win32', true, false)).toBe(true)
+        expect(typed_should_start_app('win32', false, true)).toBe(true)
+        expect(typed_should_start_app('win32', false, false)).toBe(false)
+        expect(typed_should_start_app('linux', true, true)).toBe(false)
+        expect(typed_should_start_app('darwin', true, true)).toBe(false)
+    })
+
+    it('prefers the matching packaged app for dist and dist:dir outputs', () => {
+        expect(typed_app_candidates('/repo', 'release', 'Omni Pot', '1.2.3', false)).toEqual([
+            join('/repo', 'release', 'Omni Pot 1.2.3.exe'),
+            join('/repo', 'release', 'win-unpacked', 'Omni Pot.exe'),
+        ])
+        expect(typed_app_candidates('/repo', 'release', 'Omni Pot', '1.2.3', true)).toEqual([
+            join('/repo', 'release', 'win-unpacked', 'Omni Pot.exe'),
+            join('/repo', 'release', 'Omni Pot 1.2.3.exe'),
+        ])
     })
 })

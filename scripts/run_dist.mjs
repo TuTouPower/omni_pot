@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import process from 'node:process'
+import { pathToFileURL } from 'node:url'
 
 const use_shell = process.platform === 'win32'
 const npm_cmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
@@ -16,21 +17,30 @@ function run(command, args) {
     return process.exitCode === undefined
 }
 
-try {
-    const steps = [
-        [npm_cmd, ['run', 'dist:check-locks']],
-        ['node', ['scripts/ensure_node_abi.mjs']],
-        [npm_cmd, ['run', 'build:chinese-dict']],
-        [npm_cmd, ['run', 'build:cc-cedict']],
-        [npm_cmd, ['run', 'build']],
-        [npm_cmd, ['run', 'dist:check-locks']],
-        [npx_cmd, ['electron-builder', ...(is_dir ? ['--dir'] : []), '-c.win.signAndEditExecutable=false']],
-    ]
+export function restart_args(is_dir, completed_ok) {
+    return ['scripts/restart_dist_app.mjs', ...(is_dir ? ['--dir'] : []), ...(completed_ok ? ['--always'] : [])]
+}
 
-    for (const [command, args] of steps) {
-        const ok = run(command, args)
-        if (!ok) break
+function main() {
+    let completed_ok = false
+
+    try {
+        const steps = [
+            [npm_cmd, ['run', 'dist:check-locks']],
+            ['node', ['scripts/ensure_node_abi.mjs']],
+            [npm_cmd, ['run', 'build:chinese-dict']],
+            [npm_cmd, ['run', 'build:cc-cedict']],
+            [npm_cmd, ['run', 'build']],
+            [npm_cmd, ['run', 'dist:check-locks']],
+            [npx_cmd, ['electron-builder', ...(is_dir ? ['--dir'] : []), '-c.win.signAndEditExecutable=false']],
+        ]
+
+        completed_ok = steps.every(([command, args]) => run(command, args))
+    } finally {
+        run('node', restart_args(is_dir, completed_ok))
     }
-} finally {
-    run('node', ['scripts/restart_dist_app.mjs', ...(is_dir ? ['--dir'] : [])])
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+    main()
 }
