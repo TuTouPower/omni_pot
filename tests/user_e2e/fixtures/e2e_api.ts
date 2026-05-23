@@ -102,6 +102,10 @@ export class E2eApi {
         return request(this.port, 'GET', '/config') as Promise<Record<string, unknown>>
     }
 
+    async requestExternal<T>(method: string, path: string, body?: unknown): Promise<T> {
+        return request(this.port, method, path, body) as Promise<T>
+    }
+
     async openWindow(label: string): Promise<{ success: boolean; error?: string }> {
         return this.request('POST', '/e2e/open-window', { label }) as Promise<{ success: boolean; error?: string }>
     }

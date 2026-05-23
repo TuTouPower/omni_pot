@@ -30,7 +30,7 @@ test.describe('@core external HTTP API', () => {
         expect(config.translate_target_language).toBe('zh_cn')
         expect(config.translate_service_list).toEqual(['bing@default', 'deepl@default', 'mymemory@default'])
         expect(config.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
-        expect(config.dictionary_service_list).toEqual(['chinese_dictionary@default', 'ecdict@default'])
+        expect(config.dictionary_service_list).toEqual(['chinese_dictionary@default'])
         expect(config.webdav_password).toBe('[redacted]')
         expect(config.service_instances).toMatchObject({
             'bing@default': { serviceKey: 'bing', config: {} },
@@ -44,5 +44,22 @@ test.describe('@core external HTTP API', () => {
         const response = await omni.api.recognize_via_external_api()
 
         expect(response).toEqual({ success: true, mode: 'recognize' })
+    })
+
+    test('POST /dict accepts text and focuses dict window', async ({ omni }) => {
+        const response = await omni.api.requestExternal<{ success: boolean }>('POST', '/dict', { text: 'hello' })
+
+        expect(response.success).toBe(true)
+        await expect.poll(async () => (await omni.api.windowState('dict')).visible, { timeout: 10_000 }).toBe(true)
+    })
+
+    test('GET /history returns paginated history', async ({ omni }) => {
+        const response = await omni.api.requestExternal<{ success: boolean; data: unknown[]; page: number; page_size: number; total: number }>('GET', '/history?page=1&page_size=5')
+
+        expect(response.success).toBe(true)
+        expect(typeof response.total).toBe('number')
+        expect(Array.isArray(response.data)).toBe(true)
+        expect(response.page).toBe(1)
+        expect(response.page_size).toBe(5)
     })
 })
