@@ -179,8 +179,8 @@ test.describe('@ui translate behavior settings', () => {
 
             const dict_result = await omni.api.triggerHotkey('hotkey_selection_dictionary', '')
             expect(dict_result.success).toBe(true)
-            const dict = await omni.dict()
-            await expect(dict.selectionEmptyNotice()).toContainText('未读取到选中的文本')
+            const dict_page = await omni.waitForWindow(/#dict/)
+            await expect(dict_page.getByTestId('selection-empty-notice')).toHaveCount(0)
         } finally {
             await omni.stop()
         }

@@ -16,6 +16,7 @@ import type { ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
 
 const log = create_logger('recognize')
+const QRCODE_INSTANCE_KEY = 'qrcode@default'
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -313,6 +314,7 @@ export default function RecognizeWindow(): React.ReactElement {
     const [isRecognizing, setIsRecognizing] = useState(false)
     const [isTranslating, setIsTranslating] = useState(false)
     const [recognizeShowId, setRecognizeShowId] = useState(0)
+    const [qr_detected, setQrDetected] = useState(false)
     const [effectiveTargetLang, setEffectiveTargetLang] = useState<LanguageCode | null>(null)
     const [detectedSourceLang, setDetectedSourceLang] = useState<LanguageCode | null>(null)
 
@@ -332,6 +334,7 @@ export default function RecognizeWindow(): React.ReactElement {
             setImageBase64(base64)
             setRecognizedText(next_text)
             setTranslatedText('')
+            setQrDetected(false)
             setEffectiveTargetLang(null)
             setDetectedSourceLang(null)
             setMode(m === 'translate' ? 'translate' : 'recognize')
@@ -355,7 +358,8 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [])
 
     const service_instances = config.service_instances
-    const service_list = config.recognize_service_list.filter((instance_key) => get_service_config(service_instances, instance_key).enable !== false)
+    const base_service_list = config.recognize_service_list.filter((instance_key) => get_service_config(service_instances, instance_key).enable !== false)
+    const service_list = qr_detected && !base_service_list.includes(QRCODE_INSTANCE_KEY) ? [...base_service_list, QRCODE_INSTANCE_KEY] : base_service_list
 
     // Build OCR engine options from service list
     const ocr_engine_options = service_list.map((instanceKey) => {
@@ -381,7 +385,7 @@ export default function RecognizeWindow(): React.ReactElement {
         label: native_language_name(t, code),
     }))
 
-    const effectiveService = selectedService && service_list.includes(selectedService) ? selectedService : service_list[0] || ''
+    const effectiveService = qr_detected ? QRCODE_INSTANCE_KEY : (selectedService && service_list.includes(selectedService) ? selectedService : service_list[0] || '')
     const effectiveServiceKey = effectiveService ? getServiceKey(effectiveService) : ''
     const effectiveMeta = effectiveServiceKey ? (OCR_META[effectiveServiceKey] ?? null) : null
 
@@ -483,6 +487,7 @@ export default function RecognizeWindow(): React.ReactElement {
             if (ocrRequestIdRef.current !== requestId) return
             if (qr) {
                 log.info('ocr: auto-detected QR code')
+                setQrDetected(true)
                 const next_text = handleNormalizeText(qr)
                 setRecognizedText(next_text)
                 if (config.recognize_auto_copy && next_text) {
@@ -496,6 +501,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 return
             }
 
+            setQrDetected(false)
             const lang = (selectedLanguage || config.recognize_language) as LanguageCode
             const instance_key = effectiveService
             if (!instance_key) return

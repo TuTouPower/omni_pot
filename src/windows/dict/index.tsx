@@ -236,7 +236,6 @@ export default function DictWindow(): React.ReactElement {
     const setConfig = useConfigStore((s) => s.set)
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
-    const [selection_notice, setSelectionNotice] = useState(false)
     const [importing, setImporting] = useState(false)
     const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
     const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
@@ -264,7 +263,6 @@ export default function DictWindow(): React.ReactElement {
         const trimmed = text.trim()
         if (!trimmed) return
 
-        setSelectionNotice(false)
         const request_id = lookup_request_ref.current + 1
         lookup_request_ref.current = request_id
         setWord(trimmed)
@@ -329,7 +327,6 @@ export default function DictWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.text.onDictSelectionEmpty(() => {
             lookup_request_ref.current += 1
-            setSelectionNotice(true)
             setWord('')
             setIsLoading(false)
             clearResults()
@@ -564,13 +561,6 @@ export default function DictWindow(): React.ReactElement {
                         </button>
                     </div>
                 </div>
-
-                {/* Empty selection feedback */}
-                {selection_notice && (
-                    <div className="card" data-testid="selection-empty-notice" style={{ padding: '12px 14px', color: 'var(--text-dim)', fontSize: 13 }}>
-                        {t('selection.no_text')}
-                    </div>
-                )}
 
                 {/* Dictionary not ready */}
                 {dictReady === false && (

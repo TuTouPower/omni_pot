@@ -33,9 +33,6 @@
     "source_placeholder": "Enter text to translate...",
     "translation_failed": "Translation failed",
     "preview": "Preview",
-    "selection": {
-        "no_text": "No selected text was found. Select text before triggering the hotkey."
-    },
     "result": {
         "tts": "Read aloud",
         "copy": "Copy",

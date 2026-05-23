@@ -100,7 +100,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     const welcomeDismissed = useConfigStore((s) => s.config.welcome_dismissed)
     const [forceShowSource, setForceShowSource] = useState(false)
-    const [selection_notice, setSelectionNotice] = useState(false)
+    const [selection_empty, setSelectionEmpty] = useState(false)
     const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
     const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -272,7 +272,7 @@ export default function TranslateWindow(): React.ReactElement {
 
             const nextText = prepareIncomingText(text)
 
-            setSelectionNotice(false)
+            setSelectionEmpty(false)
             setSourceText(nextText)
             setForceShowSource(false)
             schedule_translate(nextText)
@@ -283,7 +283,7 @@ export default function TranslateWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateSelectionEmpty(() => {
             cancel_scheduled_translate()
-            setSelectionNotice(true)
+            setSelectionEmpty(true)
             setSourceText('')
             setDetectedLanguage(null)
             clearResults()
@@ -295,7 +295,7 @@ export default function TranslateWindow(): React.ReactElement {
         const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
-            setSelectionNotice(false)
+            setSelectionEmpty(false)
             setSourceText(nextText)
             setForceShowSource(false)
             schedule_translate(nextText)
@@ -307,7 +307,7 @@ export default function TranslateWindow(): React.ReactElement {
         const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
-            setSelectionNotice(false)
+            setSelectionEmpty(false)
             setSourceText(nextText)
             setForceShowSource(false)
             schedule_translate(nextText)
@@ -318,7 +318,7 @@ export default function TranslateWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.text.onInputTranslate(() => {
             cancel_scheduled_translate()
-            setSelectionNotice(false)
+            setSelectionEmpty(false)
             setSourceText('')
             setForceShowSource(true)
             setDetectedLanguage(null)
@@ -329,7 +329,7 @@ export default function TranslateWindow(): React.ReactElement {
     }, [cancel_scheduled_translate, setSourceText, setDetectedLanguage, clearResults])
 
     const showSource = forceShowSource || !hideSource
-    const show_welcome_empty = sourceText.trim() === '' && !forceShowSource && !welcomeDismissed && !selection_notice
+    const show_welcome_empty = sourceText.trim() === '' && !forceShowSource && !welcomeDismissed && !selection_empty
 
     useEffect(() => {
         window.electronAPI.ready('translate')
@@ -584,11 +584,6 @@ export default function TranslateWindow(): React.ReactElement {
                         onDetectedLanguageClick={handleSwapLanguages}
                         inputRef={inputRef}
                     />
-                )}
-                {selection_notice && (
-                    <div className="card" data-testid="selection-empty-notice" style={{ padding: '12px 14px', color: 'var(--text-dim)', fontSize: 13 }}>
-                        {t('selection.no_text')}
-                    </div>
                 )}
                 {!hideLanguage && !show_welcome_empty && <LanguageArea onSwap={handleSwapLanguages} />}
                 {show_welcome_empty && (

@@ -83,10 +83,6 @@ export class DictPage {
         return this.page.getByTestId('dict-source-tag')
     }
 
-    selectionEmptyNotice(): Locator {
-        return this.page.getByTestId('selection-empty-notice')
-    }
-
     // Titlebar
     clickPin(): Promise<void> {
         return this.pinButton().click()

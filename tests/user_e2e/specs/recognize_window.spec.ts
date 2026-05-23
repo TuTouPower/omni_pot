@@ -39,12 +39,13 @@ const qrcode_config = {
 const qrcode_auto_detect_config = {
     app_language: 'zh_cn',
     recognize_engine: 'baidu_ocr@default',
-    recognize_service_list: ['baidu_ocr@default'],
+    recognize_service_list: ['baidu_ocr@default', 'qrcode@default'],
     service_instances: {
         'baidu_ocr@default': {
             serviceKey: 'baidu_ocr',
             config: { client_id: 'enabled', client_secret: 'enabled' },
         },
+        'qrcode@default': { serviceKey: 'qrcode', config: {} },
     },
 }
 
@@ -249,11 +250,18 @@ test.describe('@ui recognize window', () => {
         try {
             const recognize = await open_recognize_with_image(omni, qrcode_image, '')
 
-            await expect(recognize.engineSelect()).toContainText('百度文字识别')
+            await expect(recognize.engineSelect()).toContainText('二维码')
             await expect.poll(async () => (await recognize.getText()).length > 0,
                 { timeout: 30_000 }).toBe(true)
             await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
             await expect.poll(async () => recognize.page.evaluate(() => (window as unknown as { __baidu_ocr_request_count?: number }).__baidu_ocr_request_count ?? 0)).toBe(0)
+
+            const non_qr_image = await sample_ocr_image(recognize.page)
+            await recognize.page.evaluate(({ image }) => window.electronAPI.ocr.openRecognize(image, '', 'recognize'), { image: non_qr_image })
+            await expect(recognize.engineSelect()).toContainText('百度文字识别')
+            await expect.poll(async () => (await recognize.getText()).length > 0,
+                { timeout: 30_000 }).toBe(true)
+            await expect(recognize.text()).toHaveValue('普通 OCR 结果不应显示')
         } finally {
             await omni.stop()
         }

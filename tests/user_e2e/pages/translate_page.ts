@@ -90,10 +90,6 @@ export class TranslatePage {
         return this.page.getByTestId('result-error')
     }
 
-    selectionEmptyNotice(): Locator {
-        return this.page.getByTestId('selection-empty-notice')
-    }
-
     // Titlebar
     clickPin(): Promise<void> {
         return this.page.getByTestId('titlebar-pin').click()
