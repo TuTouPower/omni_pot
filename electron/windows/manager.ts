@@ -9,6 +9,14 @@ import { get_recognize_window_options } from './recognize_options'
 import { get_dict_window_options, attach_dict_resize_persistence } from './dict_options'
 import { log } from '../log'
 
+function debounce<F extends (...args: unknown[]) => void>(fn: F, ms: number): F {
+    let timer: ReturnType<typeof setTimeout> | null = null
+    return ((...args: unknown[]) => {
+        if (timer) clearTimeout(timer)
+        timer = setTimeout(() => { fn(...args); timer = null }, ms)
+    }) as unknown as F
+}
+
 const log_wm = log.scope('wm')
 
 export function log_renderer_console_message(label: WindowLabel, level: number, message: string): void {
@@ -126,6 +134,8 @@ export class WindowManager {
       // Other windows auto-close unless pinned / always-on-top
       const pinned = win.isAlwaysOnTop()
         || (opts.label === WindowLabel.TRANSLATE && getConfig('translate_pinned'))
+        || (opts.label === WindowLabel.DICT && getConfig('dict_pinned'))
+        || (opts.label === WindowLabel.RECOGNIZE && getConfig('recognize_pinned'))
       if (!pinned) {
         win.close()
       }
@@ -133,6 +143,20 @@ export class WindowManager {
 
     win.webContents.on('console-message', (_event, level, message) => {
       log_renderer_console_message(opts.label, level, message)
+    })
+
+    win.webContents.on('render-process-gone', (_event, details) => {
+      log_wm.error('render-process-gone:', opts.label, details.reason)
+      if (details.reason !== 'clean-exit') {
+        // Renderer crashed (white screen) — close the dead window so next use creates a fresh one
+        if (!win.isDestroyed()) {
+          try { win.destroy() } catch { /* already gone */ }
+        }
+      }
+    })
+
+    win.on('unresponsive', () => {
+      log_wm.warn('window unresponsive:', opts.label)
     })
 
     if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
@@ -149,7 +173,8 @@ export class WindowManager {
     // Attach resize persistence for windows that support it
     if (opts.label === WindowLabel.TRANSLATE) {
       if (getConfig('translate_remember_window_size') && !win.listenerCount('resize')) {
-        win.on('resize', () => { const [w, h] = win.getSize(); setConfig('translate_window_width', w); setConfig('translate_window_height', h) })
+        const persistSize = debounce(() => { if (win.isDestroyed()) return; const [w, h] = win.getSize(); setConfig('translate_window_width', w); setConfig('translate_window_height', h) }, 300)
+        win.on('resize', persistSize)
       }
     }
     if (opts.label === WindowLabel.DICT) {
@@ -157,7 +182,8 @@ export class WindowManager {
     }
     if (opts.label === WindowLabel.RECOGNIZE) {
       if (getConfig('recognize_remember_window_size') && !win.listenerCount('resize')) {
-        win.on('resize', () => { const [w, h] = win.getSize(); setConfig('recognize_window_width', w); setConfig('recognize_window_height', h) })
+        const persistSize = debounce(() => { if (win.isDestroyed()) return; const [w, h] = win.getSize(); setConfig('recognize_window_width', w); setConfig('recognize_window_height', h) }, 300)
+        win.on('resize', persistSize)
       }
     }
 
