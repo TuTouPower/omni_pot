@@ -12,6 +12,7 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import type { TranslationTestServer } from '../fixtures/translation_test_server'
+import type { Page } from '@playwright/test'
 
 const RESIZE_TOLERANCE_PX = 4
 
@@ -39,16 +40,19 @@ test.describe('@ui translate window constraints', () => {
         const omni = await AppFixture.start({ config: single_service_config })
         try {
             const translate = await omni.translate()
-            const page = translate['page']
+            const page = (translate as unknown as { page: Page }).page
 
             // Stub setContentHeight so fit_height cannot override our resize.
             await page.evaluate(() => {
-                const api = (window as any).electronAPI
+                type TestElectronApi = Window['electronAPI'] & {
+                    __orig_setContentHeight?: Window['electronAPI']['window']['setContentHeight']
+                }
+                const api = window.electronAPI as TestElectronApi
                 api.__orig_setContentHeight = api.window.setContentHeight.bind(api.window)
                 api.window.setContentHeight = () => Promise.resolve()
             })
 
-            await translate.resizeWindowTo(430, 2000)
+            await page.evaluate(() => window.electronAPI.window.setContentSize(430, 2000))
 
             // The BrowserWindow clamps to maxHeight. Read the actual height.
             const bounds = (await omni.api.windowState('translate')).bounds
@@ -57,7 +61,10 @@ test.describe('@ui translate window constraints', () => {
 
             // Restore so teardown is clean.
             await page.evaluate(() => {
-                const api = (window as any).electronAPI
+                type TestElectronApi = Window['electronAPI'] & {
+                    __orig_setContentHeight?: Window['electronAPI']['window']['setContentHeight']
+                }
+                const api = window.electronAPI as TestElectronApi
                 if (api.__orig_setContentHeight) {
                     api.window.setContentHeight = api.__orig_setContentHeight
                 }

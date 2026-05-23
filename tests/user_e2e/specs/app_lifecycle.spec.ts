@@ -50,8 +50,8 @@ test.describe('@core app lifecycle', () => {
             expect(translate_state.bounds).not.toBeNull()
             expect((translate_state.bounds?.width ?? 0)).toBeGreaterThanOrEqual(430 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
             expect((translate_state.bounds?.width ?? 0)).toBeLessThanOrEqual(430 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
-            expect((translate_state.bounds?.height ?? 0)).toBeGreaterThanOrEqual(360 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
-            expect((translate_state.bounds?.height ?? 0)).toBeLessThanOrEqual(360 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.height ?? 0)).toBeGreaterThanOrEqual(420 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.height ?? 0)).toBeLessThanOrEqual(420 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
         } finally {
             await omni.stop()
         }

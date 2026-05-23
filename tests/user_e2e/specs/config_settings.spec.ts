@@ -54,7 +54,7 @@ test.describe('@ui config settings window', () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', app_primary_color: '#bad', transparent: true, dev_mode: true, translate_always_on_top: true } })
 
         try {
-            const translate = await omni.translate()
+            let translate = await omni.translate()
             await translate.clickPin()
             const config = await omni.openConfig()
 
@@ -99,6 +99,8 @@ test.describe('@ui config settings window', () => {
             await expect(config.setting('cfg-transparent')).toBeVisible()
             await config.toggle('cfg-transparent')
             await expect.poll(async () => await config.documentTransparent()).toBe('false')
+            await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(false)
+            translate = await omni.translate()
             await expect.poll(async () => await translate.documentTransparent()).toBe('false')
             await expect_config(omni, 'transparent', false)
 
@@ -164,7 +166,7 @@ test.describe('@ui config settings window', () => {
             await expect_config(omni, 'hide_source', true)
             await expect_config(omni, 'hide_language', true)
             await expect_config(omni, 'translate_hide_window', true)
-            await expect_config(omni, 'translate_remember_window_size', true)
+            await expect_config(omni, 'translate_remember_window_size', false)
 
             await config.openSection('recognize')
             await expect(config.setting('cfg-recognize_close_on_blur')).toHaveCount(0)

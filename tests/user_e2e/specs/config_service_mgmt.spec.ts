@@ -5,7 +5,7 @@ const SERVICE_CATEGORIES = [
     ['translate_service_list', '翻译', ['Bing', 'DeepL', 'MyMemory']],
     ['dictionary_service_list', '中文词典', ['中文词典', 'CC-CEDICT']],
     ['english_dictionary_service_list', '英文词典', ['Cambridge Dict', 'CC-CEDICT']],
-    ['recognize_service_list', '识别', ['Tesseract']],
+    ['recognize_service_list', '识别', ['Tesseract', 'System OCR', 'QR Code']],
     ['tts_service_list', '朗读', ['System TTS']],
     ['collection_service_list', '收藏', []],
 ] as const

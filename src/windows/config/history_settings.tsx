@@ -114,7 +114,7 @@ export default function HistorySettings(): React.ReactElement {
                 <span style={{ fontSize: 12.5, color: !historyDisable ? 'var(--text)' : 'var(--text-dim)', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('history.enable', { defaultValue: '启用' })}</span>
                 <ConfigSwitch on={!historyDisable} onChange={(v) => { setHistoryDisable(!v); }} testId="cfg-history_disable" />
                 <div style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px', flexShrink: 0 }} />
-                <div className="field" style={{ flex: '1 1 120px', minWidth: 0, opacity: disabled ? 0.5 : 1 }}>
+                <div className="field" style={{ flex: '1 1 120px', minWidth: 96, opacity: disabled ? 0.5 : 1 }}>
                     <Icons.Search size={13} style={{ color: 'var(--text-mute)', flexShrink: 0 }} />
                     <input
                         data-testid="history-search"

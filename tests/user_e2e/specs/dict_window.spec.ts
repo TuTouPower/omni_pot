@@ -41,6 +41,7 @@ test.describe('@ui dict window', () => {
         const omni = await AppFixture.start({
             init_script: free_dictionary_init_script,
             config: {
+                app_language: 'zh_cn',
                 dictionary_service_list: [],
                 english_dictionary_service_list: ['free_dictionary@default'],
                 collection_service_list: ['anki@default'],

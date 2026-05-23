@@ -160,23 +160,26 @@ export class WindowManager {
 
     win.on('closed', () => {
       log_wm.info('window closed:', opts.label)
-      this.byLabel.delete(opts.label)
+      const current = this.byLabel.get(opts.label)
+      if (current?.id === win.id) {
+        this.byLabel.delete(opts.label)
+        this.readyLabels.delete(opts.label)
+        this.pendingQueue.delete(opts.label)
+
+        // Reset per-window pin/topmost state so next open starts fresh
+        if (opts.label === WindowLabel.TRANSLATE) {
+          setConfig('translate_pinned', false)
+          setConfig('translate_always_on_top', false)
+        }
+        if (opts.label === WindowLabel.DICT) {
+          setConfig('dict_always_on_top', false)
+        }
+        if (opts.label === WindowLabel.RECOGNIZE) {
+          setConfig('recognize_always_on_top', false)
+        }
+      }
       this.labelById.delete(win.id)
       this.transparentById.delete(win.id)
-      this.readyLabels.delete(opts.label)
-      this.pendingQueue.delete(opts.label)
-
-      // Reset per-window pin/topmost state so next open starts fresh
-      if (opts.label === WindowLabel.TRANSLATE) {
-        setConfig('translate_pinned', false)
-        setConfig('translate_always_on_top', false)
-      }
-      if (opts.label === WindowLabel.DICT) {
-        setConfig('dict_always_on_top', false)
-      }
-      if (opts.label === WindowLabel.RECOGNIZE) {
-        setConfig('recognize_always_on_top', false)
-      }
     })
 
     this.byLabel.set(opts.label, win)
@@ -247,14 +250,13 @@ export class WindowManager {
   }
 
   rebuildForTransparencyChange(): void {
-    const labels_to_rebuild: WindowLabel[] = [
-      WindowLabel.TRANSLATE, WindowLabel.RECOGNIZE, WindowLabel.DICT, WindowLabel.CONFIG,
-    ]
-    const options_map: Record<string, () => WindowOptions> = {
+    const labels_to_rebuild = [
+      WindowLabel.TRANSLATE, WindowLabel.RECOGNIZE, WindowLabel.DICT,
+    ] as const
+    const options_map: Record<(typeof labels_to_rebuild)[number], () => WindowOptions> = {
       [WindowLabel.TRANSLATE]: get_translate_window_options,
       [WindowLabel.RECOGNIZE]: get_recognize_window_options,
       [WindowLabel.DICT]: get_dict_window_options,
-      [WindowLabel.CONFIG]: () => ({ label: WindowLabel.CONFIG, width: 720, height: 740 }),
     }
 
     for (const label of labels_to_rebuild) {
@@ -262,9 +264,11 @@ export class WindowManager {
       if (!win) continue
       log_wm.info('rebuilding window for transparency change:', label)
       const bounds = win.getBounds()
+      this.byLabel.delete(label)
+      this.readyLabels.delete(label)
+      this.pendingQueue.delete(label)
       win.close()
-      const opts = options_map[label]?.()
-      if (!opts) continue
+      const opts = options_map[label]()
       const rebuilt = this.createWindow(opts)
       rebuilt.setBounds(bounds)
     }
