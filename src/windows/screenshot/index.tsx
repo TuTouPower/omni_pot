@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import jsQR from 'jsqr'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
@@ -6,6 +7,25 @@ import { map_cover_rect_to_image_rect } from './crop'
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
+}
+
+async function try_qr_decode(base64: string): Promise<string | null> {
+    const img = new Image()
+    const data = await new Promise<ImageData>((resolve, reject) => {
+        img.onload = () => {
+            const canvas = document.createElement('canvas')
+            canvas.width = img.width
+            canvas.height = img.height
+            const ctx = canvas.getContext('2d')
+            if (!ctx) { reject(new Error('canvas')); return }
+            ctx.drawImage(img, 0, 0)
+            resolve(ctx.getImageData(0, 0, canvas.width, canvas.height))
+        }
+        img.onerror = () => { reject(new Error('image')); }
+        img.src = `data:image/png;base64,${base64}`
+    })
+    const code = jsQR(data.data, data.width, data.height)
+    return code?.data ?? null
 }
 
 interface SelectionRect {
@@ -104,20 +124,27 @@ export default function ScreenshotWindow(): React.ReactElement {
             const language = config.recognize_language as LanguageCode
 
             let full_text = ''
-            for (const instance_key of service_list) {
-                const { getServiceKey } = await import('@shared/types/service')
-                const service_key = getServiceKey(instance_key)
-                const service = ocrServiceRegistry.get(service_key)
-                if (!service) continue
-                const instance_config = get_service_config(service_instances, instance_key)
-                try {
-                    const result = await service.recognize(cropped, language, instance_config)
-                    if (result) {
-                        full_text = result
-                        break
+
+            // QR auto-detect before running OCR engines
+            const qr = await try_qr_decode(cropped).catch(() => null)
+            if (qr) {
+                full_text = qr
+            } else {
+                for (const instance_key of service_list) {
+                    const { getServiceKey } = await import('@shared/types/service')
+                    const service_key = getServiceKey(instance_key)
+                    const service = ocrServiceRegistry.get(service_key)
+                    if (!service) continue
+                    const instance_config = get_service_config(service_instances, instance_key)
+                    try {
+                        const result = await service.recognize(cropped, language, instance_config)
+                        if (result) {
+                            full_text = result
+                            break
+                        }
+                    } catch {
+                        continue
                     }
-                } catch {
-                    continue
                 }
             }
 

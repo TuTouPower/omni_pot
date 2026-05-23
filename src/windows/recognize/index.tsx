@@ -9,6 +9,7 @@ import { detectLanguage } from '../../services/detect'
 import { native_language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
 import { LANGUAGE_CODES } from '@shared/types/language'
+import jsQR from 'jsqr'
 import { create_logger } from '../../utils/logger'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
@@ -18,6 +19,25 @@ const log = create_logger('recognize')
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
+}
+
+async function try_qr_decode(base64: string): Promise<string | null> {
+    const img = new Image()
+    const data = await new Promise<ImageData>((resolve, reject) => {
+        img.onload = () => {
+            const canvas = document.createElement('canvas')
+            canvas.width = img.width
+            canvas.height = img.height
+            const ctx = canvas.getContext('2d')
+            if (!ctx) { reject(new Error('canvas')); return }
+            ctx.drawImage(img, 0, 0)
+            resolve(ctx.getImageData(0, 0, canvas.width, canvas.height))
+        }
+        img.onerror = () => { reject(new Error('image')); }
+        img.src = `data:image/png;base64,${base64}`
+    })
+    const code = jsQR(data.data, data.width, data.height)
+    return code?.data ?? null
 }
 
 // OCR engine metadata (subset of SVC_META for action bar)
@@ -457,22 +477,34 @@ export default function RecognizeWindow(): React.ReactElement {
         setIsRecognizing(true)
         setTranslatedText('')
 
-        const lang = (selectedLanguage || config.recognize_language) as LanguageCode
-        const instance_key = effectiveService
-        if (!instance_key) {
-            setIsRecognizing(false)
-            return
-        }
-
-        const svc_key = getServiceKey(instance_key)
-        const service = ocrServiceRegistry.get(svc_key)
-        if (!service) {
-            setIsRecognizing(false)
-            return
-        }
-
-        const instance_config: ServiceConfig = get_service_config(service_instances, instance_key)
         try {
+            // QR auto-detect: fast pixel scan before running the selected OCR engine
+            const qr = await try_qr_decode(imageBase64)
+            if (ocrRequestIdRef.current !== requestId) return
+            if (qr) {
+                log.info('ocr: auto-detected QR code')
+                const next_text = handleNormalizeText(qr)
+                setRecognizedText(next_text)
+                if (config.recognize_auto_copy && next_text) {
+                    await window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
+                }
+                if (mode === 'translate' && next_text) {
+                    setIsTranslating(true)
+                    await doTranslate(next_text, 'auto', requestId)
+                    setIsTranslating(false)
+                }
+                return
+            }
+
+            const lang = (selectedLanguage || config.recognize_language) as LanguageCode
+            const instance_key = effectiveService
+            if (!instance_key) return
+
+            const svc_key = getServiceKey(instance_key)
+            const service = ocrServiceRegistry.get(svc_key)
+            if (!service) return
+
+            const instance_config: ServiceConfig = get_service_config(service_instances, instance_key)
             log.info('ocr start: engine=%s, lang=%s', svc_key, lang)
             const start = Date.now()
             const result = await service.recognize(imageBase64, lang, instance_config)
@@ -483,14 +515,13 @@ export default function RecognizeWindow(): React.ReactElement {
             if (config.recognize_auto_copy && next_text) {
                 await window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
             }
-            // Auto-translate in translate mode after OCR completes
             if (mode === 'translate' && next_text) {
                 setIsTranslating(true)
                 await doTranslate(next_text, lang, requestId)
                 setIsTranslating(false)
             }
         } catch (err) {
-            log.error('ocr failed: engine=%s, error=%s', svc_key, err instanceof Error ? err.message : String(err))
+            log.error('ocr failed: error=%s', err instanceof Error ? err.message : String(err))
         }
         if (ocrRequestIdRef.current === requestId) {
             setIsRecognizing(false)
