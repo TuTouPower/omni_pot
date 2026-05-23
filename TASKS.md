@@ -69,6 +69,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 - [x] **设置文字识别开关改名**：把"删除换行"改成"自动去除换行"，把"复制"改成"自动复制结果"。
 - [x] **设置页"关于"和"日志"样式对齐 demo**：当前实现与设计稿 `docs/design/omni-pot/project/windows/config.jsx`（PageAbout）不一致。
 - [x] **服务器 API 测试补全**：`POST /dict` 和 `GET /history` 两个端点缺少 HTTP API 测试（已有 `POST /translate`、`POST /recognize`、`GET /config` 的覆盖）。
+- [x] **词典/文字识别窗口固定按钮 bug + 补测试**：主进程 `manager.ts` 的 blur 失焦关闭只检查了 `translate_pinned`，遗漏 `dict_pinned` 和 `recognize_pinned`，导致词典和文字识别窗口点固定后失焦仍然关闭。修 blur 逻辑并为词典、文字识别（含截图翻译）窗口补固定/置顶 e2e 测试（对齐 `translate_pin_topmost.spec.ts` 覆盖范围）。
 
 ---
 

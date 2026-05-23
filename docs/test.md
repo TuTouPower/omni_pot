@@ -264,6 +264,7 @@
 | `translate_welcome.spec.ts` | 欢迎空状态 |
 | `translate_titlebar.spec.ts` | 标题栏按钮（置顶、固定、关闭） |
 | `translate_pin_topmost.spec.ts` | 固定/置顶独立状态 |
+| `window_pin_topmost.spec.ts` | 词典/文字识别窗口固定/置顶独立状态 |
 | `translate_window_constraints.spec.ts` | 窗口尺寸、滚动、自适应高度 |
 | `translate_input_rows.spec.ts` | 输入框行数增长/上限 |
 | `translate_entry_merge.spec.ts` | 多次触发翻译的合并行为 |
