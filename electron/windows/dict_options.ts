@@ -20,11 +20,18 @@ export function get_dict_window_options(): WindowOptions {
     }
 }
 
+let resizeTimer: ReturnType<typeof setTimeout> | null = null
+
 export function attach_dict_resize_persistence(win: BrowserWindow): void {
     if (!getConfig('translate_remember_window_size') || win.listenerCount('resize')) return
     win.on('resize', () => {
-        const [width, height] = win.getSize()
-        setConfig('dict_window_width', width)
-        setConfig('dict_window_height', height)
+        if (resizeTimer) clearTimeout(resizeTimer)
+        resizeTimer = setTimeout(() => {
+            if (win.isDestroyed()) { resizeTimer = null; return }
+            const [width, height] = win.getSize()
+            setConfig('dict_window_width', width)
+            setConfig('dict_window_height', height)
+            resizeTimer = null
+        }, 300)
     })
 }
