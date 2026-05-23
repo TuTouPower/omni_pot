@@ -87,9 +87,11 @@ export const cambridgeDictService: TranslateService = {
                     const symbol_match = block.match(/class="[^"]*\bipa\b[^"]*"[^>]*>([^<]*)/)
                         ?? block.match(/class="pron[^"]*"[^>]*>\/([^<]*)/)
                     if (region_match && symbol_match) {
+                        const audio_src = block.match(/data-src-mp3="([^"]*)"/)
                         pronunciations.push({
                             region: regex_capture(region_match, 1).trim(),
-                            phonetic: regex_capture(symbol_match, 1).trim()
+                            phonetic: regex_capture(symbol_match, 1).trim(),
+                            audioUrl: audio_src ? regex_capture(audio_src, 1).trim() : undefined
                         })
                         if (pronunciations.length >= 2) break
                     }

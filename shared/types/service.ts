@@ -9,6 +9,7 @@ export interface ServiceConfig {
 export interface DictPronunciation {
   region: string
   phonetic: string
+  audioUrl?: string
 }
 
 export interface DictDefinition {

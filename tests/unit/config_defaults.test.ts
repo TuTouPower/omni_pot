@@ -81,10 +81,10 @@ describe('Config defaults', () => {
             'bing@default', 'deepl@default', 'mymemory@default'
         ])
         expect(DEFAULT_CONFIG.dictionary_service_list).toEqual([
-            'chinese_dictionary@default', 'ecdict@default'
+            'chinese_dictionary@default'
         ])
         expect(DEFAULT_CONFIG.english_dictionary_service_list).toEqual([
-            'cambridge_dict@default', 'ecdict@default'
+            'cambridge_dict@default'
         ])
         expect(DEFAULT_CONFIG.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
         expect(DEFAULT_CONFIG.tts_service_list).toEqual(['system_tts@default'])

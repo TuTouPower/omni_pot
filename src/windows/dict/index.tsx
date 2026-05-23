@@ -31,11 +31,12 @@ function dict_result_to_text(result: DictResult): string {
         .join('\n')
 }
 
-function SortableDictCard({ instanceKey, result, isLoading, isCollected, onCollect, collectionAvailable, collapsed, onToggleCollapse, onTts, ttsPlayingKey, ttsAvailable }: {
+function SortableDictCard({ instanceKey, result, isLoading, isCollected, onCollect, collectionAvailable, collapsed, onToggleCollapse, onTts, ttsPlayingKey, ttsAvailable, hidePosTag }: {
     instanceKey: string; result: DictResult | null | undefined; isLoading: boolean
     isCollected?: boolean; onCollect?: () => void; collectionAvailable?: boolean
     collapsed?: boolean; onToggleCollapse?: () => void
     onTts?: (text: string) => void; ttsPlayingKey?: string | null; ttsAvailable?: boolean
+    hidePosTag?: boolean
 }): React.ReactElement | null {
     const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
@@ -123,7 +124,18 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
                                     <span key={i} data-testid="dict-pronunciation" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                         {p.region && <span className="hint" style={{ fontSize: 11 }}>{p.region}</span>}
                                         <span className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>{p.phonetic}</span>
-                                        {ttsAvailable && onTts && (
+                                        {p.audioUrl && (
+                                            <button
+                                                className="ic-btn"
+                                                data-testid="dict-pron-audio-btn"
+                                                title={t('result.tts', { defaultValue: '朗读' })}
+                                                onClick={() => { const a = new Audio(p.audioUrl!); a.play().catch(() => undefined); }}
+                                                style={{ padding: 2 }}
+                                            >
+                                                <Icons.Volume size={12} />
+                                            </button>
+                                        )}
+                                        {!p.audioUrl && ttsAvailable && onTts && (
                                             <button
                                                 className="ic-btn"
                                                 data-testid="dict-pron-tts-btn"
@@ -144,7 +156,7 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
                                     {result.definitions.map((def, i) => (
-                                        <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
+                                        !hidePosTag && <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
                                     ))}
                                 </div>
                                 <div className="stack" style={{ gap: 10 }}>
@@ -155,7 +167,7 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
                                             </div>
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                    <span className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
+                                                    {!hidePosTag && <span className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>}
                                                     <span style={{ fontSize: 14, fontWeight: 500 }} data-testid="dict-meaning-primary">{def.meanings[0] ?? ''}</span>
                                                 </div>
                                                 {def.meanings.slice(1).map((m, mi) => (
@@ -578,6 +590,7 @@ export default function DictWindow(): React.ReactElement {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {activeList.map((instanceKey) => {
                                 const hasResult = Object.prototype.hasOwnProperty.call(results, instanceKey)
+                                const is_zh_dict = zhServiceList.includes(instanceKey)
                                 return (
                                     <SortableDictCard
                                         key={instanceKey}
@@ -589,9 +602,10 @@ export default function DictWindow(): React.ReactElement {
                                         collectionAvailable={collection_available}
                                         collapsed={collapsedKeys.has(instanceKey)}
                                         onToggleCollapse={() => { toggleCollapse(instanceKey); }}
-                                        onTts={handleTts}
-                                        ttsPlayingKey={ttsPlayingKey}
-                                        ttsAvailable={ttsAvailable}
+                                        onTts={is_zh_dict ? undefined : handleTts}
+                                        ttsPlayingKey={is_zh_dict ? null : ttsPlayingKey}
+                                        ttsAvailable={is_zh_dict ? false : ttsAvailable}
+                                        hidePosTag={is_zh_dict}
                                     />
                                 )
                             })}

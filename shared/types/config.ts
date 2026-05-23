@@ -159,8 +159,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   hotkey_selection_dictionary: '',
 
   translate_service_list: ['bing@default', 'deepl@default', 'mymemory@default'],
-  dictionary_service_list: ['chinese_dictionary@default', 'ecdict@default'],
-  english_dictionary_service_list: ['cambridge_dict@default', 'ecdict@default'],
+  dictionary_service_list: ['chinese_dictionary@default'],
+  english_dictionary_service_list: ['cambridge_dict@default'],
   recognize_service_list: ['tesseract@default', 'system@default', 'qrcode@default'],
   tts_service_list: ['system_tts@default'],
   collection_service_list: [],
