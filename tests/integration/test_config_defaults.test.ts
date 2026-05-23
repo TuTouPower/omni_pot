@@ -84,7 +84,7 @@ describe('Config defaults', () => {
         expect(DEFAULT_CONFIG.english_dictionary_service_list).toEqual([
             'cambridge_dict@default', 'ecdict@default'
         ])
-        expect(DEFAULT_CONFIG.recognize_service_list).toEqual(['tesseract@default'])
+        expect(DEFAULT_CONFIG.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
         expect(DEFAULT_CONFIG.tts_service_list).toEqual(['system_tts@default'])
         expect(DEFAULT_CONFIG.collection_service_list).toEqual([])
     })
