@@ -103,6 +103,24 @@ test.describe('@external external service health', () => {
         })
     }
 
+    test('Cambridge Dictionary returns pronunciations with audioUrl', async () => {
+        test.setTimeout(120_000)
+        const result = await cambridgeDictService.translate('hello', 'en', 'zh_cn', {})
+        expect(result).toEqual(expect.objectContaining({ type: 'dict' }))
+        const dict_result = result as { type: 'dict'; pronunciations: Array<{ audioUrl?: string }> }
+        expect(dict_result.pronunciations.length).toBeGreaterThan(0)
+        expect(dict_result.pronunciations[0].audioUrl).toBeTruthy()
+    })
+
+    test('Free Dictionary returns pronunciations with audioUrl', async () => {
+        test.setTimeout(120_000)
+        const result = await freeDictionaryService.translate('hello', 'en', 'zh_cn', {})
+        expect(result).toEqual(expect.objectContaining({ type: 'dict' }))
+        const dict_result = result as { type: 'dict'; pronunciations: Array<{ audioUrl?: string }> }
+        expect(dict_result.pronunciations.length).toBeGreaterThan(0)
+        expect(dict_result.pronunciations.some((p) => p.audioUrl)).toBe(true)
+    })
+
     test.skip('OCR, TTS, and detection external service placeholders stay here when public providers are added', () => {})
 
     // TTS is now provided by system_tts (Web Speech API → OS engine). It can

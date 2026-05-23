@@ -1,5 +1,5 @@
 import type { BrowserWindow } from 'electron'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const config_values = vi.hoisted(() => new Map<string, unknown>())
 const get_config = vi.hoisted(() => vi.fn((key: string) => config_values.get(key)))
@@ -26,9 +26,14 @@ function reset_config(): void {
 
 describe('window options', () => {
     beforeEach(() => {
+        vi.useFakeTimers()
         reset_config()
         get_config.mockClear()
         set_config.mockClear()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it('uses independent saved sizes for translate and dict windows', () => {
@@ -46,6 +51,7 @@ describe('window options', () => {
 
         attach_dict_resize_persistence(win)
         resize_handler?.()
+        vi.advanceTimersByTime(300)
 
         expect(set_config).toHaveBeenCalledWith('dict_window_width', 520)
         expect(set_config).toHaveBeenCalledWith('dict_window_height', 530)
