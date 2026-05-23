@@ -12,7 +12,7 @@ interface TitlebarProps {
     containerRef?: React.Ref<HTMLDivElement>
 }
 
-const btn_style: React.CSSProperties = {
+const btn_style = {
     width: 30,
     height: 30,
     borderRadius: 6,
@@ -22,9 +22,9 @@ const btn_style: React.CSSProperties = {
     background: 'transparent',
     border: 0,
     padding: 0,
-    WebkitAppRegion: 'no-drag' as const,
+    WebkitAppRegion: 'no-drag',
     cursor: 'pointer',
-}
+} as React.CSSProperties
 
 export function Titlebar({ alwaysOnTop, pinned, onToggleTopmost, onTogglePin, modeLabel, onClose, containerRef }: TitlebarProps): React.ReactElement {
     const { t } = useTranslation()
