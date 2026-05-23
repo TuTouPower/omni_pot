@@ -9,7 +9,6 @@ import { CSS } from '@dnd-kit/utilities'
 import { useDictStore } from '../../stores/dict_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
-import { ttsServiceRegistry } from '../../services/tts_registry'
 import { collectionServiceRegistry } from '../../services/index'
 import { detectLanguage } from '../../services/detect'
 import { native_language_name } from '../../i18n/language_names'
@@ -31,11 +30,10 @@ function dict_result_to_text(result: DictResult): string {
         .join('\n')
 }
 
-function SortableDictCard({ instanceKey, result, isLoading, isCollected, onCollect, collectionAvailable, collapsed, onToggleCollapse, onTts, ttsPlayingKey, ttsAvailable, hidePosTag }: {
+function SortableDictCard({ instanceKey, result, isLoading, isCollected, onCollect, collectionAvailable, collapsed, onToggleCollapse, hidePosTag }: {
     instanceKey: string; result: DictResult | null | undefined; isLoading: boolean
     isCollected?: boolean; onCollect?: () => void; collectionAvailable?: boolean
     collapsed?: boolean; onToggleCollapse?: () => void
-    onTts?: (text: string) => void; ttsPlayingKey?: string | null; ttsAvailable?: boolean
     hidePosTag?: boolean
 }): React.ReactElement | null {
     const { t } = useTranslation()
@@ -45,8 +43,6 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
 
     if (!service) return null
-
-    const is_playing = ttsPlayingKey === instanceKey
 
     const handleCopy = () => {
         if (!result) return
@@ -82,17 +78,6 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
                     {result === null && (
                         <span style={{ color: 'var(--danger)', fontSize: 12 }}>{t('dict.lookup_failed')}</span>
                     )}
-                    <button
-                        data-testid="dict-tts-btn"
-                        className={'ic-btn' + (is_playing ? ' brand' : '')}
-                        title={is_playing ? t('tts_stop', { defaultValue: '停止朗读' }) : t('result.tts', { defaultValue: '朗读' })}
-                        aria-pressed={is_playing}
-                        disabled={!ttsAvailable || !result}
-                        style={is_playing ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
-                        onClick={() => { if (result && onTts) onTts(dict_result_to_text(result)); }}
-                    >
-                        <Icons.Volume size={16} fill={is_playing} />
-                    </button>
                     <button data-testid="dict-copy-btn" className="ic-btn" title={copied ? t('dict.copied', { defaultValue: '已复制' }) : t('result.copy', { defaultValue: '复制' })} disabled={!result} onClick={handleCopy}>
                         <Icons.Copy size={16} />
                     </button>
@@ -130,17 +115,6 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
                                                 data-testid="dict-pron-audio-btn"
                                                 title={t('result.tts', { defaultValue: '朗读' })}
                                                 onClick={() => { const a = new Audio(p.audioUrl!); a.play().catch(() => undefined); }}
-                                                style={{ padding: 2 }}
-                                            >
-                                                <Icons.Volume size={12} />
-                                            </button>
-                                        )}
-                                        {!p.audioUrl && ttsAvailable && onTts && (
-                                            <button
-                                                className="ic-btn"
-                                                data-testid="dict-pron-tts-btn"
-                                                title={t('result.tts', { defaultValue: '朗读' })}
-                                                onClick={() => { onTts(p.phonetic); }}
                                                 style={{ padding: 2 }}
                                             >
                                                 <Icons.Volume size={12} />
@@ -251,12 +225,8 @@ export default function DictWindow(): React.ReactElement {
     const [importing, setImporting] = useState(false)
     const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
     const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
-    const [ttsPlayingKey, setTtsPlayingKey] = useState<string | null>(null)
-    const ttsCleanupRef = useRef<(() => void) | null>(null)
-    const ttsRequestRef = useRef(0)
     const lookup_request_ref = useRef(0)
     const inputRef = useRef<HTMLDivElement>(null)
-    const sourceLangRef = useRef<LanguageCode>('en')
 
     useEffect(() => {
         window.electronAPI.dict.check().then(({ ready }) => { setDictReady(ready); }).catch(console.error)
@@ -288,7 +258,6 @@ export default function DictWindow(): React.ReactElement {
         if (lookup_request_ref.current !== request_id) return
         log.info('lookup: word=%s, detected=%s', lookupWord, detected)
         setDetectedLanguage(detected)
-        sourceLangRef.current = detected
 
         const isEn = detected === 'en'
         const source_language = detected
@@ -370,8 +339,6 @@ export default function DictWindow(): React.ReactElement {
     }, [alwaysOnTop, setConfig])
 
     const collection_available = enabledCollectionServiceList.length > 0
-    const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
-    const ttsAvailable = ttsServiceList.length > 0
 
     const handleCollect = useCallback(async (instanceKey: string) => {
         const result = results[instanceKey]
@@ -403,50 +370,6 @@ export default function DictWindow(): React.ReactElement {
             else next.add(key)
             return next
         })
-    }, [])
-
-    const handleTts = useCallback((text: string) => {
-        ttsRequestRef.current += 1
-        ttsCleanupRef.current?.()
-        ttsCleanupRef.current = null
-        setTtsPlayingKey(null)
-        if (!text.trim() || ttsServiceList.length === 0) return
-
-        const instanceKey = ttsServiceList[0]
-        if (!instanceKey) return
-        const svcKey = getServiceKey(instanceKey)
-        const ttsService = ttsServiceRegistry.get(svcKey)
-        if (!ttsService) return
-
-        const request_id = ttsRequestRef.current + 1
-        ttsRequestRef.current = request_id
-        setTtsPlayingKey('pron')
-        const instanceConfig = get_service_config(serviceInstances, instanceKey)
-        try {
-            const handle = ttsService.play(text.trim(), sourceLangRef.current, instanceConfig)
-            const reset = (): void => {
-                if (ttsRequestRef.current === request_id) {
-                    setTtsPlayingKey(null)
-                }
-                if (ttsCleanupRef.current === reset) {
-                    ttsCleanupRef.current = null
-                }
-            }
-            ttsCleanupRef.current = () => { handle.stop(); reset() }
-            handle.done.then(reset, reset)
-        } catch {
-            if (ttsRequestRef.current === request_id) {
-                setTtsPlayingKey(null)
-            }
-        }
-    }, [ttsServiceList, serviceInstances])
-
-    useEffect(() => {
-        return () => {
-            ttsRequestRef.current += 1
-            ttsCleanupRef.current?.()
-            ttsCleanupRef.current = null
-        }
     }, [])
 
     const [wordCopied, setWordCopied] = useState(false)
@@ -602,9 +525,6 @@ export default function DictWindow(): React.ReactElement {
                                         collectionAvailable={collection_available}
                                         collapsed={collapsedKeys.has(instanceKey)}
                                         onToggleCollapse={() => { toggleCollapse(instanceKey); }}
-                                        onTts={is_zh_dict ? undefined : handleTts}
-                                        ttsPlayingKey={is_zh_dict ? null : ttsPlayingKey}
-                                        ttsAvailable={is_zh_dict ? false : ttsAvailable}
                                         hidePosTag={is_zh_dict}
                                     />
                                 )

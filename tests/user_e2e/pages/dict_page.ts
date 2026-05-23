@@ -39,10 +39,6 @@ export class DictPage {
         return this.page.getByTestId('dict-newline-btn')
     }
 
-    ttsButton(): Locator {
-        return this.page.getByTestId('dict-source-tts-btn')
-    }
-
     lookupButton(): Locator {
         return this.page.getByTestId('dict-lookup-btn')
     }
