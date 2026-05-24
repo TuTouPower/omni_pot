@@ -91,35 +91,35 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 ### A. 安全与本地 HTTP API（high）
 
 - [ ] **本地 HTTP API 加认证 + 收紧 CORS**：`electron/server/index.ts:65-68` 当前 `Access-Control-Allow-Origin: *`，任意网页可读 `/history` / `/config`、触发 `/translate` `/dict` `/recognize`。改为 Origin 白名单 + token；校验 `Host: 127.0.0.1`。
-- [ ] **HTTP body 大小限制**：`electron/server/index.ts` 多处 handler（84-89、251-254、274-278、303-308、355-359、387-391、419-423、545-550、641-647、679-684）把 chunks 全部存数组再 `Buffer.concat`，无上限。按端点限制 body 大小，超限 destroy + 413。
+- [x] **HTTP body 大小限制**：`electron/server/index.ts` 多处 handler（84-89、251-254、274-278、303-308、355-359、387-391、419-423、545-550、641-647、679-684）把 chunks 全部存数组再 `Buffer.concat`，无上限。按端点限制 body 大小，超限 destroy + 413。
 - [ ] **`/config` 改为 public allowlist**：当前只手写 redact `webdav_password`（`electron/server/index.ts:41-53`），未来新增 top-level secret 易遗漏；改为只暴露明确 public 字段。
 - [ ] **`/history` 端点隐私**：即便加 auth，也应默认不暴露完整 source/target；考虑显式开关 + 用户可见提示。
 - [ ] **翻译/TTS 原文不再写入持久日志**：`src/windows/translate/index.tsx:131-132`、`src/services/tts/system_tts.ts:78-80` 记录 `text.slice(0, 50)`，落盘到 `%APPDATA%/omni_pot/logs/main.log` 并进入导出日志包。只记录长度/语言/服务数量/request id/耗时。
 - [ ] **凭据存储与备份加密**：`config.json` 明文保存 WebDAV 密码与 provider API key；备份 zip 未加密（`electron/backup/index.ts:82-147`、`350`）。凭据迁到 OS credential storage；备份默认排除或加密 secrets。
 - [ ] **preload API 按窗口拆分**：`electron/preload.ts:34-47/117-125/52-56` 把 config/backup/clipboard 全部暴露给所有 renderer；IPC handler（`config_handlers.ts`、`backup_handlers.ts`、`text_handlers.ts`）不校验 sender。按窗口拆分 preload；handler 校验 sender window label。
 - [ ] **IPC config setter schema 校验**：`ipc/config_handlers.ts:15-24` 接收 `value: unknown` 直接写入；renderer 可持久化错误类型破坏端口、布尔开关等。IPC 边界加 schema。
-- [ ] **IPC history 分页 clamp**：`ipc/history_handlers.ts:31-33` 把 `page` / `page_size` 直接拼到 SQLite `LIMIT/OFFSET`；按 HTTP 同等规则 clamp，验证 mutation 参数。
-- [ ] **OCR temp 文件随机化**：`ipc/ocr_handlers.ts:124-130` 用 `Date.now()` 拼路径，并发可碰撞、本地可预测。改为 `mkdtemp` 私有目录 + exclusive write。
+- [x] **IPC history 分页 clamp**：`ipc/history_handlers.ts:31-33` 把 `page` / `page_size` 直接拼到 SQLite `LIMIT/OFFSET`；按 HTTP 同等规则 clamp，验证 mutation 参数。
+- [x] **OCR temp 文件随机化**：`ipc/ocr_handlers.ts:124-130` 用 `Date.now()` 拼路径，并发可碰撞、本地可预测。改为 `mkdtemp` 私有目录 + exclusive write。
 
 ### B. 自动更新（high）
 
-- [ ] **更新仓库改为公开 release 仓库**：`electron/updater/index.ts:15-16` 和 `src/windows/updater/index.tsx:27-28` 硬编码 `TuTouPower/omni_pot`（私有），普通用户无法访问。改为 `omni_pot_release`，allowlist（`updater/index.ts:51-53`）同步。
+- [x] **更新仓库改为公开 release 仓库**：`electron/updater/index.ts:15-16` 和 `src/windows/updater/index.tsx:27-28` 硬编码 `TuTouPower/omni_pot`（私有），普通用户无法访问。改为 `omni_pot_release`，allowlist（`updater/index.ts:51-53`）同步。
 - [ ] **更新包签名/哈希校验**：`updater/index.ts:177-185` 下载后直接 `shell.openPath`，仅 URL allowlist。补 Authenticode/签名哈希校验。
 - [ ] **updater IPC 限定 sender**：`updater/index.ts:177-189` handler 不校验 sender window，asset URL 来自 renderer。限制只允许 updater window 调用，asset 由 main 从 release metadata 绑定。
-- [ ] **手动检查更新不应受启动开关阻断**：`electron/tray/index.ts:215-218` 调用 `checkForUpdate(silent=false)`，但 `updater/index.ts:192-195` 在 `check_update=false` 时直接返回。`silent=false` 应忽略该开关。
-- [ ] **About / updater 仓库链接改为公开地址**：`src/windows/config/about.tsx:19,70,73,76,79`。
+- [x] **手动检查更新不应受启动开关阻断**：`electron/tray/index.ts:215-218` 调用 `checkForUpdate(silent=false)`，但 `updater/index.ts:192-195` 在 `check_update=false` 时直接返回。`silent=false` 应忽略该开关。
+- [x] **About / updater 仓库链接改为公开地址**：`src/windows/config/about.tsx:19,70,73,76,79`。
 
 ### C. 数据可靠性与状态（high）
 
-- [ ] **`config.json` 原子写入**：`electron/config/store.ts:192-223` 用 300ms 防抖 + `writeFileSync`，崩溃可留半写文件。改为写 `config.json.tmp` 再 `renameSync`。
+- [x] **`config.json` 原子写入**：`electron/config/store.ts:192-223` 用 300ms 防抖 + `writeFileSync`，崩溃可留半写文件。改为写 `config.json.tmp` 再 `renameSync`。
 - [ ] **history.db 恢复期间加全局 mutex**：`electron/history/index.ts:17-39` + `electron/backup/index.ts:268-281`。并发 `get_db()` 与 rename 竞态会损坏恢复结果。
 - [ ] **Windows 选区 COM 引用泄漏**：`electron/selection/windows.ts:148-152`、`230-247`。`RPC_E_CHANGED_MODE` 路径未配对 `CoUninitialize`；异常路径未 `SysFreeString` 释放 BSTR / `pRange`。统一 try/finally。
-- [ ] **修改快捷键时注销旧绑定**：`electron/hotkey/index.ts:80-107` 用 `name` 索引 actions 但用 `shortcut` 索引 OS 注册；改 shortcut 时旧绑定残留。注册新 shortcut 前按 name 找到旧值并 `globalShortcut.unregister`。
-- [ ] **透明度切换不重置 pin/置顶**：`electron/windows/manager.ts:209-220`、`297-320`。`rebuildForTransparencyChange()` 触发的 close 当前会清掉 pinned 与 always-on-top。close handler 仅在 `app.quitting` 时重置，rebuild 阶段加跳过标记。
-- [ ] **dict/recognize close 时 reset pinned**：`electron/windows/manager.ts:215-220` 只 reset `always_on_top`，pinned 残留；blur auto-close 被跳过。补 reset，并补 e2e 断言 pinned/`aria-pressed` 与 blur 行为。
+- [x] **修改快捷键时注销旧绑定**：`electron/hotkey/index.ts:80-107` 用 `name` 索引 actions 但用 `shortcut` 索引 OS 注册；改 shortcut 时旧绑定残留。注册新 shortcut 前按 name 找到旧值并 `globalShortcut.unregister`。
+- [x] **透明度切换不重置 pin/置顶**：`electron/windows/manager.ts:209-220`、`297-320`。`rebuildForTransparencyChange()` 触发的 close 当前会清掉 pinned 与 always-on-top。close handler 仅在 `app.quitting` 时重置，rebuild 阶段加跳过标记。
+- [x] **dict/recognize close 时 reset pinned**：`electron/windows/manager.ts:215-220` 只 reset `always_on_top`，pinned 残留；blur auto-close 被跳过。补 reset，并补 e2e 断言 pinned/`aria-pressed` 与 blur 行为。
 - [ ] **dict 尺寸记忆使用独立开关**：`electron/windows/dict_options.ts:8-11/25-27` 复用 `translate_remember_window_size`。新增 `dict_remember_window_size`，或文档明确共用。
 - [ ] **`translate_window_position='pre_state'` 实现**：`shared/types/config.ts:27/38-39`、`docs/spec.md:519` 定义"上次位置"，但 `windows/manager.ts:80-85` 永远按鼠标显示器居中。补 save/restore。
-- [ ] **`recognize_always_on_top` 创建时生效**：`windows/recognize_options.ts:7-17` 未传 `alwaysOnTop`，配置无效。
+- [x] **`recognize_always_on_top` 创建时生效**：`windows/recognize_options.ts:7-17` 未传 `alwaysOnTop`，配置无效。
 - [ ] **renderer config store 持久化失败不静默成功**：`src/stores/config_store.ts:35-39` 乐观更新 + `.catch(console.error)`；失败需回滚或提示。
 - [ ] **backup restore 严格 schema + 广播 config**：`electron/backup/index.ts:239-250/305-309` 只检查 plain object 就替换 live config；`reload_config_from_disk()` 不广播，已打开窗口仍使用旧值。restore 用严格 schema 拒绝未知 key；写完广播 config changed。
 
@@ -133,9 +133,9 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 - [ ] **WebDAV 密码改 password 输入**：`src/windows/config/backup_settings.tsx:155-159` + `config_components.tsx:203`。
 - [ ] **dict contentEditable 同步 store / 复制**：`src/windows/dict/index.tsx:319-337/385-402`。可见文本未通过 onInput 同步 store，copy 复制旧值；React 也会重置 caret。改用受控 input/textarea，或非受控 + ref。
 - [ ] **dict / 自定义下拉补 ARIA 与键盘**：`src/windows/dict/index.tsx:385-390`、`src/windows/config/config_components.tsx:135-172`、`src/windows/translate/language_area.tsx:69-111`、`src/windows/recognize/index.tsx:127-174`。补 textbox/combobox/listbox + 键盘导航或换原生 select。
-- [ ] **server_port 输入校验**：`src/windows/config/general.tsx:66-69` 当前 `Number(v)` 可得 NaN/0。
-- [ ] **托盘 tooltip 改为 `Omni Pot`**：`electron/tray/index.ts:246-247`。
-- [ ] **托盘"查看日志"走 `getUserDataDir()`**：`electron/tray/index.ts:220-222` 忽略 `OMNI_POT_USER_DATA` override。
+- [x] **server_port 输入校验**：`src/windows/config/general.tsx:66-69` 当前 `Number(v)` 可得 NaN/0。
+- [x] **托盘 tooltip 改为 `Omni Pot`**：`electron/tray/index.ts:246-247`。
+- [x] **托盘"查看日志"走 `getUserDataDir()`**：`electron/tray/index.ts:220-222` 忽略 `OMNI_POT_USER_DATA` override。
 - [ ] **renderer 用 logger 替换 console**：`src/main.tsx:74`、`src/i18n/index.ts:49/53`、`src/stores/config_store.ts:39`、`src/windows/{translate,dict,recognize,screenshot,config}` 多处违反 CLAUDE.md。
 - [ ] **截图/词典/翻译/快捷键设置内的硬编码中文走 i18n**：`src/windows/screenshot/index.tsx:303-310`、`src/windows/translate/target_area.tsx:83-84`、`src/windows/dict/index.tsx:70-71`、`src/windows/config/hotkey_settings.tsx:93-100/159/162/168-184`。
 - [ ] **版本号统一来自 metadata**：`src/windows/config/about.tsx:7`、`src/windows/config/index.tsx:123-124`、`src/windows/updater/index.tsx:114/369` 硬编码。
@@ -146,13 +146,13 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 - [ ] **所有 provider 加超时 + AbortController**：`src/services/*.ts` 全量；统一 `fetchWithTimeout` 默认 15s + abort。
 - [ ] **OpenAI 流式 chunk 跨边界 / 异常**：`src/services/openai.ts:51-70/174-176` 未维护跨 chunk buffer，`JSON.parse` 无 try/catch（参考 `ollama.ts`）。补 buffer + per-chunk catch。
-- [ ] **DeepL 付费路径走 lang map**：`src/services/deepl.ts:212-218` 直接 `to.toUpperCase().replace('_','-')`，`zh_cn → ZH-CN` DeepL 拒收；改走 `DEEPL_LANGUAGES`。
-- [ ] **火山引擎签名日期改为 V4 basic 格式**：`src/services/volcengine_sign.ts:20-30` 用了 `YYYY-MM-DD`，所有依赖 (`volcengine.ts`、`ocr/volcengine_ocr.ts`) 都会签名失败；与 `ocr/volcengine_multi_lang_ocr.ts:41-64` 已实现的正确格式对齐，并加签名单测。
-- [ ] **iFlytek 鉴权修复**：`ocr/iflytek_auth.ts:13-15` 的 base64 拼到 URL 未 `encodeURIComponent`（`iflytek_ocr.ts:31-37`、`iflytek_latex_ocr.ts:31-33`）；`iflytek_intsig_ocr.ts:37-46` 签名声明 `digest` 但缺 `Digest` header。
+- [x] **DeepL 付费路径走 lang map**：`src/services/deepl.ts:212-218` 直接 `to.toUpperCase().replace('_','-')`，`zh_cn → ZH-CN` DeepL 拒收；改走 `DEEPL_LANGUAGES`。
+- [x] **火山引擎签名日期改为 V4 basic 格式**：`src/services/volcengine_sign.ts:20-30` 用了 `YYYY-MM-DD`，所有依赖 (`volcengine.ts`、`ocr/volcengine_ocr.ts`) 都会签名失败；与 `ocr/volcengine_multi_lang_ocr.ts:41-64` 已实现的正确格式对齐，并加签名单测。
+- [x] **iFlytek 鉴权修复**：`ocr/iflytek_auth.ts:13-15` 的 base64 拼到 URL 未 `encodeURIComponent`（`iflytek_ocr.ts:31-37`、`iflytek_latex_ocr.ts:31-33`）；`iflytek_intsig_ocr.ts:37-46` 签名声明 `digest` 但缺 `Digest` header。
 - [ ] **Youdao 签名统一**：`src/services/youdao.ts:50-55/76-83` 混用新版 input 截断和旧版 MD5（无 curtime/signType）。
 - [ ] **TranSmart 协议核对**：`src/services/transmart.ts:43-63`（form-urlencoded + Bearer）与 `scripts/test_pot_plugins.cjs:29-45`（JSON + Referer/UA、无 Bearer）冲突；统一并加契约测试。
 - [ ] **Baidu OCR token 请求不要把 secret 拼到 URL**：`src/services/ocr/baidu_common.ts:8` 改 `URLSearchParams` / form body；`baidu_common.ts:19` 的 ttl < 1 天时 expiresAt 变负。
-- [ ] **provider salt/nonce 改 `crypto.randomUUID()`**：`baidu.ts:57`、`baidu_field.ts:58`、`youdao.ts:71`、`alibaba.ts:88` 当前 `Math.random().toString(36).substring(2)` 可能产空串。
+- [x] **provider salt/nonce 改 `crypto.randomUUID()`**：`baidu.ts:57`、`baidu_field.ts:58`、`youdao.ts:71`、`alibaba.ts:88` 当前 `Math.random().toString(36).substring(2)` 可能产空串。
 - [ ] **Bing/Google/Ollama 错误处理**：`bing.ts:124-127` 缺 `!resp.ok` 检查；`google.ts:50-56` 对合法空译响应抛错；`ollama.ts:62-67` 静默丢弃 malformed JSON。
 - [ ] **OpenAI `requestArguments` JSON 解析失败显式报错**：`src/services/openai.ts:85-87/140-146` 当前静默回退默认值。
 - [ ] **中文词典错误不再吞为空结果**：`src/services/chinese_dictionary.ts:15-20` DB 缺失 / IPC 失败 / SQL 错误与"无该词"不可区分；记录错误并 UI 暴露。
