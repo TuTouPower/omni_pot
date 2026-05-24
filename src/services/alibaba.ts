@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { hmac, hexToBase64 } from '@/lib/crypto'
@@ -85,7 +86,7 @@ export const alibabaService: TranslateService = {
             AccessKeyId: accessKeyId,
             SignatureMethod: 'HMAC-SHA1',
             SignatureVersion: '1.0',
-            SignatureNonce: Math.random().toString(36).substring(2),
+            SignatureNonce: randomUUID().replace(/-/g, ''),
             Timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
             Version: '2018-10-12'
         }

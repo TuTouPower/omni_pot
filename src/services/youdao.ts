@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { TranslateService, ServiceConfig, DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { md5 } from '@/lib/crypto'
@@ -67,7 +68,7 @@ export const youdaoService: TranslateService = {
     ): Promise<string | DictResult> {
         const appKey = config.appkey as string
         const key = config.key as string
-        const salt = Math.random().toString(36).substring(2)
+        const salt = randomUUID().replace(/-/g, '')
         const sign = buildSign(appKey, text, salt, key)
 
         const fromLang = YOUDAO_LANG_MAP[from] ?? from
