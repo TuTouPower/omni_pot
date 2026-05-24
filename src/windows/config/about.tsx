@@ -5,7 +5,8 @@ import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow } from './config_components'
 
 const VERSION = '0.1.0'
-nfunction platform_arch(): string {
+
+function platform_arch(): string {
     try {
         return `${process.platform}-${process.arch}`
     } catch { /* not in Node context */ }

@@ -88,7 +88,7 @@ if (!gotLock) {
     preload_screenshot_window(manager)
 
     onConfigChanged((key) => {
-        if (key === 'transparent') manager.rebuildForTransparencyChange()
+        if (key === 'transparent') manager.rebuildAllForTransparencyChange()
     })
 
     setWindowManagerForTray(manager)

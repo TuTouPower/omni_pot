@@ -287,9 +287,8 @@ export class WindowManager {
   }
 
   /**
-   * Rebuild a window (destroy + recreate) preserving pin/topmost config.
-   * Used when a property that cannot be changed at runtime (e.g. transparency)
-   * needs to be toggled.
+   * Rebuild a single window for transparency change, preserving pin/topmost config.
+   * Used when a property that cannot be changed at runtime needs to be toggled.
    */
   rebuildForTransparencyChange(label: WindowLabel, opts: WindowOptions): BrowserWindow {
     const win = this.getWindow(label)
@@ -302,8 +301,26 @@ export class WindowManager {
     return this.createWindow(opts)
   }
 
-  getAllWindows(): BrowserWindow[] {
-    return Array.from(this.byLabel.values()).filter((w) => !w.isDestroyed())
+  /** Rebuild all transparent-capable windows for transparency change. */
+  rebuildAllForTransparencyChange(): void {
+    const labels_to_rebuild = [
+      WindowLabel.TRANSLATE, WindowLabel.RECOGNIZE, WindowLabel.DICT,
+    ] as const
+    const options_map: Record<(typeof labels_to_rebuild)[number], () => WindowOptions> = {
+      [WindowLabel.TRANSLATE]: get_translate_window_options,
+      [WindowLabel.RECOGNIZE]: get_recognize_window_options,
+      [WindowLabel.DICT]: get_dict_window_options,
+    }
+
+    for (const label of labels_to_rebuild) {
+      const win = this.getWindow(label)
+      if (!win) continue
+      log_wm.info('rebuilding window for transparency change:', label)
+      const bounds = win.getBounds()
+      const opts = options_map[label]()
+      const rebuilt = this.rebuildForTransparencyChange(label, opts)
+      rebuilt.setBounds(bounds)
+    }
   }
 
   /** Send IPC to a window, waiting for renderer to be ready if needed. */
@@ -334,28 +351,7 @@ export class WindowManager {
     }
   }
 
-  rebuildForTransparencyChange(): void {
-    const labels_to_rebuild = [
-      WindowLabel.TRANSLATE, WindowLabel.RECOGNIZE, WindowLabel.DICT,
-    ] as const
-    const options_map: Record<(typeof labels_to_rebuild)[number], () => WindowOptions> = {
-      [WindowLabel.TRANSLATE]: get_translate_window_options,
-      [WindowLabel.RECOGNIZE]: get_recognize_window_options,
-      [WindowLabel.DICT]: get_dict_window_options,
-    }
-
-    for (const label of labels_to_rebuild) {
-      const win = this.getWindow(label)
-      if (!win) continue
-      log_wm.info('rebuilding window for transparency change:', label)
-      const bounds = win.getBounds()
-      this.byLabel.delete(label)
-      this.readyLabels.delete(label)
-      this.pendingQueue.delete(label)
-      win.close()
-      const opts = options_map[label]()
-      const rebuilt = this.createWindow(opts)
-      rebuilt.setBounds(bounds)
-    }
+  getAllWindows(): BrowserWindow[] {
+    return Array.from(this.byLabel.values()).filter((w) => !w.isDestroyed())
   }
 }
