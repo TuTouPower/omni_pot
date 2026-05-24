@@ -99,5 +99,6 @@ describe('Config defaults', () => {
         expect(DEFAULT_SERVICE_INSTANCES['bing@default'].serviceKey).toBe('bing')
         expect(DEFAULT_SERVICE_INSTANCES['deepl@default'].serviceKey).toBe('deepl')
         expect(DEFAULT_SERVICE_INSTANCES['mymemory@default'].serviceKey).toBe('mymemory')
+        expect(DEFAULT_SERVICE_INSTANCES['ecdict@default']).toBeUndefined()
     })
 })

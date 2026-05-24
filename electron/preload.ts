@@ -119,11 +119,6 @@ const api: Omit<ElectronAPI, 'ready'> = {
     delete: (name) => ipcRenderer.invoke('backup:delete', name),
     getPath: (name) => ipcRenderer.invoke('backup:get-path', name)
   },
-  dict: {
-    lookup: (text, from, to) => ipcRenderer.invoke('dict:lookup', text, from, to),
-    check: () => ipcRenderer.invoke('dict:check'),
-    import: (url) => ipcRenderer.invoke('dict:import', url)
-  },
   chineseDict: {
     lookup: (text: string) => ipcRenderer.invoke('chineseDict:lookup', text),
     check: () => ipcRenderer.invoke('chineseDict:check'),

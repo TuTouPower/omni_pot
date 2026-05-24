@@ -99,7 +99,7 @@ function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleC
                                                 className="ic-btn"
                                                 data-testid="dict-pron-audio-btn"
                                                 title={t('result.tts', { defaultValue: '朗读' })}
-                                                onClick={() => { const a = new Audio(p.audioUrl!); a.play().catch(() => undefined); }}
+                                                onClick={() => { const a = new Audio(p.audioUrl); a.play().catch(() => undefined); }}
                                                 style={{ padding: 2 }}
                                             >
                                                 <Icons.Volume size={12} />
@@ -201,24 +201,9 @@ export default function DictWindow(): React.ReactElement {
     const pinned = configPinned || alwaysOnTop
     const setConfig = useConfigStore((s) => s.set)
 
-    const [dictReady, setDictReady] = useState<boolean | null>(null)
-    const [importing, setImporting] = useState(false)
     const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
     const lookup_request_ref = useRef(0)
     const inputRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        window.electronAPI.dict.check().then(({ ready }) => { setDictReady(ready); }).catch(console.error)
-    }, [])
-
-    const handleImport = useCallback(async () => {
-        setImporting(true)
-        const result = await window.electronAPI.dict.import()
-        if (result.success) {
-            setDictReady(true)
-        }
-        setImporting(false)
-    }, [])
 
     const handleLookup = useCallback(async (text: string) => {
         const trimmed = text.trim()
@@ -436,15 +421,6 @@ export default function DictWindow(): React.ReactElement {
                     </div>
                 </div>
 
-                {/* Dictionary not ready */}
-                {dictReady === false && (
-                    <div className="card" style={{ padding: '14px 16px', textAlign: 'center' }}>
-                        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 8 }}>CC-CEDICT dictionary not downloaded</p>
-                        <button className="btn primary" onClick={() => { handleImport().catch(console.error); }} disabled={importing}>
-                            {importing ? 'Downloading...' : 'Download Dictionary (~6MB)'}
-                        </button>
-                    </div>
-                )}
 
                 {/* Results with DnD */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

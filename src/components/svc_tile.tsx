@@ -5,7 +5,6 @@ export const SVC_META: Partial<Record<string, { name: string; mono: string; tone
     bing: { name: 'Bing', mono: 'BG', tone: 'oklch(65% 0.10 200)' },
     google: { name: 'Google', mono: 'GG', tone: 'oklch(68% 0.10 130)' },
     yandex: { name: 'Yandex', mono: 'YD', tone: 'oklch(65% 0.13 25)' },
-    ecdict: { name: 'ECDict', mono: 'EC', tone: 'oklch(64% 0.10 60)' },
     chinese_dictionary: { name: '中文词典', mono: 'ZD', tone: 'oklch(60% 0.13 25)' },
     openai: { name: 'OpenAI', mono: 'AI', tone: 'oklch(58% 0.02 180)' },
     geminipro: { name: 'Gemini', mono: 'GM', tone: 'oklch(64% 0.12 280)' },

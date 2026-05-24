@@ -361,10 +361,10 @@ class TranslatePage {
 - `/trigger-dict` 打开词典窗口
 - 标题栏：置顶 → wordmark → 模式标签 `词典`，右上角关闭按钮
 - 查英文词（`hello`）：本地 stub 模拟英文词典（free_dictionary）响应，断言**不渲染任何中文词典卡片**
-- 查中文词：**只渲染中文词典**（chinese_dictionary / ecdict 中文释义），断言**不渲染任何英文词典卡片**
+- 查中文词：**只渲染中文词典**（chinese_dictionary 中文释义），断言**不渲染任何英文词典卡片**
 - 查中文词"经济"/"学习"等常用字词：中文词典卡片出现且含真实内容
-- 服务分流通过 `data-result-key` 验证：英文查询的卡片 key 均以 `free_dictionary@` 或 `ecdict@` 开头；中文查询的卡片 key 均以 `chinese_dictionary@` 或 `ecdict@` 开头
-- 多词典并行出结果：本地 stub 模拟 free_dictionary 响应，ECDICT 走真实本地词典；查英文词后所有英文词典服务渲染含内容的卡片
+- 服务分流通过 `data-result-key` 验证：英文查询的卡片 key 均以 `free_dictionary@` 开头；中文查询的卡片 key 均以 `chinese_dictionary@` 开头
+- 多词典并行出结果：本地 stub 模拟 free_dictionary 响应，中文词典走真实本地词典；中英文查询后各自只渲染对应语言的词典服务卡片
 - **无搜索框**：断言窗口内不存在搜索输入框
 - **无换行符号**：断言不存在去换行按钮
 - **无词形变化卡片**：断言不存在词形变化区块
@@ -444,7 +444,7 @@ class TranslatePage {
 - 备份目标切换 WebDAV / 本地；断言**无”阿里云盘”**选项（见 `docs/design/demo_todo.md` A4）
 - 本地备份 → 生成 zip，列表列出
 - 恢复 → 配置与历史记录被覆盖
-- 备份内容含设置与 CC-CEDICT 数据库
+- 备份内容含设置与历史记录数据库
 
 ### 5.14 app_http_api.spec.ts — 应用 HTTP API 集成边界
 
@@ -522,7 +522,7 @@ class TranslatePage {
 ### 6.4 真实环境 vs 桩
 
 - 全部测试模拟真实用户操作；除 `external_services.spec.ts` 外，外部翻译/词典/文字识别服务用本地可控 stub 模拟响应。
-- 本地能力真实测试：ECDICT、`chinese_dictionary`、Tesseract、System TTS。
+- 本地能力真实测试：`chinese_dictionary`、Tesseract、System TTS。
 - 更新检查：`/e2e/mock-update` 注入假”有新版本”数据，避免依赖真实 GitHub release ——
   这只是数据桩，用户操作（点更新器按钮）仍是真实的；下载 URL 在生产环境限制为本仓库 GitHub release asset 与 GitHub 可信重定向，测试环境才允许 localhost HTTP 资产。
 - 截图/OCR：真实路径优先；CI 无显示器时降级为窗口创建与取消路径。

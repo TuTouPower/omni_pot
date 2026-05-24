@@ -174,8 +174,6 @@ function DictResultInline({ result }: { result: DictResult }): React.ReactElemen
 export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaProps): React.ReactElement {
     const results = useTranslateStore((s) => s.results)
     const isTranslating = useTranslateStore((s) => s.isTranslating)
-    const sourceText = useTranslateStore((s) => s.sourceText)
-    const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
     const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
     const setSourceText = useTranslateStore((s) => s.setSourceText)

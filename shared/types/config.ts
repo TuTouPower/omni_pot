@@ -92,7 +92,6 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
   'tesseract@default': { serviceKey: 'tesseract', config: {} },
   'mymemory@default': { serviceKey: 'mymemory', config: {} },
   'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
-  'ecdict@default': { serviceKey: 'ecdict', config: {} },
   'chinese_dictionary@default': { serviceKey: 'chinese_dictionary', config: {} },
   'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
   'system_tts@default': { serviceKey: 'system_tts', config: {} },

@@ -17,7 +17,7 @@ NODE_MODULE_VERSION 127. This version of Node.js requires
 NODE_MODULE_VERSION 140.
 ```
 
-也曾出现 CC-CEDICT 自动导入失败：
+历史日志中也曾出现已移除的 CC-CEDICT 自动导入失败：
 
 ```text
 CC-CEDICT auto-import failed: Error: The module '...\better_sqlite3.node'
@@ -30,7 +30,6 @@ NODE_MODULE_VERSION 140.
 
 受影响的是主进程中直接加载 `better-sqlite3` 的功能，包括：
 
-- CC-CEDICT 词典查询与自动导入
 - 中文词典查询
 - 翻译历史数据库
 - 任何通过 IPC 间接访问这些数据库的渲染窗口
@@ -61,7 +60,7 @@ NODE_MODULE_VERSION 140.
 
 修复或恢复环境后，需要验证：
 
-1. 打开词典窗口不再出现 `dict:check` IPC 错误。
+1. 打开词典窗口不再出现中文词典 IPC 错误。
 2. 中文词典服务状态正常。
 3. 历史记录相关页面不再因 `better-sqlite3` 加载失败而报错。
 4. `%APPDATA%\omni_pot\logs\main.log` 中不再出现 `NODE_MODULE_VERSION 127` / `requires 140`。
@@ -201,7 +200,7 @@ renderer ready: recognize
 
 ### 当前判断
 
-Google Translate 失败是已知现网问题；DeepL free 429 表明当前环境或上游接口触发限流。不能用 mock 隐藏真实公网健康检查失败，后续应在网络可达且限流恢复的环境复测。
+Google Translate 在 Node 测试进程中可能因代理/网络环境不可达；`external_services.spec.ts` 已读取 `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` 并为 Node fetch 配置代理，仍不可达时只 skip Google 用例。DeepL free 429 表明当前环境或上游接口触发限流。不能用 mock 隐藏真实公网健康检查失败，后续应在网络可达且限流恢复的环境复测。
 
 ### 后续验证
 

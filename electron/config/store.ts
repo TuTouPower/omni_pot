@@ -45,6 +45,13 @@ function resolveSystemLanguage(): string {
     return 'en'
 }
 
+function remove_ecdict_from_list(value: unknown, fallback: string[]): string[] {
+    if (!Array.isArray(value)) return fallback
+    const filtered = value.filter((item): item is string => typeof item === 'string' && !item.startsWith('ecdict@'))
+    if (filtered.length === 0) return fallback
+    return filtered.length === value.length ? value as string[] : filtered
+}
+
 export function initConfigStore(): void {
     // Allow E2E tests to specify a custom userData directory
     const dir = getUserDataDir()
@@ -80,8 +87,30 @@ export function initConfigStore(): void {
         saveToDisk()
     }
 
+    data.service_instances = {
+        ...DEFAULT_SERVICE_INSTANCES,
+        ...(data.service_instances ?? {})
+    }
+    const service_instances = data.service_instances as Partial<typeof DEFAULT_SERVICE_INSTANCES>
+    if (Object.prototype.hasOwnProperty.call(service_instances, 'ecdict@default')) {
+        delete service_instances['ecdict@default']
+        saveToDisk()
+    }
+
+    const migrated_dictionary_service_list = remove_ecdict_from_list(data.dictionary_service_list, DEFAULT_CONFIG.dictionary_service_list)
+    if (data.dictionary_service_list !== migrated_dictionary_service_list) {
+        data.dictionary_service_list = migrated_dictionary_service_list
+        saveToDisk()
+    }
+
+    const migrated_english_dictionary_service_list = remove_ecdict_from_list(data.english_dictionary_service_list, DEFAULT_CONFIG.english_dictionary_service_list)
+    if (data.english_dictionary_service_list !== migrated_english_dictionary_service_list) {
+        data.english_dictionary_service_list = migrated_english_dictionary_service_list
+        saveToDisk()
+    }
+
     // Migrate: clear stale DeepL config that pointed to official API with empty key
-    const deeplInst = data.service_instances?.['deepl@default']
+    const deeplInst = service_instances['deepl@default']
     if (deeplInst && (deeplInst.config as Record<string, unknown>).type === 'free'
         && !(deeplInst.config as Record<string, unknown>).authKey) {
         deeplInst.config = {}

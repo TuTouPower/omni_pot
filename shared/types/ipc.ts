@@ -89,11 +89,6 @@ export interface ElectronAPI {
     delete(name: string): Promise<{ success: boolean; error?: string }>
     getPath(name: string): Promise<string>
   }
-  dict: {
-    lookup(text: string, from: string, to: string): Promise<DictResult | null>
-    check(): Promise<{ ready: boolean; entry_count: number }>
-    import(url?: string): Promise<{ success: boolean; entry_count?: number; error?: string }>
-  }
   chineseDict: {
     lookup(text: string): Promise<DictResult | null>
     check(): Promise<{ ready: boolean; status: ChineseDictServiceState; entry_count: number }>

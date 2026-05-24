@@ -3,7 +3,6 @@ import { randomUUID } from 'crypto'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, lstatSync, renameSync, mkdtempSync, rmSync } from 'fs'
 import { cancel_pending_config_save, flush_config, getUserDataDir, reload_config_from_disk } from '../config/store'
 import { close_history } from '../history'
-import { close_dict } from '../dict'
 
 interface BackupFile {
     name: string
@@ -23,13 +22,10 @@ const BACKUP_MANIFEST = { app: 'omni_pot', version: 1 }
 const BACKUP_DATA_FILES = [
     'history.db',
     'history.db-wal',
-    'cc_cedict.db',
-    'cc_cedict.db-wal',
 ]
 const BACKUP_CLEANUP_FILES = [
     ...BACKUP_DATA_FILES,
     'history.db-shm',
-    'cc_cedict.db-shm',
 ]
 
 const BACKUP_FILE_NAMES = [BACKUP_MANIFEST_NAME, 'config.json', ...BACKUP_DATA_FILES]
@@ -38,8 +34,6 @@ const MAX_ZIP_ENTRY_BYTES: Record<string, number> = {
     'config.json': 5 * 1024 * 1024,
     'history.db': 512 * 1024 * 1024,
     'history.db-wal': 512 * 1024 * 1024,
-    'cc_cedict.db': 512 * 1024 * 1024,
-    'cc_cedict.db-wal': 512 * 1024 * 1024,
 }
 const MAX_BACKUP_ZIP_BYTES = Object.values(MAX_ZIP_ENTRY_BYTES).reduce((total, size) => total + size, 0) + 1024 * 1024
 const ZIP_STORED = 0
@@ -348,7 +342,6 @@ export function create_local_backup(): string {
 
     flush_config()
     close_history()
-    close_dict()
 
     const files: BackupFile[] = [{
         name: BACKUP_MANIFEST_NAME,
@@ -399,8 +392,7 @@ export function restore_local_backup(backup_name: string): void {
     try {
         cancel_pending_config_save()
         close_history()
-        close_dict()
-        replace_from_staging(staging_dir, entry_by_name)
+            replace_from_staging(staging_dir, entry_by_name)
     } finally {
         rmSync(staging_dir, { recursive: true, force: true })
     }
@@ -427,8 +419,7 @@ export function restore_from_zip_path(zip_path: string): { restored_files: strin
     try {
         cancel_pending_config_save()
         close_history()
-        close_dict()
-        replace_from_staging(staging_dir, entry_by_name)
+            replace_from_staging(staging_dir, entry_by_name)
     } finally {
         rmSync(staging_dir, { recursive: true, force: true })
     }

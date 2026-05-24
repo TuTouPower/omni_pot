@@ -62,7 +62,7 @@
 
 - 真实公网连通性只由 `external_services.spec.ts`（`@external`）负责；默认免费翻译服务是否能产出真实结果的期望也放在该 spec，不放在 `@core` / `@ui`。
 - 其他 spec 可通过本地 HTTP stub、init script `fetch` override 或 `page.route().fulfill()` 模拟外部翻译/词典/文字识别服务响应。
-- 本地能力继续真测：ECDICT、`chinese_dictionary`、Tesseract、System TTS 使用真实本地链路；自动化无法稳定验证真实发声时，Web Speech voice/playback 状态可用 stub 控制。
+- 本地能力继续真测：`chinese_dictionary`、Tesseract、System TTS 使用真实本地链路；自动化无法稳定验证真实发声时，Web Speech voice/playback 状态可用 stub 控制。
 
 ### 允许 mock / stub 的场景
 
@@ -102,7 +102,7 @@
 | `@core` 翻译/词典/识别路径 | 本地 HTTP stub（优先） | 需要真实 service adapter + 可控响应、loading、retry、长文本、历史写入 |
 | `@ui` 渲染与交互 | 本地 HTTP stub 或 init script `fetch` override | 只验证 UI 状态、卡片文案、语言切换、错误态 |
 | 单页网络边界 UI | Playwright `page.route().fulfill()` | 临时拦截单个页面请求；应标注 `@stubbed`，避免替代 service adapter 覆盖 |
-| 本地能力测试 | 真实本地服务 | ECDICT、`chinese_dictionary`、Tesseract、System TTS |
+| 本地能力测试 | 真实本地服务 | `chinese_dictionary`、Tesseract、System TTS |
 | `@external` / `external_services.spec.ts` | 真实外部服务 | Bing、Google、DeepL 免费、MyMemory、Cambridge、Free Dictionary、Edge TTS 等公网连通性 |
 
 ---
@@ -291,10 +291,9 @@
 ```bash
 npm install
 npm run build:chinese-dict   # 生成 chinese_dict.db（词典相关单元/E2E 测试依赖）
-npm run build:cc-cedict      # 生成 cc_cedict.db（词典相关单元/E2E 测试依赖）
 ```
 
-> 两个词典 DB 不提交到仓库（gitignored）。`npm run dist` 会自动运行上述两步；
+> 中文词典 DB 不提交到仓库（gitignored）。`npm run dist` 会自动运行上述构建；
 > 纯本地 `dev`/`test` 路径需手动运行一次。词典相关测试（`tests/integration/chinese_dict_build.test.ts`、
 > 词典 E2E spec）在 DB 缺失时会直接报错并提示运行生成命令。
 
@@ -332,7 +331,7 @@ npm run test:e2e:external
 > `test:e2e:external` 需要真实网络访问，通常由脚本设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查。
 > 覆盖所有"免费无需 key"且"当前代码存在"的外部服务（对照 `docs/external_service_catalog.md`）：
 > Bing、Google、DeepL 免费（含长文本/葡语变体）、MyMemory、Cambridge Dictionary、
-> Free Dictionary。本地服务（ECDICT、Chinese Dictionary、Tesseract）通过 E2E 环境覆盖。
+> Free Dictionary。本地服务（Chinese Dictionary、Tesseract）通过 E2E 环境覆盖。
 > CI nightly 跑此项；PR 不跑。新增免费服务时必须同步添加到此 spec。
 
 ### 分层执行说明

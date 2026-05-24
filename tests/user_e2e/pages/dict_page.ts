@@ -39,6 +39,10 @@ export class DictPage {
         return this.page.getByTestId('dict-newline-btn')
     }
 
+    removedDictionaryPrompts(): Locator {
+        return this.page.getByText(/CC-CEDICT|ECDICT|Download Dictionary/)
+    }
+
     lookupButton(): Locator {
         return this.page.getByTestId('dict-lookup-btn')
     }

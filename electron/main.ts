@@ -24,7 +24,6 @@ import { registerTextHandlers } from './ipc/text_handlers'
 import { registerOcrHandlers } from './ipc/ocr_handlers'
 import { registerHistoryHandlers } from './ipc/history_handlers'
 import { registerBackupHandlers } from './ipc/backup_handlers'
-import { registerDictHandlers } from './ipc/dict_handlers'
 import { registerChineseDictHandlers } from './ipc/chinese_dict_handlers'
 import { registerDetectHandlers } from './ipc/detect_handlers'
 import { get_db_path, set_service_state, reload_db, close_chinese_dict } from './chinese_dict'
@@ -33,7 +32,6 @@ import { existsSync, watch, type FSWatcher } from 'fs'
 import { spawn } from 'child_process'
 import { registerTrayHandlers } from './ipc/tray_handlers'
 import { close_history } from './history'
-import { close_dict, auto_import_if_needed } from './dict'
 import { checkForUpdate, registerUpdateHandlers } from './updater'
 import { startServer, stopServer } from './server'
 import { preload_screenshot_window } from './screenshot'
@@ -105,7 +103,6 @@ if (!gotLock) {
     registerOcrHandlers(manager)
     registerHistoryHandlers()
     registerBackupHandlers()
-    registerDictHandlers()
     registerChineseDictHandlers()
     registerDetectHandlers()
     registerUpdateHandlers()
@@ -228,10 +225,6 @@ if (!gotLock) {
     }
 
     checkForUpdate(manager).catch((err: unknown) => { log_main.error(err) })
-
-    auto_import_if_needed().catch((err: unknown) => {
-      log_main.info('CC-CEDICT auto-import failed:', err)
-    })
     } catch (err) {
       log_main.error('Init error:', err)
     }
@@ -248,7 +241,6 @@ if (!gotLock) {
     stopClipboardMonitor()
     stopServer()
     close_history()
-    close_dict()
     close_chinese_dict()
     flush_config()
     unregisterAll()
