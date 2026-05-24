@@ -31,20 +31,20 @@
 │                                                  │
 │ use_content_height() hook:                       │
 │   ResizeObserver 监测 #app 自然高度              │
-│   rAF 合批 → IPC 上报 'translate:report-content- │
-│   height' { content_height }                     │
+│   rAF 合批 → IPC 上报 'translate:reportContent-  │
+│   Height' { content_height }                     │
 └──────────────────────────────────────────────────┘
                        │
                        ▼
 ┌────────── 主进程 ────────────────────────────────┐
-│ on('translate:report-content-height'):           │
+│ on('translate:reportContentHeight'):             │
 │   work_area = screen.getDisplayMatching(bounds)  │
 │                      .workArea                   │
 │   max_h     = floor(work_area.height * 0.75)     │
 │   target_h  = clamp(content_height, min_h, max_h)│
 │   if (win.getBounds().height === target_h) return│
 │   win.setMinimumSize(MIN_WIDTH, target_h)        │
-│   win.setMaximumSize(0, target_h)                │
+│   win.setMaximumSize(MAX_W_SENTINEL, target_h)   │
 │   win.setBounds({ height: target_h })            │
 └──────────────────────────────────────────────────┘
 ```
@@ -52,7 +52,7 @@
 ### 关键设计点
 
 - **唯一可信源**:主进程持有"当前应有窗口高度",渲染端只汇报内容高度。
-- **高度锁定**:`setMinimumSize` 与 `setMaximumSize` 的高度分量设为同一个 `target_h`,宽度上界设为 0(Electron 约定:0 = 无限制),从而宽度可调、高度固定。`BrowserWindow.resizable` 保持 `true`(否则宽度也不能拖)。
+- **高度锁定**:`setMinimumSize` 与 `setMaximumSize` 的高度分量设为同一个 `target_h`,宽度上界设为一个足够大的常数 `MAX_W_SENTINEL = 100000`(不使用 `0`,因 Electron 各平台对 `0=无限制` 的语义未在 Win11/Electron 39 实测过,用大常数语义更稳),从而宽度实际可拖到任意尺寸、高度固定。`BrowserWindow.resizable` 保持 `true`。
 - **多显示器**:每次重算时通过 `screen.getDisplayMatching(win.getBounds()).workArea` 取当前显示器的工作区,适应多屏/DPI 变化。
 - **节流**:渲染端用 rAF 合并 ResizeObserver 回调,差异 < 1px 时不汇报;主进程对相同 `target_h` 做幂等判断。
 
@@ -143,6 +143,7 @@
 | 名称 | 值 | 说明 |
 |---|---|---|
 | `MIN_WIDTH` | 360 | 窗口最小宽度(像素) |
+| `MAX_W_SENTINEL` | 100000 | 传给 `setMaximumSize` 第一参数的"足够大"常数,语义=宽度无实际上限 |
 | `MIN_HEIGHT_INPUT_LINES` | 1 | textarea 最少行数 |
 | `MAX_HEIGHT_INPUT_LINES` | 8 | textarea 最多行数,超出内部滚动 |
 | `MAX_HEIGHT_RATIO` | 0.75 | 窗口最大高度占当前显示器 `workArea.height` 比例 |
@@ -155,13 +156,13 @@
 
 | Channel | 方向 | 载荷 | 说明 |
 |---|---|---|---|
-| `translate:report-content-height` | renderer → main | `{ content_height: number }` | 翻译窗口渲染端汇报当前内容自然高度;主进程在翻译窗口范畴内计算 75vh 上限、锁定目标高度、保持宽度可拖。 |
+| `translate:reportContentHeight` | renderer → main | `{ content_height: number }` | 翻译窗口渲染端汇报当前内容自然高度;主进程在翻译窗口范畴内计算 75vh 上限、锁定目标高度、保持宽度可拖。 |
 
 ### 与通用机制的关系
 
 - **翻译窗口不再使用通用 `window:setContentHeight`** 这类"内容尺寸自适应"机制。
 - 通用 `window:setContentHeight`(如果存在)**保留给其他窗口**(词典、设置、截图预览等)按原规则运行,不要把翻译窗口的高度锁定/75vh/宽度可拖规则掺入通用通道。
-- 主进程为翻译窗口注册的 `translate:report-content-height` handler 只处理翻译窗口的 `BrowserWindow`,其他窗口不订阅、不响应。
+- 主进程为翻译窗口注册的 `translate:reportContentHeight` handler 只处理翻译窗口的 `BrowserWindow`,其他窗口不订阅、不响应。
 - 渲染端只汇报"自然内容高度",不承担任何决策——所有"锁定 / 上限 / 宽度策略"均在主进程内完成。
 
 ## 7. 测试
@@ -192,6 +193,7 @@
 ## 9. 已知风险
 
 - **跨平台高度锁定差异**:`setMinimumSize`/`setMaximumSize` 同值在 Windows DPI 缩放下可能出现 ±1px 偏差,需 Win11 实测 e2e。
+- **`setMaximumSize` 宽度参数**:本设计用 `MAX_W_SENTINEL = 100000` 代替 `0` 来表达"宽度无实际上限",避免依赖未验证的"0=无限制"约定。Plan 中包含一项验证步骤,实测 Win11 Electron 39 下用户可把窗口拖到任意 ≤100000px 的宽度。
 - **流式翻译高频重算**:引擎极快时分片连续触发,通过 rAF + 1px 阈值 + 幂等判断压制。
 - **resize 光标视觉**:边角仍可能显示斜向 resize 光标;接受此折中,不在本次改造中投入资源消除。
 
