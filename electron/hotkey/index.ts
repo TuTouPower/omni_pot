@@ -82,6 +82,15 @@ export function registerHotkey(
     shortcut: string,
     action: () => void
 ): HotkeyRegisterResult {
+    // Unregister old shortcut if this action previously had a different one
+    for (const [old_shortcut, old_name] of registered_hotkeys) {
+        if (old_name === name && old_shortcut !== shortcut) {
+            globalShortcut.unregister(old_shortcut)
+            registered_hotkeys.delete(old_shortcut)
+            break
+        }
+    }
+
     const owner = registered_hotkeys.get(shortcut)
     if (owner && owner !== name) {
         return { success: false, reason: 'conflict' }
