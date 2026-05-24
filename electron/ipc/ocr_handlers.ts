@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { ipcMain } from 'electron'
 import { execFile } from 'child_process'
 import { tmpdir } from 'os'
@@ -124,8 +125,8 @@ export function registerOcrHandlers(manager: WindowManager): void {
     ipcMain.handle('ocr:system-recognize', async (_event, base64Image: string, lang: string): Promise<string> => {
         const platform = process.platform
 
-        // Write image to temp file
-        const tmp_path = join(tmpdir(), `omni_pot_ocr_${String(Date.now())}.png`)
+        // Write image to temp file with unpredictable path
+        const tmp_path = join(tmpdir(), `omni_ocr_${randomUUID()}.png`)
         const buffer = Buffer.from(base64Image, 'base64')
         await writeFile(tmp_path, buffer)
 
