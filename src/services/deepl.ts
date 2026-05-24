@@ -211,10 +211,10 @@ export const deeplService: TranslateService = {
 
     const body: Record<string, string> = {
       text,
-      target_lang: to.toUpperCase().replace('_', '-')
+      target_lang: get_lang_code(to)
     }
     if (from !== 'auto') {
-      body.source_lang = from.toUpperCase().replace('_', '-')
+      body.source_lang = get_lang_code(from)
     }
 
     const headers: Record<string, string> = {

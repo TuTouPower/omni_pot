@@ -34,7 +34,7 @@ export const iflytekOcrService: OcrService = {
         const request_line = `POST /v1/private/${SERVICE_ID} HTTP/1.1`
         const auth = await iflytek_auth(apikey, apisecret, host, date, request_line)
 
-        const url = `https://${host}/v1/private/${SERVICE_ID}?authorization=${auth}&host=${host}&date=${encodeURIComponent(date)}`
+        const url = `https://${host}/v1/private/${SERVICE_ID}?authorization=${encodeURIComponent(auth)}&host=${host}&date=${encodeURIComponent(date)}`
 
         const body = {
             header: { app_id: appid, status: 3 },

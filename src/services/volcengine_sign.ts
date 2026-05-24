@@ -19,15 +19,16 @@ export async function signVolcengineRequest(opts: VolcengineSignOpts): Promise<{
 
     const timestamp = Math.floor(Date.now() / 1000)
     const d = new Date(timestamp * 1000)
-    const date = `${String(d.getUTCFullYear())}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+    const x_date = d.toISOString().replace(/-/g, '').replace(/:/g, '').replace(/\.\d+/, '')
+    const date = x_date.slice(0, 8)
 
     const hashedPayload = await sha256(body)
-    const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-content-sha256:${hashedPayload}\nx-date:${date}\n`
+    const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-content-sha256:${hashedPayload}\nx-date:${x_date}\n`
     const signedHeaders = 'content-type;host;x-content-sha256;x-date'
     const canonicalRequest = `POST\n/\nAction=${action}&Version=${version}\n${canonicalHeaders}\n${signedHeaders}\n${hashedPayload}`
 
     const credentialScope = `${date}/${region}/${service}/request`
-    const stringToSign = `HMAC-SHA256\n${date}\n${credentialScope}\n${await sha256(canonicalRequest)}`
+    const stringToSign = `HMAC-SHA256\n${x_date}\n${credentialScope}\n${await sha256(canonicalRequest)}`
 
     const kDate = await hmac(secret, date, 'SHA-256')
     const kRegion = await hmac(hexToBytes(kDate).buffer as ArrayBuffer, region, 'SHA-256')
@@ -41,7 +42,7 @@ export async function signVolcengineRequest(opts: VolcengineSignOpts): Promise<{
         headers: {
             'Content-Type': 'application/json',
             'Host': host,
-            'X-Date': date,
+            'X-Date': x_date,
             'X-Content-Sha256': hashedPayload,
             'Authorization': authorization
         },
