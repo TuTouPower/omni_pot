@@ -206,7 +206,7 @@ class TranslatePage {
   `source-newline-btn`、`source-copy-btn`、`source-tts-btn`、`detected-lang`、
   `lang-source`、`lang-source-button`、`lang-source-option-{code}`、`lang-target`、
   `lang-target-button`、`lang-target-option-{code}`、`lang-swap`、
-  结果卡片 `result-card` / `result-tts` / `result-copy` / `result-collect` /
+  结果卡片 `result-card` / `result-tts` / `result-copy` /
   `result-collapse` / `result-retry` / `result-body` / `result-error`，以及
   `data-result-key` / `data-result-content` / `data-result-error`
 - 词典：标题栏基础选择器、`dict-word`、`dict-card`、`dict-source-tag`
@@ -225,7 +225,7 @@ class TranslatePage {
   备份 `backup-create` / `backup-row` / `backup-restore-*`
 - 更新器：`updater-release-meta`、`updater-changelog`、`updater-progress`、`updater-confirm`、`updater-later`
 
-当前 UI 尚未实现的控件不预埋选择器：词典收藏 `dict-collect`、词典朗读 `dict-tts`。
+当前 UI 尚未实现的控件不预埋选择器：词典朗读 `dict-tts`。
 后续实现这些用户功能时，同步补选择器与对应用户路径 spec。
 
 **(b) E2E HTTP 端点扩充**（`electron/server/index.ts`，仅 `OMNI_POT_E2E` +
@@ -317,11 +317,10 @@ class TranslatePage {
 ### 5.5 translate_result_cards.spec.ts — 结果卡片
 
 - 每个启用的翻译实例渲染一张卡片
-- 卡片右上角同一行操作按钮顺序：朗读、复制、收藏、折叠
+- 卡片右上角同一行操作按钮顺序：朗读、复制、折叠
 - **点击朗读** → 配置真实 TTS 服务后按钮进入播放态；再次点击停止播放；音频仍在加载时再次点击不会重复发起 TTS 请求
 - **点击折叠** → 卡片主体收起/展开；折叠图标尺寸接近正文
 - **点击复制** → 剪贴板为该卡片译文
-- **点击收藏** → 触发收藏，无异常
 - 卡片出错时显示红色错误文本 + 重试按钮；**点击重试** → 重新翻译该卡片
 - 重试按钮仅在出错后出现
 - **拖拽排序** → 卡片顺序变化并写回 `translate_service_list`
@@ -371,7 +370,6 @@ class TranslatePage {
 - **无词形变化卡片**：断言不存在词形变化区块
 - **无来源 chips**：断言卡片底部不渲染来源 chips 段
 - 窗口高度自适应内容，不留多余空白
-- 每个词右上角收藏按钮，**点击** → 触发收藏
 - 置顶/关闭按钮可用
 
 ### 5.9 recognize_window.spec.ts — 文字识别 / 截图翻译窗口
@@ -421,7 +419,7 @@ class TranslatePage {
 
 ### 5.12 config_service_mgmt.spec.ts — 服务管理页
 
-- Tabs 切换**翻译 / 中文词典 / 英文词典 / 文字识别 / 语音朗读 / 收藏** 六类
+- Tabs 切换**翻译 / 中文词典 / 英文词典 / 文字识别 / 语音朗读** 五类
 - 服务实例列表项渲染：拖拽手柄、图标、实例名、key、启停、编辑、上移/下移、删除
 - **添加内置服务** → 创建新实例（key 形如 `bing@xxxx`），出现在列表与 `*_service_list`
 - **删除实例** → 从列表与 `*_service_list` 移除，并同步删除 `service_instances` 项

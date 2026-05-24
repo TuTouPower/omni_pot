@@ -115,8 +115,8 @@
 
 以下问题应补 Vitest、集成测试或 Playwright E2E，不能只靠人工检查：
 
-- 按钮点击是否触发实际行为，例如收藏、朗读、语音相关按钮不能只断言“按钮存在”。
-- 收藏、历史、配置、语言选择等状态是否持久化并能再次读取。
+- 按钮点击是否触发实际行为，例如朗读、语音相关按钮不能只断言”按钮存在”。
+- 历史、配置、语言选择等状态是否持久化并能再次读取。
 - 朗读按钮是否调用 TTS IPC/服务；服务不可用时是否显示明确 disabled 态或错误反馈。
 - 源语言/目标语言下拉是否可点击、可选择，选择后是否更新方向并触发重新翻译。
 - 自动检测后的目标语言、请求参数和 UI 显示方向是否一致。
@@ -259,7 +259,7 @@
 | `translate_source_area.spec.ts` | 源文本区操作（去空格、去换行、复制、清空、TTS） |
 | `translate_behavior.spec.ts` | 动态翻译、快捷键触发、剪贴板翻译 |
 | `translate_language_area.spec.ts` | 语言选择、自动检测、方向切换 |
-| `translate_result_cards.spec.ts` | 结果卡片（复制、收藏、TTS、重试） |
+| `translate_result_cards.spec.ts` | 结果卡片（复制、TTS、重试） |
 | `translate_result_states.spec.ts` | 加载态、错误态、空态 |
 | `translate_welcome.spec.ts` | 欢迎空状态 |
 | `translate_titlebar.spec.ts` | 标题栏按钮（置顶、固定、关闭） |

@@ -59,6 +59,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 ## 待做 UI / 功能调整
 
+- [x] **删除收藏功能**：收藏功能未实现完整（默认无服务实例，按钮永远禁用），从代码、文档、测试中彻底移除。涉及文件：`shared/types/config.ts`、`shared/types/collection_service.ts`、`src/services/collection/`（三个文件）、`src/services/index.ts`、`src/windows/dict/index.tsx`、`src/windows/translate/target_area.tsx`、`src/windows/config/service_settings.tsx`、`src/i18n/locales/zh_cn.json`、`src/i18n/locales/zh_tw.json`、`tests/user_e2e/pages/dict_page.ts`、`tests/user_e2e/pages/translate_page.ts`、`tests/user_e2e/specs/config_service_mgmt.spec.ts`、`tests/user_e2e/specs/dict_window.spec.ts`、`tests/user_e2e/specs/translate_result_cards.spec.ts`、`tests/unit/config_defaults.test.ts`、`docs/spec.md`、`docs/test.md`、`docs/test_user_e2e.md`、`docs/external_service_catalog.md`。
 - [x] **关闭 ECDICT**：暂时不要启用 ECDICT 词典源。
 - [x] **中文词典不显示朗读按钮**：中文词典卡片隐藏 TTS/朗读按钮。
 - [x] **英文词典保留已有 audio**：英文词典结果中的发音链接不要丢掉。

@@ -119,12 +119,6 @@
 |---|---|---|---|
 | System TTS | 当前代码存在 | 系统语音引擎/voice | Windows 使用 SAPI，macOS 使用系统语音，Linux 取决于系统语音环境。 |
 
-### 2.6 收藏/同步
-
-| 服务/方案 | 状态 | 本地依赖 | 备注 |
-|---|---|---|---|
-| Anki | 当前代码存在 | 本地 Anki + AnkiConnect 服务 | 不需要云 key，但需要用户启动本地 AnkiConnect。 |
-
 ## 3. 需要 key 但可免费用
 
 > 这一类表示“需要用户申请/填写 key、token 或账号凭证，但资料中显示有免费额度、免费套餐或免费层”。具体额度会随服务商政策变化，需要以服务商当前控制台/文档为准。
@@ -179,12 +173,6 @@
 | iFlytek IntSig OCR | 当前代码存在 | appid + apisecret + apikey | 通常有免费额度/按量计费。 |
 | iFlytek LaTeX OCR | 当前代码存在 | appid + apisecret + apikey | 通常有免费额度/按量计费。 |
 | Simple LaTeX OCR | 当前代码存在 | token | 需要 SimpleTex token；免费额度需以服务方当前规则为准。 |
-
-### 3.4 收藏/同步
-
-| 服务 | 状态 | 需要配置 | 免费性质 |
-|---|---|---|---|
-| Eudic | 当前代码存在 | token | 调用欧路词典开放 API；免费/付费限制需以欧路当前规则为准。 |
 
 ## 4. 必须付费 key
 
