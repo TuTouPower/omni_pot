@@ -74,8 +74,15 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 ---
 
+## 待做 bug 修复（2026-05-24 用户反馈）
+
+- [ ] **词典去掉 ECDICT**：`src/services/ecdict.ts` 仍存在且在 `src/services/index.ts` 中注册；`shared/types/config.ts` 的 `service_instances` 里有 `'ecdict@default'` 默认实例；`src/components/svc_tile.tsx` 有 ECDict UI tile；`tests/user_e2e/specs/dict_window.spec.ts` 多处依赖 ecdict。需从代码、默认配置、测试中彻底移除。
+- [ ] **中文词典查找失败**：`chinese_dict.db`（90MB）和 `cc_cedict.db`（24MB）均存在于 `resources/data/dict/`，但用户运行 dist 产物时中文词典查询仍报错。需查 `src/services/chinese_dict.ts` 的查询逻辑和错误处理。
+- [ ] **Cambridge 词典没有声音**：`src/services/cambridge_dict.ts` 第 90-91 行的 audio 提取正则（`<source ... audio/mpeg` 或 `data-src-mp3`）可能与 Cambridge 当前 HTML 结构不匹配。e2e 测试 `external_services.spec.ts` 第 106 行的 `Cambridge Dictionary returns pronunciations with audioUrl` 在 CI 中通过，但用户实际运行 dist 产物时无声音，需对比实际返回的 HTML 判断正则是否命中。
+- [ ] **Google Translate e2e 测试失败**：`test:e2e:external` 中 Google Translate 连续超时（Node fetch → `translate.googleapis.com` 不可达），但用户确认 dist 产物中谷歌翻译正常工作。原因：测试在 Node.js 进程直接调 `fetch`，不读系统代理；Electron 应用走系统代理所以能连上。修复方向：测试里读 `HTTP_PROXY`/`HTTPS_PROXY` 环境变量并带上，或连接失败时 skip。
+
 ## 已知环境问题（不修，仅跟踪）
 
-- **谷歌翻译当前环境失败**：保留为已知问题，不用 mock 隐藏；需要在网络可达的环境复测，或更换默认免费引擎。
+- **谷歌翻译测试环境失败**：见上方待修项"Google Translate e2e 测试失败"；运行时正常，仅测试进程因无代理连不上。
 - **DeepL free 当前环境限流**：`npm run test:e2e:external` 中长文本和葡语变体用例出现 429；只影响 opt-in 外部服务健康检查，不影响 `@core` / `@ui`。
 - **`cld3-asm` 依赖链 moderate audit 提示**：`npm audit --audit-level=high` 通过；npm 给出的 `--force` 修复会引入 breaking change，暂不自动修。
