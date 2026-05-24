@@ -47,6 +47,7 @@ describe('window options', () => {
             listenerCount: vi.fn(() => 0),
             on: vi.fn((_event: string, handler: () => void) => { resize_handler = handler }),
             getSize: vi.fn(() => [520, 530]),
+            isDestroyed: vi.fn(() => false),
         } as unknown as BrowserWindow
 
         attach_dict_resize_persistence(win)
