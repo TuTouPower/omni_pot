@@ -13,7 +13,7 @@ import { log } from '../log'
 const log_updater = log.scope('updater')
 
 const REPO_OWNER = 'TuTouPower'
-const REPO_NAME = 'omni_pot'
+const REPO_NAME = 'omni_pot_release'
 
 interface GitHubRelease {
     tag_name: string

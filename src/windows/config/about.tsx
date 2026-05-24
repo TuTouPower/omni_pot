@@ -5,8 +5,7 @@ import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow } from './config_components'
 
 const VERSION = '0.1.0'
-
-function platform_arch(): string {
+nfunction platform_arch(): string {
     try {
         return `${process.platform}-${process.arch}`
     } catch { /* not in Node context */ }
@@ -16,7 +15,7 @@ function platform_arch(): string {
     if (/Linux/.test(ua)) return 'linux-x64'
     return 'unknown'
 }
-const REPO_URL = 'https://github.com/TuTouPower/omni_pot'
+const REPO_URL = 'https://github.com/TuTouPower/omni_pot_release'
 
 export default function AboutPage(): React.ReactElement {
     const { t } = useTranslation()
