@@ -36,7 +36,6 @@
     "result": {
         "tts": "Read aloud",
         "copy": "Copy",
-        "collect": "Collect",
         "expand": "Expand",
         "collapse": "Collapse",
         "retry": "Retry",
@@ -193,7 +192,6 @@
         "english_dictionary": "English Dict",
         "tts": "TTS",
         "ocr": "OCR",
-        "collection": "Collection",
         "add": "Add",
         "remove": "Remove",
         "instances": "Service Instances",

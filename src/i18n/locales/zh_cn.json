@@ -37,7 +37,6 @@
     "result": {
         "tts": "朗读",
         "copy": "复制",
-        "collect": "收藏",
         "expand": "展开",
         "collapse": "收起",
         "retry": "重试",
@@ -194,7 +193,6 @@
         "english_dictionary": "英文词典",
         "tts": "语音朗读",
         "ocr": "文字识别",
-        "collection": "收藏",
         "add": "添加",
         "remove": "移除",
         "instances": "服务实例",
