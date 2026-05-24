@@ -115,6 +115,10 @@ export class DictPage {
         await this.word().press('Enter')
     }
 
+    async isWordFocused(): Promise<boolean> {
+        return this.word().evaluate((el) => document.activeElement === el)
+    }
+
     async resizeWindowTo(width: number, height: number): Promise<void> {
         await this.page.evaluate((size) => { window.resizeTo(size.width, size.height) }, { width, height })
         const viewport = await this.page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }))

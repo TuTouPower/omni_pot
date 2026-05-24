@@ -115,8 +115,8 @@ renderer ready: recognize
 
 **修复后顺序：**
 
-1. 获取主显示器尺寸。
-2. `await capture_screenshot()` 捕获桌面截图（窗口不可见）。
+1. 获取鼠标当前所在显示器尺寸。
+2. `await capture_screenshot(display)` 捕获该显示器桌面截图（窗口不可见）。
 3. 创建或聚焦截图窗口。
 4. 设置 bounds。
 5. `win.show()` + `win.focus()` 显示并聚焦。
@@ -124,14 +124,14 @@ renderer ready: recognize
 
 **改动文件：**
 
-- `electron/screenshot/index.ts`：重排 `start_screenshot_capture()`，移除无用的 50ms 等待，增加主进程诊断日志（capture 开始/完成、base64 长度、发送时机）。
+- `electron/screenshot/index.ts`：重排 `start_screenshot_capture()`，按鼠标当前所在显示器捕获截图并设置遮罩 bounds，移除无用的 50ms 等待，增加主进程诊断日志（capture 开始/完成、base64 长度、发送时机）。
 - `src/windows/screenshot/index.tsx`：增加渲染进程诊断日志（收到 `screenshot:show` 时的 base64 长度和 mode）。
 
 ### 相关代码位置
 
 - `electron/screenshot/index.ts`
   - `start_screenshot_capture()`：截图窗口显示和 `capture_screenshot()` 的顺序。
-  - `capture_screenshot()`：通过 `desktopCapturer.getSources()` 捕获主显示器截图。
+  - `capture_screenshot()`：通过 `desktopCapturer.getSources()` 捕获目标显示器截图。
 - `src/windows/screenshot/index.tsx`
   - 接收 `screenshot:show` 后设置 `background`。
   - `background` 为空或是白图时，截图选择窗口看起来就是全白。
@@ -149,8 +149,8 @@ renderer ready: recognize
 
 目标顺序：
 
-1. 获取主显示器尺寸。
-2. 在截图窗口不可见时调用 `capture_screenshot()`。
+1. 获取目标显示器尺寸。
+2. 在截图窗口不可见时调用 `capture_screenshot(display)`。
 3. 创建或聚焦截图窗口。
 4. 设置 bounds。
 5. 显示并聚焦截图窗口。

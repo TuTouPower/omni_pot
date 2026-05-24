@@ -1,13 +1,16 @@
-import { desktopCapturer, screen, type BrowserWindow } from 'electron'
+import { desktopCapturer, screen, type BrowserWindow, type Display } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { log } from '../log'
 
-export async function capture_screenshot(): Promise<string> {
+export function get_screenshot_display(): Display {
+    return screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
+}
+
+export async function capture_screenshot(display: Display = get_screenshot_display()): Promise<string> {
     log.info('[screenshot] capture_screenshot: start')
-    const primary_display = screen.getPrimaryDisplay()
-    const { width, height } = primary_display.size
-    const scale_factor = primary_display.scaleFactor
+    const { width, height } = display.size
+    const scale_factor = display.scaleFactor
 
     const sources = await desktopCapturer.getSources({
         types: ['screen'],
@@ -17,7 +20,7 @@ export async function capture_screenshot(): Promise<string> {
         }
     })
 
-    const source = sources.find((item) => item.display_id === String(primary_display.id)) ?? sources.at(0)
+    const source = sources.find((item) => item.display_id === String(display.id)) ?? sources.at(0)
     if (!source) {
         throw new Error('No screen source available')
     }
@@ -43,7 +46,7 @@ function get_screenshot_window_options(width: number, height: number, show: bool
 }
 
 export function preload_screenshot_window(manager: WindowManager): void {
-    const display = screen.getPrimaryDisplay()
+    const display = get_screenshot_display()
     const { width, height } = display.size
     const win = manager.createWindow(get_screenshot_window_options(width, height, false))
     win.setBounds({ x: display.bounds.x, y: display.bounds.y, width, height })
@@ -55,12 +58,9 @@ export async function start_screenshot_capture(
 ): Promise<boolean> {
     let win: BrowserWindow | null = null
     try {
-        const display = screen.getPrimaryDisplay()
+        const display = get_screenshot_display()
         const { width, height } = display.size
-
-        // Capture the desktop before showing the screenshot window,
-        // so the overlay window itself is never included in the capture.
-        const base64 = await capture_screenshot()
+        const base64 = await capture_screenshot(display)
 
         win = manager.focusOrCreate(WindowLabel.SCREENSHOT, get_screenshot_window_options(width, height, true))
         win.setBounds({ x: display.bounds.x, y: display.bounds.y, width, height })

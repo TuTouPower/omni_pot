@@ -260,6 +260,10 @@ export default function DictWindow(): React.ReactElement {
         }
     }, [zhServiceList, enServiceList, serviceInstances, setWord, setDetectedLanguage, setIsLoading, clearResults, setResult])
 
+    const focusWordInput = useCallback(() => {
+        window.requestAnimationFrame(() => { inputRef.current?.focus() })
+    }, [])
+
     useEffect(() => {
         const unsub = window.electronAPI.text.onDictLookup((text: string) => {
             if (!text.trim()) return
@@ -272,11 +276,13 @@ export default function DictWindow(): React.ReactElement {
         const unsub = window.electronAPI.text.onDictSelectionEmpty(() => {
             lookup_request_ref.current += 1
             setWord('')
+            setDetectedLanguage(null)
             setIsLoading(false)
             clearResults()
+            focusWordInput()
         })
         return unsub
-    }, [setWord, setIsLoading, clearResults])
+    }, [setWord, setDetectedLanguage, setIsLoading, clearResults, focusWordInput])
 
     useEffect(() => {
         window.electronAPI.ready('dict')

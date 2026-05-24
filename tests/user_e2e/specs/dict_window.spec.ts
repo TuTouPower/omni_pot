@@ -66,6 +66,32 @@ test.describe('@ui dict window', () => {
         }
     })
 
+    test('user opens dictionary without selected text and can type immediately', async () => {
+        const omni = await AppFixture.start({
+            config: {
+                hotkey_selection_dictionary: 'Ctrl+Shift+D',
+                dictionary_service_list: [],
+                english_dictionary_service_list: [],
+                service_instances: {},
+            },
+        })
+
+        try {
+            const result = await omni.api.triggerHotkey('hotkey_selection_dictionary', '')
+            expect(result.success).toBe(true)
+            const dict = await omni.dict()
+
+            await expect(dict.word()).toHaveText('')
+            await expect(dict.detectedLang()).toHaveText('')
+            await expect.poll(async () => dict.isWordFocused()).toBe(true)
+
+            await dict.editWordAndSubmit('hello')
+            await expect(dict.word()).toHaveText('hello')
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user edits the source word card and presses Enter to look up again', async () => {
         const omni = await AppFixture.start({
             init_script: build_free_dictionary_init_script({
