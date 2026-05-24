@@ -2,208 +2,113 @@
 
 本文记录从本地运行日志中确认或定位中的运行时问题，用于后续修复和验证。
 
-## 1. 中文词典与数据库相关窗口报 `better-sqlite3` ABI 不匹配
+## 4. 全局热键到窗口可见之间约有 1 秒延迟
 
 ### 现象
 
-词典、中文词典和部分依赖本地 SQLite 的页面在运行时可能报错，窗口可能表现为白屏、空结果或 IPC 调用失败。
-
-运行日志中出现类似错误：
-
-```text
-Error invoking remote method 'dict:check': Error: The module '...\better_sqlite3.node'
-was compiled against a different Node.js version using
-NODE_MODULE_VERSION 127. This version of Node.js requires
-NODE_MODULE_VERSION 140.
-```
-
-历史日志中也曾出现已移除的 CC-CEDICT 自动导入失败：
-
-```text
-CC-CEDICT auto-import failed: Error: The module '...\better_sqlite3.node'
-was compiled against a different Node.js version using
-NODE_MODULE_VERSION 127. This version of Node.js requires
-NODE_MODULE_VERSION 140.
-```
+用户按下 `hotkey_translate` / `hotkey_selection_dictionary` 等全局快捷键后，翻译窗口或词典窗口要等约 1 秒才弹出，体感明显卡顿；`hotkey_ocr_recognize` / `hotkey_ocr_translate` 因为有预热窗口，反应明显更快。
 
 ### 影响范围
 
-受影响的是主进程中直接加载 `better-sqlite3` 的功能，包括：
+- `hotkey_translate`（含 `hotkey_selection_translate`、`hotkey_input_translate` 别名）
+- `hotkey_selection_dictionary`
+- 任何首次冷启动的翻译 / 词典窗口路径（包括托盘菜单进入）
 
-- 中文词典查询
-- 翻译历史数据库
-- 任何通过 IPC 间接访问这些数据库的渲染窗口
+OCR 路径不受影响，因为已存在 `preload_screenshot_window`。
 
-### 当前判断
+### 链路分析
 
-这是 `better-sqlite3` 原生模块 ABI 与当前 Electron 运行时不匹配导致的问题，不是词典数据本身的问题。
+热键按下后的代码路径（以翻译为例，词典同构）：
 
-当前项目同时存在两类运行时：
+| 步骤 | 位置 | 典型耗时 |
+|---|---|---:|
+| 1. 全局热键触发 action | `electron/hotkey/index.ts:39` | ~0 ms |
+| 2. **await readSelectedText()** | `electron/hotkey/index.ts:53` | **200–800 ms** |
+| 2a. 加载 `./windows` 子模块（首次） | `electron/selection/index.ts:33` | 一次性 ~30 ms |
+| 2b. `CoInitializeEx` + `IUIAutomation::GetFocusedElement` + `TextPattern` | `electron/selection/windows.ts:148-198` | 200–500 ms（焦点元素结构越复杂越慢） |
+| 2c. UIA 拿不到选区 → fallback 模拟 Ctrl+C + 轮询剪贴板 | `electron/selection/clipboard.ts:65-99` | 最长 300 ms |
+| 3. `focusOrCreate(TRANSLATE)` 冷启动 BrowserWindow | `electron/windows/manager.ts` | 100–300 ms |
+| 4. 渲染进程加载 React + 首屏布局 | `src/windows/translate/index.tsx` | 100–300 ms |
+| 5. `sendWhenReady` 等 `renderer:ready` 后投递文本 | `electron/windows/manager.ts:52` | 取决于 4 |
 
-| 运行时 | ABI | 典型用途 |
-|---|---:|---|
-| Node.js | 127 | 单元测试、词典构建脚本、普通 Node 脚本 |
-| Electron 39.8.10 | 140 | Electron 主进程、E2E、打包产物 |
+**关键观察**：步骤 2、3、4 当前是**串行**的。即使选区是空（用户只想打开输入框），UIA + clipboard fallback 仍会全程跑完才开始建窗口。
 
-同一个 `node_modules/better-sqlite3/build/Release/better_sqlite3.node` 会在 Node ABI 和 Electron ABI 之间被不同命令切换。如果运行 Electron 打包产物前该模块被 `npm rebuild better-sqlite3` 切回 Node ABI，就会在 Electron 主进程里报 `NODE_MODULE_VERSION 127` / `requires 140`。
+### 根因
 
-### 已有说明
+1. **选区读取阻塞了窗口创建**：`triggerTranslateEntry` / `triggerSelectionDictionary` 都在 `focusOrCreate` 之前 `await readSelectedText()`，UIA 是绝大多数延迟来源。
+2. **翻译 / 词典窗口没有预热**：只有截图窗口在 `electron/screenshot/index.ts:48` 有 `preload_screenshot_window`，translate / dict 走按需 `createBrowserWindow`，首次必然带冷启动开销。
+3. **UIA 无软超时**：`getTextByUIAutomation`（`electron/selection/windows.ts:148`）调用同步 COM API（通过 koffi）。COM 自身没有可中断超时；遇到响应慢的应用（Office、复杂 Electron 应用）整体路径会卡到 UIA 自然返回为止。
+4. **clipboard fallback 默认 300ms 轮询窗口**（`electron/selection/clipboard.ts:70`）是合理值，但叠加在 UIA 之后再次串行。
 
-更完整的 ABI 说明见 `docs/better_sqlite3_abi.md`。
+### 修复方案
 
-### 临时处理方式
+按改动成本与收益排序，A 与 B 可独立或叠加生效，C 是兜底。
 
-- 运行打包产物或 Electron 侧测试前，确保执行过 Electron ABI 重建路径，例如 `npm run dist` 或 E2E 入口里的 `scripts/ensure_electron_abi.mjs`。
-- 不要在启动打包产物前手动执行 `npm rebuild better-sqlite3`，否则会把模块切回 Node ABI。
+#### A. 解耦：先开窗，选区并行读（推荐先做）
 
-### 后续验证
+把 `focusOrCreate` 提前到 `readSelectedText()` 之前发起，两者并行：
 
-修复或恢复环境后，需要验证：
-
-1. 打开词典窗口不再出现中文词典 IPC 错误。
-2. 中文词典服务状态正常。
-3. 历史记录相关页面不再因 `better-sqlite3` 加载失败而报错。
-4. `%APPDATA%\omni_pot\logs\main.log` 中不再出现 `NODE_MODULE_VERSION 127` / `requires 140`。
-
-## 2. 截图翻译偶发白屏
-
-### 现象
-
-截图翻译偶发出现一个全白窗口。用户反馈：不是只有识别文本为空，而是只出现一个窗口，窗口内容全白，截图图片本身也没有显示出来。
-
-如果只是 OCR 没识别出文本，结果窗口左侧仍应显示裁剪后的截图。因此“全白窗口”不能仅用 OCR 空结果解释。
-
-### 日志证据
-
-发生问题前后的日志显示截图链路中的窗口可以创建并触发 renderer ready：
-
-```text
-createWindow: screenshot 2560x1440
-renderer ready: screenshot
-createWindow: recognize 860x520
-renderer ready: recognize
+```ts
+// electron/hotkey/index.ts:51 triggerTranslateEntry
+export async function triggerTranslateEntry(mgr, textOverride?) {
+    mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())  // 立即出窗
+    const result = textOverride === undefined
+        ? await readSelectedText()
+        : { text: textOverride, reason: textOverride.trim() ? undefined : 'empty' }
+    if (!result.text.trim()) {
+        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
+        return
+    }
+    mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', result.text)
+}
 ```
 
-同一段日志中没有看到最新这次截图翻译对应的 `ERR_FAILED` 页面加载失败，也没有明确的 renderer 崩溃记录。
+- **收益**：窗口可见时间从 500–1100ms → ~150ms（仅含 BrowserWindow create + 首屏）。文本到达窗口的总时延不变。
+- **代价**：极少数情况下用户能看到一闪而过的空 loading；可在渲染端用 `translate:from-selection` 到达前显示骨架/占位。
+- **兼容性**：`sendWhenReady` 队列机制已经支持窗口未 ready 时排队，改动无需触动 IPC 协议。
+- 词典路径同理修改 `triggerSelectionDictionary`（`electron/hotkey/index.ts:66`）。
 
-日志中还出现多条 Tesseract 参数 warning，例如：
+#### B. 启动期预热翻译 / 词典窗口
 
-```text
-[renderer:screenshot] Warning: Parameter not found: language_model_ngram_on
-[renderer:screenshot] Warning: Parameter not found: segsearch_max_char_wh_ratio
-```
+模仿 `preload_screenshot_window`（`electron/screenshot/index.ts:48`）：应用 ready 时创建 translate / dict 窗口，`show: false`，渲染进程完成首屏后保持隐藏，热键时直接 `win.show()`。
 
-这些 warning 说明 Tesseract 识别过程中有兼容性提示，但每次之后窗口仍能 ready，暂时不能把它当作白屏的直接根因。
+- **收益**：步骤 3 + 4 完全消失，可见时间 < 50ms。
+- **代价**：
+  - 每个常驻 BrowserWindow 增加约 60–100 MB 内存（V8 + Blink）。
+  - 应用启动时间额外 +200–500ms（可移到 idle queue 减轻）。
+  - 需要处理"窗口已存在但配置变了（透明度、置顶、记住尺寸）"的同步重建——当前 `rebuildForTransparencyChange` 路径已存在状态丢失 bug（见 `docs/review_claude.md §1.5`），预热会放大这个问题，需要先修。
+- **建议**：先做 A，B 作为后续优化项，并视用户内存反馈决定是否默认开启或做成配置开关 `preload_windows`。
 
-### 当前最可能原因
+#### C. UIA 软超时 + 提前 fallback
 
-`electron/screenshot/index.ts` 中 `start_screenshot_capture()` **修复前**的顺序是：
+为 `getTextByUIAutomation` 套 100–150ms 软超时。由于 koffi 调用的是同步 COM API，主线程上无法真正中断；可行做法是把 UIA 调用移到 `utility process` / `worker_threads`，主线程用 `Promise.race(uia, sleep(150))`，超时则直接走 clipboard fallback，UIA worker 继续跑完释放资源。
 
-1. 创建或聚焦截图窗口。
-2. 设置截图窗口 bounds。
-3. `win.show()` 显示截图窗口。
-4. `win.focus()` 聚焦截图窗口。
-5. 等待 50ms。
-6. 调用 `capture_screenshot()` 捕获桌面。
-7. 发送 `screenshot:show` 给截图窗口。
+- **收益**：极端慢 UIA（Office 大文档、慢的 Electron 应用）场景下从 800ms → 150ms。
+- **代价**：worker 化改动较大；`CoInitializeEx` / `CoUninitialize` 顺序需要谨慎，否则放大 `docs/review_claude.md §1.4` 已记录的泄漏。
+- **建议**：A + B 落地后若仍有用户报慢再做。
 
-这意味着截图窗口已经显示后才调用 `desktopCapturer.getSources()`。这是一个竞态条件：`win.show()` 之后截图窗口的渲染需要时间，`desktopCapturer.getSources()` 的调用时机不同，结果也不同——有时截图窗口还没完全渲染进桌面画面（得到正常截图），有时已经渲染进去（得到带遮罩的白图或部分遮挡的截图）。这就是白屏"偶发"而非必现的原因。
+### 取舍
 
-### 修复记录（2026-05-23）
+| 方案 | 改动量 | 内存代价 | 启动时间代价 | 体感收益 |
+|---|---|---|---|---|
+| A 解耦 | 小（约 10 行） | 0 | 0 | 高（首帧 < 200ms） |
+| B 预热 | 中（参考 screenshot 实现） | +60–100 MB/窗口 | +200–500ms | 极高（首帧 < 50ms） |
+| C UIA worker | 大 | 微增 | 0 | 中（仅长尾场景） |
 
-调整 `start_screenshot_capture()` 顺序，改为先捕获桌面截图再显示窗口：
-
-**修复后顺序：**
-
-1. 获取鼠标当前所在显示器尺寸。
-2. `await capture_screenshot(display)` 捕获该显示器桌面截图（窗口不可见）。
-3. 创建或聚焦截图窗口。
-4. 设置 bounds。
-5. `win.show()` + `win.focus()` 显示并聚焦。
-6. 发送 `screenshot:show`，把预先捕获的 base64 作为背景。
-
-**改动文件：**
-
-- `electron/screenshot/index.ts`：重排 `start_screenshot_capture()`，按鼠标当前所在显示器捕获截图并设置遮罩 bounds，移除无用的 50ms 等待，增加主进程诊断日志（capture 开始/完成、base64 长度、发送时机）。
-- `src/windows/screenshot/index.tsx`：增加渲染进程诊断日志（收到 `screenshot:show` 时的 base64 长度和 mode）。
-
-### 相关代码位置
-
-- `electron/screenshot/index.ts`
-  - `start_screenshot_capture()`：截图窗口显示和 `capture_screenshot()` 的顺序。
-  - `capture_screenshot()`：通过 `desktopCapturer.getSources()` 捕获目标显示器截图。
-- `src/windows/screenshot/index.tsx`
-  - 接收 `screenshot:show` 后设置 `background`。
-  - `background` 为空或是白图时，截图选择窗口看起来就是全白。
-  - `confirm_selection()` 中 crop / OCR 的异常目前被静默吞掉。
-- `electron/ipc/ocr_handlers.ts`
-  - `ocr:open-recognize` 打开 `recognize` 窗口并发送 `recognize:show`。
-- `src/windows/recognize/index.tsx`
-  - 接收 `recognize:show` 后显示裁剪图和识别/翻译结果。
-- `electron/windows/manager.ts`
-  - `sendWhenReady()` 负责窗口 ready 后发送 IPC，但当前日志没有记录每次实际发送的 `screenshot:show` / `recognize:show`。
-
-### 建议修复方向
-
-优先调整截图顺序：先捕获桌面截图，再显示截图选择窗口。
-
-目标顺序：
-
-1. 获取目标显示器尺寸。
-2. 在截图窗口不可见时调用 `capture_screenshot(display)`。
-3. 创建或聚焦截图窗口。
-4. 设置 bounds。
-5. 显示并聚焦截图窗口。
-6. 发送 `screenshot:show`，把预先捕获的 base64 作为背景。
-
-这样可以避免把 Omni Pot 自己的截图遮罩窗口截进背景图。
-
-注意：`desktopCapturer.getSources()` 本身有 100–300ms 延迟，实现时必须 `await` 捕获完成后再调用 `win.show()`，不能仅交换代码行顺序。
-
-### 建议补充的最小诊断日志
-
-如果调整顺序后仍复现，应补充以下日志以定位 IPC 或渲染阶段是否丢数据：
-
-- 主进程：`capture_screenshot()` 开始和完成。
-- 主进程：捕获到的 base64 长度。
-- 主进程：发送 `screenshot:show` / `recognize:show` 的时机。
-- 渲染进程截图窗口：收到 `screenshot:show` 时的 base64 长度和 mode。
-- 渲染进程截图窗口：crop 后 base64 长度。
-- 渲染进程截图窗口：每个 OCR 服务的开始、失败和结果长度。
+推荐路径：**A 立即落地** → 观察用户反馈 → 决定是否做 B（必要时加 `preload_windows` 配置） → C 作为长尾优化保留。
 
 ### 后续验证
 
-修复后至少验证：
+1. 在主进程加上 timing log：`log_hotkey.info('show=%dms total=%dms', show_ms, total_ms)`，分别记录"按下 → 窗口可见"、"按下 → 文本到达"两段，回归前后对比。
+2. E2E 增加用例：触发翻译热键后断言窗口在 200ms 内 `isVisible()`，文本到达可放宽到 1.5s。
+3. 在主显示器 + 复杂焦点应用（VS Code、Word）下手动验证体感，避免只在简单 Notepad 场景测试导致回归未被发现。
+4. 修复后更新本节并归档到 `docs/archive/closed_issues/`。
 
-1. 连续多次触发截图翻译，不再出现全白截图选择窗口。
-2. 截图选择窗口背景始终是触发前的桌面画面，不包含 Omni Pot 自己的截图遮罩窗口。
-3. OCR 为空时，结果窗口仍能显示裁剪后的截图。
-4. `%APPDATA%\omni_pot\logs\main.log` 中窗口创建、renderer ready 和 IPC 发送顺序符合预期。
+### 相关代码与文档
 
-## 3. 外部服务 opt-in 健康检查现网失败
-
-### 现象
-
-2026-05-23 运行 `npm run test:e2e:external` 时，`external_services.spec.ts` 的真实公网服务检查结果为：6 passed、3 failed、1 skipped。
-
-失败项：
-
-- Google Translate：`Google Translate failed`
-- DeepL free long single paragraph text：`DeepL free API error: 429`
-- DeepL free Portuguese variant：`DeepL free API error: 429`
-
-通过项包括 Bing Translate、DeepL free 基础短文本、DeepL free long multi-paragraph text、MyMemory、Cambridge Dictionary、Free Dictionary。
-
-### 影响范围
-
-这些失败只影响 opt-in 的 `@external` 真实公网健康检查；`npm run test:e2e:core` 与 `npm run test:e2e:ui` 已改为本地可控 stub / 本地能力路径，不依赖这些公网服务可达性。
-
-### 当前判断
-
-Google Translate 在 Node 测试进程中可能因代理/网络环境不可达；`external_services.spec.ts` 已读取 `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` 并为 Node fetch 配置代理，仍不可达时只 skip Google 用例。DeepL free 429 表明当前环境或上游接口触发限流。不能用 mock 隐藏真实公网健康检查失败，后续应在网络可达且限流恢复的环境复测。
-
-### 后续验证
-
-1. 在网络可达环境重新运行 `npm run test:e2e:external`。
-2. 如果 DeepL 429 持续出现，评估是否需要降低 nightly 频率或拆分长文本/变体检查节奏，但不要迁回 `@core` / `@ui`。
-3. 若 Google Translate 恢复，更新本节与 `TASKS.md` 的已知环境问题记录。
+- `electron/hotkey/index.ts:51-78`（trigger entry，A 改造点）
+- `electron/selection/index.ts:24-46`、`electron/selection/windows.ts:148-247`（UIA 调用链）
+- `electron/selection/clipboard.ts:65-99`（fallback 轮询）
+- `electron/screenshot/index.ts:48-53`（B 的参考实现）
+- `electron/windows/manager.ts`（`focusOrCreate` / `sendWhenReady`）
+- `docs/review_claude.md §1.4 / §1.5`（COM 泄漏与 rebuild 状态丢失，B 落地前需修）
