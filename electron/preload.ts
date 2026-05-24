@@ -20,6 +20,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
   },
   translate: {
     reportContentHeight: (height) => ipcRenderer.invoke('translate:reportContentHeight', height),
+    reportMinWidth: (width) => ipcRenderer.invoke('translate:reportMinWidth', width),
   },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)

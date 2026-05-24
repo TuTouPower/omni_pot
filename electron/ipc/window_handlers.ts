@@ -62,4 +62,13 @@ export function registerWindowHandlers(manager: WindowManager): void {
     const controller = manager.getTranslateHeightController()
     controller?.report_content_height(height)
   })
+  ipcMain.handle('translate:reportMinWidth', (event, width: number) => {
+    if (!Number.isFinite(width) || width < 0 || width > 100000) return
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    const label = manager.getLabelById(win.id)
+    if (label !== WindowLabel.TRANSLATE) return
+    const controller = manager.getTranslateHeightController()
+    controller?.report_min_width(width)
+  })
 }

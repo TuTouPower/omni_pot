@@ -33,6 +33,8 @@ export default function TranslateWindow(): React.ReactElement {
     const isTranslating = useTranslateStore((s) => s.isTranslating)
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
+    const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
+    const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
     const setIsTranslating = useTranslateStore((s) => s.setIsTranslating)
     const setResult = useTranslateStore((s) => s.setResult)
     const clearResults = useTranslateStore((s) => s.clearResults)
@@ -114,9 +116,11 @@ export default function TranslateWindow(): React.ReactElement {
     const root_ref = useRef<HTMLDivElement>(null)
     const titlebar_ref = useRef<HTMLDivElement>(null)
     const top_ref = useRef<HTMLDivElement>(null)
+    const language_ref = useRef<HTMLDivElement>(null)
     const results_scroll_ref = useRef<HTMLDivElement>(null)
     const results_content_ref = useRef<HTMLDivElement>(null)
     const last_reported_content_height_ref = useRef(0)
+    const last_reported_min_width_ref = useRef(0)
     const translate_timer_ref = useRef<number | null>(null)
     const previousLanguagesRef = useRef({ sourceLanguage, targetLanguage })
 
@@ -554,6 +558,49 @@ export default function TranslateWindow(): React.ReactElement {
         }
     }, [show_welcome_empty, showSource, hideLanguage, enabledServiceList.length, isTranslating, appFont, appFontSize, results])
 
+    useEffect(() => {
+        const language = language_ref.current
+        if (!language) {
+            if (last_reported_min_width_ref.current !== 0) {
+                last_reported_min_width_ref.current = 0
+                window.electronAPI.translate.reportMinWidth(0).catch(() => undefined)
+            }
+            return
+        }
+
+        let frame_id = 0
+        const report = (): void => {
+            window.cancelAnimationFrame(frame_id)
+            frame_id = window.requestAnimationFrame(() => {
+                const source = language.querySelector('[data-testid="lang-source-button"]')
+                const swap = language.querySelector('[data-testid="lang-swap"]')
+                const target = language.querySelector('[data-testid="lang-target-button"]')
+                if (!source || !swap || !target) return
+
+                const rects = [source, swap, target].map((el) => (el as HTMLElement).getBoundingClientRect())
+                const style = getComputedStyle(language)
+                const padding_w = (Number.parseFloat(style.paddingLeft) || 0) + (Number.parseFloat(style.paddingRight) || 0)
+                const left = Math.min(...rects.map((rect) => rect.left))
+                const right = Math.max(...rects.map((rect) => rect.right))
+                const width = Math.ceil(right - left + padding_w)
+                if (width === last_reported_min_width_ref.current) return
+                last_reported_min_width_ref.current = width
+                window.electronAPI.translate.reportMinWidth(width).catch(() => undefined)
+            })
+        }
+
+        report()
+        const observer = new ResizeObserver(report)
+        observer.observe(language)
+        for (const el of language.querySelectorAll('[data-testid="lang-source-button"], [data-testid="lang-swap"], [data-testid="lang-target-button"]')) {
+            observer.observe(el)
+        }
+        return () => {
+            window.cancelAnimationFrame(frame_id)
+            observer.disconnect()
+        }
+    }, [hideLanguage, show_welcome_empty, sourceLanguage, targetLanguage, detectedLanguage, effectiveTargetLanguage, appFont, appFontSize])
+
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
     const handle_source_translate = useCallback(() => { handleTranslate().catch(console.error); }, [handleTranslate])
@@ -597,7 +644,7 @@ export default function TranslateWindow(): React.ReactElement {
                         inputRef={inputRef}
                     />
                 )}
-                {!hideLanguage && !show_welcome_empty && <LanguageArea onSwap={handleSwapLanguages} />}
+                {!hideLanguage && !show_welcome_empty && <LanguageArea onSwap={handleSwapLanguages} containerRef={language_ref} />}
                 {show_welcome_empty && (
                     <WelcomeEmpty onSkip={() => { setConfig('welcome_dismissed', true); window.electronAPI.window.close().catch(console.error); }} />
                 )}

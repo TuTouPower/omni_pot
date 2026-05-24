@@ -1,8 +1,9 @@
 import { screen, type BrowserWindow, type Display } from 'electron'
 
-export const TRANSLATE_MIN_WIDTH = 360
+export const TRANSLATE_MIN_WIDTH_FALLBACK = 280
 export const TRANSLATE_MAX_HEIGHT_RATIO = 0.75
 export const TRANSLATE_HEIGHT_REPORT_DEBOUNCE_PX = 1
+export const TRANSLATE_WIDTH_REPORT_DEBOUNCE_PX = 1
 export const TRANSLATE_SCREEN_MOVE_DEBOUNCE_MS = 100
 export const TRANSLATE_MAX_W_SENTINEL = 100000
 
@@ -18,6 +19,10 @@ export function compute_target_height(
     return rounded
 }
 
+export function compute_target_min_width(content_width: number): number {
+    return Math.max(TRANSLATE_MIN_WIDTH_FALLBACK, Math.ceil(content_width))
+}
+
 interface ControllerOptions {
     initial_min_height: number
 }
@@ -25,16 +30,18 @@ interface ControllerOptions {
 export class TranslateHeightController {
     private win: BrowserWindow
     private min_height: number
+    private current_min_width = TRANSLATE_MIN_WIDTH_FALLBACK
     private current_target_h: number
     private move_timer: ReturnType<typeof setTimeout> | null = null
     private last_reported_h = 0
+    private last_reported_w = 0
     private disposed = false
 
     constructor(win: BrowserWindow, opts: ControllerOptions) {
         this.win = win
         this.min_height = opts.initial_min_height
         this.current_target_h = opts.initial_min_height
-        this.apply_locked_height(this.current_target_h)
+        this.apply_locked_size()
 
         win.on('move', this.on_move)
         win.on('restore', this.on_restore)
@@ -51,16 +58,29 @@ export class TranslateHeightController {
         const target_h = compute_target_height(rounded, work_area_h, this.min_height)
         if (target_h === this.current_target_h) return
         this.current_target_h = target_h
-        this.apply_locked_height(target_h)
+        this.apply_locked_size()
     }
 
-    private apply_locked_height(h: number): void {
+    report_min_width(content_width: number): void {
+        if (this.disposed || this.win.isDestroyed() || !Number.isFinite(content_width) || content_width < 0) return
+        const rounded = Math.ceil(content_width)
+        if (Math.abs(rounded - this.last_reported_w) < TRANSLATE_WIDTH_REPORT_DEBOUNCE_PX) return
+        this.last_reported_w = rounded
+        const min_width = compute_target_min_width(rounded)
+        if (min_width === this.current_min_width) return
+        this.current_min_width = min_width
+        this.apply_locked_size()
+    }
+
+    private apply_locked_size(): void {
         if (this.win.isDestroyed()) return
-        this.win.setMinimumSize(TRANSLATE_MIN_WIDTH, h)
+        const h = this.current_target_h
+        this.win.setMinimumSize(this.current_min_width, h)
         this.win.setMaximumSize(TRANSLATE_MAX_W_SENTINEL, h)
         const bounds = this.win.getBounds()
-        if (bounds.height !== h) {
-            this.win.setBounds({ ...bounds, height: h })
+        const width = Math.max(bounds.width, this.current_min_width)
+        if (bounds.height !== h || bounds.width !== width) {
+            this.win.setBounds({ ...bounds, width, height: h })
         }
     }
 
@@ -74,7 +94,7 @@ export class TranslateHeightController {
         const target_h = compute_target_height(this.last_reported_h, work_area_h, this.min_height)
         if (target_h !== this.current_target_h) {
             this.current_target_h = target_h
-            this.apply_locked_height(target_h)
+            this.apply_locked_size()
         }
     }
 
@@ -87,7 +107,7 @@ export class TranslateHeightController {
     }
 
     private on_restore = (): void => {
-        this.apply_locked_height(this.current_target_h)
+        this.apply_locked_size()
     }
 
     private on_display_metrics = (): void => {

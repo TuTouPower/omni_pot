@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 改造翻译窗口的尺寸、滚动与可调性:输入区固定在窗口顶部、结果区按引擎返回分次扩张、超出 75vh 时仅结果区滚动、高度由主进程锁定、宽度用户可拖(只限最小宽 360px)。
+**Goal:** 改造翻译窗口的尺寸、滚动与可调性:输入区固定在窗口顶部、结果区按引擎返回分次扩张、超出 75vh 时仅结果区滚动、高度由主进程锁定、宽度用户可拖(最小宽以 280px 为硬保底,并按语言转换区自然宽度实时更新)。
 
 **Architecture:** 渲染端通过新的专属 IPC `translate:reportContentHeight` 上报内容自然高度;主进程依据当前显示器 `workArea.height * 0.75` 计算 `target_h`,通过 `setMinimumSize`/`setMaximumSize` 同高度锁定、最大宽度用 `MAX_W_SENTINEL=100000` 表达"无实际上限",通过 `setBounds` 应用高度。原有通用 `window:setContentHeight` 保留给其他窗口不动。
 
@@ -22,7 +22,7 @@
 
 ### 修改
 
-- `electron/windows/translate_options.ts` — 改最小宽 360、删 maxHeight 上限、改最小高度初值、不再从 config 还原 height。
+- `electron/windows/translate_options.ts` — 改最小宽为 280 硬保底、删 maxHeight 上限、改最小高度初值、不再从 config 还原 height。
 - `electron/windows/manager.ts` — 翻译窗口 resize 持久化只保存 width;创建翻译窗口时实例化 `TranslateHeightController`。
 - `electron/ipc/window_handlers.ts` — 新增 `translate:reportContentHeight` handler。**不修改** `window:setContentHeight`。
 - `electron/preload.ts` — 新增 `electronAPI.translate.reportContentHeight(height)`。
@@ -64,7 +64,7 @@
 写入 `electron/windows/translate_height_controller.ts` 顶部并 export:
 
 ```ts
-export const TRANSLATE_MIN_WIDTH = 360
+export const TRANSLATE_MIN_WIDTH_FALLBACK = 280
 export const TRANSLATE_MAX_HEIGHT_RATIO = 0.75
 export const TRANSLATE_HEIGHT_REPORT_DEBOUNCE_PX = 1
 export const TRANSLATE_SCREEN_MOVE_DEBOUNCE_MS = 100
@@ -86,7 +86,7 @@ export const TRANSLATE_MAX_W_SENTINEL = 100000  // 传给 setMaximumSize 的"足
 import { app, BrowserWindow } from 'electron'
 app.whenReady().then(() => {
     const win = new BrowserWindow({ width: 500, height: 400, resizable: true })
-    win.setMinimumSize(360, 400)
+    win.setMinimumSize(280, 400)
     win.setMaximumSize(100000, 400)
     win.loadURL('data:text/html,<h1>resize-me</h1>')
     setTimeout(() => {
@@ -198,7 +198,7 @@ Expected: FAIL — 模块未找到 / `compute_target_height` 未定义。
 新建 `electron/windows/translate_height_controller.ts`(此 task 只放常量+纯函数;类放 Task 3):
 
 ```ts
-export const TRANSLATE_MIN_WIDTH = 360
+export const TRANSLATE_MIN_WIDTH_FALLBACK = 280
 export const TRANSLATE_MAX_HEIGHT_RATIO = 0.75
 export const TRANSLATE_HEIGHT_REPORT_DEBOUNCE_PX = 1
 export const TRANSLATE_SCREEN_MOVE_DEBOUNCE_MS = 100
@@ -281,7 +281,7 @@ export class TranslateHeightController {
 
     private apply_locked_height(h: number): void {
         if (this.win.isDestroyed()) return
-        this.win.setMinimumSize(TRANSLATE_MIN_WIDTH, h)
+        this.win.setMinimumSize(TRANSLATE_MIN_WIDTH_FALLBACK, h)
         this.win.setMaximumSize(TRANSLATE_MAX_W_SENTINEL, h)
         const bounds = this.win.getBounds()
         if (bounds.height !== h) {
@@ -487,7 +487,7 @@ git commit -m "feat(translate): 注册 translate:reportContentHeight handler 并
 ```ts
 import { getConfig } from '../config/store'
 import { WindowLabel, type WindowOptions } from './types'
-import { TRANSLATE_MIN_WIDTH } from './translate_height_controller'
+import { TRANSLATE_MIN_WIDTH_FALLBACK } from './translate_height_controller'
 
 const TRANSLATE_INITIAL_HEIGHT = 160
 const TRANSLATE_DEFAULT_WIDTH = 430
@@ -495,13 +495,13 @@ const TRANSLATE_DEFAULT_WIDTH = 430
 export function get_translate_window_options(): WindowOptions {
     const remember_size = getConfig('translate_remember_window_size') as boolean
     const width = remember_size
-        ? Math.max(TRANSLATE_MIN_WIDTH, getConfig('translate_window_width') as number)
+        ? Math.max(TRANSLATE_MIN_WIDTH_FALLBACK, getConfig('translate_window_width') as number)
         : TRANSLATE_DEFAULT_WIDTH
     return {
         label: WindowLabel.TRANSLATE,
         width,
         height: TRANSLATE_INITIAL_HEIGHT,
-        minWidth: TRANSLATE_MIN_WIDTH,
+        minWidth: TRANSLATE_MIN_WIDTH_FALLBACK,
         minHeight: TRANSLATE_INITIAL_HEIGHT,
         resizable: true,
         alwaysOnTop: getConfig('translate_always_on_top') as boolean,
@@ -562,7 +562,7 @@ Expected: PASS
 
 ```bash
 git add electron/windows/translate_options.ts electron/windows/manager.ts tests/unit/windows/window_options.test.ts
-git commit -m "feat(translate): 翻译窗口初始尺寸/最小宽 360/持久化只保留宽度"
+git commit -m "feat(translate): 翻译窗口初始尺寸/动态最小宽/持久化只保留宽度"
 ```
 
 ---
@@ -1170,7 +1170,7 @@ Run: `grep -n "翻译窗口" docs/spec.md | head -10`
 ```markdown
 ### 窗口尺寸与滚动
 
-- 最小宽度 360px,无最大宽度上限(实现层用 MAX_W_SENTINEL=100000),用户可拖宽。
+- 最小宽度以 280px 为硬保底,实际下限由语言转换区自然宽度上报后实时更新;无最大宽度上限(实现层用 MAX_W_SENTINEL=100000),用户可拖宽。
 - 高度由主进程锁定,用户**不可**手动调整;实际高度 = clamp(内容自然高度, 初始高度, floor(workArea.height × 0.75))。
 - 内容超出上限时,结果区(`ResultsScroll`)内部滚动,输入区与语言条固定在窗口顶部不滚动。
 - 未触发翻译时不渲染任何卡片;触发后每个引擎卡片初始为折叠态(只显示 header 一行),结果返回后自动展开 body,窗口分次扩张。

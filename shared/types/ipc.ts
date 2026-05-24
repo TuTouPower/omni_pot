@@ -34,6 +34,7 @@ export interface ElectronAPI {
   }
   translate: {
     reportContentHeight(height: number): Promise<void>
+    reportMinWidth(width: number): Promise<void>
   }
   shell: {
     openExternal(url: string): Promise<boolean>

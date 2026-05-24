@@ -16,7 +16,7 @@ import { get_translate_window_options } from '../../../electron/windows/translat
 function reset_config(): void {
     config_values.clear()
     config_values.set('translate_remember_window_size', true)
-    config_values.set('translate_window_width', 710)
+    config_values.set('translate_window_width', 240)
     config_values.set('translate_window_height', 720)
     config_values.set('dict_window_width', 430)
     config_values.set('dict_window_height', 440)
@@ -37,7 +37,7 @@ describe('window options', () => {
     })
 
     it('uses independent saved sizes for translate and dict windows', () => {
-        expect(get_translate_window_options()).toMatchObject({ width: 710, height: 160 })
+        expect(get_translate_window_options()).toMatchObject({ width: 280, height: 160, minWidth: 280 })
         expect(get_dict_window_options()).toMatchObject({ width: 430, height: 440 })
     })
 

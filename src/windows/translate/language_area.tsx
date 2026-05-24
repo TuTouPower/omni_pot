@@ -145,9 +145,10 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
 
 interface LanguageAreaProps {
     onSwap: () => void
+    containerRef?: React.Ref<HTMLDivElement>
 }
 
-export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement {
+export function LanguageArea({ onSwap, containerRef }: LanguageAreaProps): React.ReactElement {
     const { t } = useTranslation()
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
@@ -158,7 +159,7 @@ export function LanguageArea({ onSwap }: LanguageAreaProps): React.ReactElement 
     const autoNoDetect = sourceLanguage === 'auto' && !detectedLanguage
 
     return (
-        <div className="card" style={{ padding: '4px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flex: '0 0 auto' }}>
+        <div ref={containerRef} className="card" style={{ padding: '4px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flex: '0 0 auto' }}>
             <div data-testid="lang-source">
                 <LangPick value={sourceLanguage} onChange={setSourceLanguage} options={SOURCE_LANGUAGES} testId="lang-source-button" optionTestIdPrefix="lang-source-option" />
             </div>
