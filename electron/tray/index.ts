@@ -14,6 +14,7 @@ import { getConfig, setConfig } from '../config/store'
 import { get_translate_window_options } from '../windows/translate_options'
 import { start_screenshot_capture } from '../screenshot'
 import { log, getLogDir } from '../log'
+import { getUserDataDir } from '../config/store'
 import { checkForUpdate } from '../updater'
 
 let tray: Tray | null = null
@@ -218,7 +219,7 @@ export function trigger_tray_action(action: string): boolean {
       close_tray_popup()
       return true
     case 'view_log':
-      shell.openPath(getLogDir(app.getPath('userData'))).catch((err: unknown) => { log_tray.error(err) })
+      shell.openPath(getLogDir(getUserDataDir())).catch((err: unknown) => { log_tray.error(err) })
       close_tray_popup()
       return true
     case 'restart':
@@ -244,7 +245,7 @@ export function createTray(): void {
   const icon = nativeImage.createFromPath(iconPath)
 
   tray = new Tray(icon.resize({ width: 16, height: 16 }))
-  tray.setToolTip('Pot Desktop')
+  tray.setToolTip('Omni Pot')
 
   tray.on('click', () => {
     trigger_tray_click()
