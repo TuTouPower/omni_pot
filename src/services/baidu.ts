@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { md5 } from '@/lib/crypto'
@@ -55,7 +54,7 @@ export const baiduService: TranslateService = {
     ): Promise<string> {
         const appid = config.appid as string
         const secret = config.secret as string
-        const salt = randomUUID().replace(/-/g, '')
+        const salt = crypto.randomUUID().replace(/-/g, '')
         const sign = md5(`${appid}${text}${salt}${secret}`)
 
         const fromLang = BAIDU_LANG_MAP[from] ?? from
