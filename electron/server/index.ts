@@ -24,6 +24,39 @@ const log_server = log.scope('server')
 const IS_E2E = !!process.env.OMNI_POT_E2E
 const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
 
+const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
+const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
+
+class BodyTooLargeError extends Error {
+    constructor() {
+        super('Body too large')
+        this.name = 'BodyTooLargeError'
+    }
+}
+
+function readBody(req: http.IncomingMessage, maxBytes: number = MAX_BODY_SIZE): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+        const chunks: Buffer[] = []
+        let total = 0
+        req.on('data', (chunk: Buffer) => {
+            total += chunk.length
+            if (total > maxBytes) {
+                req.destroy()
+                reject(new BodyTooLargeError())
+                return
+            }
+            chunks.push(chunk)
+        })
+        req.on('end', () => resolve(Buffer.concat(chunks)))
+        req.on('error', reject)
+    })
+}
+
+function respondBodyTooLarge(res: http.ServerResponse): void {
+    res.writeHead(413)
+    res.end(JSON.stringify({ success: false, error: 'body too large' }))
+}
+
 function is_e2e_request(req: http.IncomingMessage): boolean {
     return IS_E2E && !!E2E_TOKEN && req.headers['x-omni-pot-e2e-token'] === E2E_TOKEN
 }
@@ -81,20 +114,28 @@ export function startServer(mgr: WindowManager): Promise<void> {
             }
 
             if (req.method === 'POST' && url.pathname === '/recognize') {
-                const chunks: Buffer[] = []
-                req.on('data', (chunk: Buffer) => chunks.push(chunk))
-                req.on('end', () => {
-                    let mode: 'recognize' | 'translate' = 'recognize'
-                    const body = Buffer.concat(chunks).toString('utf-8').trim()
-                    if (body.startsWith('{')) {
-                        try {
-                            const json = JSON.parse(body) as { mode?: unknown }
-                            if (json.mode === 'translate') mode = 'translate'
-                        } catch { /* keep default */ }
+                ;(async () => {
+                    try {
+                        const buf = await readBody(req, MAX_OCR_BODY_SIZE)
+                        let mode: 'recognize' | 'translate' = 'recognize'
+                        const body = buf.toString('utf-8').trim()
+                        if (body.startsWith('{')) {
+                            try {
+                                const json = JSON.parse(body) as { mode?: unknown }
+                                if (json.mode === 'translate') mode = 'translate'
+                            } catch { /* keep default */ }
+                        }
+                        start_screenshot_capture(mgr, mode).catch((err: unknown) => {
+                            log_server.error('recognize via HTTP failed: %s', err)
+                        })
+                        res.writeHead(200)
+                        res.end(JSON.stringify({ success: true, mode }))
+                    } catch (err: unknown) {
+                        if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+                        res.writeHead(500)
+                        res.end(JSON.stringify({ success: false, error: String(err) }))
                     }
-                    res.writeHead(200)
-                    res.end(JSON.stringify({ success: true, mode }))
-                })
+                })().catch((err: unknown) => { log_server.error(err) })
                 return
             }
 
@@ -156,28 +197,13 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
-            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/set-config') {
-                handleSetConfig(req, res)
-                return
-            }
-
             if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/clipboard') {
                 handleReadClipboard(res)
                 return
             }
 
-            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/clipboard-image') {
-                handle_read_clipboard_image(res)
-                return
-            }
-
             if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/window-state') {
                 handleWindowState(mgr, url, res)
-                return
-            }
-
-            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/primary-display') {
-                handle_primary_display(res)
                 return
             }
 
@@ -248,22 +274,27 @@ function handleTranslate(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
-        const text = Buffer.concat(chunks).toString('utf-8').trim()
-        if (!text) {
-            res.writeHead(400)
-            res.end(JSON.stringify({ success: false, error: 'empty body' }))
-            return
+    ;(async () => {
+        try {
+            const buf = await readBody(req)
+            const text = buf.toString('utf-8').trim()
+            if (!text) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'empty body' }))
+                return
+            }
+
+            mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+            mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
+
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-
-        mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-        mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
-
-        res.writeHead(200)
-        res.end(JSON.stringify({ success: true }))
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleDictLookup(
@@ -271,28 +302,33 @@ function handleDictLookup(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
-        const body = Buffer.concat(chunks).toString('utf-8').trim()
-        let text = body
-        if (body.startsWith('{')) {
-            try {
-                const json = JSON.parse(body) as { text?: unknown }
-                if (typeof json.text === 'string') text = json.text
-            } catch { /* fall through */ }
+    ;(async () => {
+        try {
+            const buf = await readBody(req)
+            const body = buf.toString('utf-8').trim()
+            let text = body
+            if (body.startsWith('{')) {
+                try {
+                    const json = JSON.parse(body) as { text?: unknown }
+                    if (typeof json.text === 'string') text = json.text
+                } catch { /* fall through */ }
+            }
+            const trimmed = text.trim()
+            if (!trimmed) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'empty body' }))
+                return
+            }
+            mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
+            mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', trimmed)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-        const trimmed = text.trim()
-        if (!trimmed) {
-            res.writeHead(400)
-            res.end(JSON.stringify({ success: false, error: 'empty body' }))
-            return
-        }
-        mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
-        mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', trimmed)
-        res.writeHead(200)
-        res.end(JSON.stringify({ success: true }))
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleTriggerSelection(
@@ -300,51 +336,49 @@ function handleTriggerSelection(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
-        ;(async () => {
-            try {
-                const body = Buffer.concat(chunks).toString('utf-8').trim()
-                let textToUse: string | null = null
-                let method = 'e2e'
+    ;(async () => {
+        try {
+            const buf = await readBody(req)
+            const body = buf.toString('utf-8').trim()
+            let textToUse: string | null = null
+            let method = 'e2e'
 
-                // E2E text injection: if JSON body has text field, use it
-                if (body) {
-                    try {
-                        const json = parse_json_body(chunks)
-                        const body_text = json.text
-                        if (typeof body_text === 'string' && body_text.trim()) {
-                            textToUse = body_text
-                        }
-                    } catch {
-                        // not JSON, ignore
+            // E2E text injection: if JSON body has text field, use it
+            if (body) {
+                try {
+                    const json = parse_json_body(buf)
+                    const body_text = json.text
+                    if (typeof body_text === 'string' && body_text.trim()) {
+                        textToUse = body_text
                     }
+                } catch {
+                    // not JSON, ignore
                 }
-
-                // If no injected text, read from OS
-                if (textToUse === null) {
-                    const result = await readSelectedText()
-                    if (!result.text.trim()) {
-                        res.writeHead(200)
-                        res.end(JSON.stringify({ success: false, reason: result.reason ?? 'empty' }))
-                        return
-                    }
-                    textToUse = result.text
-                    method = result.method
-                }
-
-                mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-                mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', textToUse)
-
-                res.writeHead(200)
-                res.end(JSON.stringify({ success: true, method }))
-            } catch (error: unknown) {
-                res.writeHead(500)
-                res.end(JSON.stringify({ success: false, error: String(error) }))
             }
-        })().catch((err: unknown) => { log_server.error(err) })
-    })
+
+            // If no injected text, read from OS
+            if (textToUse === null) {
+                const result = await readSelectedText()
+                if (!result.text.trim()) {
+                    res.writeHead(200)
+                    res.end(JSON.stringify({ success: false, reason: result.reason ?? 'empty' }))
+                    return
+                }
+                textToUse = result.text
+                method = result.method
+            }
+
+            mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+            mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', textToUse)
+
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true, method }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
+        }
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleTriggerDict(
@@ -352,15 +386,14 @@ function handleTriggerDict(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
+    ;(async () => {
         try {
-            const body = Buffer.concat(chunks).toString('utf-8').trim()
+            const buf = await readBody(req)
+            const body = buf.toString('utf-8').trim()
             let text = ''
             if (body) {
                 try {
-                    const json = parse_json_body(chunks)
+                    const json = parse_json_body(buf)
                     if (typeof json.text === 'string') text = json.text
                 } catch { /* ignore */ }
             }
@@ -373,26 +406,26 @@ function handleTriggerDict(
             mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', text)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
-        } catch (error: unknown) {
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
             res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleTriggerClipboard(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
+    ;(async () => {
         try {
-            const body = Buffer.concat(chunks).toString('utf-8').trim()
+            const buf = await readBody(req)
+            const body = buf.toString('utf-8').trim()
             let text = ''
             if (body) {
                 try {
-                    const json = parse_json_body(chunks)
+                    const json = parse_json_body(buf)
                     if (typeof json.text === 'string') text = json.text
                 } catch { /* ignore */ }
             }
@@ -404,11 +437,12 @@ function handleTriggerClipboard(
             clipboard.writeText(text)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
-        } catch (error: unknown) {
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
             res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleTriggerClipboardTranslate(
@@ -416,15 +450,14 @@ function handleTriggerClipboardTranslate(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
+    ;(async () => {
         try {
-            const body = Buffer.concat(chunks).toString('utf-8').trim()
+            const buf = await readBody(req)
+            const body = buf.toString('utf-8').trim()
             let text = ''
             if (body) {
                 try {
-                    const json = parse_json_body(chunks)
+                    const json = parse_json_body(buf)
                     if (typeof json.text === 'string') text = json.text
                 } catch { /* ignore */ }
             }
@@ -437,11 +470,12 @@ function handleTriggerClipboardTranslate(
             mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', text)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
-        } catch (error: unknown) {
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
             res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleCaptureClock(res: http.ServerResponse): void {
@@ -492,11 +526,10 @@ function handleOpenWindow(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
+    ;(async () => {
         try {
-            const body = parse_json_body(chunks)
+            const buf = await readBody(req)
+            const body = parse_json_body(buf)
             const label = typeof body.label === 'string' ? body.label : ''
             if (!label) {
                 res.writeHead(400)
@@ -506,7 +539,7 @@ function handleOpenWindow(
 
             const windowOpts: Partial<Record<string, ReturnType<typeof get_translate_window_options>>> = {
                 dict: { label: WindowLabel.DICT, width: 350, height: 420 },
-                config: { label: WindowLabel.CONFIG, width: 720, height: 740 },
+                config: { label: WindowLabel.CONFIG, width: 880, height: 600 },
                 recognize: get_recognize_window_options(),
                 updater: { label: WindowLabel.UPDATER, width: 400, height: 300 },
             }
@@ -521,11 +554,12 @@ function handleOpenWindow(
             mgr.focusOrCreate(opts.label, opts)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
-        } catch (error: unknown) {
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
             res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handleResetConfig(res: http.ServerResponse): void {
@@ -541,47 +575,11 @@ function handleResetConfig(res: http.ServerResponse): void {
     }
 }
 
-function handleSetConfig(req: http.IncomingMessage, res: http.ServerResponse): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
-        try {
-            const body = parse_json_body(chunks)
-            const results: Record<string, boolean> = {}
-            for (const [key, value] of Object.entries(body)) {
-                try {
-                    setConfig(key as keyof typeof DEFAULT_CONFIG, value)
-                    results[key] = true
-                } catch {
-                    results[key] = false
-                }
-            }
-            res.writeHead(200)
-            res.end(JSON.stringify({ success: true, results }))
-        } catch (error: unknown) {
-            res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
-        }
-    })
-}
-
 function handleReadClipboard(res: http.ServerResponse): void {
     try {
         const text = clipboard.readText()
         res.writeHead(200)
         res.end(JSON.stringify({ success: true, text }))
-    } catch (error: unknown) {
-        res.writeHead(500)
-        res.end(JSON.stringify({ success: false, error: String(error) }))
-    }
-}
-
-function handle_read_clipboard_image(res: http.ServerResponse): void {
-    try {
-        const image = clipboard.readImage()
-        const size = image.getSize()
-        res.writeHead(200)
-        res.end(JSON.stringify({ success: true, is_empty: image.isEmpty(), size }))
     } catch (error: unknown) {
         res.writeHead(500)
         res.end(JSON.stringify({ success: false, error: String(error) }))
@@ -620,14 +618,8 @@ function handleWindowState(
     }))
 }
 
-function handle_primary_display(res: http.ServerResponse): void {
-    const display = screen.getPrimaryDisplay()
-    res.writeHead(200)
-    res.end(JSON.stringify({ success: true, workArea: display.workArea }))
-}
-
-function parse_json_body(chunks: Buffer[]): Record<string, unknown> {
-    const body = Buffer.concat(chunks).toString('utf-8').trim()
+function parse_json_body(buf: Buffer): Record<string, unknown> {
+    const body = buf.toString('utf-8').trim()
     if (!body) return {}
     const parsed = JSON.parse(body) as unknown
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {}
@@ -638,22 +630,20 @@ function handle_trigger_screenshot(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
-        ;(async () => {
-            try {
-                const body = parse_json_body(chunks)
-                const mode = body.mode === 'translate' ? 'translate' : 'recognize'
-                const success = await start_screenshot_capture(mgr, mode)
-                res.writeHead(success ? 200 : 500)
-                res.end(JSON.stringify(success ? { success: true, mode } : { success: false, error: 'screenshot capture failed' }))
-            } catch (error: unknown) {
-                res.writeHead(500)
-                res.end(JSON.stringify({ success: false, error: String(error) }))
-            }
-        })().catch((err: unknown) => { log_server.error(err) })
-    })
+    ;(async () => {
+        try {
+            const buf = await readBody(req, MAX_OCR_BODY_SIZE)
+            const body = parse_json_body(buf)
+            const mode = body.mode === 'translate' ? 'translate' : 'recognize'
+            const success = await start_screenshot_capture(mgr, mode)
+            res.writeHead(success ? 200 : 500)
+            res.end(JSON.stringify(success ? { success: true, mode } : { success: false, error: 'screenshot capture failed' }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
+        }
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handle_trigger_input_translate(
@@ -676,51 +666,49 @@ function handle_trigger_hotkey(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
-        (async () => {
-            try {
-                const body = parse_json_body(chunks)
-                const name = typeof body.name === 'string' ? body.name : ''
-                if (!name) {
-                    res.writeHead(400)
-                    res.end(JSON.stringify({ success: false, error: 'missing name' }))
-                    return
-                }
-                const selectionText = typeof body.selectionText === 'string' ? body.selectionText : undefined
-                if (name === 'translate') {
-                    await triggerTranslateEntry(mgr, selectionText)
-                    res.writeHead(200)
-                    res.end(JSON.stringify({ success: true }))
-                    return
-                }
-                if (selectionText !== undefined) {
-                    setE2eSelectedTextResult({
-                        text: selectionText,
-                        method: 'none',
-                        reason: selectionText.trim() ? undefined : 'empty'
-                    })
-                }
-                if (!hasRegisteredHotkey(name)) {
-                    res.writeHead(404)
-                    res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
-                    return
-                }
-                triggerRegisteredHotkey(name)
+    ;(async () => {
+        try {
+            const buf = await readBody(req)
+            const body = parse_json_body(buf)
+            const name = typeof body.name === 'string' ? body.name : ''
+            if (!name) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'missing name' }))
+                return
+            }
+            const selectionText = typeof body.selectionText === 'string' ? body.selectionText : undefined
+            if (name === 'translate') {
+                await triggerTranslateEntry(mgr, selectionText)
                 res.writeHead(200)
                 res.end(JSON.stringify({ success: true }))
-            } catch (error: unknown) {
-                res.writeHead(500)
-                res.end(JSON.stringify({ success: false, error: String(error) }))
+                return
             }
-        })().catch((error: unknown) => {
-            log_server.error(error)
-            if (!res.headersSent) {
-                res.writeHead(500)
-                res.end(JSON.stringify({ success: false, error: String(error) }))
+            if (selectionText !== undefined) {
+                setE2eSelectedTextResult({
+                    text: selectionText,
+                    method: 'none',
+                    reason: selectionText.trim() ? undefined : 'empty'
+                })
             }
-        })
+            if (!hasRegisteredHotkey(name)) {
+                res.writeHead(404)
+                res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
+                return
+            }
+            triggerRegisteredHotkey(name)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
+        }
+    })().catch((error: unknown) => {
+        log_server.error(error)
+        if (!res.headersSent) {
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(error) }))
+        }
     })
 }
 
@@ -728,33 +716,32 @@ function handle_hotkey_system_failures(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
+    ;(async () => {
         try {
-            const body = parse_json_body(chunks)
+            const buf = await readBody(req)
+            const body = parse_json_body(buf)
             const shortcuts = Array.isArray(body.shortcuts)
                 ? body.shortcuts.filter((shortcut): shortcut is string => typeof shortcut === 'string')
                 : []
             setE2eHotkeySystemFailures(shortcuts)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
-        } catch (error: unknown) {
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
             res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handle_tray_action(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
+    ;(async () => {
         try {
-            const body = parse_json_body(chunks)
+            const buf = await readBody(req)
+            const body = parse_json_body(buf)
             const action = typeof body.action === 'string' ? body.action : ''
             if (!action) {
                 res.writeHead(400)
@@ -768,11 +755,12 @@ function handle_tray_action(
             }
             res.writeHead(200)
             res.end(JSON.stringify({ success: true, action }))
-        } catch (error: unknown) {
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
             res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
 
 function handle_tray_menu(res: http.ServerResponse): void {
@@ -785,17 +773,14 @@ function handle_tray_menu(res: http.ServerResponse): void {
     }
 }
 
-function parse_mock_update_assets(value: unknown): Array<{ name: string; url: string; size?: number }> {
+function parse_mock_update_assets(value: unknown): Array<{ name: string; url: string }> {
     if (!Array.isArray(value)) return []
     return value.flatMap((asset) => {
         if (!asset || typeof asset !== 'object' || Array.isArray(asset)) return []
         const record = asset as Record<string, unknown>
-        if (typeof record.name !== 'string' || typeof record.url !== 'string') return []
-        return [{
-            name: record.name,
-            url: record.url,
-            ...(typeof record.size === 'number' ? { size: record.size } : {}),
-        }]
+        return typeof record.name === 'string' && typeof record.url === 'string'
+            ? [{ name: record.name, url: record.url }]
+            : []
     })
 }
 
@@ -804,11 +789,10 @@ function handle_mock_update(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
-    const chunks: Buffer[] = []
-    req.on('data', (chunk: Buffer) => chunks.push(chunk))
-    req.on('end', () => {
+    ;(async () => {
         try {
-            const body = parse_json_body(chunks)
+            const buf = await readBody(req)
+            const body = parse_json_body(buf)
             const release = {
                 version: typeof body.version === 'string' ? body.version : '9.9.9',
                 current_version: typeof body.current_version === 'string' ? body.current_version : app.getVersion(),
@@ -828,9 +812,10 @@ function handle_mock_update(
             mgr.sendWhenReady(WindowLabel.UPDATER, 'updater:release', release)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true, release }))
-        } catch (error: unknown) {
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
             res.writeHead(500)
-            res.end(JSON.stringify({ success: false, error: String(error) }))
+            res.end(JSON.stringify({ success: false, error: String(err) }))
         }
-    })
+    })().catch((err: unknown) => { log_server.error(err) })
 }
