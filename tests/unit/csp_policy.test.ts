@@ -17,6 +17,7 @@ describe('CSP policy', () => {
 
         expect(csp.get('connect-src')).toContain('https:')
         expect(csp.get('media-src')).toContain('blob:')
+        expect(csp.get('media-src')).toContain('https:')
         expect(csp.get('worker-src')).toContain('blob:')
         expect(csp.get('script-src')).toContain(wasm_token)
     })
