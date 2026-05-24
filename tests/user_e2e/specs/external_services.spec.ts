@@ -13,46 +13,57 @@ const deepl_portuguese_variant_text = 'The bus arrives at the station.'
 const external_service_cases = [
     { catalog_section: '1.2', name: 'Bing Translate', run: () => bingService.translate('hello world', 'en', 'zh_cn', {}) },
     { catalog_section: '1.2', name: 'Google Translate', run: () => googleService.translate('hello world', 'en', 'zh_cn', {}) },
-    { catalog_section: '1.2', name: 'DeepL free', run: () => deeplService.translate('hello world', 'en', 'zh_cn', { type: 'deeplx_free' }) },
+    { catalog_section: '1.2', name: 'DeepL free', run: () => throttled_deepl(() => deeplService.translate('hello world', 'en', 'zh_cn', { type: 'deeplx_free' })) },
     {
         catalog_section: '1.2',
         name: 'DeepL free long multi-paragraph text',
         source_text: deepl_long_multi_paragraph_text,
         target_contains_cjk: true,
-        run: () => deeplService.translate(
+        run: () => throttled_deepl(() => deeplService.translate(
             deepl_long_multi_paragraph_text,
             'en',
             'zh_cn',
             { type: 'deeplx_free' }
-        )
+        ))
     },
     {
         catalog_section: '1.2',
         name: 'DeepL free long single paragraph text',
         source_text: deepl_long_single_paragraph_text,
         target_contains_cjk: true,
-        run: () => deeplService.translate(
+        run: () => throttled_deepl(() => deeplService.translate(
             deepl_long_single_paragraph_text,
             'en',
             'zh_cn',
             { type: 'deeplx_free' }
-        )
+        ))
     },
     {
         catalog_section: '1.2',
         name: 'DeepL free Portuguese variant',
         source_text: deepl_portuguese_variant_text,
-        run: () => deeplService.translate(
+        run: () => throttled_deepl(() => deeplService.translate(
             deepl_portuguese_variant_text,
             'en',
             'pt_br',
             { type: 'deeplx_free' }
-        )
+        ))
     },
     { catalog_section: '1.2', name: 'MyMemory', run: () => mymemoryService.translate('hello world', 'en', 'zh_cn', {}) },
     { catalog_section: '1.3', name: 'Cambridge Dictionary', run: () => cambridgeDictService.translate('hello', 'en', 'zh_cn', {}) },
     { catalog_section: '1.3', name: 'Free Dictionary', run: () => freeDictionaryService.translate('hello', 'en', 'zh_cn', {}) },
 ] as const
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => { setTimeout(resolve, ms) })
+}
+
+let _deepl_sent = 0
+async function throttled_deepl(fn: () => Promise<unknown>): Promise<unknown> {
+    if (_deepl_sent > 0) await sleep(10_000)
+    _deepl_sent++
+    return fn()
+}
 
 function normalize_text(value: string): string {
     return value.replace(/\s+/g, ' ').trim()
