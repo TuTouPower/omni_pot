@@ -190,8 +190,10 @@ export function registerUpdateHandlers(): void {
 }
 
 export async function checkForUpdate(manager: WindowManager, silent = true): Promise<void> {
-    const enabled = getConfig('check_update')
-    if (!enabled) return
+    if (silent) {
+        const enabled = getConfig('check_update')
+        if (!enabled) return
+    }
 
     try {
         const resp = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`, {
