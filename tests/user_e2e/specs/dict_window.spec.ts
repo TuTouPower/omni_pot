@@ -30,10 +30,8 @@ test.describe('@ui dict window', () => {
                 app_language: 'zh_cn',
                 dictionary_service_list: [],
                 english_dictionary_service_list: ['free_dictionary@default'],
-                collection_service_list: ['anki@default'],
                 service_instances: {
                     'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
-                    'anki@default': { serviceKey: 'anki', config: { port: 8765 } },
                 },
             },
         })
@@ -58,12 +56,6 @@ test.describe('@ui dict window', () => {
 
             await dict.clickFirstCopy()
             await expect.poll(async () => (await omni.api.readClipboard()).text).not.toBe('')
-
-            await dict.fulfill_anki_collection_once()
-            // Use the result card's collect button (not the source card's).
-            const result_collect = dict.dictCards().nth(1).getByTestId('dict-collect-btn')
-            await result_collect.click()
-            await expect(result_collect).toHaveAttribute('aria-pressed', 'true')
 
             // TODO: pin toggle for dict window does not work in CI (setAlwaysOnTop IPC succeeds
             // but isAlwaysOnTop() stays false — likely a transparent-window issue on Windows).

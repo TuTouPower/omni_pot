@@ -343,7 +343,7 @@ export class TranslatePage {
     }
 
     async result_action_order(instanceKey: string): Promise<string[]> {
-        const expected = new Set(['result-tts', 'result-copy', 'result-collect', 'result-collapse'])
+        const expected = new Set(['result-tts', 'result-copy', 'result-collapse'])
         return this.resultCard(instanceKey).locator('[data-testid]').evaluateAll((elements, ids) => {
             const expected_ids = new Set(ids)
             return elements
@@ -368,10 +368,6 @@ export class TranslatePage {
 
     click_result_tts(instanceKey: string): Promise<void> {
         return this.result_tts_button(instanceKey).click()
-    }
-
-    clickResultCollect(instanceKey: string): Promise<void> {
-        return this.resultAction(instanceKey, 'result-collect').click()
     }
 
     clickResultCollapse(instanceKey: string): Promise<void> {
@@ -473,17 +469,6 @@ export class TranslatePage {
                 return original_fetch(input, init)
             }
         }, translation)
-    }
-
-    /** @stubbed Intercepts local AnkiConnect. Not a translation stub — tests collection feature. */
-    async fulfill_anki_collection_once(): Promise<void> {
-        await this.page.route('http://localhost:8765/', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({ result: null, error: null }),
-            })
-        }, { times: 1 })
     }
 
     async hold_lingva_tts(): Promise<{ wait_for_request: () => Promise<void>; wait_for_request_count: (expected_count: number) => Promise<void>; release_response: () => Promise<void> }> {

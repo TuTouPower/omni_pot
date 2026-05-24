@@ -51,14 +51,6 @@ export class DictPage {
         return this.page.getByTestId('dict-pos-tag')
     }
 
-    collectButton(): Locator {
-        return this.page.getByTestId('dict-collect-btn')
-    }
-
-    sourceCollectButton(): Locator {
-        return this.page.getByTestId('dict-source-collect-btn')
-    }
-
     copyButtons(): Locator {
         return this.page.getByTestId('dict-copy-btn')
     }
@@ -94,20 +86,6 @@ export class DictPage {
 
     getModeLabel(): Promise<string | null> {
         return this.modeLabel().textContent()
-    }
-
-    clickCollect(): Promise<void> {
-        return this.collectButton().click()
-    }
-
-    async fulfill_anki_collection_once(): Promise<void> {
-        await this.page.route('http://localhost:8765/', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({ result: null, error: null }),
-            })
-        }, { times: 1 })
     }
 
     clickFirstCopy(): Promise<void> {

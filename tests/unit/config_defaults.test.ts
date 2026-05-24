@@ -9,7 +9,7 @@ describe('Config defaults', () => {
             'translate_source_language', 'translate_target_language',
             'hotkey_translate',
             'translate_service_list', 'dictionary_service_list', 'recognize_service_list', 'tts_service_list',
-            'collection_service_list', 'service_instances',
+            'service_instances',
             'backup_type', 'webdav_url'
         ]
         for (const key of required_keys) {
@@ -88,7 +88,6 @@ describe('Config defaults', () => {
         ])
         expect(DEFAULT_CONFIG.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
         expect(DEFAULT_CONFIG.tts_service_list).toEqual(['system_tts@default'])
-        expect(DEFAULT_CONFIG.collection_service_list).toEqual([])
     })
 
     it('backup defaults', () => {

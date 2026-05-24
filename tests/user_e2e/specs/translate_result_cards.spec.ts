@@ -8,10 +8,8 @@ const test_service_config = {
     translate_source_language: 'en',
     translate_target_language: 'zh_cn',
     tts_service_list: ['system_tts@default'],
-    collection_service_list: ['anki@default'],
     service_instances: {
         'system_tts@default': { serviceKey: 'system_tts', config: {} },
-        'anki@default': { serviceKey: 'anki', config: { port: 8765 } },
     },
 }
 
@@ -43,7 +41,7 @@ test.describe('@ui translate result cards', () => {
         }
     })
 
-    test('user copies, collects, collapses, expands, and retries a result card (stubbed - local HTTP server)', async () => {
+    test('user copies, collapses, expands, and retries a result card (stubbed - local HTTP server)', async () => {
         const omni = await AppFixture.start({ config: test_service_config })
         let server: TranslationTestServer | null = null
 
@@ -65,10 +63,6 @@ test.describe('@ui translate result cards', () => {
 
             await translate.clickResultCopy('mymemory@e2e')
             await expect.poll(async () => (await omni.api.readClipboard()).text).toBe('你好世界')
-
-            await translate.fulfill_anki_collection_once()
-            await translate.clickResultCollect('mymemory@e2e')
-            await expect(translate.resultAction('mymemory@e2e', 'result-collect')).toHaveAttribute('aria-pressed', 'true')
 
             await translate.clickResultCollapse('mymemory@e2e')
             await expect(translate.resultBody('mymemory@e2e')).toHaveCount(0)
