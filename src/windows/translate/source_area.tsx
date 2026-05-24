@@ -12,6 +12,7 @@ interface SourceAreaProps {
     ttsBusy?: boolean
     ttsPlaying?: boolean
     onDetectedLanguageClick?: () => void
+    onClearResults?: () => void
     inputRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
@@ -62,7 +63,7 @@ function cycle_variable_name(text: string): string {
     return apply_format(words, next)
 }
 
-export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy = false, ttsPlaying = false, onDetectedLanguageClick, inputRef }: SourceAreaProps): React.ReactElement | null {
+export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy = false, ttsPlaying = false, onDetectedLanguageClick, onClearResults, inputRef }: SourceAreaProps): React.ReactElement | null {
     const { t } = useTranslation()
     const sourceText = useTranslateStore((s) => s.sourceText)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
@@ -146,7 +147,17 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     const handleClear = useCallback(() => {
         setSourceText('')
         setDetectedLanguage(null)
-    }, [setSourceText, setDetectedLanguage])
+        onClearResults?.()
+    }, [setSourceText, setDetectedLanguage, onClearResults])
+
+    const handleSourceChange = useCallback((value: string) => {
+        setSourceText(value)
+        if (!value.trim()) {
+            cancel_dynamic_translate()
+            setDetectedLanguage(null)
+            onClearResults?.()
+        }
+    }, [setSourceText, cancel_dynamic_translate, setDetectedLanguage, onClearResults])
 
     useEffect(() => {
         resize_source_area()
@@ -173,12 +184,13 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
                 <textarea
                     ref={textAreaRef}
                     value={sourceText}
-                    onChange={(e) => { setSourceText(e.target.value); }}
+                    onChange={(e) => { handleSourceChange(e.target.value); }}
                     onCompositionStart={() => { isComposingRef.current = true }}
                     onCompositionEnd={() => { isComposingRef.current = false }}
                     onKeyDown={handleKeyDown}
                     placeholder={t('source_placeholder')}
                     data-testid="source-input"
+                    className="thin-scroll"
                     style={{
                         width: '100%',
                         fontSize: 'inherit',

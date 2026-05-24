@@ -2,7 +2,7 @@ import { app, Menu, session } from 'electron'
 import { basename, dirname } from 'path'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
-import { attach_translate_resize_persistence, get_translate_window_options } from './windows/translate_options'
+import { get_translate_window_options } from './windows/translate_options'
 import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config, getUserDataDir, onConfigChanged } from './config/store'
 import { initLog, log } from './log'
 
@@ -212,8 +212,7 @@ if (!gotLock) {
     })
 
     // Always open translate window for development
-    const tw = manager.createWindow(get_translate_window_options())
-    attach_translate_resize_persistence(tw)
+    manager.createWindow(get_translate_window_options())
 
     if (isFirstRun()) {
       manager.createWindow({

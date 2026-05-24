@@ -32,6 +32,9 @@ export interface ElectronAPI {
     openConfig(section?: string): Promise<void>
     onConfigNavigate(callback: (section: string) => void): () => void
   }
+  translate: {
+    reportContentHeight(height: number): Promise<void>
+  }
   shell: {
     openExternal(url: string): Promise<boolean>
   }

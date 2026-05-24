@@ -37,7 +37,7 @@ describe('window options', () => {
     })
 
     it('uses independent saved sizes for translate and dict windows', () => {
-        expect(get_translate_window_options()).toMatchObject({ width: 710, height: 720 })
+        expect(get_translate_window_options()).toMatchObject({ width: 710, height: 160 })
         expect(get_dict_window_options()).toMatchObject({ width: 430, height: 440 })
     })
 

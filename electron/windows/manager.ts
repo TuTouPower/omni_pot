@@ -5,6 +5,7 @@ import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
 import { getConfig, setConfig } from '../config/store'
 import { get_translate_window_options } from './translate_options'
+import { TranslateHeightController } from './translate_height_controller'
 import { get_recognize_window_options } from './recognize_options'
 import { get_dict_window_options, attach_dict_resize_persistence } from './dict_options'
 import { log } from '../log'
@@ -44,6 +45,7 @@ export class WindowManager {
   private transparentById = new Map<number, boolean>()
   private readyLabels = new Set<WindowLabel>()
   private pendingQueue = new Map<WindowLabel, Array<{ channel: string; args: unknown[] }>>()
+  private translate_height_controller: TranslateHeightController | null = null
 
   constructor() {
     // Listen for renderer-ready signals
@@ -111,6 +113,10 @@ export class WindowManager {
 
     if (opts.label === WindowLabel.TRANSLATE) {
       win.setSize(opts.width, opts.height)
+      this.translate_height_controller?.dispose()
+      this.translate_height_controller = new TranslateHeightController(win, {
+        initial_min_height: opts.height,
+      })
     }
 
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
@@ -173,7 +179,11 @@ export class WindowManager {
     // Attach resize persistence for windows that support it
     if (opts.label === WindowLabel.TRANSLATE) {
       if (getConfig('translate_remember_window_size') && !win.listenerCount('resize')) {
-        const persistSize = debounce(() => { if (win.isDestroyed()) return; const [w, h] = win.getSize(); setConfig('translate_window_width', w); setConfig('translate_window_height', h) }, 300)
+        const persistSize = debounce(() => {
+          if (win.isDestroyed()) return
+          const [w] = win.getSize()
+          setConfig('translate_window_width', w)
+        }, 300)
         win.on('resize', persistSize)
       }
     }
@@ -199,6 +209,8 @@ export class WindowManager {
         if (opts.label === WindowLabel.TRANSLATE) {
           setConfig('translate_pinned', false)
           setConfig('translate_always_on_top', false)
+          this.translate_height_controller?.dispose()
+          this.translate_height_controller = null
         }
         if (opts.label === WindowLabel.DICT) {
           setConfig('dict_always_on_top', false)
@@ -230,6 +242,10 @@ export class WindowManager {
 
   getLabelById(id: number): WindowLabel | undefined {
     return this.labelById.get(id)
+  }
+
+  getTranslateHeightController(): TranslateHeightController | null {
+    return this.translate_height_controller
   }
 
   focusOrCreate(label: WindowLabel, opts: WindowOptions): BrowserWindow {

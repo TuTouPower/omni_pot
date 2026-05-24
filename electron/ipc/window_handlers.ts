@@ -53,4 +53,13 @@ export function registerWindowHandlers(manager: WindowManager): void {
       manager.sendWhenReady(WindowLabel.CONFIG, 'config:navigate', section)
     }
   })
+  ipcMain.handle('translate:reportContentHeight', (event, height: number) => {
+    if (!Number.isFinite(height) || height < 0 || height > 100000) return
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    const label = manager.getLabelById(win.id)
+    if (label !== WindowLabel.TRANSLATE) return
+    const controller = manager.getTranslateHeightController()
+    controller?.report_content_height(height)
+  })
 }

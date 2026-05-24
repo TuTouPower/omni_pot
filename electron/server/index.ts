@@ -176,6 +176,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/primary-display') {
+                handle_primary_display(res)
+                return
+            }
+
             if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-screenshot') {
                 handle_trigger_screenshot(mgr, req, res)
                 return
@@ -613,6 +618,12 @@ function handleWindowState(
         transparent: mgr.isTransparent(label as WindowLabel),
         bounds: win.getBounds(),
     }))
+}
+
+function handle_primary_display(res: http.ServerResponse): void {
+    const display = screen.getPrimaryDisplay()
+    res.writeHead(200)
+    res.end(JSON.stringify({ success: true, workArea: display.workArea }))
 }
 
 function parse_json_body(chunks: Buffer[]): Record<string, unknown> {

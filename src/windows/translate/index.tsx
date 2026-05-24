@@ -113,17 +113,12 @@ export default function TranslateWindow(): React.ReactElement {
     const retryRequestRef = useRef<Record<string, number>>({})
     const root_ref = useRef<HTMLDivElement>(null)
     const titlebar_ref = useRef<HTMLDivElement>(null)
-    const content_ref = useRef<HTMLDivElement>(null)
+    const top_ref = useRef<HTMLDivElement>(null)
+    const results_scroll_ref = useRef<HTMLDivElement>(null)
+    const results_content_ref = useRef<HTMLDivElement>(null)
+    const last_reported_content_height_ref = useRef(0)
     const translate_timer_ref = useRef<number | null>(null)
     const previousLanguagesRef = useRef({ sourceLanguage, targetLanguage })
-    const result_fit_key = useMemo(
-        () => Object.entries(results).map(([key, result]) => {
-            if (result === null) return `${key}:error`
-            if (typeof result === 'string') return `${key}:text:${result.length.toString()}`
-            return `${key}:dict:${result.definitions.length.toString()}:${result.examples.length.toString()}`
-        }).join('|'),
-        [results]
-    )
 
     const handleTranslate = useCallback(async (textOverride?: string) => {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
@@ -525,32 +520,39 @@ export default function TranslateWindow(): React.ReactElement {
     }, [secondLanguage, serviceInstances, setIsTranslating, setResult])
 
     useEffect(() => {
-        const root = root_ref.current
         const titlebar = titlebar_ref.current
-        const content = content_ref.current
-        if (!root || !titlebar || !content) return
+        const top = top_ref.current
+        const results_scroll = results_scroll_ref.current
+        const results_content = results_content_ref.current
 
         let frame_id = 0
-        const fit_height = (): void => {
+        const report = (): void => {
             window.cancelAnimationFrame(frame_id)
             frame_id = window.requestAnimationFrame(() => {
-                const root_style = getComputedStyle(root)
-                const root_padding = (Number.parseFloat(root_style.paddingTop) || 0) + (Number.parseFloat(root_style.paddingBottom) || 0)
-                const height = Math.ceil(titlebar.getBoundingClientRect().height + content.scrollHeight + root_padding)
-                if (Math.abs(window.innerHeight - height) <= 1) return
-                window.electronAPI.window.setContentHeight(height).catch(() => undefined)
+                const titlebar_h = titlebar ? titlebar.getBoundingClientRect().height : 0
+                const top_h = top ? top.getBoundingClientRect().height : 0
+                const results_h = results_content ? results_content.scrollHeight : 0
+                const results_style = results_scroll ? getComputedStyle(results_scroll) : null
+                const results_padding_h = results_style
+                    ? Number.parseFloat(results_style.paddingTop) + Number.parseFloat(results_style.paddingBottom)
+                    : 0
+                const total = Math.ceil(titlebar_h + top_h + results_h + results_padding_h)
+                if (total === last_reported_content_height_ref.current) return
+                last_reported_content_height_ref.current = total
+                window.electronAPI.translate.reportContentHeight(total).catch(() => undefined)
             })
         }
 
-        fit_height()
-        const observer = new ResizeObserver(fit_height)
-        observer.observe(titlebar)
-        observer.observe(content)
+        report()
+        const observer = new ResizeObserver(report)
+        if (titlebar) observer.observe(titlebar)
+        if (top) observer.observe(top)
+        if (results_content) observer.observe(results_content)
         return () => {
             window.cancelAnimationFrame(frame_id)
             observer.disconnect()
         }
-    }, [show_welcome_empty, showSource, hideLanguage, enabledServiceList.length, sourceText, result_fit_key, isTranslating, appFont, appFontSize])
+    }, [show_welcome_empty, showSource, hideLanguage, enabledServiceList.length, isTranslating, appFont, appFontSize, results])
 
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
@@ -560,7 +562,14 @@ export default function TranslateWindow(): React.ReactElement {
         <div
             ref={root_ref}
             className="op-window"
-            style={{ fontSize: appFontSize, fontFamily: appFont === 'default' ? undefined : appFont }}
+            style={{
+                fontSize: appFontSize,
+                fontFamily: appFont === 'default' ? undefined : appFont,
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100vh',
+                overflow: 'hidden',
+            }}
         >
             <Titlebar
                 alwaysOnTop={alwaysOnTop}
@@ -572,8 +581,10 @@ export default function TranslateWindow(): React.ReactElement {
                 containerRef={titlebar_ref}
             />
 
-            {/* Content */}
-            <div ref={content_ref} style={{ flex: '0 1 auto', overflow: 'auto', padding: '4px 10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div
+                ref={top_ref}
+                style={{ flex: '0 0 auto', padding: '4px 10px 0', display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
                 {showSource && !show_welcome_empty && (
                     <SourceArea
                         onTranslate={handle_source_translate}
@@ -582,6 +593,7 @@ export default function TranslateWindow(): React.ReactElement {
                         ttsBusy={sourceTtsBusy}
                         ttsPlaying={sourceTtsPlaying}
                         onDetectedLanguageClick={handleSwapLanguages}
+                        onClearResults={clearResults}
                         inputRef={inputRef}
                     />
                 )}
@@ -589,9 +601,29 @@ export default function TranslateWindow(): React.ReactElement {
                 {show_welcome_empty && (
                     <WelcomeEmpty onSkip={() => { setConfig('welcome_dismissed', true); window.electronAPI.window.close().catch(console.error); }} />
                 )}
-                {!show_welcome_empty && (
-                    <TargetArea serviceList={enabledServiceList} ttsServiceList={enabledTtsServiceList} onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }} />
-                )}
+            </div>
+
+            <div
+                ref={results_scroll_ref}
+                className="thin-scroll"
+                data-testid="translate-results-scroll"
+                style={{
+                    flex: '1 1 auto',
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    padding: show_welcome_empty ? 0 : '8px 10px 12px',
+                }}
+            >
+                <div ref={results_content_ref}>
+                    {!show_welcome_empty && (
+                        <TargetArea
+                            serviceList={enabledServiceList}
+                            ttsServiceList={enabledTtsServiceList}
+                            hasAnyRequest={isTranslating || Object.keys(results).length > 0}
+                            onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }}
+                        />
+                    )}
+                </div>
             </div>
         </div>
     )

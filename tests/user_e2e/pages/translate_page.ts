@@ -6,7 +6,7 @@ function is_target_closed_error(error: unknown): boolean {
 }
 
 export class TranslatePage {
-    constructor(private page: Page, private api: E2eApi) {}
+    constructor(public page: Page, private api: E2eApi) {}
 
     wordmark(): Locator {
         return this.page.getByTestId('titlebar-wordmark')
@@ -88,6 +88,10 @@ export class TranslatePage {
 
     resultErrors(): Locator {
         return this.page.getByTestId('result-error')
+    }
+
+    resultsScroll(): Locator {
+        return this.page.getByTestId('translate-results-scroll')
     }
 
     // Titlebar

@@ -437,7 +437,7 @@ test.describe('@ui translate behavior settings', () => {
         }
     })
 
-    test('user reopens translate window with remembered size', async () => {
+    test('user reopens translate window with remembered width', async () => {
         const omni = await AppFixture.start({
             config: no_service_config({
                 translate_remember_window_size: true,
@@ -447,21 +447,21 @@ test.describe('@ui translate behavior settings', () => {
 
         try {
             const translate = await omni.translate()
+            const initial_bounds = (await omni.api.windowState('translate')).bounds
+            if (!initial_bounds) throw new Error('Translate window bounds unavailable')
 
             await translate.resizeWindowTo(520, 560)
             await expect.poll(async () => {
                 const bounds = (await omni.api.windowState('translate')).bounds
-                return !!bounds && bounds.width > 500 && bounds.height >= 320 && bounds.height <= 400 + WINDOW_SIZE_TOLERANCE
+                return !!bounds
+                    && bounds.width > 500
+                    && bounds.height >= 160
+                    && bounds.height <= 220
             }).toBe(true)
             const resized_bounds = (await omni.api.windowState('translate')).bounds
             if (!resized_bounds) throw new Error('Translate window bounds unavailable')
             const expected_width = resized_bounds.width
-            const expected_height = resized_bounds.height
             await expect_config(omni, 'translate_window_width', expected_width)
-            await expect.poll(async () => {
-                const height = (await omni.api.getConfig()).translate_window_height
-                return typeof height === 'number' && Math.abs(height - expected_height) <= WINDOW_SIZE_TOLERANCE
-            }).toBe(true)
 
             await translate.clickClose()
             await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
@@ -473,7 +473,8 @@ test.describe('@ui translate behavior settings', () => {
                 const bounds = (await omni.api.windowState('translate')).bounds
                 return !!bounds
                     && Math.abs(bounds.width - expected_width) <= WINDOW_SIZE_TOLERANCE
-                    && Math.abs(bounds.height - expected_height) <= WINDOW_SIZE_TOLERANCE
+                    && bounds.height >= 160
+                    && bounds.height <= 220
             }).toBe(true)
         } finally {
             await omni.stop()

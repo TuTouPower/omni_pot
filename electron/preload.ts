@@ -18,6 +18,9 @@ const api: Omit<ElectronAPI, 'ready'> = {
       return () => { ipcRenderer.off('config:navigate', handler) }
     }
   },
+  translate: {
+    reportContentHeight: (height) => ipcRenderer.invoke('translate:reportContentHeight', height),
+  },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
   },

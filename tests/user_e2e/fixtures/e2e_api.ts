@@ -147,7 +147,18 @@ export class E2eApi {
             visible: boolean
             focused: boolean
             alwaysOnTop: boolean
+            transparent: boolean
             bounds: { x: number; y: number; width: number; height: number } | null
+        }>
+    }
+
+    async primaryDisplay(): Promise<{
+        success: boolean
+        workArea: { x: number; y: number; width: number; height: number }
+    }> {
+        return this.request('GET', '/e2e/primary-display') as Promise<{
+            success: boolean
+            workArea: { x: number; y: number; width: number; height: number }
         }>
     }
 

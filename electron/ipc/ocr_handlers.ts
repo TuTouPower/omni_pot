@@ -6,7 +6,7 @@ import { writeFile, unlink } from 'fs/promises'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { start_screenshot_capture } from '../screenshot'
-import { get_translate_window_options, attach_translate_resize_persistence } from '../windows/translate_options'
+import { get_translate_window_options } from '../windows/translate_options'
 import { get_recognize_window_options } from '../windows/recognize_options'
 
 const SYSTEM_OCR_LANGUAGES = new Set([
@@ -116,8 +116,7 @@ export function registerOcrHandlers(manager: WindowManager): void {
     })
 
     ipcMain.handle('ocr:send-to-translate', (_event, text: string) => {
-        const win = manager.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-        attach_translate_resize_persistence(win)
+        manager.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
 
         manager.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
     })

@@ -20,6 +20,7 @@ function get_service_config(service_instances: ServiceInstancesMap, instance_key
 interface TargetAreaProps {
     serviceList: string[]
     ttsServiceList: string[]
+    hasAnyRequest: boolean
     onRetry?: (instanceKey: string) => void
 }
 
@@ -59,6 +60,7 @@ function SortableCard({
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
+        width: '100%',
     }
 
     const result = results[instanceKey]
@@ -123,7 +125,7 @@ function SortableCard({
                             <span style={{ color: 'var(--danger)', fontSize: 13 }}>{t('result.failed', { defaultValue: '翻译失败' })}</span>
                         </div>
                     ) : result !== undefined ? (
-                        <div data-testid="result-body" data-result-content style={{ marginTop: 8, marginLeft: 22, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)' }}>
+                        <div data-testid="result-body" data-result-content style={{ marginTop: 8, marginLeft: 22, fontSize: 13.5, lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                             {typeof result === 'string'
                                 ? (result || <span style={{ color: 'var(--text-mute)' }}>…</span>)
                                 : <DictResultInline result={result} />
@@ -171,7 +173,7 @@ function DictResultInline({ result }: { result: DictResult }): React.ReactElemen
     )
 }
 
-export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaProps): React.ReactElement {
+export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry }: TargetAreaProps): React.ReactElement | null {
     const results = useTranslateStore((s) => s.results)
     const isTranslating = useTranslateStore((s) => s.isTranslating)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
@@ -299,10 +301,12 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         useConfigStore.getState().set('translate_service_list', updated)
     }, [serviceList])
 
+    if (!hasAnyRequest) return null
+
     return (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={serviceList} strategy={verticalListSortingStrategy}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {serviceList.map((instanceKey) => (
                         <SortableCard
                             key={instanceKey}
