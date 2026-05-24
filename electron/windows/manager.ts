@@ -45,6 +45,8 @@ export class WindowManager {
   private transparentById = new Map<number, boolean>()
   private readyLabels = new Set<WindowLabel>()
   private pendingQueue = new Map<WindowLabel, Array<{ channel: string; args: unknown[] }>>()
+  /** Labels currently being rebuilt (e.g. transparency change); close handler skips config reset. */
+  private rebuilding = new Set<WindowLabel>()
   private translate_height_controller: TranslateHeightController | null = null
 
   constructor() {
@@ -221,6 +223,28 @@ export class WindowManager {
       }
       this.labelById.delete(win.id)
       this.transparentById.delete(win.id)
+      this.readyLabels.delete(opts.label)
+      this.pendingQueue.delete(opts.label)
+
+      // Skip config reset when the window is being rebuilt (e.g. transparency change)
+      if (this.rebuilding.has(opts.label)) {
+        this.rebuilding.delete(opts.label)
+        return
+      }
+
+      // Reset per-window pin/topmost state so next open starts fresh
+      if (opts.label === WindowLabel.TRANSLATE) {
+        setConfig('translate_pinned', false)
+        setConfig('translate_always_on_top', false)
+      }
+      if (opts.label === WindowLabel.DICT) {
+        setConfig('dict_always_on_top', false)
+        setConfig('translate_pinned', false)
+      }
+      if (opts.label === WindowLabel.RECOGNIZE) {
+        setConfig('recognize_always_on_top', false)
+        setConfig('translate_pinned', false)
+      }
     })
 
     this.byLabel.set(opts.label, win)
@@ -260,6 +284,22 @@ export class WindowManager {
   closeWindow(label: WindowLabel): void {
     const win = this.getWindow(label)
     if (win) win.close()
+  }
+
+  /**
+   * Rebuild a window (destroy + recreate) preserving pin/topmost config.
+   * Used when a property that cannot be changed at runtime (e.g. transparency)
+   * needs to be toggled.
+   */
+  rebuildForTransparencyChange(label: WindowLabel, opts: WindowOptions): BrowserWindow {
+    const win = this.getWindow(label)
+    if (!win) return this.createWindow(opts)
+
+    // Mark as rebuilding so the closed handler skips resetting pin/topmost config
+    this.rebuilding.add(label)
+    win.close()
+
+    return this.createWindow(opts)
   }
 
   getAllWindows(): BrowserWindow[] {
