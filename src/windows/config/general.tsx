@@ -66,7 +66,11 @@ export default function GeneralPage(): React.ReactElement {
                         <ConfigField
                             mono
                             defaultValue={String(serverPort)}
-                            onChange={(v) => { setServerPort(Number(v)); }}
+                            onChange={(v) => {
+                                const n = Number(v)
+                                const clamped = Number.isFinite(n) && n >= 1 && n <= 65535 ? n : 20202
+                                setServerPort(clamped)
+                            }}
                             testId="cfg-server_port"
                             style={{ width: 140 }}
                         />

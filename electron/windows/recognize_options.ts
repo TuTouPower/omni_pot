@@ -14,5 +14,6 @@ export function get_recognize_window_options(): WindowOptions {
         height: Math.max(height, RECOGNIZE_MIN_HEIGHT),
         minWidth: RECOGNIZE_MIN_WIDTH,
         minHeight: RECOGNIZE_MIN_HEIGHT,
+        alwaysOnTop: getConfig('recognize_always_on_top') as boolean,
     }
 }
