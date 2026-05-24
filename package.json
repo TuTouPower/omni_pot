@@ -25,7 +25,6 @@
     "test:e2e:external": "node scripts/ensure_electron_abi.mjs && node -e \"const { spawnSync } = require('node:child_process'); const result = spawnSync('npx', ['playwright', 'test', '--project=external'], { stdio: 'inherit', shell: true, env: { ...process.env, OMNI_POT_EXTERNAL_SERVICE_TESTS: '1' } }); process.exit(result.status ?? 1)\"",
     "test:e2e:all": "node scripts/ensure_electron_abi.mjs && node -e \"const { spawnSync } = require('node:child_process'); const result = spawnSync('npx', ['playwright', 'test', '--project=full'], { stdio: 'inherit', shell: true, env: { ...process.env, OMNI_POT_EXTERNAL_SERVICE_TESTS: '1' } }); process.exit(result.status ?? 1)\"",
     "build:chinese-dict": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dict.ts",
-    "build:cc-cedict": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_cc_cedict.ts",
     "start": "electron-vite preview"
   },
   "dependencies": {
@@ -67,7 +66,6 @@
         "from": "data",
         "to": "data",
         "filter": [
-          "dict/**",
           "tesseract/**"
         ]
       },
@@ -75,10 +73,8 @@
         "from": "resources/data/dict/",
         "to": "data/dict/",
         "filter": [
-          "**/*.db",
-          "**/chinese-dictionary-LICENSE",
-          "!**/*.db-shm",
-          "!**/*.db-wal"
+          "chinese_dict.db",
+          "chinese-dictionary-LICENSE"
         ]
       },
       {
@@ -138,6 +134,7 @@
     "tsx": "^4.22.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.3",
+    "undici": "^7.25.0",
     "vite": "^7.3.2",
     "vitest": "^4.1.5",
     "ws": "^8.20.0"
