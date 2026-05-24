@@ -197,13 +197,28 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/set-config') {
+                handleSetConfig(req, res)
+                return
+            }
+
             if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/clipboard') {
                 handleReadClipboard(res)
                 return
             }
 
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/clipboard-image') {
+                handle_read_clipboard_image(res)
+                return
+            }
+
             if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/window-state') {
                 handleWindowState(mgr, url, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/primary-display') {
+                handle_primary_display(res)
                 return
             }
 
@@ -575,11 +590,47 @@ function handleResetConfig(res: http.ServerResponse): void {
     }
 }
 
+function handleSetConfig(req: http.IncomingMessage, res: http.ServerResponse): void {
+    ;(async () => {
+        try {
+            const buf = await readBody(req)
+            const body = parse_json_body(buf)
+            const results: Record<string, boolean> = {}
+            for (const [key, value] of Object.entries(body)) {
+                try {
+                    setConfig(key as keyof typeof DEFAULT_CONFIG, value)
+                    results[key] = true
+                } catch {
+                    results[key] = false
+                }
+            }
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true, results }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
+        }
+    })().catch((err: unknown) => { log_server.error(err) })
+}
+
 function handleReadClipboard(res: http.ServerResponse): void {
     try {
         const text = clipboard.readText()
         res.writeHead(200)
         res.end(JSON.stringify({ success: true, text }))
+    } catch (error: unknown) {
+        res.writeHead(500)
+        res.end(JSON.stringify({ success: false, error: String(error) }))
+    }
+}
+
+function handle_read_clipboard_image(res: http.ServerResponse): void {
+    try {
+        const image = clipboard.readImage()
+        const size = image.getSize()
+        res.writeHead(200)
+        res.end(JSON.stringify({ success: true, is_empty: image.isEmpty(), size }))
     } catch (error: unknown) {
         res.writeHead(500)
         res.end(JSON.stringify({ success: false, error: String(error) }))
@@ -616,6 +667,12 @@ function handleWindowState(
         transparent: mgr.isTransparent(label as WindowLabel),
         bounds: win.getBounds(),
     }))
+}
+
+function handle_primary_display(res: http.ServerResponse): void {
+    const display = screen.getPrimaryDisplay()
+    res.writeHead(200)
+    res.end(JSON.stringify({ success: true, workArea: display.workArea }))
 }
 
 function parse_json_body(buf: Buffer): Record<string, unknown> {
