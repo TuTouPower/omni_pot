@@ -1,5 +1,5 @@
 import { app, BrowserWindow } from 'electron'
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs'
 import { join } from 'path'
 import { DEFAULT_CONFIG, DEFAULT_SERVICE_INSTANCES, APP_PRIMARY_COLORS } from '@shared/types/config'
 import { log } from '../log'
@@ -190,7 +190,9 @@ export function getAllConfig(): AppConfig {
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
 function write_config_to_disk(): void {
-    writeFileSync(config_path, JSON.stringify(data, null, 2), 'utf-8')
+    const tmp_path = config_path + '.tmp'
+    writeFileSync(tmp_path, JSON.stringify(data, null, 2), 'utf-8')
+    renameSync(tmp_path, config_path)
 }
 
 function cancel_pending_save(): void {
