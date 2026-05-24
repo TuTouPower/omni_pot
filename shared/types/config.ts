@@ -66,7 +66,6 @@ export interface AppConfig {
   english_dictionary_service_list: string[]
   recognize_service_list: string[]
   tts_service_list: string[]
-  collection_service_list: string[]
 
   service_instances: ServiceInstancesMap
 
@@ -163,7 +162,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   english_dictionary_service_list: ['cambridge_dict@default'],
   recognize_service_list: ['tesseract@default', 'system@default', 'qrcode@default'],
   tts_service_list: ['system_tts@default'],
-  collection_service_list: [],
 
   service_instances: DEFAULT_SERVICE_INSTANCES,
 

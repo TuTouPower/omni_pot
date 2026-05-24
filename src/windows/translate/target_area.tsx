@@ -8,7 +8,6 @@ import { CSS } from '@dnd-kit/utilities'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
-import { collectionServiceRegistry } from '../../services/index'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult, ServiceConfig } from '@shared/types/service'
@@ -39,19 +38,16 @@ interface SortableCardProps {
     onRetry?: (key: string) => void
     onCopy: (text: string) => void
     onTts: (text: string, key: string) => void
-    onCollect: (key: string) => void
     onReverseTranslate: (text: string) => void
     playingKey: string | null
     busyKey: string | null
-    collectedKeys: Set<string>
     ttsAvailable: boolean
-    collectionAvailable: boolean
 }
 
 function SortableCard({
     instanceKey, results, isTranslating, collapsed, onToggleCollapse, onRetry,
-    onCopy, onTts, onCollect,
-    playingKey, busyKey, collectedKeys, ttsAvailable, collectionAvailable,
+    onCopy, onTts,
+    playingKey, busyKey, ttsAvailable,
 }: SortableCardProps): React.ReactElement | null {
     const { t } = useTranslation()
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
@@ -68,7 +64,6 @@ function SortableCard({
     const result = results[instanceKey]
     const result_text = result_to_text(result)
     const is_loading = isTranslating && result === undefined
-    const is_collected = collectedKeys.has(instanceKey)
     const is_playing = playingKey === instanceKey
     const is_busy = busyKey === instanceKey
 
@@ -115,19 +110,6 @@ function SortableCard({
                         if (result_text) onCopy(result_text)
                     }}>
                         <Icons.Copy size={16} />
-                    </button>
-                    <button
-                        data-testid="result-collect"
-                        className="ic-btn"
-                        title={t('result.collect', { defaultValue: '收藏' })}
-                        aria-pressed={is_collected}
-                        disabled={!collectionAvailable || !result_text}
-                        onClick={() => {
-                            if (collectionAvailable && result_text) onCollect(instanceKey)
-                        }}
-                        style={{ color: is_collected ? 'var(--brand-primary)' : undefined }}
-                    >
-                        <Icons.Heart size={16} fill={is_collected} />
                     </button>
                     <button data-testid="result-collapse" className="ic-btn" title={collapsed ? t('result.expand', { defaultValue: '展开' }) : t('result.collapse', { defaultValue: '收起' })} aria-expanded={!collapsed} onClick={() => { onToggleCollapse(instanceKey); }}>
                         <Icons.Chev size={17} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
@@ -198,19 +180,13 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
     const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
 
-    const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
-    const enabledCollectionServiceList = useMemo(
-        () => collectionServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
-        [collectionServiceList, serviceInstances]
-    )
 
     const playingCleanupRef = useRef<(() => void) | null>(null)
     const playingRequestRef = useRef(0)
     const playingActiveRef = useRef(false)
     const [playingKey, setPlayingKey] = useState<string | null>(null)
     const [busyKey, setBusyKey] = useState<string | null>(null)
-    const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
     const [manuallyCollapsedKeys, setManuallyCollapsedKeys] = useState<Set<string>>(new Set())
 
     // Clear manual collapse state when a new translation starts so that
@@ -299,41 +275,6 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
         }
     }, [])
 
-    useEffect(() => {
-        setCollectedKeys(new Set())
-    }, [sourceText])
-
-    useEffect(() => {
-        if (isTranslating) {
-            setCollectedKeys(new Set())
-        }
-    }, [isTranslating])
-
-    const handleCollect = useCallback(async (instanceKey: string) => {
-        const result = results[instanceKey]
-        if (!result || !sourceText.trim() || enabledCollectionServiceList.length === 0) return
-
-        const resultText = typeof result === 'string'
-            ? result
-            : (result).definitions.map((d) => d.meanings.join('; ')).join('\n')
-
-        let collected = false
-        for (const collInstanceKey of enabledCollectionServiceList) {
-            const collKey = getServiceKey(collInstanceKey)
-            const svc = collectionServiceRegistry.get(collKey)
-            if (!svc) continue
-            const cfg = get_service_config(serviceInstances, collInstanceKey)
-            try {
-                await svc.send(sourceText, sourceLanguage, effectiveTargetLanguage ?? targetLanguage, resultText, cfg)
-                collected = true
-            } catch { /* skip failed services */ }
-        }
-
-        if (collected) {
-            setCollectedKeys((prev) => new Set(prev).add(instanceKey))
-        }
-    }, [results, sourceText, sourceLanguage, targetLanguage, effectiveTargetLanguage, enabledCollectionServiceList, serviceInstances])
-
     const sensors = useMemo<SensorDescriptor<SensorOptions>[]>(() => [{
         sensor: PointerSensor,
         options: { activationConstraint: { distance: 5 } },
@@ -375,13 +316,10 @@ export function TargetArea({ serviceList, ttsServiceList, onRetry }: TargetAreaP
                             onRetry={onRetry}
                             onCopy={handleCopy}
                             onTts={(text, key) => { handleTts(text, key) }}
-                            onCollect={(key) => { handleCollect(key).catch(console.error); }}
                             onReverseTranslate={handleReverseTranslate}
                             playingKey={playingKey}
                             busyKey={busyKey}
-                            collectedKeys={collectedKeys}
                             ttsAvailable={ttsServiceList.length > 0}
-                            collectionAvailable={enabledCollectionServiceList.length > 0}
                         />
                     ))}
                 </div>

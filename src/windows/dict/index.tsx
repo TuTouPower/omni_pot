@@ -9,7 +9,6 @@ import { CSS } from '@dnd-kit/utilities'
 import { useDictStore } from '../../stores/dict_store'
 import { useConfigStore } from '../../stores/config_store'
 import { translateServiceRegistry } from '../../services/registry'
-import { collectionServiceRegistry } from '../../services/index'
 import { detectLanguage } from '../../services/detect'
 import { native_language_name } from '../../i18n/language_names'
 import { getServiceKey } from '@shared/types/service'
@@ -30,9 +29,8 @@ function dict_result_to_text(result: DictResult): string {
         .join('\n')
 }
 
-function SortableDictCard({ instanceKey, result, isLoading, isCollected, onCollect, collectionAvailable, collapsed, onToggleCollapse, hidePosTag }: {
+function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleCollapse, hidePosTag }: {
     instanceKey: string; result: DictResult | null | undefined; isLoading: boolean
-    isCollected?: boolean; onCollect?: () => void; collectionAvailable?: boolean
     collapsed?: boolean; onToggleCollapse?: () => void
     hidePosTag?: boolean
 }): React.ReactElement | null {
@@ -81,19 +79,6 @@ function SortableDictCard({ instanceKey, result, isLoading, isCollected, onColle
                     <button data-testid="dict-copy-btn" className="ic-btn" title={copied ? t('dict.copied', { defaultValue: '已复制' }) : t('result.copy', { defaultValue: '复制' })} disabled={!result} onClick={handleCopy}>
                         <Icons.Copy size={16} />
                     </button>
-                    {onCollect && (
-                        <button
-                            className="ic-btn"
-                            data-testid="dict-collect-btn"
-                            title={t('result.collect', { defaultValue: '收藏' })}
-                            aria-pressed={isCollected}
-                            disabled={!collectionAvailable || !result}
-                            onClick={onCollect}
-                            style={{ color: isCollected ? 'var(--brand-primary)' : undefined }}
-                        >
-                            <Icons.Heart size={16} fill={isCollected} />
-                        </button>
-                    )}
                     <button className="ic-btn" data-testid="dict-collapse-btn" title={collapsed ? t('result.expand', { defaultValue: '展开' }) : t('result.collapse', { defaultValue: '收起' })} aria-expanded={!collapsed} onClick={onToggleCollapse}>
                         <Icons.Chev size={17} style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
                     </button>
@@ -199,7 +184,6 @@ export default function DictWindow(): React.ReactElement {
 
     const zhServiceList = useConfigStore((s) => s.config.dictionary_service_list)
     const enServiceList = useConfigStore((s) => s.config.english_dictionary_service_list)
-    const collectionServiceList = useConfigStore((s) => s.config.collection_service_list)
     const serviceInstances = useConfigStore((s) => s.config.service_instances)
     const allDictionaryInstances = useMemo(() => [...new Set([...zhServiceList, ...enServiceList])], [zhServiceList, enServiceList])
     const enabledServiceList = useMemo(
@@ -212,10 +196,6 @@ export default function DictWindow(): React.ReactElement {
         const langList = isEn ? enServiceList : zhServiceList
         return langList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false)
     }, [detectedLanguage, enabledServiceList, enServiceList, zhServiceList, serviceInstances])
-    const enabledCollectionServiceList = useMemo(
-        () => collectionServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
-        [collectionServiceList, serviceInstances]
-    )
     const alwaysOnTop = useConfigStore((s) => s.config.dict_always_on_top)
     const configPinned = useConfigStore((s) => s.config.dict_pinned)
     const pinned = configPinned || alwaysOnTop
@@ -223,7 +203,6 @@ export default function DictWindow(): React.ReactElement {
 
     const [dictReady, setDictReady] = useState<boolean | null>(null)
     const [importing, setImporting] = useState(false)
-    const [collectedKeys, setCollectedKeys] = useState<Set<string>>(new Set())
     const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
     const lookup_request_ref = useRef(0)
     const inputRef = useRef<HTMLDivElement>(null)
@@ -248,7 +227,6 @@ export default function DictWindow(): React.ReactElement {
         const request_id = lookup_request_ref.current + 1
         lookup_request_ref.current = request_id
         setWord(trimmed)
-        setCollectedKeys(new Set())
         setCollapsedKeys(new Set())
         setIsLoading(true)
         clearResults()
@@ -338,31 +316,6 @@ export default function DictWindow(): React.ReactElement {
             .catch(console.error)
     }, [alwaysOnTop, setConfig])
 
-    const collection_available = enabledCollectionServiceList.length > 0
-
-    const handleCollect = useCallback(async (instanceKey: string) => {
-        const result = results[instanceKey]
-        const trimmed_word = word.trim()
-        if (!trimmed_word || !result || enabledCollectionServiceList.length === 0) return
-
-        const result_text = dict_result_to_text(result)
-        let collected_result = false
-        for (const collInstanceKey of enabledCollectionServiceList) {
-            const collKey = getServiceKey(collInstanceKey)
-            const service = collectionServiceRegistry.get(collKey)
-            if (!service) continue
-            const instance_config = get_service_config(serviceInstances, collInstanceKey)
-            try {
-                await service.send(trimmed_word, 'auto', 'zh_cn', result_text, instance_config)
-                collected_result = true
-            } catch { /* skip failed services */ }
-        }
-
-        if (collected_result) {
-            setCollectedKeys((prev) => new Set(prev).add(instanceKey))
-        }
-    }, [word, results, enabledCollectionServiceList, serviceInstances])
-
     const toggleCollapse = useCallback((key: string) => {
         setCollapsedKeys((prev) => {
             const next = new Set(prev)
@@ -379,11 +332,6 @@ export default function DictWindow(): React.ReactElement {
         setWordCopied(true)
         setTimeout(() => { setWordCopied(false); }, 1500)
     }, [word])
-
-    const handleCollectFirst = useCallback(() => {
-        const firstKey = enabledServiceList.find((ik) => results[ik])
-        if (firstKey) handleCollect(firstKey).catch(console.error)
-    }, [enabledServiceList, results, handleCollect])
 
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
@@ -478,15 +426,6 @@ export default function DictWindow(): React.ReactElement {
                         </button>
                         <button
                             className="ic-btn"
-                            data-testid="dict-source-collect-btn"
-                            title={t('result.collect', { defaultValue: '收藏' })}
-                            onClick={handleCollectFirst}
-                            disabled={!collection_available || !enabledServiceList.find((ik) => results[ik])}
-                        >
-                            <Icons.Heart size={16} />
-                        </button>
-                        <button
-                            className="ic-btn"
                             data-testid="dict-lookup-btn"
                             title={t('dict.look_up', { defaultValue: '查询' })}
                             onClick={handleLookupClick}
@@ -520,9 +459,6 @@ export default function DictWindow(): React.ReactElement {
                                         instanceKey={instanceKey}
                                         result={hasResult ? (results[instanceKey] ?? null) : undefined}
                                         isLoading={isLoading && !hasResult}
-                                        isCollected={collectedKeys.has(instanceKey)}
-                                        onCollect={() => { handleCollect(instanceKey).catch(console.error); }}
-                                        collectionAvailable={collection_available}
                                         collapsed={collapsedKeys.has(instanceKey)}
                                         onToggleCollapse={() => { toggleCollapse(instanceKey); }}
                                         hidePosTag={is_zh_dict}

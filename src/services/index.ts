@@ -1,4 +1,4 @@
-import { translateServiceRegistry, ServiceRegistry } from './registry'
+import { translateServiceRegistry } from './registry'
 import { bingService } from './bing'
 import { googleService } from './google'
 import { deeplService } from './deepl'
@@ -22,10 +22,6 @@ import { ecdictService } from './ecdict'
 import { chineseDictionaryService } from './chinese_dictionary'
 import { registerAllTtsServices } from './tts'
 import { registerAllOcrServices } from './ocr'
-import { collectionServices } from './collection'
-import type { CollectionService } from '@shared/types/collection_service'
-
-export const collectionServiceRegistry = new ServiceRegistry<CollectionService>()
 
 export function registerAllServices(): void {
     translateServiceRegistry.register(bingService)
@@ -52,10 +48,6 @@ export function registerAllServices(): void {
 
     registerAllTtsServices()
     registerAllOcrServices()
-
-    for (const svc of collectionServices) {
-        collectionServiceRegistry.register(svc)
-    }
 }
 
 export { translateServiceRegistry, ocrServiceRegistry } from './registry'
