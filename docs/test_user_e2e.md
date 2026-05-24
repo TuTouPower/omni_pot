@@ -234,7 +234,7 @@ class TranslatePage {
 当前已有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、
 `/trigger-clipboard-translate`、`/capture-clock`、`POST /e2e/open-window`、
 `POST /e2e/reset-config`、`GET /e2e/clipboard`、`GET /e2e/clipboard-image`、`GET /e2e/window-state`、
-`POST /e2e/trigger-screenshot`、`POST /e2e/trigger-input-translate`、
+`GET /e2e/primary-display`、`POST /e2e/trigger-screenshot`、`POST /e2e/trigger-input-translate`、
 `POST /e2e/tray-action`、`GET /e2e/tray-menu`、`POST /e2e/mock-update`。
 
 | 端点 | 用途 |
@@ -242,6 +242,7 @@ class TranslatePage {
 | `POST /e2e/trigger-screenshot` | 触发截图（指定 `recognize` / `translate` mode） |
 | `POST /e2e/trigger-input-translate` | 触发输入翻译入口 |
 | `GET /e2e/window-state` | 查询窗口存在、可见、聚焦、置顶与 bounds 状态 |
+| `GET /e2e/primary-display` | 查询主显示器工作区，用于窗口高度上限等尺寸断言 |
 | `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `clipboard_monitor` / `config` / `restart` / `quit` / `tray_click` |
 | `GET /e2e/tray-menu` | 读取原生托盘菜单当前文案，用于验证界面语言切换后的托盘项本地化 |
 | `POST /e2e/mock-update` | 注入一个假的“有新版本”用于更新器测试 |

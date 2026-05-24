@@ -27,7 +27,8 @@
 - `electron/ipc/window_handlers.ts` — 新增 `translate:reportContentHeight` handler。**不修改** `window:setContentHeight`。
 - `electron/preload.ts` — 新增 `electronAPI.translate.reportContentHeight(height)`。
 - `shared/types/ipc.ts` — 新增 `translate` namespace 类型。
-- `src/windows/translate/index.tsx` — 重构布局(顶部固定块 + 底部 `ResultsScroll` 滚动块、内层 `ResultsContent` 节点供高度上报);删除旧 `fit_height` effect 改用新 IPC。
+- `src/windows/translate/index.tsx` — 重构布局(顶部固定块 + 底部 `ResultsScroll` 滚动块、内层 `ResultsContent` 节点供高度上报);删除旧 `fit_height` effect 改用新 IPC;向 SourceArea 传入清空结果回调。
+- `src/windows/translate/source_area.tsx` — 清空输入时同时触发父组件传入的结果清空回调,确保窗口回缩。
 - `src/windows/translate/target_area.tsx` — 容器去掉 `overflow:auto`;卡片宽度 100%;body 加 `white-space:pre-wrap; word-break:break-word`;接受 `hasAnyRequest` 控制是否渲染卡片列表(无翻译请求时不渲染任何卡片)。
 - `src/styles/globals.css` — 新增 `.thin-scroll` 工具类。
 - `tests/user_e2e/specs/translate_window_constraints.spec.ts` — **不删除**,改写 stub 到新 IPC,保留并改造既有断言以适配 75vh 上限语义。
@@ -572,6 +573,8 @@ git commit -m "feat(translate): 翻译窗口初始尺寸/最小宽 360/持久化
 - Modify: `src/windows/translate/index.tsx`
 - Modify: `src/windows/translate/source_area.tsx`
 
+**额外要求:** SourceArea 清空按钮必须同时清空翻译结果,否则 `Object.keys(results).length > 0` 会让 `hasAnyRequest` 继续为 true,窗口无法缩回初始高度。实现方式:给 `SourceArea` 新增 `onClearResults?: () => void` prop,父组件传入 `clearResults`,并在 `handleClear` 中调用。
+
 - [ ] **Step 1: 改根容器**
 
 在 `src/windows/translate/index.tsx` 的 return,把根 `<div ref={root_ref} className="op-window" ...>` 的 style 改为:
@@ -658,9 +661,33 @@ const results_content_ref = useRef<HTMLDivElement>(null)
 
 (`isTranslating || Object.keys(results).length > 0` 表示"已发起且尚未清空的翻译会话";`clearResults` 把 `results` 清空、`setIsTranslating(false)` 触发条件为 false → 卡片列表不再渲染。)
 
-- [ ] **Step 4: textarea 应用 `.thin-scroll`**
+- [ ] **Step 4: textarea 应用 `.thin-scroll`,清空时同步清空结果**
 
 `src/windows/translate/source_area.tsx` 的 `<textarea ref={textAreaRef} ...>`:若原本无 `className` 属性,加 `className="thin-scroll"`;若有,合并。
+
+同时扩展 `SourceAreaProps`:
+
+```ts
+    onClearResults?: () => void
+```
+
+函数参数解构加入 `onClearResults`,并把 `handleClear` 改为:
+
+```ts
+const handleClear = useCallback(() => {
+    setSourceText('')
+    setDetectedLanguage(null)
+    onClearResults?.()
+}, [setSourceText, setDetectedLanguage, onClearResults])
+```
+
+父组件 `src/windows/translate/index.tsx` 调用 `<SourceArea ... />` 时传入:
+
+```tsx
+onClearResults={clearResults}
+```
+
+这样用户点击清空输入后,`results` 同步清空,`hasAnyRequest` 变为 false,窗口能缩回初始高度。
 
 - [ ] **Step 5: 类型检查**
 
