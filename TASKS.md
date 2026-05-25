@@ -79,7 +79,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 - [x] **文字识别 / 截图翻译截屏显示器选择错误**：已改为按鼠标当前所在显示器选择截图源和截图遮罩 bounds；文字识别、截图翻译共用同一 `start_screenshot_capture` 路径，并补充显示器选择单测。
 - [x] **词典无选中文本时输入框未自动聚焦**：用户没有选中词汇却打开词典窗口时，自动清空旧词条/结果并聚焦词典输入框，等待用户直接输入查询内容；已补 e2e 回归。
-- [x] **词典去掉 ECDICT**：已从服务注册、默认实例、UI tile、词典 e2e 依赖、CC-CEDICT IPC/自动导入/构建/备份路径和当前文档中移除；配置迁移会清理旧用户配置里的 `ecdict@default`。
+- [x] **词典去掉 ECDICT**：~~已从服务注册、默认实例、UI tile、词典 e2e 依赖、CC-CEDICT IPC/自动导入/构建/备份路径和当前文档中移除；配置迁移会清理旧用户配置里的 `ecdict@default`。~~ **已重新启用**：ECDict (CC-CEDICT) 已加回，默认在中文词典和英文词典服务列表中启用，使用预构建的 `resources/data/dict/cc_cedict.db`（只读模式）。
 - [x] **中文词典查找失败**：已验证 `resources/data/dict/chinese_dict.db` 样例词查询正常，并增加旧 ECDICT 配置迁移，确保旧配置恢复为 `chinese_dictionary@default`；词典 e2e 覆盖中文真实查询。
 - [x] **Cambridge 词典没有声音**：audioUrl 提取仍命中 Cambridge 当前 HTML；根因是打包 CSP 的 `media-src` 未允许 `https:`，导致远程 mp3 被拦截。已允许 `media-src https:` 并补充 CSP 单测，外部 Cambridge audioUrl 测试通过。
 - [x] **Google Translate e2e 测试失败**：`external_services.spec.ts` 已读取 `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY`（含小写）并用 undici `ProxyAgent` 配置 Node fetch；若 Node 测试进程仍网络不可达，仅 skip Google 用例，不影响其他外部服务健康检查。
