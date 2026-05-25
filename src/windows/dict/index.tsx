@@ -113,29 +113,52 @@ function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleC
                         {/* Definitions */}
                         {result.definitions.length > 0 && (
                             <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-                                    {!hidePosTag && [...new Set(result.definitions.map(d => d.partOfSpeech).filter(Boolean))].map((pos, i) => (
-                                        <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{pos}</span>
-                                    ))}
-                                </div>
-                                <div className="stack" style={{ gap: 10 }}>
-                                    {result.definitions.map((def, i) => (
-                                        <div key={i} data-testid="dict-definition" style={{ display: 'flex', gap: 10 }}>
-                                            <div style={{ width: 22, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 11, paddingTop: 3 }}>
-                                                {String(i + 1).padStart(2, '0')}
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                    {!hidePosTag && <span className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>}
-                                                    <span style={{ fontSize: 14, fontWeight: 500 }} data-testid="dict-meaning-primary">{def.meanings[0] ?? ''}</span>
+                                {!hidePosTag ? (
+                                    (() => {
+                                        const groups = new Map<string, typeof result.definitions>()
+                                        for (const def of result.definitions) {
+                                            const key = def.partOfSpeech || ''
+                                            if (!groups.has(key)) groups.set(key, [])
+                                            groups.get(key)!.push(def)
+                                        }
+                                        return [...groups.entries()].map(([pos, defs], gi) => (
+                                            <div key={gi} style={{ marginBottom: gi < groups.size - 1 ? 10 : 0 }}>
+                                                {pos && <div data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10, marginBottom: 4 }}>{pos}</div>}
+                                                <div className="stack" style={{ gap: 10 }}>
+                                                    {defs.map((def, i) => (
+                                                        <div key={i} data-testid="dict-definition" style={{ display: 'flex', gap: 10 }}>
+                                                            <div style={{ width: 22, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 11, paddingTop: 3 }}>
+                                                                {String(i + 1).padStart(2, '0')}
+                                                            </div>
+                                                            <div style={{ flex: 1 }}>
+                                                                <span style={{ fontSize: 14, fontWeight: 500 }} data-testid="dict-meaning-primary">{def.meanings[0] ?? ''}</span>
+                                                                {def.meanings.slice(1).map((m, mi) => (
+                                                                    <div key={mi} data-testid="dict-meaning-alt" style={{ marginTop: 2, fontSize: 12.5, color: 'var(--text-dim)', fontStyle: 'italic' }}>{m}</div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                {def.meanings.slice(1).map((m, mi) => (
-                                                    <div key={mi} data-testid="dict-meaning-alt" style={{ marginTop: 2, fontSize: 12.5, color: 'var(--text-dim)', fontStyle: 'italic' }}>{m}</div>
-                                                ))}
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))
+                                    })()
+                                ) : (
+                                    <div className="stack" style={{ gap: 10 }}>
+                                        {result.definitions.map((def, i) => (
+                                            <div key={i} data-testid="dict-definition" style={{ display: 'flex', gap: 10 }}>
+                                                <div style={{ width: 22, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 11, paddingTop: 3 }}>
+                                                    {String(i + 1).padStart(2, '0')}
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <span style={{ fontSize: 14, fontWeight: 500 }} data-testid="dict-meaning-primary">{def.meanings[0] ?? ''}</span>
+                                                    {def.meanings.slice(1).map((m, mi) => (
+                                                        <div key={mi} data-testid="dict-meaning-alt" style={{ marginTop: 2, fontSize: 12.5, color: 'var(--text-dim)', fontStyle: 'italic' }}>{m}</div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
