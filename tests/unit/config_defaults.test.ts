@@ -81,10 +81,10 @@ describe('Config defaults', () => {
             'bing@default', 'deepl@default', 'mymemory@default'
         ])
         expect(DEFAULT_CONFIG.dictionary_service_list).toEqual([
-            'chinese_dictionary@default'
+            'chinese_dictionary@default', 'ecdict@default'
         ])
         expect(DEFAULT_CONFIG.english_dictionary_service_list).toEqual([
-            'cambridge_dict@default'
+            'cambridge_dict@default', 'ecdict@default'
         ])
         expect(DEFAULT_CONFIG.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
         expect(DEFAULT_CONFIG.tts_service_list).toEqual(['system_tts@default'])
@@ -99,6 +99,6 @@ describe('Config defaults', () => {
         expect(DEFAULT_SERVICE_INSTANCES['bing@default'].serviceKey).toBe('bing')
         expect(DEFAULT_SERVICE_INSTANCES['deepl@default'].serviceKey).toBe('deepl')
         expect(DEFAULT_SERVICE_INSTANCES['mymemory@default'].serviceKey).toBe('mymemory')
-        expect(DEFAULT_SERVICE_INSTANCES['ecdict@default']).toBeUndefined()
+        expect(DEFAULT_SERVICE_INSTANCES['ecdict@default'].serviceKey).toBe('ecdict')
     })
 })

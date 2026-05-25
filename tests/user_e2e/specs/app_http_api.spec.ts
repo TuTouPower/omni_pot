@@ -30,7 +30,7 @@ test.describe('@core external HTTP API', () => {
         expect(config.translate_target_language).toBe('zh_cn')
         expect(config.translate_service_list).toEqual(['bing@default', 'deepl@default', 'mymemory@default'])
         expect(config.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
-        expect(config.dictionary_service_list).toEqual(['chinese_dictionary@default'])
+        expect(config.dictionary_service_list).toEqual(['chinese_dictionary@default', 'ecdict@default'])
         expect(config.webdav_password).toBe('[redacted]')
         expect(config.service_instances).toMatchObject({
             'bing@default': { serviceKey: 'bing', config: {} },
