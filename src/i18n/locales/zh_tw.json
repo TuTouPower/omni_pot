@@ -92,7 +92,7 @@
     "history": {
         "title": "歷史記錄",
         "disable": "停用歷史記錄",
-        "clear": "清空歷史記錄"
+        "clear": "清空"
     },
     "backup": {
         "title": "備份",

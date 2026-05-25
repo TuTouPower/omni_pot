@@ -210,7 +210,7 @@
     "history": {
         "title": "History",
         "disable": "Disable history",
-        "clear": "Clear all history"
+        "clear": "Clear"
     },
     "backup": {
         "title": "Backup",

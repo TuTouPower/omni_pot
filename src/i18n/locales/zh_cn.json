@@ -211,7 +211,7 @@
     "history": {
         "title": "历史记录",
         "disable": "禁用历史记录",
-        "clear": "清空历史记录"
+        "clear": "清空"
     },
     "backup": {
         "title": "备份",
