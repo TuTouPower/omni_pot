@@ -114,8 +114,8 @@ function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleC
                         {result.definitions.length > 0 && (
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-                                    {result.definitions.map((def, i) => (
-                                        !hidePosTag && <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{def.partOfSpeech}</span>
+                                    {!hidePosTag && [...new Set(result.definitions.map(d => d.partOfSpeech).filter(Boolean))].map((pos, i) => (
+                                        <span key={i} data-testid="dict-pos-tag" className="chip plain mono" style={{ fontSize: 10 }}>{pos}</span>
                                     ))}
                                 </div>
                                 <div className="stack" style={{ gap: 10 }}>
