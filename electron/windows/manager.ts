@@ -201,6 +201,13 @@ export class WindowManager {
 
     win.on('closed', () => {
       log_wm.info('window closed:', opts.label)
+
+      // Skip config reset when the window is being rebuilt (e.g. transparency change)
+      const is_rebuilding = this.rebuilding.has(opts.label)
+      if (is_rebuilding) {
+        this.rebuilding.delete(opts.label)
+      }
+
       const current = this.byLabel.get(opts.label)
       if (current?.id === win.id) {
         this.byLabel.delete(opts.label)
@@ -208,43 +215,27 @@ export class WindowManager {
         this.pendingQueue.delete(opts.label)
 
         // Reset per-window pin/topmost state so next open starts fresh
-        if (opts.label === WindowLabel.TRANSLATE) {
-          setConfig('translate_pinned', false)
-          setConfig('translate_always_on_top', false)
-          this.translate_height_controller?.dispose()
-          this.translate_height_controller = null
-        }
-        if (opts.label === WindowLabel.DICT) {
-          setConfig('dict_always_on_top', false)
-        }
-        if (opts.label === WindowLabel.RECOGNIZE) {
-          setConfig('recognize_always_on_top', false)
+        if (!is_rebuilding) {
+          if (opts.label === WindowLabel.TRANSLATE) {
+            setConfig('translate_pinned', false)
+            setConfig('translate_always_on_top', false)
+            this.translate_height_controller?.dispose()
+            this.translate_height_controller = null
+          }
+          if (opts.label === WindowLabel.DICT) {
+            setConfig('dict_always_on_top', false)
+            setConfig('translate_pinned', false)
+          }
+          if (opts.label === WindowLabel.RECOGNIZE) {
+            setConfig('recognize_always_on_top', false)
+            setConfig('translate_pinned', false)
+          }
         }
       }
       this.labelById.delete(win.id)
       this.transparentById.delete(win.id)
       this.readyLabels.delete(opts.label)
       this.pendingQueue.delete(opts.label)
-
-      // Skip config reset when the window is being rebuilt (e.g. transparency change)
-      if (this.rebuilding.has(opts.label)) {
-        this.rebuilding.delete(opts.label)
-        return
-      }
-
-      // Reset per-window pin/topmost state so next open starts fresh
-      if (opts.label === WindowLabel.TRANSLATE) {
-        setConfig('translate_pinned', false)
-        setConfig('translate_always_on_top', false)
-      }
-      if (opts.label === WindowLabel.DICT) {
-        setConfig('dict_always_on_top', false)
-        setConfig('translate_pinned', false)
-      }
-      if (opts.label === WindowLabel.RECOGNIZE) {
-        setConfig('recognize_always_on_top', false)
-        setConfig('translate_pinned', false)
-      }
     })
 
     this.byLabel.set(opts.label, win)
