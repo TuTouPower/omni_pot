@@ -25,8 +25,10 @@ import { registerOcrHandlers } from './ipc/ocr_handlers'
 import { registerHistoryHandlers } from './ipc/history_handlers'
 import { registerBackupHandlers } from './ipc/backup_handlers'
 import { registerChineseDictHandlers } from './ipc/chinese_dict_handlers'
+import { registerDictHandlers } from './ipc/dict_handlers'
 import { registerDetectHandlers } from './ipc/detect_handlers'
 import { get_db_path, set_service_state, reload_db, close_chinese_dict } from './chinese_dict'
+import { close_dict } from './dict'
 import { init_cld3 } from './detect'
 import { existsSync, watch, type FSWatcher } from 'fs'
 import { spawn } from 'child_process'
@@ -104,6 +106,7 @@ if (!gotLock) {
     registerHistoryHandlers()
     registerBackupHandlers()
     registerChineseDictHandlers()
+    registerDictHandlers()
     registerDetectHandlers()
     registerUpdateHandlers()
     registerTrayHandlers()
@@ -241,6 +244,7 @@ if (!gotLock) {
     stopServer()
     close_history()
     close_chinese_dict()
+    close_dict()
     flush_config()
     unregisterAll()
   })

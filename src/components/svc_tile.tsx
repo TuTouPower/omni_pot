@@ -35,6 +35,7 @@ export const SVC_META: Partial<Record<string, { name: string; mono: string; tone
     system_tts: { name: 'System TTS', mono: 'SY', tone: 'oklch(60% 0.08 250)' },
     anki: { name: 'Anki', mono: 'AK', tone: 'oklch(58% 0.13 25)' },
     eudic: { name: '欧路词典', mono: 'EU', tone: 'oklch(60% 0.13 145)' },
+    ecdict: { name: 'CC-CEDICT', mono: 'EC', tone: 'oklch(55% 0.13 145)' },
 }
 
 export function SvcTile({ name, size = 24 }: { name: string; size?: number }): React.ReactElement {

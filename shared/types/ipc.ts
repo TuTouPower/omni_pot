@@ -99,6 +99,10 @@ export interface ElectronAPI {
     reload(): Promise<{ success: boolean }>
     onStateChanged(callback: (state: ChineseDictServiceState) => void): () => void
   }
+  dict: {
+    lookup(text: string, from: string): Promise<DictResult | null>
+    check(): Promise<{ ready: boolean; entry_count: number }>
+  }
   update: {
     onRelease(callback: (release: {
       version: string

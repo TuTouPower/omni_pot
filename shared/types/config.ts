@@ -96,7 +96,8 @@ export const DEFAULT_SERVICE_INSTANCES: ServiceInstancesMap = {
   'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
   'system_tts@default': { serviceKey: 'system_tts', config: {} },
   'system@default': { serviceKey: 'system', config: {} },
-  'qrcode@default': { serviceKey: 'qrcode', config: {} }
+  'qrcode@default': { serviceKey: 'qrcode', config: {} },
+  'ecdict@default': { serviceKey: 'ecdict', config: {} }
 }
 export const DEFAULT_CONFIG: AppConfig = {
   app_language: 'en',
@@ -157,8 +158,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   hotkey_selection_dictionary: '',
 
   translate_service_list: ['bing@default', 'deepl@default', 'mymemory@default'],
-  dictionary_service_list: ['chinese_dictionary@default'],
-  english_dictionary_service_list: ['cambridge_dict@default'],
+  dictionary_service_list: ['chinese_dictionary@default', 'ecdict@default'],
+  english_dictionary_service_list: ['cambridge_dict@default', 'ecdict@default'],
   recognize_service_list: ['tesseract@default', 'system@default', 'qrcode@default'],
   tts_service_list: ['system_tts@default'],
 

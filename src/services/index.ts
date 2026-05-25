@@ -19,6 +19,7 @@ import { ollamaService } from './ollama'
 import { mymemoryService } from './mymemory'
 import { freeDictionaryService } from './free_dictionary'
 import { chineseDictionaryService } from './chinese_dictionary'
+import { ecdictService } from './ecdict'
 import { registerAllTtsServices } from './tts'
 import { registerAllOcrServices } from './ocr'
 
@@ -43,6 +44,7 @@ export function registerAllServices(): void {
     translateServiceRegistry.register(mymemoryService)
     translateServiceRegistry.register(freeDictionaryService)
     translateServiceRegistry.register(chineseDictionaryService)
+    translateServiceRegistry.register(ecdictService)
 
     registerAllTtsServices()
     registerAllOcrServices()

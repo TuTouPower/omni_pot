@@ -133,6 +133,10 @@ const api: Omit<ElectronAPI, 'ready'> = {
       return () => { ipcRenderer.off('chineseDict:state-changed', handler) }
     },
   },
+  dict: {
+    lookup: (text: string, from: string) => ipcRenderer.invoke('dict:lookup', text, from),
+    check: () => ipcRenderer.invoke('dict:check'),
+  },
   update: {
     onRelease: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, release: Parameters<typeof callback>[0]) => { callback(release); }
