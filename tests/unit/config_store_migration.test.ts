@@ -21,26 +21,25 @@ afterEach(() => {
 })
 
 describe('config store migrations', () => {
-    it('removes ecdict from existing dictionary config and restores current dictionary defaults', async () => {
+    it('does not force ecdict into user who removed it', async () => {
         const user_data_dir = mkdtempSync(join(tmpdir(), 'omni-pot-config-'))
         process.env['OMNI_POT_USER_DATA'] = user_data_dir
         writeFileSync(join(user_data_dir, 'config.json'), JSON.stringify({
             __initialized: true,
-            dictionary_service_list: ['ecdict@default'],
-            english_dictionary_service_list: ['ecdict@default'],
-            service_instances: {
-                'ecdict@default': { serviceKey: 'ecdict', config: {} },
-            },
+            dictionary_service_list: ['chinese_dictionary@default'],
+            english_dictionary_service_list: ['cambridge_dict@default'],
+            service_instances: {},
         }), 'utf-8')
 
         const store = await import('../../electron/config/store')
         store.initConfigStore()
         const config = store.getAllConfig()
 
+        // Persisted config without ecdict stays without ecdict — user may have removed it intentionally
         expect(config.dictionary_service_list).toEqual(['chinese_dictionary@default'])
         expect(config.english_dictionary_service_list).toEqual(['cambridge_dict@default'])
-        expect(config.service_instances['ecdict@default']).toBeUndefined()
-        expect(config.service_instances['chinese_dictionary@default'].serviceKey).toBe('chinese_dictionary')
-        expect(config.service_instances['cambridge_dict@default'].serviceKey).toBe('cambridge_dict')
+        // But service_instances still gets defaults merged in (ecdict@default from DEFAULT_SERVICE_INSTANCES)
+        expect(config.service_instances['ecdict@default']).toBeDefined()
+        expect(config.service_instances['ecdict@default'].serviceKey).toBe('ecdict')
     })
 })
