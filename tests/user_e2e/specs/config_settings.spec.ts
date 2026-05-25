@@ -66,6 +66,7 @@ test.describe('@ui config settings window', () => {
             await config.setting('cfg-app_theme-dark').click()
             await expect.poll(async () => await config.documentTheme()).toBe('dark')
             await expect.poll(async () => await config.documentHasDarkClass()).toBe(true)
+            translate = await omni.translate(20_000)
             await expect.poll(async () => await translate.documentTheme()).toBe('dark')
             await expect.poll(async () => await translate.documentHasDarkClass()).toBe(true)
             await expect_config(omni, 'app_theme', 'dark')
@@ -96,7 +97,7 @@ test.describe('@ui config settings window', () => {
             await config.toggle('cfg-transparent')
             await expect.poll(async () => await config.documentTransparent()).toBe('false')
             await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(false)
-            translate = await omni.translate()
+            translate = await omni.translate(20_000)
             await expect.poll(async () => await translate.documentTransparent()).toBe('false')
             await expect_config(omni, 'transparent', false)
 

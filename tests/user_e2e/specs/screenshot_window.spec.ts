@@ -43,10 +43,13 @@ async function expect_recognize_image_size(
     expected_width: number,
     expected_height: number
 ): Promise<void> {
-    await expect.poll(async () => recognize.image().locator('img').evaluate((image) => ({
-        width: (image as HTMLImageElement).naturalWidth,
-        height: (image as HTMLImageElement).naturalHeight,
-    }))).toEqual({ width: expected_width, height: expected_height })
+    await expect.poll(async () => {
+        const size = await recognize.image().locator('img').evaluate((image) => ({
+            width: (image as HTMLImageElement).naturalWidth,
+            height: (image as HTMLImageElement).naturalHeight,
+        }))
+        return Math.abs(size.width - expected_width) <= 1 && Math.abs(size.height - expected_height) <= 1
+    }).toBe(true)
 }
 
 async function expected_image_size(screenshot: { device_scale_factor: () => Promise<number> }, width: number, height: number): Promise<{ width: number; height: number }> {

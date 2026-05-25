@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import type { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const SERVICE_CATEGORIES = [
     ['translate_service_list', '翻译', ['Bing', 'DeepL', 'MyMemory']],
@@ -139,45 +140,55 @@ test.describe('@ui config service management', () => {
             config: {
                 app_language: 'zh_cn',
                 translate_pinned: true,
-                translate_service_list: ['bing@default', 'google@default'],
+                translate_service_list: ['mymemory@first', 'mymemory@second'],
+                service_instances: {
+                    'mymemory@first': { serviceKey: 'mymemory', config: {} },
+                    'mymemory@second': { serviceKey: 'mymemory', config: {} },
+                },
             },
         })
 
+        let server: TranslationTestServer | null = null
         try {
+            server = await omni.startTranslationTestServer(['mymemory@first', 'mymemory@second'])
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@first')
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@second')
             const translate = await omni.translate()
             await translate.typeSource('hello')
+            await translate.clickTranslate()
             const config = await omni.openConfig()
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')
 
             await expect(translate.resultCards()).toHaveCount(2)
-            await expect(translate.resultCards().nth(0)).toContainText('Bing')
-            await expect(translate.resultCards().nth(1)).toContainText('Google')
-            await expect.poll(() => config.serviceItemKeys()).toEqual(['bing@default', 'google@default'])
+            await expect(translate.resultCards().nth(0)).toContainText('MyMemory')
+            await expect(translate.resultCards().nth(1)).toContainText('MyMemory')
+            await expect.poll(() => config.serviceItemKeys()).toEqual(['mymemory@first', 'mymemory@second'])
             const original_service_list = await config.serviceItemKeys()
-            await config.toggleService('bing@default')
+            await config.toggleService('mymemory@first')
 
-            await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'false')
+            await expect(config.serviceToggle('mymemory@first')).toHaveAttribute('aria-checked', 'false')
             await expect(config.serviceItems()).toHaveCount(2)
-            await expect(config.serviceItem('bing@default')).toContainText('Bing')
-            await expect(config.serviceItem('google@default')).toContainText('Google')
+            await expect(config.serviceItem('mymemory@first')).toContainText('MyMemory')
+            await expect(config.serviceItem('mymemory@second')).toContainText('MyMemory')
             expect(await config.serviceItemKeys()).toEqual(original_service_list)
             await expect.poll(async () => (await omni.api.getConfig()).translate_service_list).toEqual(original_service_list)
-            await expect_service_config_match(omni, 'bing@default', { enable: false })
+            await expect_service_config_match(omni, 'mymemory@first', { enable: false })
             await expect(translate.resultCards()).toHaveCount(1)
-            await expect(translate.resultCards().first()).toContainText('Google')
+            await expect(translate.resultCards().first()).toContainText('MyMemory')
 
-            await config.toggleService('bing@default')
+            await config.toggleService('mymemory@first')
 
-            await expect(config.serviceToggle('bing@default')).toHaveAttribute('aria-checked', 'true')
+            await expect(config.serviceToggle('mymemory@first')).toHaveAttribute('aria-checked', 'true')
             await expect(config.serviceItems()).toHaveCount(2)
             expect(await config.serviceItemKeys()).toEqual(original_service_list)
             await expect.poll(async () => (await omni.api.getConfig()).translate_service_list).toEqual(original_service_list)
-            await expect_service_config_match(omni, 'bing@default', { enable: true })
+            await expect_service_config_match(omni, 'mymemory@first', { enable: true })
             await expect(translate.resultCards()).toHaveCount(2)
-            await expect(translate.resultCards().nth(0)).toContainText('Bing')
-            await expect(translate.resultCards().nth(1)).toContainText('Google')
+            await expect(translate.resultCards().nth(0)).toContainText('MyMemory')
+            await expect(translate.resultCards().nth(1)).toContainText('MyMemory')
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
@@ -221,31 +232,41 @@ test.describe('@ui config service management', () => {
             config: {
                 app_language: 'zh_cn',
                 translate_pinned: true,
-                translate_service_list: ['bing@default', 'google@default'],
+                translate_service_list: ['mymemory@first', 'mymemory@second'],
+                service_instances: {
+                    'mymemory@first': { serviceKey: 'mymemory', config: {} },
+                    'mymemory@second': { serviceKey: 'mymemory', config: {} },
+                },
             },
         })
 
+        let server: TranslationTestServer | null = null
         try {
+            server = await omni.startTranslationTestServer(['mymemory@first', 'mymemory@second'])
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@first')
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@second')
             const translate = await omni.translate()
             await translate.typeSource('hello')
+            await translate.clickTranslate()
             const config = await omni.openConfig()
             await config.openSection('service')
             await config.openServiceCategory('translate_service_list')
 
             await expect(config.serviceItems()).toHaveCount(2)
-            await expect(config.serviceItems().nth(0)).toContainText('Bing')
-            await expect(config.serviceItems().nth(1)).toContainText('Google')
+            await expect(config.serviceItems().nth(0)).toContainText('MyMemory')
+            await expect(config.serviceItems().nth(1)).toContainText('MyMemory')
             await expect(translate.resultCards()).toHaveCount(2)
-            await expect(translate.resultCards().nth(0)).toContainText('Bing')
-            await expect(translate.resultCards().nth(1)).toContainText('Google')
+            await expect(translate.resultCards().nth(0)).toHaveAttribute('data-result-key', 'mymemory@first')
+            await expect(translate.resultCards().nth(1)).toHaveAttribute('data-result-key', 'mymemory@second')
 
-            await config.dragService('bing@default', 'google@default')
+            await config.dragService('mymemory@first', 'mymemory@second')
 
-            await expect(config.serviceItems().nth(0)).toContainText('Google')
-            await expect(config.serviceItems().nth(1)).toContainText('Bing')
-            await expect(translate.resultCards().nth(0)).toContainText('Google')
-            await expect(translate.resultCards().nth(1)).toContainText('Bing')
+            await expect(config.serviceItems().nth(0)).toContainText('MyMemory')
+            await expect(config.serviceItems().nth(1)).toContainText('MyMemory')
+            await expect(translate.resultCards().nth(0)).toHaveAttribute('data-result-key', 'mymemory@second')
+            await expect(translate.resultCards().nth(1)).toHaveAttribute('data-result-key', 'mymemory@first')
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })

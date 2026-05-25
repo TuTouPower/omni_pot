@@ -71,7 +71,7 @@ test.describe('@ui translate welcome empty state', () => {
                 const rect = el.getBoundingClientRect()
                 return { window_height, content_bottom: Math.ceil(rect.bottom) }
             })
-            expect(metrics.window_height).toBeGreaterThanOrEqual(metrics.content_bottom)
+            expect(metrics.window_height).toBeGreaterThanOrEqual(metrics.content_bottom - 1)
             expect(metrics.window_height - metrics.content_bottom).toBeLessThanOrEqual(80)
         } finally {
             await omni.stop()

@@ -212,9 +212,14 @@ test.describe('@ui translate result cards', () => {
             },
         })
 
+        let server: TranslationTestServer | null = null
         try {
+            server = await omni.startTranslationTestServer(['mymemory@e2e_a', 'mymemory@e2e_b'])
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@e2e_a')
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@e2e_b')
             const translate = await omni.translate()
             await translate.typeSource('hello')
+            await translate.clickTranslate()
 
             await expect(translate.resultCards()).toHaveCount(2)
             await expect(translate.resultCards().nth(0)).toHaveAttribute('data-result-key', 'mymemory@e2e_a')
@@ -229,6 +234,7 @@ test.describe('@ui translate result cards', () => {
             await config.openSection('service')
             await expect.poll(() => config.serviceItemKeys()).toEqual(['mymemory@e2e_b', 'mymemory@e2e_a'])
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })
@@ -246,9 +252,19 @@ test.describe('@ui translate result cards', () => {
             },
         })
 
+        let server: TranslationTestServer | null = null
         try {
+            server = await omni.startTranslationTestServer(['mymemory@e2e_a', 'mymemory@e2e_b'])
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@e2e_a')
+            server.set_mymemory_response({ translated_text: '你好', status: 200 }, 'mymemory@e2e_b')
+            // Restore the disabled instance to the service list (startTranslationTestServer only
+            // sets up enabled instances and overwrites translate_service_list).
+            await omni.api.setConfig({
+                translate_service_list: ['mymemory@e2e_a', 'mymemory@e2e_disabled', 'mymemory@e2e_b'],
+            })
             const translate = await omni.translate()
             await translate.typeSource('hello')
+            await translate.clickTranslate()
 
             await expect(translate.resultCards()).toHaveCount(2)
             await expect(translate.resultCards().nth(0)).toHaveAttribute('data-result-key', 'mymemory@e2e_a')
@@ -267,6 +283,7 @@ test.describe('@ui translate result cards', () => {
             expect(open_result.success).toBe(true)
             const translate_after_config = await omni.translate()
             await translate_after_config.typeSource('hello')
+            await translate_after_config.clickTranslate()
             await expect(translate_after_config.resultCards()).toHaveCount(2)
             await expect(translate_after_config.resultCards().nth(0)).toHaveAttribute('data-result-key', 'mymemory@e2e_b')
             await expect(translate_after_config.resultCards().nth(1)).toHaveAttribute('data-result-key', 'mymemory@e2e_a')
@@ -279,6 +296,7 @@ test.describe('@ui translate result cards', () => {
             await config_after_reverse.openSection('service')
             await expect.poll(() => config_after_reverse.serviceItemKeys()).toEqual(['mymemory@e2e_a', 'mymemory@e2e_disabled', 'mymemory@e2e_b'])
         } finally {
+            await server?.stop()
             await omni.stop()
         }
     })

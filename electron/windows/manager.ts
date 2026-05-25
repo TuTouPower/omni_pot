@@ -287,6 +287,10 @@ export class WindowManager {
 
     // Mark as rebuilding so the closed handler skips resetting pin/topmost config
     this.rebuilding.add(label)
+    // Detach the old window from the label map before closing, so that the
+    // following createWindow creates a fresh window instead of re-focusing
+    // the still-closing old one.
+    this.byLabel.delete(label)
     win.close()
 
     return this.createWindow(opts)
