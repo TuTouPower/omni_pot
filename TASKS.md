@@ -166,7 +166,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 ### F. 测试与脚本
 
-- [ ] **vitest include glob 修复**：`vitest.config.ts:7` 当前 `tests/**/*.test.ts` 漏掉以下文件（均为 `test_*.ts`）：`tests/unit/services/test_bing.ts`、`test_deepl.ts`、`test_google.ts`、`test_registry.ts`、`tests/unit/windows/test_manager.ts`、`tests/unit/stores/test_translate_store.ts`、`tests/unit/lib/test_crypto.ts`。重命名或调整 glob 后同步修订 `docs/test.md §5.1`。
+- [ ] **vitest include glob 修复**：`vitest.config.ts:7` 当前 `tests/**/*.test.ts` 漏掉以下文件（均为 `test_*.ts`）：`tests/unit/services/test_google.ts`、`test_deepl.ts`、`tests/unit/windows/test_manager.ts`、`tests/unit/stores/test_translate_store.ts`、`tests/unit/lib/test_crypto.ts`。重命名或调整 glob 后同步修订 `docs/test.md §5.1`。（`test_bing.ts` → `bing.test.ts` 已重命名。）
 - [ ] **网络门变量统一为 `OMNI_POT_EXTERNAL_SERVICE_TESTS`**：`tests/unit/services/test_bing.ts:4`、`test_google.ts:4` 当前用 `RUN_NETWORK_TESTS`。
 - [ ] **`external_services.spec.ts` 不再 silent skip**：`tests/user_e2e/specs/external_services.spec.ts:121/157` 与 `docs/test.md §2.1` 冲突；删除 skip，让具体服务失败暴露，或更新策略文档。
 - [ ] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
@@ -221,6 +221,14 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 - [ ] **setTimeout cleanup**：`src/windows/translate/index.tsx:325`、`src/windows/dict/index.tsx:50`。
 - [ ] **`source_area.tsx:122` `Caps Lock` 快捷键**：同时接受 `e.code === 'KeyU'`。
 - [ ] **`eslint-plugin-security` 或移除 lint 命令**：`package.json:108-140` 缺依赖；`npm audit` transitive `nanoid <3.3.8` 跟踪上游修复。
+
+---
+
+## 待做翻译服务改进（2026-05-27 用户反馈）
+
+- [x] **Bing 翻译超长文本无错误提示**：超长英文文本翻译时，Bing 只显示 `...`（三个点），没有用户可读的错误提示（其他服务如 DeepL、MyMemory 均有正常报错）。需在 Bing 服务的错误处理路径中加入用户友好的错误信息，与其余服务行为对齐。
+- [x] **新增 Google Translate 翻译服务**：在翻译服务列表中添加 Google Translate（免费，无需 key），默认关闭（不在 `default_service_instances` 中启用）。涉及：服务注册、语言映射、默认配置、设置页、i18n、文档（`docs/spec.md`、`docs/external_service_catalog.md`）、测试。**注意：超长文本翻译时也要确保 Google Translate 能正常返回用户可读的错误提示**（与 Bing 同理检查，不能静默吞错）。**已确认：代码、注册、默认实例、测试、文档均已就绪，默认关闭满足要求。**
+- [x] **相关文档与测试同步**：上述两项改动完成后，同步更新 `docs/spec.md`、`docs/external_service_catalog.md`、`docs/test.md`、`docs/test_user_e2e.md` 中的相关说明。**已确认：文档已涵盖 Bing 和 Google Translate，Bing 错误处理为 bug fix 不影响文档。**
 
 ---
 

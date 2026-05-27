@@ -121,6 +121,10 @@ export const bingService: TranslateService = {
       }).toString()
     })
 
+    if (!resp.ok) {
+      throw new Error(`Bing translate API ${String(resp.status)}`)
+    }
+
     const data = (await resp.json()) as Array<{
       translations: Array<{ text: string }>
     }>
