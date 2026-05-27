@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
 import type { LanguageCode } from '@shared/types/language'
-import type { ServiceConfig } from '@shared/types/service'
+import { type ServiceConfig, getServiceKey } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
+import { ocrServiceRegistry } from '@/services/registry'
+import { useConfigStore } from '@/stores/config_store'
 import { map_cover_rect_to_image_rect } from './crop'
 import { create_logger } from '../../utils/logger'
 
@@ -119,9 +121,6 @@ export default function ScreenshotWindow(): React.ReactElement {
             const bounds = container.getBoundingClientRect()
             const cropped = await crop_image(background, rect, { width: bounds.width, height: bounds.height })
 
-            const { ocrServiceRegistry } = await import('@/services/registry')
-            const { useConfigStore } = await import('@/stores/config_store')
-
             const config = useConfigStore.getState().config
             const service_instances = config.service_instances
             const service_list = config.recognize_service_list.filter((instance_key) => get_service_config(service_instances, instance_key).enable !== false)
@@ -135,7 +134,6 @@ export default function ScreenshotWindow(): React.ReactElement {
                 full_text = qr
             } else {
                 for (const instance_key of service_list) {
-                    const { getServiceKey } = await import('@shared/types/service')
                     const service_key = getServiceKey(instance_key)
                     const service = ocrServiceRegistry.get(service_key)
                     if (!service) continue
