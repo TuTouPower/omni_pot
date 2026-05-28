@@ -72,6 +72,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 - [x] **服务器 API 测试补全**：`POST /dict` 和 `GET /history` 两个端点缺少 HTTP API 测试（已有 `POST /translate`、`POST /recognize`、`GET /config` 的覆盖）。
 - [x] **词典/文字识别窗口固定按钮 bug + 补测试**：主进程 `manager.ts` 的 blur 失焦关闭只检查了 `translate_pinned`，遗漏 `dict_pinned` 和 `recognize_pinned`，导致词典和文字识别窗口点固定后失焦仍然关闭。修 blur 逻辑并为词典、文字识别（含截图翻译）窗口补固定/置顶 e2e 测试（对齐 `translate_pin_topmost.spec.ts` 覆盖范围）。
 - [x] **翻译窗口高度自适应与结果区滚动**：翻译窗口高度由主进程按内容高度和当前显示器 75% 工作区上限锁定；宽度仍可由用户拖拽并记忆，最小宽度以 280px 为硬保底并按语言转换区自然宽度实时更新；长结果只滚动结果区，清空源文本同步清空结果并回缩窗口。
+- [x] **清理废弃快捷键配置键**：`hotkey_selection_translate` / `hotkey_input_translate` 是旧版拆分快捷键的残留，spec §9.6 已明确只保留 4 个快捷键（合并为单一翻译入口）。从 `AppConfig` 中删除这两个键的定义和默认值，运行时不再读写；涉及 `shared/types/config.ts`、`electron/hotkey/index.ts`、迁移逻辑。
 
 ---
 
@@ -140,6 +141,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 - [ ] **截图/词典/翻译/快捷键设置内的硬编码中文走 i18n**：`src/windows/screenshot/index.tsx:303-310`、`src/windows/translate/target_area.tsx:83-84`、`src/windows/dict/index.tsx:70-71`、`src/windows/config/hotkey_settings.tsx:93-100/159/162/168-184`。
 - [ ] **版本号统一来自 metadata**：`src/windows/config/about.tsx:7`、`src/windows/config/index.tsx:123-124`、`src/windows/updater/index.tsx:114/369` 硬编码。
 - [ ] **`use_tts` 失败路径清理**：`src/hooks/use_tts.ts:17-34` 播放 reject 时未 `revokeObjectURL`、`is_playing` 卡 true；补 try/catch/finally。
+- [x] **欢迎页与翻译窗口空状态解耦**：当前欢迎页作为 `TranslateWindow` 的空状态组件渲染，导致 `welcome_dismissed=false` 时，只要翻译窗口短暂空文本就会显示欢迎页；热键翻译并行开窗后，选区文本尚未到达前会先闪欢迎页。根因是 onboarding（一次性欢迎/引导）和 translate empty state（翻译窗口空输入/等待态）混在一起。已新增 `translate:selection-pending` IPC 事件，热键触发后立即发送，渲染进程用 `selection_pending` 状态禁止欢迎页渲染，直到选区结果到达。详细分析见 `docs/archive/hotkey_translate_welcome_flash.md`。
 - [ ] **冷启动延迟（已记录）**：详见 `docs/runtime_issues.md` §4。本审阅不重复条目，仅作交叉引用。
 
 ### E. 翻译 / 词典 / OCR 服务正确性（high）

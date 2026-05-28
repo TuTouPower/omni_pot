@@ -6,8 +6,6 @@ test.describe('@ui translate welcome empty state', () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
-                hotkey_selection_translate: 'CommandOrControl+Alt+T',
-                hotkey_input_translate: 'CommandOrControl+Alt+I',
                 hotkey_ocr_recognize: 'CommandOrControl+Alt+S',
                 hotkey_ocr_translate: 'CommandOrControl+Alt+Shift+S',
             },
@@ -126,8 +124,6 @@ test.describe('@ui translate welcome empty state', () => {
         const omni = await AppFixture.start({
             config: {
                 app_language: 'zh_cn',
-                hotkey_selection_translate: '',
-                hotkey_input_translate: '',
                 hotkey_ocr_recognize: '',
                 hotkey_ocr_translate: '',
             },

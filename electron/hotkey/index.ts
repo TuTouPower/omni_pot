@@ -34,8 +34,6 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
   switch (name) {
     case 'translate':
     case 'hotkey_translate':
-    case 'hotkey_selection_translate':
-    case 'hotkey_input_translate':
       return () => { log_hotkey.info('triggered: %s', name); triggerTranslateEntry(mgr).catch((err: unknown) => { log_hotkey.error(err) }) }
     case 'hotkey_ocr_recognize':
       return () => { log_hotkey.info('triggered: %s', name); start_screenshot_capture(mgr, 'recognize').catch((err: unknown) => { log_hotkey.error(err) }) }
@@ -54,6 +52,7 @@ export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: s
         : Promise.resolve({ text: textOverride, reason: textOverride.trim() ? undefined : 'empty' })
 
     mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+    mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-pending')
 
     const result = await result_promise
     if (!result.text.trim()) {

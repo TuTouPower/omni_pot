@@ -59,6 +59,7 @@ export interface ElectronAPI {
     getSelection(): Promise<string>
     writeClipboard(text: string): Promise<void>
     writeClipboardImage(base64Image: string): Promise<void>
+    onTranslateSelectionPending(callback: () => void): () => void
     onTranslateFromSelection(callback: (text: string) => void): () => void
     onTranslateSelectionEmpty(callback: () => void): () => void
     onInputTranslate(callback: () => void): () => void

@@ -218,8 +218,6 @@ test.describe('@ui config settings window', () => {
         try {
             const config = await omni.openConfig()
             await config.openSection('hotkey')
-            await expect(config.hotkeyField('hotkey_input_translate')).toHaveCount(0)
-            await expect(config.hotkeyField('hotkey_selection_translate')).toHaveCount(0)
             await expect(config.window()).not.toContainText('Wayland 用户')
 
             await bind_hotkey(config, hotkey, 'Control+Alt+Shift+F9')

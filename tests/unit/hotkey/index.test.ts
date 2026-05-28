@@ -40,11 +40,34 @@ describe('translate hotkey entry', () => {
         const pending = triggerTranslateEntry(manager)
 
         expect(focus_or_create).toHaveBeenCalledWith('translate', translate_options)
-        expect(send_when_ready).not.toHaveBeenCalled()
+        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
 
         resolve_selection({ text: '', method: 'clipboard', reason: 'copy-failed' })
         await pending
 
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:input-translate')
+    })
+
+    it('sends selection-pending before from-selection when text is found', async () => {
+        send_when_ready.mockClear()
+        focus_or_create.mockClear()
+        let resolve_selection: (value: { text: string; method: 'clipboard' }) => void = () => {}
+        read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))
+        const manager = {
+            focusOrCreate: focus_or_create,
+            sendWhenReady: send_when_ready,
+        } as unknown as WindowManager
+        const { triggerTranslateEntry } = await import('../../../electron/hotkey/index')
+
+        const pending = triggerTranslateEntry(manager)
+
+        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
+        expect(send_when_ready).toHaveBeenCalledTimes(1)
+
+        resolve_selection({ text: 'hello', method: 'clipboard' })
+        await pending
+
+        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:from-selection', 'hello')
+        expect(send_when_ready).toHaveBeenCalledTimes(2)
     })
 })

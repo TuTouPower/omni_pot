@@ -53,6 +53,11 @@ const api: Omit<ElectronAPI, 'ready'> = {
     getSelection: () => ipcRenderer.invoke('text:getSelection'),
     writeClipboard: (text) => ipcRenderer.invoke('text:writeClipboard', text),
     writeClipboardImage: (base64Image) => ipcRenderer.invoke('text:writeClipboardImage', base64Image),
+    onTranslateSelectionPending: (callback) => {
+      const handler = () => { callback(); }
+      ipcRenderer.on('translate:selection-pending', handler)
+      return () => { ipcRenderer.off('translate:selection-pending', handler) }
+    },
     onTranslateFromSelection: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, text: string) => { callback(text); }
       ipcRenderer.on('translate:from-selection', handler)

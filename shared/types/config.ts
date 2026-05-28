@@ -55,8 +55,6 @@ export interface AppConfig {
   recognize_auto_copy: boolean
 
   hotkey_translate: string
-  hotkey_selection_translate: string
-  hotkey_input_translate: string
   hotkey_ocr_recognize: string
   hotkey_ocr_translate: string
   hotkey_selection_dictionary: string
@@ -151,8 +149,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   recognize_window_height: 520,
 
   hotkey_translate: '',
-  hotkey_selection_translate: '',
-  hotkey_input_translate: '',
   hotkey_ocr_recognize: '',
   hotkey_ocr_translate: '',
   hotkey_selection_dictionary: '',

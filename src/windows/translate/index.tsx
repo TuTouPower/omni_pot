@@ -103,6 +103,7 @@ export default function TranslateWindow(): React.ReactElement {
     const welcomeDismissed = useConfigStore((s) => s.config.welcome_dismissed)
     const [forceShowSource, setForceShowSource] = useState(false)
     const [selection_empty, setSelectionEmpty] = useState(false)
+    const [selection_pending, setSelectionPending] = useState(false)
     const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
     const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -266,11 +267,19 @@ export default function TranslateWindow(): React.ReactElement {
     }, [deleteNewline, incrementalTranslate])
 
     useEffect(() => {
+        const unsub = window.electronAPI.text.onTranslateSelectionPending(() => {
+            setSelectionPending(true)
+        })
+        return unsub
+    }, [])
+
+    useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
             if (!text.trim()) return
 
             const nextText = prepareIncomingText(text)
 
+            setSelectionPending(false)
             setSelectionEmpty(false)
             setSourceText(nextText)
             setForceShowSource(false)
@@ -282,6 +291,7 @@ export default function TranslateWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateSelectionEmpty(() => {
             cancel_scheduled_translate()
+            setSelectionPending(false)
             setSelectionEmpty(true)
             setSourceText('')
             setDetectedLanguage(null)
@@ -294,6 +304,7 @@ export default function TranslateWindow(): React.ReactElement {
         const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
+            setSelectionPending(false)
             setSelectionEmpty(false)
             setSourceText(nextText)
             setForceShowSource(false)
@@ -306,6 +317,7 @@ export default function TranslateWindow(): React.ReactElement {
         const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
+            setSelectionPending(false)
             setSelectionEmpty(false)
             setSourceText(nextText)
             setForceShowSource(false)
@@ -317,6 +329,7 @@ export default function TranslateWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.text.onInputTranslate(() => {
             cancel_scheduled_translate()
+            setSelectionPending(false)
             setSelectionEmpty(false)
             setSourceText('')
             setForceShowSource(true)
@@ -328,7 +341,7 @@ export default function TranslateWindow(): React.ReactElement {
     }, [cancel_scheduled_translate, setSourceText, setDetectedLanguage, clearResults])
 
     const showSource = forceShowSource || !hideSource
-    const show_welcome_empty = sourceText.trim() === '' && !forceShowSource && !welcomeDismissed && !selection_empty
+    const show_welcome_empty = sourceText.trim() === '' && !forceShowSource && !welcomeDismissed && !selection_empty && !selection_pending
 
     useEffect(() => {
         window.electronAPI.ready('translate')
