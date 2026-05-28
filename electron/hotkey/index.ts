@@ -49,11 +49,13 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
 }
 
 export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: string): Promise<void> {
-    const result = textOverride === undefined
-        ? await readSelectedText()
-        : { text: textOverride, reason: textOverride.trim() ? undefined : 'empty' }
+    const result_promise = textOverride === undefined
+        ? readSelectedText()
+        : Promise.resolve({ text: textOverride, reason: textOverride.trim() ? undefined : 'empty' })
 
     mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+
+    const result = await result_promise
     if (!result.text.trim()) {
         log_hotkey.info('translate entry: no text, reason=%s', result.reason ?? 'empty')
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')

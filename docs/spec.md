@@ -992,8 +992,8 @@ E2E 测试专用端点（仅 `OMNI_POT_E2E` 环境变量启用）：
 | `hotkey_ocr_recognize` | 文字识别 |
 | `hotkey_ocr_translate` | 截图翻译 |
 
-划词翻译 / 词典：**必须在 main 进程、翻译窗口聚焦/创建之前**读取选区
-（否则焦点切走会读错目标）。快捷键显示必须按平台转换修饰键：Windows / Linux 显示 `Control`，macOS 显示 `Command`，不得显示 `CommandOrControl`。
+划词翻译 / 词典：**必须在 main 进程、目标窗口聚焦/创建之前发起选区读取**
+（否则焦点切走会读错目标）。翻译入口允许选区读取与窗口创建并行：先发起读取，再立即创建 / 聚焦翻译窗口，读取完成后投递文本或进入空输入模式。快捷键显示必须按平台转换修饰键：Windows / Linux 显示 `Control`，macOS 显示 `Command`，不得显示 `CommandOrControl`。
 
 ---
 

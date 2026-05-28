@@ -62,6 +62,42 @@ describe('readSelectedText platform dispatch', () => {
         expect(result.method).toBe('accessibility')
     })
 
+    it('prepared windows reader starts before the first await', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+        const events: string[] = []
+        const windows_fn = vi.fn(() => {
+            events.push('windows')
+            return new Promise(() => {})
+        })
+        vi.doMock('../../../electron/selection/windows', () => ({
+            readSelectedTextWindows: windows_fn,
+        }))
+
+        const { prepareSelectedTextReader, readSelectedText } = await import('../../../electron/selection/index')
+        await prepareSelectedTextReader()
+
+        readSelectedText().catch(() => undefined)
+        events.push('after-call')
+
+        expect(events).toEqual(['windows', 'after-call'])
+    })
+
+    it('prepare failure does not throw or prevent later error result', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+        vi.doMock('../../../electron/selection/windows', () => {
+            throw new Error('native preload failed')
+        })
+
+        const { prepareSelectedTextReader, readSelectedText } = await import('../../../electron/selection/index')
+        await expect(prepareSelectedTextReader()).resolves.toBeUndefined()
+
+        const result = await readSelectedText()
+        expect(result.method).toBe('none')
+        expect(result.reason).toBe('error')
+        expect(result.text).toBe('')
+        expect(result.error).toBeInstanceOf(Error)
+    })
+
     it('catches platform module error and returns error result', async () => {
         Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
         vi.doMock('../../../electron/selection/windows', () => ({

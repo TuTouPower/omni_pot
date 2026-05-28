@@ -41,6 +41,7 @@ import {
   startClipboardMonitor,
   stopClipboardMonitor
 } from './clipboard'
+import { prepareSelectedTextReader } from './selection'
 import { build_csp_policy } from './csp_policy'
 
 let windowManager: WindowManager | undefined
@@ -59,7 +60,7 @@ if (!gotLock) {
     })
   })
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     try {
     // Remove native application menu (File/Edit/Window/Help)
     Menu.setApplicationMenu(null)
@@ -176,6 +177,7 @@ if (!gotLock) {
     createTray()
     log_main.info('tray created')
 
+    await prepareSelectedTextReader()
     registerGlobalShortcutsFromConfig()
     log_main.info('global shortcuts registered')
 

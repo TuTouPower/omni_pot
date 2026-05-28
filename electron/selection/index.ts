@@ -14,11 +14,32 @@ export interface SelectedTextResult {
     error?: unknown
 }
 
+let prepared_reader: (() => Promise<SelectedTextResult>) | null = null
 let e2e_selected_text_result: SelectedTextResult | null = null
 
 export function setE2eSelectedTextResult(result: SelectedTextResult | null): void {
     if (!process.env['OMNI_POT_E2E']) return
     e2e_selected_text_result = result
+}
+
+export async function prepareSelectedTextReader(): Promise<void> {
+    try {
+        if (process.platform === 'win32') {
+            const { readSelectedTextWindows } = await import('./windows')
+            prepared_reader = readSelectedTextWindows
+            return
+        }
+
+        if (process.platform === 'darwin') {
+            const { readSelectedTextDarwin } = await import('./darwin')
+            prepared_reader = readSelectedTextDarwin
+            return
+        }
+
+        prepared_reader = null
+    } catch {
+        prepared_reader = null
+    }
 }
 
 export async function readSelectedText(): Promise<SelectedTextResult> {
@@ -29,6 +50,10 @@ export async function readSelectedText(): Promise<SelectedTextResult> {
     }
 
     try {
+        if (prepared_reader) {
+            return await prepared_reader()
+        }
+
         if (process.platform === 'win32') {
             const { readSelectedTextWindows } = await import('./windows')
             return await readSelectedTextWindows()

@@ -2,15 +2,20 @@
 
 本文记录从本地运行日志中确认或定位中的运行时问题，用于后续修复和验证。
 
-## 4. 全局热键到窗口可见之间约有 1 秒延迟
+## 4. 词典热键到窗口可见之间约有 1 秒延迟
+
+### 状态
+
+`hotkey_translate` 同类问题已修复并归档：`docs/archive/closed_issues/hotkey_translate_waits_for_selection.md`。
+
+`hotkey_selection_dictionary` 仍按旧链路串行读取选区后开窗。
 
 ### 现象
 
-用户按下 `hotkey_translate` / `hotkey_selection_dictionary` 等全局快捷键后，翻译窗口或词典窗口要等约 1 秒才弹出，体感明显卡顿；`hotkey_ocr_recognize` / `hotkey_ocr_translate` 因为有预热窗口，反应明显更快。
+修复前，用户按下 `hotkey_translate` / `hotkey_selection_dictionary` 等全局快捷键后，翻译窗口或词典窗口要等约 1 秒才弹出，体感明显卡顿；`hotkey_translate` 已修复，当前未解决范围是 `hotkey_selection_dictionary`。
 
 ### 影响范围
 
-- `hotkey_translate`（含 `hotkey_selection_translate`、`hotkey_input_translate` 别名）
 - `hotkey_selection_dictionary`
 - 任何首次冷启动的翻译 / 词典窗口路径（包括托盘菜单进入）
 
@@ -31,11 +36,11 @@ OCR 路径不受影响，因为已存在 `preload_screenshot_window`。
 | 4. 渲染进程加载 React + 首屏布局 | `src/windows/translate/index.tsx` | 100–300 ms |
 | 5. `sendWhenReady` 等 `renderer:ready` 后投递文本 | `electron/windows/manager.ts:52` | 取决于 4 |
 
-**关键观察**：步骤 2、3、4 当前是**串行**的。即使选区是空（用户只想打开输入框），UIA + clipboard fallback 仍会全程跑完才开始建窗口。
+**关键观察**：词典路径中步骤 2、3、4 仍串行。UIA + clipboard fallback 会全程跑完才开始建窗口。
 
 ### 根因
 
-1. **选区读取阻塞了窗口创建**：`triggerTranslateEntry` / `triggerSelectionDictionary` 都在 `focusOrCreate` 之前 `await readSelectedText()`，UIA 是绝大多数延迟来源。
+1. **选区读取阻塞了词典窗口创建**：`triggerSelectionDictionary` 在 `focusOrCreate` 之前 `await readSelectedText()`，UIA 是绝大多数延迟来源。
 2. **翻译 / 词典窗口没有预热**：只有截图窗口在 `electron/screenshot/index.ts:48` 有 `preload_screenshot_window`，translate / dict 走按需 `createBrowserWindow`，首次必然带冷启动开销。
 3. **UIA 无软超时**：`getTextByUIAutomation`（`electron/selection/windows.ts:148`）调用同步 COM API（通过 koffi）。COM 自身没有可中断超时；遇到响应慢的应用（Office、复杂 Electron 应用）整体路径会卡到 UIA 自然返回为止。
 4. **clipboard fallback 默认 300ms 轮询窗口**（`electron/selection/clipboard.ts:70`）是合理值，但叠加在 UIA 之后再次串行。
@@ -44,17 +49,19 @@ OCR 路径不受影响，因为已存在 `preload_screenshot_window`。
 
 按改动成本与收益排序，A 与 B 可独立或叠加生效，C 是兜底。
 
-#### A. 解耦：先开窗，选区并行读（推荐先做）
+#### A. 解耦：先发起选区读取，再立即开窗（`hotkey_translate` 已落地）
 
-把 `focusOrCreate` 提前到 `readSelectedText()` 之前发起，两者并行：
+`triggerTranslateEntry` 先启动 `readSelectedText()`，不等待结果就 `focusOrCreate`；读取结果回来后再投递 IPC：
 
 ```ts
-// electron/hotkey/index.ts:51 triggerTranslateEntry
 export async function triggerTranslateEntry(mgr, textOverride?) {
-    mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())  // 立即出窗
-    const result = textOverride === undefined
-        ? await readSelectedText()
-        : { text: textOverride, reason: textOverride.trim() ? undefined : 'empty' }
+    const result_promise = textOverride === undefined
+        ? readSelectedText()
+        : Promise.resolve({ text: textOverride, reason: textOverride.trim() ? undefined : 'empty' })
+
+    mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+
+    const result = await result_promise
     if (!result.text.trim()) {
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
         return
@@ -66,7 +73,7 @@ export async function triggerTranslateEntry(mgr, textOverride?) {
 - **收益**：窗口可见时间从 500–1100ms → ~150ms（仅含 BrowserWindow create + 首屏）。文本到达窗口的总时延不变。
 - **代价**：极少数情况下用户能看到一闪而过的空 loading；可在渲染端用 `translate:from-selection` 到达前显示骨架/占位。
 - **兼容性**：`sendWhenReady` 队列机制已经支持窗口未 ready 时排队，改动无需触动 IPC 协议。
-- 词典路径同理修改 `triggerSelectionDictionary`（`electron/hotkey/index.ts:66`）。
+- **剩余问题**：词典路径同理可修改 `triggerSelectionDictionary`（`electron/hotkey/index.ts:66`），但本次只修用户报告的翻译空按卡顿。
 
 #### B. 启动期预热翻译 / 词典窗口
 
@@ -95,7 +102,7 @@ export async function triggerTranslateEntry(mgr, textOverride?) {
 | B 预热 | 中（参考 screenshot 实现） | +60–100 MB/窗口 | +200–500ms | 极高（首帧 < 50ms） |
 | C UIA worker | 大 | 微增 | 0 | 中（仅长尾场景） |
 
-推荐路径：**A 立即落地** → 观察用户反馈 → 决定是否做 B（必要时加 `preload_windows` 配置） → C 作为长尾优化保留。
+推荐路径：**A 已对 `hotkey_translate` 落地** → 观察用户反馈 → 决定是否对词典路径做同样解耦、是否做 B（必要时加 `preload_windows` 配置） → C 作为长尾优化保留。
 
 ### 后续验证
 
