@@ -7,7 +7,7 @@ export function registerTextHandlers(): void {
         clipboard.writeText(text)
     })
     ipcMain.handle('text:writeClipboardImage', (_event, base64_image: string): void => {
-        const MAX_BASE64_LENGTH = 20 * 1024 * 1024 // ~15MB raw image
+        const MAX_BASE64_LENGTH = 20 * 1024 * 1024 // 20MB base64 ≈ 15MB raw image
         if (base64_image.length > MAX_BASE64_LENGTH) {
             throw new Error('Clipboard image too large')
         }

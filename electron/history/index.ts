@@ -13,40 +13,29 @@ export interface HistoryRecord {
 }
 
 let db: Database.Database | undefined
-let db_mutex = false
 
 function get_db(): Database.Database {
     if (db) return db
 
-    // Simple mutex to prevent concurrent initialization
-    if (db_mutex) {
-        throw new Error('Database is being reinitialized')
-    }
-    db_mutex = true
+    const dir = getUserDataDir()
+    const db_path = join(dir, 'history.db')
 
-    try {
-        const dir = getUserDataDir()
-        const db_path = join(dir, 'history.db')
+    db = new Database(db_path)
+    db.pragma('journal_mode = WAL')
 
-        db = new Database(db_path)
-        db.pragma('journal_mode = WAL')
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            service_key TEXT NOT NULL,
+            source_text TEXT NOT NULL,
+            source_lang TEXT NOT NULL DEFAULT '',
+            target_text TEXT NOT NULL DEFAULT '',
+            target_lang TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+        )
+    `)
 
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                service_key TEXT NOT NULL,
-                source_text TEXT NOT NULL,
-                source_lang TEXT NOT NULL DEFAULT '',
-                target_text TEXT NOT NULL DEFAULT '',
-                target_lang TEXT NOT NULL DEFAULT '',
-                created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
-            )
-        `)
-
-        return db
-    } finally {
-        db_mutex = false
-    }
+    return db
 }
 
 /**
