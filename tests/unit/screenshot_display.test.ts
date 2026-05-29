@@ -14,6 +14,7 @@ const get_sources = vi.hoisted(() => vi.fn(() => Promise.resolve([
     { display_id: '2', thumbnail: { toPNG: () => Buffer.from('secondary') } },
 ])))
 
+// @electron-mock: mocks desktopCapturer and screen to test display selection and capture without real Electron runtime
 vi.mock('electron', () => ({
     desktopCapturer: { getSources: get_sources },
     screen: {

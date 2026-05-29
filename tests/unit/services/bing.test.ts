@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { bingService } from '../../../src/services/bing'
 
-const RUN_NET = process.env.RUN_NETWORK_TESTS === '1'
+const RUN_NET = process.env.OMNI_POT_EXTERNAL_SERVICE_TESTS === '1'
 
 describe('Bing Translate Service', () => {
   it('has correct key and name', () => {

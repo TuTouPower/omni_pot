@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { googleService } from '../../../src/services/google'
 
-const RUN_NET = process.env.RUN_NETWORK_TESTS === '1'
+const RUN_NET = process.env.OMNI_POT_EXTERNAL_SERVICE_TESTS === '1'
 
 describe('Google Translate Service', () => {
   it('has correct key and name', () => {

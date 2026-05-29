@@ -3,6 +3,7 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+// @electron-mock: mocks app.getPath / getLocale to test config store migration without real Electron runtime
 vi.mock('electron', () => ({
     app: {
         getPath: () => process.env['OMNI_POT_USER_DATA'] ?? '',

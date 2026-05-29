@@ -84,12 +84,6 @@ function expect_result(value: unknown): void {
     expect(value).toEqual(expect.objectContaining({ type: 'dict' }))
 }
 
-function is_network_unreachable(error: unknown): boolean {
-    if (!(error instanceof Error)) return false
-    const message = `${error.message}\n${error.stack ?? ''}`
-    return /fetch failed|UND_ERR_CONNECT_TIMEOUT|ETIMEDOUT|ECONNRESET|ECONNREFUSED|ENETUNREACH|EAI_AGAIN/i.test(message)
-}
-
 function expect_translated_text(value: unknown, source_text: string): string {
     expect(typeof value).toBe('string')
     const translated_text = value as string
@@ -111,15 +105,7 @@ test.describe('@external external service health', () => {
     for (const { catalog_section, name, run, source_text, target_contains_cjk } of external_service_cases) {
         test(`${name} returns a real result (catalog §${catalog_section})`, async () => {
             test.setTimeout(120_000)
-            let result: unknown
-            try {
-                result = await run()
-            } catch (error) {
-                if (name === 'Google Translate' && is_network_unreachable(error)) {
-                    test.skip(true, `Google Translate is unreachable from the Node test process${proxy_url ? ' even with proxy env configured' : ' and no proxy env is configured'}`)
-                }
-                throw error
-            }
+            const result = await run()
 
             const expected_source_text = typeof source_text === 'string' ? source_text : undefined
             if (expected_source_text) {

@@ -6,33 +6,71 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 // Real window behavior is covered by E2E (app_lifecycle.spec.ts,
 // updater_and_tray.spec.ts window-state assertions).
 function makeWindowStub(opts: unknown): Record<string, unknown> {
-  const win: Record<string, unknown> = {
-    id: Math.floor(Math.random() * 1_000_000),
-    webContents: { loadFile: vi.fn(), loadURL: vi.fn(), id: Math.random(), on: vi.fn() },
+  const webContents: Record<string, unknown> = {
     loadFile: vi.fn(),
     loadURL: vi.fn(),
+    id: Math.random(),
+    on: vi.fn(),
+    send: vi.fn(),
+    setWindowOpenHandler: vi.fn(),
+  }
+  const win: Record<string, unknown> = {
+    id: Math.floor(Math.random() * 1_000_000),
+    webContents,
+    loadFile: vi.fn().mockResolvedValue(undefined),
+    loadURL: vi.fn().mockResolvedValue(undefined),
     show: vi.fn(),
     focus: vi.fn(),
     close: vi.fn(),
     on: vi.fn(),
+    once: vi.fn(),
+    removeListener: vi.fn(),
     setPosition: vi.fn(),
     setBounds: vi.fn(),
+    setSize: vi.fn(),
+    getSize: vi.fn().mockReturnValue([350, 420]),
+    getBounds: vi.fn().mockReturnValue({ x: 0, y: 0, width: 350, height: 420 }),
+    setMinimumSize: vi.fn(),
+    setMaximumSize: vi.fn(),
     setAlwaysOnTop: vi.fn(),
+    isAlwaysOnTop: vi.fn().mockReturnValue(false),
     isDestroyed: vi.fn().mockReturnValue(false),
+    listenerCount: vi.fn().mockReturnValue(0),
     options: opts
   }
   return win
 }
 
 vi.mock('electron', () => ({
-  BrowserWindow: vi.fn().mockImplementation(makeWindowStub),
+  BrowserWindow: Object.assign(vi.fn().mockImplementation(makeWindowStub), {
+    getAllWindows: vi.fn().mockReturnValue([]),
+  }),
+  ipcMain: { on: vi.fn() },
   screen: {
     getCursorScreenPoint: vi.fn().mockReturnValue({ x: 0, y: 0 }),
     getDisplayNearestPoint: vi.fn().mockReturnValue({
       workArea: { x: 0, y: 0, width: 1920, height: 1080 }
-    })
+    }),
+    getDisplayMatching: vi.fn().mockReturnValue({
+      workArea: { x: 0, y: 0, width: 1920, height: 1080 }
+    }),
+    on: vi.fn(),
+    removeListener: vi.fn(),
   },
-  app: { isPackaged: true }
+  app: { isPackaged: true, getAppPath: vi.fn().mockReturnValue('/mock/app') }
+}))
+
+vi.mock('../../electron/log', () => ({
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    scope: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })),
+  },
+}))
+
+vi.mock('../../electron/windows/translate_height_controller', () => ({
+  TranslateHeightController: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
 }))
 
 import { BrowserWindow } from 'electron'
@@ -44,6 +82,7 @@ describe('WindowManager', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    process.resourcesPath = '/mock/resources'
     manager = new WindowManager()
   })
 
