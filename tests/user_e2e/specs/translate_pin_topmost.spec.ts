@@ -1,3 +1,4 @@
+import { ui_timeout_ms } from '../fixtures/timeout_constants'
 // Covers docs/issues.md "固定与置顶功能拆分与联动":
 //   - 标题栏存在 TWO buttons: 固定 (pin / 不失焦关闭) 与 置顶 (always-on-top)
 //   - 未点击固定 + 失焦 -> 窗口自动关闭
@@ -50,7 +51,7 @@ test.describe('@ui translate pin/topmost split', () => {
             await omni_unpinned.translate()
             await omni_unpinned.openConfig()
             await expect.poll(async () => (await omni_unpinned.api.windowState('translate')).visible,
-                { timeout: 5_000 }).toBe(false)
+                { timeout: ui_timeout_ms }).toBe(false)
         } finally {
             await omni_unpinned.stop()
         }
@@ -65,7 +66,7 @@ test.describe('@ui translate pin/topmost split', () => {
             await translate.clickPin()
             await omni_pinned.openConfig()
             await expect.poll(async () => (await omni_pinned.api.windowState('translate')).visible,
-                { timeout: 3_000 }).toBe(true)
+                { timeout: ui_timeout_ms }).toBe(true)
         } finally {
             await omni_pinned.stop()
         }
@@ -79,14 +80,14 @@ test.describe('@ui translate pin/topmost split', () => {
             const translate = await omni.translate()
             await translate.clickPin()
             await expect.poll(async () => (await omni.api.getConfig()).translate_pinned,
-                { timeout: 3_000 }).toBe(true)
+                { timeout: ui_timeout_ms }).toBe(true)
             const state = await omni.api.windowState('translate')
             expect(state.alwaysOnTop).toBe(false)
 
             // Close the translate window through the titlebar close button.
             await translate.clickClose()
             await expect.poll(async () => (await omni.api.windowState('translate')).exists,
-                { timeout: 5_000 }).toBe(false)
+                { timeout: ui_timeout_ms }).toBe(false)
 
             // Reopen via input-translate hotkey — topmost must be off again.
             await omni.triggerInputTranslate()

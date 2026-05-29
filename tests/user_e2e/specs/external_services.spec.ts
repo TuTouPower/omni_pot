@@ -5,6 +5,7 @@ import { googleService } from '../../../src/services/google'
 import { deeplService } from '../../../src/services/deepl'
 import { mymemoryService } from '../../../src/services/mymemory'
 import { cambridgeDictService } from '../../../src/services/cambridge_dict'
+import { external_service_timeout_ms } from '../fixtures/timeout_constants'
 
 const deepl_long_multi_paragraph_text = 'Hello,\n\nI would like to request a manual review of this fictional service case.\n\nThis is not a standard cancellation request. The workspace in this synthetic example is unavailable, which means the customer cannot access or use the service described in this test text. The customer is requesting a refund or prorated refund for the period during which the fictional workspace is unavailable.\n\nPlease clarify the exact reason why the purchase is considered not eligible under the sample refund policy, and please escalate this synthetic case to the appropriate billing review team.\n\nReference number: 00000000\nPlan: Example Business\nIssue: Example workspace unavailable\nRequest: Refund or prorated refund for the unusable subscription period\n\nIf the suspension in this fictional scenario was applied in error, please also provide the steps to appeal or restore the workspace. If the workspace cannot be restored, please confirm that no further charges will occur and reconsider the refund request based on inability to access the paid example service.\n\nThank you.'
 const deepl_long_single_paragraph_text = 'This synthetic customer support paragraph describes an unavailable example workspace, a manual review request, and a prorated refund request for a fictional subscription period. The customer cannot open the dashboard, export saved files, or invite team members while the workspace is suspended. Please explain the policy reason, escalate the case to billing review, and confirm whether future charges will stop if access cannot be restored.'
@@ -104,7 +105,7 @@ test.describe('@external external service health', () => {
 
     for (const { catalog_section, name, run, source_text, target_contains_cjk } of external_service_cases) {
         test(`${name} returns a real result (catalog §${catalog_section})`, async () => {
-            test.setTimeout(120_000)
+            test.setTimeout(external_service_timeout_ms)
             const result = await run()
 
             const expected_source_text = typeof source_text === 'string' ? source_text : undefined
@@ -121,7 +122,7 @@ test.describe('@external external service health', () => {
     }
 
     test('Cambridge Dictionary returns pronunciations with audioUrl', async () => {
-        test.setTimeout(120_000)
+        test.setTimeout(external_service_timeout_ms)
         const result = await cambridgeDictService.translate('hello', 'en', 'zh_cn', {})
         expect(result).toEqual(expect.objectContaining({ type: 'dict' }))
         const dict_result = result as { type: 'dict'; pronunciations: Array<{ audioUrl?: string }> }

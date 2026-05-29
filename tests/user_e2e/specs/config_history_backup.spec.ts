@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import { TranslationTestServer } from '../fixtures/translation_test_server'
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
 test.describe('@ui config history and backup settings', () => {
     test('user sees a successful translation in history, edits it, and clears it', async () => {
@@ -277,7 +278,7 @@ test.describe('@ui config history and backup settings', () => {
 
             await expect(config.backupContentHint()).toContainText('设置、历史记录数据库')
             await config.backupCreateButton().click()
-            await expect(config.backupStatus()).toContainText('Backup created', { timeout: 10_000 })
+            await expect(config.backupStatus()).toContainText('Backup created', { timeout: local_operation_timeout_ms })
             await expect(config.backupRows()).toHaveCount(1)
             const backupName = await config.latestBackupName()
             expect(backupName).toMatch(/^pot-backup-.*\.zip$/)
@@ -296,7 +297,7 @@ test.describe('@ui config history and backup settings', () => {
             await expect(config.backupRestoreModal()).toBeVisible()
             await expect(config.backupRestoreRows()).toHaveCount(1)
             await config.backupRestoreAction(backupName).click()
-            await expect(config.backupStatus()).toContainText('Restored successfully', { timeout: 10_000 })
+            await expect(config.backupStatus()).toContainText('Restored successfully', { timeout: local_operation_timeout_ms })
 
             await omni.restart()
             // Backup was created with default app_theme='system'; restore reverts dark→system.

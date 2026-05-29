@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/test'
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
-test.describe('@core external HTTP API', () => {
+test.describe('@ui external HTTP API', () => {
     test('POST /translate rejects requests without API token', async ({ omni }) => {
         const response = await omni.api.translate_via_external_api_without_token('external api text')
 
@@ -14,7 +15,7 @@ test.describe('@core external HTTP API', () => {
         await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(true)
         await expect.poll(async () => (await omni.api.windowState('translate')).focused).toBe(true)
         const translate = await omni.translate()
-        await expect(translate.sourceInput()).toHaveValue('external api text', { timeout: 10_000 })
+        await expect(translate.sourceInput()).toHaveValue('external api text', { timeout: local_operation_timeout_ms })
     })
 
     test('GET /config rejects requests without API token', async ({ omni }) => {
@@ -71,7 +72,7 @@ test.describe('@core external HTTP API', () => {
         const response = await omni.api.requestExternal<{ success: boolean }>('POST', '/dict', { text: 'hello' })
 
         expect(response.success).toBe(true)
-        await expect.poll(async () => (await omni.api.windowState('dict')).visible, { timeout: 10_000 }).toBe(true)
+        await expect.poll(async () => (await omni.api.windowState('dict')).visible, { timeout: local_operation_timeout_ms }).toBe(true)
     })
 
     test('GET /history returns paginated history', async ({ omni }) => {

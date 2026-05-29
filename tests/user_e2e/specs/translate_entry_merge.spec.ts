@@ -1,3 +1,4 @@
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 // Covers docs/issues.md "翻译功能合并（输入/选中）":
 //   - There is ONE entry point. If the user has a selection, it behaves like
 //     selection-translate (fills source from clipboard / selection). Otherwise
@@ -31,7 +32,7 @@ test.describe('@ui translate entry merge', () => {
         const result = await omni.api.triggerHotkey('translate', 'merged selection text')
         expect(result.success).toBe(true)
 
-        await expect(translate.sourceInput()).toHaveValue('merged selection text', { timeout: 10_000 })
+        await expect(translate.sourceInput()).toHaveValue('merged selection text', { timeout: local_operation_timeout_ms })
     })
 
     test('hotkey without a selection performs input-translate (empty source)', async ({ omni }) => {
@@ -43,7 +44,7 @@ test.describe('@ui translate entry merge', () => {
         expect(result.success).toBe(true)
 
         // Window is shown, source is empty (input mode), no error.
-        await expect(translate.sourceInput()).toBeVisible({ timeout: 10_000 })
+        await expect(translate.sourceInput()).toBeVisible({ timeout: local_operation_timeout_ms })
         await expect(translate.sourceInput()).toHaveValue('')
         await expect(translate.resultErrors()).toHaveCount(0)
     })

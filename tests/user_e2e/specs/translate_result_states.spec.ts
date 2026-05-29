@@ -1,3 +1,4 @@
+import { local_translation_timeout_ms, ui_timeout_ms } from '../fixtures/timeout_constants'
 // Covers docs/issues.md:
 //   - 翻译失败重试功能失效 (retry button must actually re-trigger translation)
 //   - 翻译结果卡片折叠与加载动效 (card collapsed-by-default while loading,
@@ -25,7 +26,7 @@ test.describe('@ui translate result card states', () => {
             await translate.clickTranslate()
 
             // First attempt fails -> error + retry button visible
-            await expect(translate.resultError('mymemory@e2e')).toBeVisible({ timeout: 30_000 })
+            await expect(translate.resultError('mymemory@e2e')).toBeVisible({ timeout: local_translation_timeout_ms })
             await expect(translate.resultRetryButton('mymemory@e2e')).toBeVisible()
 
             // Second request: return success
@@ -34,10 +35,10 @@ test.describe('@ui translate result card states', () => {
 
             // Click retry -> error clears, body shows the success payload
             await translate.clickResultRetry('mymemory@e2e')
-            await expect(translate.resultError('mymemory@e2e')).toHaveCount(0, { timeout: 30_000 })
+            await expect(translate.resultError('mymemory@e2e')).toHaveCount(0, { timeout: local_translation_timeout_ms })
             await expect.poll(
                 async () => (await translate.getResultText('mymemory@e2e'))?.trim() ?? '',
-                { timeout: 30_000 }
+                { timeout: local_translation_timeout_ms }
             ).toBe('retry success body')
 
             // Verify the retry actually sent a new HTTP request (not just a UI toggle)
@@ -63,13 +64,13 @@ test.describe('@ui translate result card states', () => {
             await translate.clickTranslate()
 
             // Wait for the request to arrive at the server
-            await expect.poll(() => Promise.resolve(server?.request_count ?? 0), { timeout: 30_000 }).toBeGreaterThanOrEqual(1)
+            await expect.poll(() => Promise.resolve(server?.request_count ?? 0), { timeout: local_translation_timeout_ms }).toBeGreaterThanOrEqual(1)
 
             // While the request is in flight: card shows loading indicator,
             // the result body is collapsed (not visible), no error.
             await expect(translate.resultCard('mymemory@e2e')).toBeVisible()
             await expect(translate.resultCard('mymemory@e2e').getByTestId('result-loading'))
-                .toBeVisible({ timeout: 5_000 })
+                .toBeVisible({ timeout: ui_timeout_ms })
             await expect(translate.resultBody('mymemory@e2e')).toBeHidden()
             await expect(translate.resultError('mymemory@e2e')).toHaveCount(0)
 
@@ -79,12 +80,12 @@ test.describe('@ui translate result card states', () => {
             // Once the response arrives, the card auto-expands and the
             // loading indicator disappears.
             await expect(translate.resultBody('mymemory@e2e'))
-                .toBeVisible({ timeout: 10_000 })
+                .toBeVisible({ timeout: local_translation_timeout_ms })
             await expect(translate.resultCard('mymemory@e2e').getByTestId('result-loading'))
                 .toHaveCount(0)
             await expect.poll(
                 async () => (await translate.getResultText('mymemory@e2e'))?.trim() ?? '',
-                { timeout: 10_000 }
+                { timeout: local_translation_timeout_ms }
             ).toBe('eventually expanded body')
         } finally {
             await server?.stop()

@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
 type WindowLabel = 'translate' | 'dict' | 'recognize' | 'config'
 const WINDOW_SIZE_DPI_RATIO_TOLERANCE = 0.35
@@ -33,7 +34,7 @@ async function expect_window_focused(omni: AppFixture, label: WindowLabel): Prom
     await expect.poll(async () => (await omni.api.windowState(label)).focused).toBe(true)
 }
 
-test.describe('@core app lifecycle', () => {
+test.describe('@ui app lifecycle', () => {
     test('returning user starts the app and sees the default translate window without first-run config', async () => {
         const omni = await AppFixture.start()
 
@@ -61,7 +62,7 @@ test.describe('@core app lifecycle', () => {
         const omni = await AppFixture.start({ firstRun: true, config: { translate_pinned: true } })
 
         try {
-            const translate = await omni.translate(20_000)
+            const translate = await omni.translate(local_operation_timeout_ms)
             const config = await omni.config()
 
             await expect(translate.wordmark()).toContainText('Omni Pot')

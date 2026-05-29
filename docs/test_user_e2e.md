@@ -42,6 +42,7 @@ tests/user_e2e/
 │   ├── app_fixture.ts      # AppFixture：封装 ElectronApplication + 多窗口 Page + 配置读写 + 重置
 │   ├── e2e_api.ts          # 封装 E2E HTTP 端点调用
 │   ├── translation_test_server.ts  # 本地可控翻译响应 HTTP 服务（loading / retry / 长文本控制）
+│   ├── timeout_constants.ts # E2E 等待超时分级常量
 │   ├── test.ts             # Playwright test fixture 入口
 │   └── qr_test.png         # QR 识别用例样图
 ├── pages/                  # Page Object：每个窗口一个，基于 Playwright locator
@@ -235,7 +236,7 @@ class TranslatePage {
 当前已有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、
 `/trigger-clipboard-translate`、`/capture-clock`、`POST /e2e/open-window`、
 `POST /e2e/reset-config`、`POST /e2e/set-config`、`GET /e2e/clipboard`、`GET /e2e/clipboard-image`、`GET /e2e/window-state`、
-`GET /e2e/primary-display`、`POST /e2e/trigger-screenshot`、`POST /e2e/trigger-input-translate`、
+`GET /e2e/window-display`、`GET /e2e/primary-display`、`POST /e2e/trigger-screenshot`、`POST /e2e/trigger-input-translate`、
 `POST /e2e/trigger-hotkey`、`POST /e2e/hotkey-system-failures`、
 `POST /e2e/tray-action`、`GET /e2e/tray-menu`、`POST /e2e/mock-update`。
 
@@ -244,7 +245,8 @@ class TranslatePage {
 | `POST /e2e/trigger-screenshot` | 触发截图（指定 `recognize` / `translate` mode） |
 | `POST /e2e/trigger-input-translate` | 触发输入翻译入口 |
 | `GET /e2e/window-state` | 查询窗口存在、可见、聚焦、置顶与 bounds 状态 |
-| `GET /e2e/primary-display` | 查询主显示器工作区，用于窗口高度上限等尺寸断言 |
+| `GET /e2e/window-display` | 查询指定窗口所在显示器工作区，用于当前显示器尺寸断言 |
+| `GET /e2e/primary-display` | 查询主显示器工作区，用于非窗口绑定的尺寸断言 |
 | `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `clipboard_monitor` / `config` / `restart` / `quit` / `tray_click` |
 | `GET /e2e/tray-menu` | 读取原生托盘菜单当前文案，用于验证界面语言切换后的托盘项本地化 |
 | `POST /e2e/mock-update` | 注入一个假的“有新版本”用于更新器测试 |
@@ -280,17 +282,11 @@ class TranslatePage {
 
 ### 5.2 translate_core.spec.ts — 翻译核心用户路径
 
-模拟用户从五种入口发起翻译，每种都验证：触发 → 源文本就位 → 多服务并行出结果 → 写历史。
+`@core` 只保留最小关键路径：启动应用 → 翻译窗口可见 → 本地 stub 译文出现 → 关闭窗口并确认窗口关闭。其他翻译入口、HTTP API、剪贴板、历史、布局和错误态均归 `@ui`。
 
-- 用户在别处选中文字按划词翻译快捷键（`/trigger-selection`）
-- 用户在翻译窗口输入框打字后按 Enter
-- 外部脚本通过 HTTP API 发文本（`POST /translate`）
-- 用户复制文字、剪贴板监听自动翻译（`clipboard_monitor`）
-- 用户截图做截图翻译（截图 → 文字识别 → 翻译，CP4）
-- 默认翻译服务通过本地 HTTP stub 产出可控结果：用户启用多个翻译实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都显示译文，无“翻译失败”；默认免费翻译服务真实出结果由 `external_services.spec.ts` 覆盖
-- 翻译成功写入历史；`history_disable=true` 时不写
-- `requestId`：用户连续两次翻译，旧结果不覆盖新结果
-- 流式服务（如已配置 Ollama / Gemini 实例）结果卡片增量更新
+- `@core`：用户在别处选中文字按划词翻译快捷键（`/trigger-selection`），默认翻译服务通过本地 HTTP stub 产出可控结果，翻译窗口显示源文本和非空译文，用户关闭窗口后窗口消失。
+- `@ui`：剪贴板翻译、用户输入后翻译、外部 HTTP API、历史写入、`history_disable=true`、`requestId` 防旧结果覆盖、流式服务结果增量更新、截图翻译等细节覆盖。
+- 默认免费翻译服务真实出结果由 `external_services.spec.ts` 覆盖；`@core` / `@ui` 不直连公网。
 
 ### 5.3 translate_titlebar.spec.ts — 翻译窗口标题栏 · issues #4 #8
 
@@ -524,7 +520,7 @@ class TranslatePage {
 
 - 禁止裸 `setTimeout` 当“等渲染”。一律用 `waitForSelector` / `waitForText` /
   `waitFor(condition)` 显式等待条件。
-- 超时分级：UI 渲染 5s；本地操作 8s；网络翻译 45s；TTS 合成 60s；OCR 60s。
+- 超时分级统一从 `tests/user_e2e/fixtures/timeout_constants.ts` 引用：UI 渲染 5s；本地操作 8s；应用窗口启动 20s；本地 stub 翻译 15s（允许 debounce / renderer 状态收敛）；网络翻译 45s；TTS 合成 60s；OCR 60s。
 - flaky 来源（截图、OCR、网络服务）用 `retry(fn, 3)` 包装，并打印每次失败原因。
 
 ### 6.3 隔离

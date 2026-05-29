@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import type { TranslationTestServer } from '../fixtures/translation_test_server'
+import { local_translation_timeout_ms } from '../fixtures/timeout_constants'
 
 const WINDOW_SIZE_TOLERANCE = 8
 
@@ -300,7 +301,7 @@ test.describe('@ui translate behavior settings', () => {
 
             await translate.typeSource('dynamic source text')
 
-            await expect(translate.resultBody('mymemory@e2e')).toContainText('动态翻译结果', { timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('动态翻译结果', { timeout: local_translation_timeout_ms })
 
             // Verify debounce: should have sent exactly 1 request after typing stopped
             expect(server.request_count).toBe(1)

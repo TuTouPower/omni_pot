@@ -2,6 +2,7 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import type { TranslationTestServer } from '../fixtures/translation_test_server'
 import { build_cambridge_dict_init_script } from '../fixtures/stub_payloads'
+import { local_translation_timeout_ms, network_translation_timeout_ms } from '../fixtures/timeout_constants'
 
 const test_service_config = {
     app_language: 'zh_cn',
@@ -27,13 +28,13 @@ test.describe('@ui translate result cards', () => {
             await translate.typeSource('hello world')
             await translate.clickTranslate()
 
-            await expect(translate.resultCard('mymemory@e2e')).toBeVisible({ timeout: 15_000 })
+            await expect(translate.resultCard('mymemory@e2e')).toBeVisible({ timeout: local_translation_timeout_ms })
             await expect(translate.resultCard('mymemory@e2e').getByTestId('result-loading')).toBeVisible()
             await expect(translate.resultBody('mymemory@e2e')).toHaveCount(0)
             await expect(translate.resultAction('mymemory@e2e', 'result-collapse'))
                 .toHaveAttribute('aria-expanded', 'false')
 
-            await expect(translate.resultBody('mymemory@e2e')).toContainText('你好世界', { timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('你好世界', { timeout: local_translation_timeout_ms })
             await expect(translate.resultAction('mymemory@e2e', 'result-collapse'))
                 .toHaveAttribute('aria-expanded', 'true')
         } finally {
@@ -54,12 +55,12 @@ test.describe('@ui translate result cards', () => {
             await translate.typeSource('hello world')
             await translate.clickTranslate()
 
-            await expect(translate.resultError('mymemory@e2e')).toContainText('翻译失败', { timeout: 30_000 })
+            await expect(translate.resultError('mymemory@e2e')).toContainText('翻译失败', { timeout: local_translation_timeout_ms })
             await expect(translate.resultRetryButton('mymemory@e2e')).toBeVisible()
 
             server.set_mymemory_response({ translated_text: '你好世界', status: 200 })
             await translate.clickResultRetry('mymemory@e2e')
-            await expect(translate.resultBody('mymemory@e2e')).toContainText('你好世界', { timeout: 30_000 })
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('你好世界', { timeout: local_translation_timeout_ms })
             await expect(translate.resultRetryButton('mymemory@e2e')).toHaveCount(0)
 
             await translate.clickResultCopy('mymemory@e2e')
@@ -90,11 +91,11 @@ test.describe('@ui translate result cards', () => {
             await translate.typeSource('hello world')
             await translate.clickTranslate()
 
-            await expect(translate.resultCard('mymemory@e2e')).toBeVisible({ timeout: 15_000 })
+            await expect(translate.resultCard('mymemory@e2e')).toBeVisible({ timeout: local_translation_timeout_ms })
             await expect(translate.resultCard('mymemory@e2e').getByTestId('result-loading')).toContainText('翻译中')
             await expect(translate.resultCard('mymemory@e2e')).not.toContainText('stream')
 
-            await expect(translate.resultBody('mymemory@e2e')).toContainText('你好世界', { timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('你好世界', { timeout: local_translation_timeout_ms })
         } finally {
             await server?.stop()
             await omni.stop()
@@ -154,7 +155,7 @@ test.describe('@ui translate result cards', () => {
             server.set_mymemory_response({ translated_text: '第一轮结果', status: 200 })
             await translate.typeSource('first request')
             await translate.clickTranslate()
-            await expect(translate.resultBody('mymemory@e2e')).toContainText('第一轮结果', { timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('第一轮结果', { timeout: local_translation_timeout_ms })
 
             // Spec §5.4: 用户手动折叠后保持状态。
             await translate.clickResultCollapse('mymemory@e2e')
@@ -165,7 +166,7 @@ test.describe('@ui translate result cards', () => {
             server.set_mymemory_response({ translated_text: '第二轮结果', status: 200 })
             await translate.typeSource('second request')
             await translate.clickTranslate()
-            await expect(translate.resultBody('mymemory@e2e')).toContainText('第二轮结果', { timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@e2e')).toContainText('第二轮结果', { timeout: local_translation_timeout_ms })
             await expect(translate.resultAction('mymemory@e2e', 'result-collapse'))
                 .toHaveAttribute('aria-expanded', 'true')
         } finally {
@@ -187,13 +188,13 @@ test.describe('@ui translate result cards', () => {
 
             await translate.typeSource('hello retry')
             await translate.clickTranslate()
-            await expect(translate.resultBody('mymemory@e2e_ok')).toContainText('成功结果', { timeout: 15_000 })
-            await expect(translate.resultError('mymemory@e2e_fail')).toBeVisible({ timeout: 15_000 })
+            await expect(translate.resultBody('mymemory@e2e_ok')).toContainText('成功结果', { timeout: local_translation_timeout_ms })
+            await expect(translate.resultError('mymemory@e2e_fail')).toBeVisible({ timeout: local_translation_timeout_ms })
 
             server.clear_requests()
             await translate.clickResultRetry('mymemory@e2e_fail')
             await expect(translate.resultBody('mymemory@e2e_ok')).toContainText('成功结果')
-            await expect(translate.resultError('mymemory@e2e_fail')).toBeVisible({ timeout: 15_000 })
+            await expect(translate.resultError('mymemory@e2e_fail')).toBeVisible({ timeout: local_translation_timeout_ms })
             expect(server.requests.some((request) => request.url.includes('key=mymemory%40e2e_ok'))).toBe(false)
         } finally {
             await server?.stop()
@@ -323,8 +324,8 @@ test.describe('@ui translate result cards', () => {
                 await translate.clickTranslate()
 
                 await expect(translate.resultCard('cambridge_dict@default')).toBeVisible()
-                await expect(translate.resultBody('cambridge_dict@default')).toContainText('exclamation', { timeout: 45_000 })
-                await expect(translate.resultBody('cambridge_dict@default')).toContainText('greeting', { timeout: 45_000 })
+                await expect(translate.resultBody('cambridge_dict@default')).toContainText('exclamation', { timeout: network_translation_timeout_ms })
+                await expect(translate.resultBody('cambridge_dict@default')).toContainText('greeting', { timeout: network_translation_timeout_ms })
             } finally {
                 await omni.stop()
             }

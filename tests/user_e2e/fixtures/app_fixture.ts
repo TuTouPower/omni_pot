@@ -8,6 +8,7 @@ import { ScreenshotPage } from '../pages/screenshot_page'
 import { ConfigPage } from '../pages/config_page'
 import { UpdaterPage } from '../pages/updater_page'
 import { TranslationTestServer } from './translation_test_server'
+import { app_window_timeout_ms, local_operation_timeout_ms } from './timeout_constants'
 
 export class AppFixture {
     app: ElectronApplication
@@ -79,7 +80,7 @@ export class AppFixture {
         this.api = new E2eApi(launched.httpPort, launched.e2eToken)
     }
 
-    async firstWindow(timeout = 10_000): Promise<Page> {
+    async firstWindow(timeout = app_window_timeout_ms): Promise<Page> {
         const page = await this.waitForWindow(/#translate/, timeout)
         if (this.init_script && !this.init_script_applied_to_first_window) {
             // The first window was created during app startup, before
@@ -91,7 +92,7 @@ export class AppFixture {
         return page
     }
 
-    async waitForWindow(urlPattern: RegExp, timeout = 10_000): Promise<Page> {
+    async waitForWindow(urlPattern: RegExp, timeout = app_window_timeout_ms): Promise<Page> {
         const start = Date.now()
         while (Date.now() - start < timeout) {
             for (const win of this.app.windows()) {
@@ -102,11 +103,11 @@ export class AppFixture {
         throw new Error(`No window matching ${String(urlPattern)} after ${String(timeout)}ms`)
     }
 
-    async welcome(timeout = 10_000): Promise<Page> {
+    async welcome(timeout = local_operation_timeout_ms): Promise<Page> {
         return this.waitForWindow(/#welcome/, timeout)
     }
 
-    async translate(timeout = 10_000): Promise<TranslatePage> {
+    async translate(timeout = app_window_timeout_ms): Promise<TranslatePage> {
         const page = await this.firstWindow(timeout)
         return new TranslatePage(page, this.api)
     }

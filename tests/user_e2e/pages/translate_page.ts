@@ -1,5 +1,6 @@
 import type { Page, Locator } from '@playwright/test'
 import type { E2eApi } from '../fixtures/e2e_api'
+import { local_translation_timeout_ms, tts_timeout_ms } from '../fixtures/timeout_constants'
 
 function is_target_closed_error(error: unknown): boolean {
     return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
@@ -206,7 +207,7 @@ export class TranslatePage {
     async click_source_tts_and_wait_for_audio_path(): Promise<string> {
         const request_promise = this.page.waitForRequest(
             (request) => request.url().includes('/api/v1/audio/'),
-            { timeout: 10_000 }
+            { timeout: tts_timeout_ms }
         )
         await this.clickSourceTts()
         const request = await request_promise
@@ -246,7 +247,7 @@ export class TranslatePage {
             wait_for_request: async () => {
                 await this.page.waitForFunction(() => {
                     return Boolean((window as Window & { __e2e_lingva_request_seen?: boolean }).__e2e_lingva_request_seen)
-                }, undefined, { timeout: 10_000 })
+                }, undefined, { timeout: local_translation_timeout_ms })
             },
             release_response: () => this.page.evaluate(() => {
                 ;(window as Window & { __e2e_lingva_release?: () => void }).__e2e_lingva_release?.()
@@ -505,7 +506,7 @@ export class TranslatePage {
             wait_for_request: async () => {
                 await this.page.waitForFunction(() => {
                     return ((window as Window & { __e2e_lingva_tts_request_count?: number }).__e2e_lingva_tts_request_count ?? 0) > 0
-                }, undefined, { timeout: 10_000 })
+                }, undefined, { timeout: tts_timeout_ms })
             },
             wait_for_request_count: async (expected_count: number) => {
                 const end = Date.now() + 1_000
@@ -537,7 +538,7 @@ export class TranslatePage {
         }
     }
 
-    async waitAllResults(timeout = 30_000): Promise<void> {
+    async waitAllResults(timeout = local_translation_timeout_ms): Promise<void> {
         // Wait for all result cards to have content (not undefined/loading)
         await this.page.waitForFunction(() => {
             const cards = document.querySelectorAll('[data-result-key]')
@@ -550,7 +551,7 @@ export class TranslatePage {
         }, { timeout })
     }
 
-    async waitForResultCount(minCount: number, timeout = 30_000): Promise<void> {
+    async waitForResultCount(minCount: number, timeout = local_translation_timeout_ms): Promise<void> {
         await this.page.waitForFunction(
             (min) => document.querySelectorAll('[data-result-key]').length >= min,
             minCount,

@@ -2,6 +2,7 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import en_locale from '../../../src/i18n/locales/en.json'
 import zh_cn_locale from '../../../src/i18n/locales/zh_cn.json'
+import { local_translation_timeout_ms } from '../fixtures/timeout_constants'
 
 const NATIVE_LANGUAGE_NAMES = {
     en: 'English',
@@ -158,7 +159,7 @@ test.describe('@ui i18n', () => {
             await expect(translate.targetLanguageButton()).toContainText(NATIVE_LANGUAGE_NAMES.zh_cn)
             await translate.typeSource('hello world')
             await translate.clickTranslate()
-            await expect(translate.detectedLanguage()).toContainText(en_locale.detected_language_prefix, { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).toContainText(en_locale.detected_language_prefix, { timeout: local_translation_timeout_ms })
             await expect(translate.detectedLanguage()).toContainText(NATIVE_LANGUAGE_NAMES.en)
             await expect(updater.body()).toContainText(en_locale.changelog)
             await expect(updater.laterButton()).toContainText(en_locale.update_later)

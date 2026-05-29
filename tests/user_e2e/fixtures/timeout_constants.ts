@@ -1,0 +1,10 @@
+export const ui_timeout_ms = 5_000
+export const local_operation_timeout_ms = 8_000
+export const app_window_timeout_ms = 20_000
+export const local_translation_timeout_ms = 15_000
+export const network_translation_timeout_ms = 45_000
+export const tts_timeout_ms = 60_000
+export const ocr_timeout_ms = 60_000
+export const tts_test_timeout_ms = tts_timeout_ms * 2
+export const ocr_test_timeout_ms = ocr_timeout_ms * 2
+export const external_service_timeout_ms = 120_000

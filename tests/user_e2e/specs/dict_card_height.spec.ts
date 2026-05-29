@@ -1,3 +1,4 @@
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 // Covers docs/issues.md "词典卡片内容展示不全":
 //   - Dictionary cards do not impose a fixed max-height. The card grows to fit
 //     all definitions and examples; only the outer window scrolls when the
@@ -15,9 +16,9 @@ import { build_cambridge_dict_init_script, cambridge_dict_run_payload } from '..
 
 async function wait_for_dict_card(page: Page): Promise<void> {
     // At least 2 cards: source card + result card (pronunciation card may also appear)
-    await expect(page.locator('[data-testid="dict-card"]')).toHaveCount(2, { timeout: 60_000 })
+    await expect(page.locator('[data-testid="dict-card"]')).toHaveCount(2, { timeout: local_operation_timeout_ms })
     // Wait for definitions to actually render inside the result card
-    await expect(page.locator('[data-testid="dict-definition"]').first()).toBeVisible({ timeout: 60_000 })
+    await expect(page.locator('[data-testid="dict-definition"]').first()).toBeVisible({ timeout: local_operation_timeout_ms })
 }
 
 test.describe('@ui dict card height auto-fits content', () => {

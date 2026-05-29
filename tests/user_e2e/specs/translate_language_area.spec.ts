@@ -2,6 +2,7 @@ import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import type { TranslationTestServer } from '../fixtures/translation_test_server'
 import type { TranslatePage } from '../pages/translate_page'
+import { local_operation_timeout_ms, local_translation_timeout_ms, network_translation_timeout_ms } from '../fixtures/timeout_constants'
 
 async function first_visible_result_text(translate: TranslatePage): Promise<string> {
     const bodies = translate.resultBodies()
@@ -29,12 +30,12 @@ test.describe('@ui translate language area', () => {
             const result = await omni.api.triggerSelection('hello world')
 
             expect(result.success).toBe(true)
-            await expect(translate.sourceInput()).toHaveValue('hello world', { timeout: 10_000 })
+            await expect(translate.sourceInput()).toHaveValue('hello world', { timeout: local_operation_timeout_ms })
             await expect(translate.sourceLanguage()).toContainText('自动检测')
             await expect(translate.sourceLanguage()).not.toContainText('auto')
             await expect(translate.targetLanguage()).toContainText('简体中文')
             await expect(translate.targetLanguage()).not.toContainText('zh_cn')
-            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: local_translation_timeout_ms })
             await expect(translate.detectedLanguage()).not.toContainText('en')
 
             await translate.clickSwap()
@@ -53,7 +54,7 @@ test.describe('@ui translate language area', () => {
             const result = await omni.api.triggerSelection('hello world')
 
             expect(result.success).toBe(true)
-            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: local_translation_timeout_ms })
 
             await translate.clickDetectedLanguage()
             await expect(translate.sourceLanguage()).toContainText('简体中文')
@@ -72,7 +73,7 @@ test.describe('@ui translate language area', () => {
 
             expect(result.success).toBe(true)
             await expect(translate.targetLanguage()).toContainText('简体中文')
-            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: 15_000 })
+            await expect(translate.detectedLanguage()).toContainText('检测为 English', { timeout: local_translation_timeout_ms })
 
             await translate.clickDetectedLanguage()
             await expect(translate.sourceLanguage()).toContainText('简体中文')
@@ -100,10 +101,10 @@ test.describe('@ui translate language area', () => {
             const result = await omni.api.triggerSelection('你好')
 
             expect(result.success).toBe(true)
-            await expect(translate.sourceInput()).toHaveValue('你好', { timeout: 10_000 })
-            await expect(translate.detectedLanguage()).toContainText('检测为 简体中文', { timeout: 15_000 })
+            await expect(translate.sourceInput()).toHaveValue('你好', { timeout: local_operation_timeout_ms })
+            await expect(translate.detectedLanguage()).toContainText('检测为 简体中文', { timeout: local_translation_timeout_ms })
             await expect(translate.targetLanguage()).toContainText('English')
-            await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).toBe('hello')
+            await expect.poll(async () => first_visible_result_text(translate), { timeout: network_translation_timeout_ms }).toBe('hello')
         } finally {
             await server?.stop()
             await omni.stop()
@@ -126,7 +127,7 @@ test.describe('@ui translate language area', () => {
             await expect(translate.sourceLanguage()).toContainText('English')
             await translate.typeSource('hello world')
             await translate.clickTranslate()
-            await expect.poll(async () => first_visible_result_text(translate), { timeout: 45_000 }).not.toBe('')
+            await expect.poll(async () => first_visible_result_text(translate), { timeout: network_translation_timeout_ms }).not.toBe('')
             const chinese_result = await first_visible_result_text(translate)
 
             await translate.selectTargetLanguage('ja')
@@ -136,7 +137,7 @@ test.describe('@ui translate language area', () => {
             await expect.poll(async () => {
                 const text = await first_visible_result_text(translate)
                 return text && text !== chinese_result ? text : ''
-            }, { timeout: 45_000 }).not.toBe('')
+            }, { timeout: network_translation_timeout_ms }).not.toBe('')
         } finally {
             await server?.stop()
             await omni.stop()

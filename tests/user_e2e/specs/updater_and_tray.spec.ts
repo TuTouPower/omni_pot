@@ -2,6 +2,7 @@ import http from 'http'
 import { createHash } from 'crypto'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
 const TEST_CONFIG = {
     app_language: 'en',
@@ -67,7 +68,7 @@ async function expect_window_visible(omni: AppFixture, label: WindowLabel): Prom
 }
 
 async function expect_window_not_exists(omni: AppFixture, label: WindowLabel): Promise<void> {
-    await expect.poll(async () => (await omni.api.windowState(label)).exists, { timeout: 20_000 }).toBe(false)
+    await expect.poll(async () => (await omni.api.windowState(label)).exists, { timeout: local_operation_timeout_ms }).toBe(false)
 }
 
 async function close_translate_window(omni: AppFixture): Promise<void> {
@@ -132,7 +133,7 @@ test.describe('@ui updater and tray', () => {
             await expect(updater.confirmButton()).toContainText('Update Now')
             await updater.clickConfirm()
             await expect(updater.progress()).toBeVisible()
-            await expect(updater.progressPercent()).toContainText('100', { timeout: 20_000 })
+            await expect(updater.progressPercent()).toContainText('100', { timeout: local_operation_timeout_ms })
             await expect(updater.confirmButton()).toContainText('Download complete')
             expect(asset_server.requests).toContain('/omni_pot-e2e-update.bin')
         } finally {
@@ -261,7 +262,7 @@ test.describe('@ui updater and tray', () => {
             const clipboard_text = current_clipboard === 'tray clipboard text' ? 'tray clipboard text changed' : 'tray clipboard text'
             const clipboard_result = await omni.api.triggerClipboard(clipboard_text)
             expect(clipboard_result.success).toBe(true)
-            await expect(translate_after_config.sourceInput()).toHaveValue(clipboard_text, { timeout: 10_000 })
+            await expect(translate_after_config.sourceInput()).toHaveValue(clipboard_text, { timeout: local_operation_timeout_ms })
 
             const disable_result = await omni.api.trayAction('clipboard_monitor')
             expect(disable_result.success).toBe(true)
