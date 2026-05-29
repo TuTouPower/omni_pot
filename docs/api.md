@@ -2,7 +2,7 @@
 
 Omni Pot 主进程会在本机绑定一个 HTTP 端口（默认 `127.0.0.1:20202`，可在「设置 → 高级」中修改 `server_port`），供外部脚本/快捷工具调用。
 
-> **范围**：仅监听 `127.0.0.1`，不对外网开放。所有路由都返回 JSON。CORS 仅允许 `http://localhost`、`http://127.0.0.1`、`https://localhost`、`https://127.0.0.1` 及这些来源的显式端口。公共端点必须携带 `X-Omni-Pot-Api-Token`，token 保存在用户数据目录的 `config.json` 中。
+> **范围**：仅监听 `127.0.0.1`，不对外网开放。所有路由都返回 JSON。CORS 仅允许 `http://localhost`、`http://127.0.0.1`、`https://localhost`、`https://127.0.0.1` 及这些来源的显式端口。公共端点必须携带 `X-Omni-Pot-Api-Token`，token 在「设置 → 关于」页面「本机 API」一栏可查看和复制。
 
 ## 配置
 

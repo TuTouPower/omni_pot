@@ -19,6 +19,7 @@ const REPO_URL = 'https://github.com/TuTouPower/omni_pot_release'
 export default function AboutPage(): React.ReactElement {
     const { t } = useTranslation()
     const [serverPort] = useConfig('server_port')
+    const [apiToken] = useConfig('server_api_token')
     const apiUrl = `http://127.0.0.1:${String(serverPort)}`
     const [configDir, setConfigDir] = useState('...')
     const [logDir, setLogDir] = useState('...')
@@ -99,6 +100,12 @@ export default function AboutPage(): React.ReactElement {
                 <ConfigRow label="本机 API">
                     <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>
                     <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).catch(() => undefined); }}>
+                        <Icons.Copy size={12} />
+                    </button>
+                </ConfigRow>
+                <ConfigRow label="API Token">
+                    <div className="mono hint" data-testid="about-api-token" style={{ marginRight: 8, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apiToken ?? '...'}</div>
+                    <button className="ic-btn" title={t('about.copy_token', { defaultValue: '复制 Token' })} data-testid="about-copy-api-token" onClick={() => { if (apiToken) window.electronAPI.text.writeClipboard(apiToken).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>
