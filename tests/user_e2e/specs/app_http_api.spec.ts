@@ -1,7 +1,13 @@
 import { test, expect } from '../fixtures/test'
 
 test.describe('@core external HTTP API', () => {
-    test('POST /translate accepts request body text and focuses translate window', async ({ omni }) => {
+    test('POST /translate rejects requests without API token', async ({ omni }) => {
+        const response = await omni.api.translate_via_external_api_without_token('external api text')
+
+        expect(response).toEqual({ success: false, error: 'unauthorized' })
+    })
+
+    test('POST /translate accepts request body text and focuses translate window with API token', async ({ omni }) => {
         const response = await omni.api.translate_via_external_api('external api text')
 
         expect(response.success).toBe(true)
@@ -11,7 +17,13 @@ test.describe('@core external HTTP API', () => {
         await expect(translate.sourceInput()).toHaveValue('external api text', { timeout: 10_000 })
     })
 
-    test('GET /config returns public config with sensitive values redacted without an E2E token', async ({ omni }) => {
+    test('GET /config rejects requests without API token', async ({ omni }) => {
+        const response = await omni.api.get_config_via_external_api_without_token()
+
+        expect(response).toEqual({ success: false, error: 'unauthorized' })
+    })
+
+    test('GET /config returns public config allowlist with API token', async ({ omni }) => {
         await omni.api.setConfig({
             webdav_password: 'webdav-secret',
             service_instances: {
@@ -32,7 +44,10 @@ test.describe('@core external HTTP API', () => {
         expect(config.translate_service_list).toEqual(['bing@default', 'deepl@default', 'mymemory@default'])
         expect(config.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
         expect(config.dictionary_service_list).toEqual(['chinese_dictionary@default', 'ecdict@default'])
-        expect(config.webdav_password).toBe('[redacted]')
+        expect(config).not.toHaveProperty('server_api_token')
+        expect(config).not.toHaveProperty('webdav_url')
+        expect(config).not.toHaveProperty('webdav_username')
+        expect(config).not.toHaveProperty('webdav_password')
         expect(service_instances).toMatchObject({
             'bing@default': { serviceKey: 'bing', config: {} },
             'mymemory@default': { serviceKey: 'mymemory', config: { enable: true, instanceName: 'MyMemory E2E' } },

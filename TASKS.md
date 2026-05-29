@@ -69,9 +69,9 @@
 
 ### A. 安全与本地 HTTP API（high）
 
-- [ ] **本地 HTTP API 加认证 + 收紧 CORS**：`electron/server/index.ts:65-68` 当前 `Access-Control-Allow-Origin: *`，任意网页可读 `/history` / `/config`、触发 `/translate` `/dict` `/recognize`。改为 Origin 白名单 + token；校验 `Host: 127.0.0.1`。
-- [ ] **`/config` 改为 public allowlist**：当前只手写 redact `webdav_password`（`electron/server/index.ts:41-53`），未来新增 top-level secret 易遗漏；改为只暴露明确 public 字段。
-- [ ] **`/history` 端点隐私**：即便加 auth，也应默认不暴露完整 source/target；考虑显式开关 + 用户可见提示。
+- [x] **本地 HTTP API 加认证 + 收紧 CORS**：公共 HTTP API 已要求 `X-Omni-Pot-Api-Token`，Host 仅允许 localhost/127.0.0.1，非法 Origin 在路由执行前 403。
+- [x] **`/config` 改为 public allowlist**：`/config` 公开响应改为顶层 allowlist，不返回 `server_api_token` / WebDAV 凭据；service instance config 只返回 `enable` / `instanceName`。
+- [x] **`/history` 端点隐私**：公共 `/history` 需 API token，且默认截断 source/target；完整文本只允许 E2E token 路径用于测试。
 - [ ] **翻译/TTS 原文不再写入持久日志**：`src/windows/translate/index.tsx:131-132`、`src/services/tts/system_tts.ts:78-80` 记录 `text.slice(0, 50)`，落盘到 `%APPDATA%/omni_pot/logs/main.log` 并进入导出日志包。只记录长度/语言/服务数量/request id/耗时。
 - [ ] **凭据存储与备份加密**：`config.json` 明文保存 WebDAV 密码与 provider API key；备份 zip 未加密（`electron/backup/index.ts:82-147`、`350`）。凭据迁到 OS credential storage；备份默认排除或加密 secrets。
 - [ ] **preload API 按窗口拆分**：`electron/preload.ts:34-47/117-125/52-56` 把 config/backup/clipboard 全部暴露给所有 renderer；IPC handler（`config_handlers.ts`、`backup_handlers.ts`、`text_handlers.ts`）不校验 sender。按窗口拆分 preload；handler 校验 sender window label。
@@ -107,7 +107,7 @@
 - [x] **截图/词典/翻译/快捷键设置内的硬编码中文走 i18n**：`src/windows/screenshot/index.tsx:303-310`、`src/windows/translate/target_area.tsx:83-84`、`src/windows/dict/index.tsx:70-71`、`src/windows/config/hotkey_settings.tsx:93-100/159/162/168-184`。
 - [x] **版本号统一来自 metadata**：`src/windows/config/about.tsx:7`、`src/windows/config/index.tsx:123-124`、`src/windows/updater/index.tsx:114/369` 硬编码。
 - [x] **`use_tts` 失败路径清理**：`src/hooks/use_tts.ts:17-34` 播放 reject 时未 `revokeObjectURL`、`is_playing` 卡 true；补 try/catch/finally。
-- [ ] **欢迎页与翻译窗口空状态彻底解耦**：旧修复只用 `translate:selection-pending` 避免热键闪欢迎页，但欢迎页仍嵌在 `TranslateWindow` 空状态，标题栏仍显示“翻译”。按上方“欢迎窗口独立化”拆成独立 `WELCOME` 窗口。
+- [x] **欢迎页与翻译窗口空状态彻底解耦**：欢迎页已拆为独立 `WELCOME` 窗口；翻译窗口空状态只保留正常输入区和语言区。
 - [ ] **冷启动延迟（已记录）**：详见 `docs/runtime_issues.md` §4。本审阅不重复条目，仅作交叉引用。
 
 ### E. 翻译 / 词典 / OCR 服务正确性（high）
@@ -137,7 +137,7 @@
 - [ ] **`@core` 标签收敛**：`@core` 只保留最小关键路径（启动 → 翻译窗口可见 → 本地 stub 译文出现 → 关闭），其他 UI 细节迁到 `@ui`。
 - [ ] **timeout 标准化**：按 `docs/test_user_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
 - [x] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
-- [ ] **HTTP server 单元/契约测试**：已新增 `tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/public config 安全边界；仍需补 auth、body limit、history privacy、`/dict` 真正使用 text、`/history` seed 多条断言分页（`docs/spec.md:927-934`，对比 `tests/user_e2e/specs/app_http_api.spec.ts:49-64`）。
+- [x] **HTTP server 单元/契约测试**：`tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/token/public config 安全边界；`app_http_api.spec.ts` 覆盖 auth、`/dict` 使用 text、`/history` 分页与公开配置 allowlist。
 - [ ] **updater repo/allowlist 契约测试**：`electron/updater/index.ts` 无对应测试。
 - [ ] **backup WebDAV/local 行为单元测试**：`electron/backup/index.ts` 无对应测试。
 - [ ] **tray 用户可见字符串 contract 测试**：捕获 `Pot Desktop` 类回归。

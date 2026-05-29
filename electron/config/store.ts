@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto'
 import { app, BrowserWindow } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs'
 import { join } from 'path'
@@ -46,6 +47,10 @@ function resolveSystemLanguage(): string {
 }
 
 
+function create_server_api_token(): string {
+    return randomBytes(32).toString('base64url')
+}
+
 export function initConfigStore(): void {
     // Allow E2E tests to specify a custom userData directory
     const dir = getUserDataDir()
@@ -73,11 +78,17 @@ export function initConfigStore(): void {
             ...data,
             app_language: data.app_language ?? sysLang,
             translate_target_language: data.translate_target_language ?? sysLang,
+            server_api_token: typeof data.server_api_token === 'string' && data.server_api_token ? data.server_api_token : create_server_api_token(),
             service_instances: {
                 ...DEFAULT_SERVICE_INSTANCES,
                 ...(data.service_instances ?? {})
             }
         }
+        saveToDisk()
+    }
+
+    if (typeof data.server_api_token !== 'string' || !data.server_api_token) {
+        data.server_api_token = create_server_api_token()
         saveToDisk()
     }
 
@@ -154,9 +165,13 @@ export function setConfig(key: ConfigKey, value: unknown): void {
 }
 
 export function resetConfigToDefaults(): void {
+    const server_api_token = typeof data.server_api_token === 'string' && data.server_api_token
+        ? data.server_api_token
+        : create_server_api_token()
     for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
         ;(data as Record<string, unknown>)[key] = value
     }
+    data.server_api_token = server_api_token
     saveToDisk()
     broadcastAllConfig()
 }

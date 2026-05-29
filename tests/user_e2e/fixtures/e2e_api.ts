@@ -1,6 +1,6 @@
 import http from 'http'
 
-function request(port: number, method: string, path: string, body?: unknown, token?: string): Promise<unknown> {
+function request(port: number, method: string, path: string, body?: unknown, token?: string, api_token?: string): Promise<unknown> {
     return new Promise((resolve, reject) => {
         const bodyStr = body ? JSON.stringify(body) : ''
         const req = http.request({
@@ -11,6 +11,7 @@ function request(port: number, method: string, path: string, body?: unknown, tok
             headers: {
                 'Content-Type': 'application/json',
                 ...(bodyStr ? { 'Content-Length': String(Buffer.byteLength(bodyStr)) } : {}),
+                ...(api_token ? { 'X-Omni-Pot-Api-Token': api_token } : {}),
                 ...(token ? { 'X-Omni-Pot-E2E-Token': token } : {}),
             },
         }, (res) => {
@@ -30,7 +31,7 @@ function request(port: number, method: string, path: string, body?: unknown, tok
     })
 }
 
-function requestText(port: number, path: string, body: string, token?: string): Promise<unknown> {
+function requestText(port: number, path: string, body: string, token?: string, api_token?: string): Promise<unknown> {
     return new Promise((resolve, reject) => {
         const req = http.request({
             hostname: '127.0.0.1',
@@ -40,6 +41,7 @@ function requestText(port: number, path: string, body: string, token?: string): 
             headers: {
                 'Content-Type': 'text/plain; charset=utf-8',
                 'Content-Length': String(Buffer.byteLength(body)),
+                ...(api_token ? { 'X-Omni-Pot-Api-Token': api_token } : {}),
                 ...(token ? { 'X-Omni-Pot-E2E-Token': token } : {}),
             },
         }, (res) => {
@@ -60,6 +62,8 @@ function requestText(port: number, path: string, body: string, token?: string): 
 }
 
 export class E2eApi {
+    private api_token: string | undefined
+
     constructor(private port: number, private token: string) {}
 
     private request(method: string, path: string, body?: unknown): Promise<unknown> {
@@ -68,6 +72,15 @@ export class E2eApi {
 
     private requestText(path: string, body: string): Promise<unknown> {
         return requestText(this.port, path, body, this.token)
+    }
+
+    private async get_api_token(): Promise<string> {
+        if (this.api_token) return this.api_token
+        const config = await this.getConfig()
+        const token = config.server_api_token
+        if (typeof token !== 'string' || !token) throw new Error('missing server_api_token')
+        this.api_token = token
+        return token
     }
 
     async triggerSelection(text?: string): Promise<{ success: boolean; method?: string; reason?: string }> {
@@ -91,18 +104,30 @@ export class E2eApi {
     }
 
     async translate_via_external_api(text: string): Promise<{ success: boolean; error?: string }> {
+        return requestText(this.port, '/translate', text, undefined, await this.get_api_token()) as Promise<{ success: boolean; error?: string }>
+    }
+
+    async translate_via_external_api_without_token(text: string): Promise<{ success: boolean; error?: string }> {
         return requestText(this.port, '/translate', text) as Promise<{ success: boolean; error?: string }>
     }
 
     async recognize_via_external_api(body?: { mode?: 'recognize' | 'translate' }): Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }> {
-        return request(this.port, 'POST', '/recognize', body) as Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }>
+        return request(this.port, 'POST', '/recognize', body, undefined, await this.get_api_token()) as Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }>
     }
 
     async get_config_via_external_api(): Promise<Record<string, unknown>> {
+        return request(this.port, 'GET', '/config', undefined, undefined, await this.get_api_token()) as Promise<Record<string, unknown>>
+    }
+
+    async get_config_via_external_api_without_token(): Promise<Record<string, unknown>> {
         return request(this.port, 'GET', '/config') as Promise<Record<string, unknown>>
     }
 
     async requestExternal<T>(method: string, path: string, body?: unknown): Promise<T> {
+        return request(this.port, method, path, body, undefined, await this.get_api_token()) as Promise<T>
+    }
+
+    async request_external_without_token<T>(method: string, path: string, body?: unknown): Promise<T> {
         return request(this.port, method, path, body) as Promise<T>
     }
 

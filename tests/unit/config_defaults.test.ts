@@ -5,7 +5,7 @@ import type { AppConfig } from '@shared/types/config'
 describe('Config defaults', () => {
     it('has all required keys', () => {
         const required_keys: (keyof AppConfig)[] = [
-            'app_language', 'app_theme', 'app_primary_color', 'server_port',
+            'app_language', 'app_theme', 'app_primary_color', 'server_port', 'server_api_token',
             'translate_source_language', 'translate_target_language',
             'hotkey_translate',
             'translate_service_list', 'dictionary_service_list', 'recognize_service_list', 'tts_service_list',
@@ -27,6 +27,7 @@ describe('Config defaults', () => {
         expect(DEFAULT_CONFIG.transparent).toBe(false)
         expect(DEFAULT_CONFIG.check_update).toBe(true)
         expect(DEFAULT_CONFIG.server_port).toBe(20202)
+        expect(DEFAULT_CONFIG.server_api_token).toBe('')
         expect(DEFAULT_CONFIG.clipboard_monitor).toBe(false)
         expect(DEFAULT_CONFIG.auto_start).toBe(false)
         expect(DEFAULT_CONFIG.tray_click_event).toBe('show_config')

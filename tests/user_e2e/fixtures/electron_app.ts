@@ -22,18 +22,24 @@ async function getFreePort(): Promise<number> {
     })
 }
 
-async function waitForHttpServer(port: number, timeoutMs = 25_000): Promise<void> {
+async function waitForHttpServer(port: number, e2eToken: string, timeoutMs = 25_000): Promise<void> {
     const start = Date.now()
     while (Date.now() - start < timeoutMs) {
         try {
             await new Promise<void>((resolve, reject) => {
-                http.get(`http://127.0.0.1:${String(port)}/config`, (res) => {
+                const req = http.get({
+                    hostname: '127.0.0.1',
+                    port,
+                    path: '/config',
+                    headers: { 'X-Omni-Pot-E2E-Token': e2eToken },
+                }, (res) => {
                     res.on('data', () => {})
                     res.on('end', () => {
                         if (res.statusCode === 200) resolve()
                         else reject(new Error(`status ${String(res.statusCode)}`))
                     })
-                }).on('error', reject)
+                })
+                req.on('error', reject)
             })
             return
         } catch {
@@ -85,7 +91,7 @@ export async function launchApp(opts: {
         env,
     })
 
-    await waitForHttpServer(httpPort)
+    await waitForHttpServer(httpPort, e2eToken)
 
     return { app, httpPort, userDataDir, e2eToken, cleanupUserDataDir }
 }

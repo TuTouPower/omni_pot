@@ -81,6 +81,16 @@ describe('server security helpers', () => {
         expect(should_reject_origin('')).toBe(false)
     })
 
+    it('requires exact API token matches', async () => {
+        const { is_api_token_allowed } = await import('../../../electron/server')
+
+        expect(is_api_token_allowed('expected-token', 'expected-token')).toBe(true)
+        expect(is_api_token_allowed('expected-token', 'wrong-token')).toBe(false)
+        expect(is_api_token_allowed('expected-token', undefined)).toBe(false)
+        expect(is_api_token_allowed('', 'expected-token')).toBe(false)
+        expect(is_api_token_allowed('expected-token', ['expected-token'])).toBe(false)
+    })
+
     it('redacts public config secrets while keeping allowed service keys', async () => {
         const { get_public_config_from_config } = await import('../../../electron/server')
         const config: AppConfig = {
@@ -88,6 +98,7 @@ describe('server security helpers', () => {
             webdav_url: 'https://webdav.example.com/dav',
             webdav_username: 'user',
             webdav_password: 'password',
+            server_api_token: 'secret-token',
             service_instances: {
                 'secret@default': {
                     serviceKey: 'secret',
@@ -104,9 +115,12 @@ describe('server security helpers', () => {
         const public_config = get_public_config_from_config(config)
         const public_instance = public_config.service_instances['secret@default']
 
-        expect(public_config.webdav_url).toBe('[redacted]')
-        expect(public_config.webdav_username).toBe('[redacted]')
-        expect(public_config.webdav_password).toBe('[redacted]')
+        expect(public_config.server_port).toBe(DEFAULT_CONFIG.server_port)
+        expect(public_config.translate_service_list).toEqual(DEFAULT_CONFIG.translate_service_list)
+        expect(public_config).not.toHaveProperty('webdav_url')
+        expect(public_config).not.toHaveProperty('webdav_username')
+        expect(public_config).not.toHaveProperty('webdav_password')
+        expect(public_config).not.toHaveProperty('server_api_token')
         expect(public_instance.serviceKey).toBe('secret')
         expect(public_instance.config).toEqual({
             enable: true,

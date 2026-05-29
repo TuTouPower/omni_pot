@@ -13,6 +13,7 @@ export interface AppConfig {
   transparent: boolean
   check_update: boolean
   server_port: number
+  server_api_token: string
   clipboard_monitor: boolean
 
   translate_source_language: string
@@ -107,6 +108,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   transparent: false,
   check_update: true,
   server_port: 20202,
+  server_api_token: '',
   clipboard_monitor: false,
 
   translate_source_language: 'auto',

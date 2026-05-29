@@ -464,8 +464,8 @@ class TranslatePage {
 
 - 覆盖 spec §20 的公开 HTTP API：`POST /translate`、`GET /config`、`POST /recognize`、`POST /dict`、`GET /history`
 - 文件名使用 `app_http_api`，避免与真实外部服务连通性 spec 混淆
-- 不带 `OMNI_POT_E2E_TOKEN` 调用公开端点，验证它们不依赖 E2E-only `/trigger-*` 路径
-- `POST /translate` 断言请求体文本进入翻译窗口源文本区；`GET /config` 返回公开配置且敏感字段脱敏；`POST /recognize` 返回当前 stub JSON（`success: true` + mode）
+- 不带 `OMNI_POT_E2E_TOKEN` 调用公开端点，验证它们不依赖 E2E-only `/trigger-*` 路径；缺少 `X-Omni-Pot-Api-Token` 时返回 401
+- `POST /translate` 断言请求体文本进入翻译窗口源文本区；`GET /config` 返回公开配置 allowlist 且不包含 token / WebDAV 凭据；`POST /recognize` 返回当前 stub JSON（`success: true` + mode）
 
 ### 5.16 external_services.spec.ts — 外部服务真实连通性
 

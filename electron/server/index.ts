@@ -3,7 +3,7 @@ import { app, clipboard, desktopCapturer, screen } from 'electron'
 import { getConfig, getAllConfig, setConfig, resetConfigToDefaults } from '../config/store'
 import { DEFAULT_CONFIG, type AppConfig, type ConfigKey } from '@shared/types/config'
 
-export type PublicConfig = Omit<AppConfig, 'service_instances'> & {
+export type PublicConfig = Partial<Omit<AppConfig, 'service_instances' | 'server_api_token'>> & {
     service_instances: Record<string, { serviceKey: string; config: Record<string, unknown> }>
 }
 import type { WindowManager } from '../windows/manager'
@@ -26,6 +26,11 @@ const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
 
 const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
+const API_TOKEN_HEADER = 'x-omni-pot-api-token'
+
+export function is_api_token_allowed(expected_token: string, provided_token: string | string[] | undefined): boolean {
+    return typeof provided_token === 'string' && !!expected_token && provided_token === expected_token
+}
 
 export function is_host_allowed(host: string): boolean {
     if (!host) return false
@@ -86,30 +91,87 @@ function is_e2e_request(req: http.IncomingMessage): boolean {
     return IS_E2E && !!E2E_TOKEN && req.headers['x-omni-pot-e2e-token'] === E2E_TOKEN
 }
 
-const PUBLIC_SERVICE_CONFIG_KEYS = new Set(['enable', 'instanceName'])
-const REDACTED_CONFIG_VALUE = '[redacted]'
+function is_api_request(req: http.IncomingMessage): boolean {
+    const expected_token = getConfig('server_api_token')
+    return typeof expected_token === 'string' && is_api_token_allowed(expected_token, req.headers[API_TOKEN_HEADER])
+}
 
-// Keys that should never be exposed via /config endpoint
-const SENSITIVE_CONFIG_KEYS = new Set([
-    'webdav_password',
-    'webdav_url',
-    'webdav_username',
-])
+function is_local_api_request(req: http.IncomingMessage): boolean {
+    return is_e2e_request(req) || is_api_request(req)
+}
+
+function respond_unauthorized(res: http.ServerResponse): void {
+    res.writeHead(401)
+    res.end(JSON.stringify({ success: false, error: 'unauthorized' }))
+}
+
+const PUBLIC_SERVICE_CONFIG_KEYS = new Set(['enable', 'instanceName'])
+const PUBLIC_CONFIG_KEYS: Array<keyof Omit<AppConfig, 'service_instances' | 'server_api_token'>> = [
+    'app_language',
+    'app_theme',
+    'app_primary_color',
+    'app_font',
+    'app_fallback_font',
+    'app_font_size',
+    'transparent',
+    'check_update',
+    'server_port',
+    'clipboard_monitor',
+    'translate_source_language',
+    'translate_target_language',
+    'translate_second_language',
+    'translate_auto_copy',
+    'incremental_translate',
+    'history_disable',
+    'dynamic_translate',
+    'translate_delete_newline',
+    'translate_window_position',
+    'translate_remember_window_size',
+    'translate_pinned',
+    'translate_always_on_top',
+    'hide_source',
+    'hide_language',
+    'translate_hide_window',
+    'welcome_dismissed',
+    'translate_window_width',
+    'translate_window_height',
+    'translate_window_position_x',
+    'translate_window_position_y',
+    'dict_always_on_top',
+    'dict_pinned',
+    'dict_remember_window_size',
+    'dict_window_width',
+    'dict_window_height',
+    'recognize_always_on_top',
+    'recognize_pinned',
+    'recognize_remember_window_size',
+    'recognize_window_width',
+    'recognize_window_height',
+    'recognize_language',
+    'recognize_engine',
+    'recognize_delete_newline',
+    'recognize_auto_copy',
+    'hotkey_translate',
+    'hotkey_ocr_recognize',
+    'hotkey_ocr_translate',
+    'hotkey_selection_dictionary',
+    'translate_service_list',
+    'dictionary_service_list',
+    'english_dictionary_service_list',
+    'recognize_service_list',
+    'tts_service_list',
+    'backup_type',
+    'auto_start',
+    'tray_click_event',
+    'dict_chinese_enabled',
+]
 
 function redact_service_config(config: Record<string, unknown>): Record<string, unknown> {
     return Object.fromEntries(Object.entries(config).filter(([key]) => PUBLIC_SERVICE_CONFIG_KEYS.has(key)))
 }
 
 export function get_public_config_from_config(config: AppConfig): PublicConfig {
-    // Redact all sensitive top-level keys
-    const redacted: Record<string, unknown> = Object.fromEntries(
-        Object.entries(config).map(([key, value]) => [
-            key,
-            SENSITIVE_CONFIG_KEYS.has(key) ? REDACTED_CONFIG_VALUE : value,
-        ])
-    )
-    return {
-        ...(redacted as Omit<AppConfig, 'service_instances'>),
+    const public_config: PublicConfig = {
         service_instances: Object.fromEntries(Object.entries(config.service_instances).map(([instance_key, instance]) => [
             instance_key,
             {
@@ -118,6 +180,12 @@ export function get_public_config_from_config(config: AppConfig): PublicConfig {
             },
         ])),
     }
+
+    for (const key of PUBLIC_CONFIG_KEYS) {
+        public_config[key] = config[key] as never
+    }
+
+    return public_config
 }
 
 function get_public_config(): PublicConfig {
@@ -154,7 +222,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 res.setHeader('Access-Control-Allow-Origin', origin)
             }
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Omni-Pot-E2E-Token')
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Omni-Pot-Api-Token, X-Omni-Pot-E2E-Token')
 
             if (req.method === 'OPTIONS') {
                 res.writeHead(204)
@@ -165,11 +233,13 @@ export function startServer(mgr: WindowManager): Promise<void> {
             const url = new URL(req.url ?? '/', `http://localhost:${String(port)}`)
 
             if (req.method === 'POST' && (url.pathname === '/' || url.pathname === '/translate')) {
+                if (!is_local_api_request(req)) { respond_unauthorized(res); return }
                 handleTranslate(mgr, req, res)
                 return
             }
 
             if (req.method === 'POST' && url.pathname === '/recognize') {
+                if (!is_local_api_request(req)) { respond_unauthorized(res); return }
                 ;(async () => {
                     try {
                         const buf = await readBody(req, MAX_OCR_BODY_SIZE)
@@ -196,22 +266,25 @@ export function startServer(mgr: WindowManager): Promise<void> {
             }
 
             if (req.method === 'GET' && url.pathname === '/config') {
+                if (!is_local_api_request(req)) { respond_unauthorized(res); return }
                 res.writeHead(200)
                 res.end(JSON.stringify(is_e2e_request(req) ? getAllConfig() : get_public_config()))
                 return
             }
 
             if (req.method === 'POST' && url.pathname === '/dict') {
+                if (!is_local_api_request(req)) { respond_unauthorized(res); return }
                 handleDictLookup(mgr, req, res)
                 return
             }
 
             if (req.method === 'GET' && url.pathname === '/history') {
+                if (!is_local_api_request(req)) { respond_unauthorized(res); return }
                 const page = Number(url.searchParams.get('page') ?? '1')
                 const page_size = Number(url.searchParams.get('page_size') ?? '20')
                 const safe_page = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
                 const safe_size = Number.isFinite(page_size) && page_size > 0 ? Math.min(Math.floor(page_size), 200) : 20
-                const full_text = url.searchParams.get('full_text') === 'true'
+                const full_text = is_e2e_request(req) && url.searchParams.get('full_text') === 'true'
                 const data = get_history_page(safe_page, safe_size)
                 // Privacy: truncate source/target text unless full_text is requested
                 const processed_data = full_text ? data : data.map((record) => ({

@@ -130,6 +130,38 @@ describe('Config Store integration', () => {
         expect(reloaded_store.getConfig('translate_auto_copy')).toBe(true)
     })
 
+    it('generates a server API token when missing', async () => {
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+        }))
+        const store = await import('../../electron/config/store')
+
+        store.initConfigStore()
+        store.flush_config()
+
+        const token = store.getConfig('server_api_token')
+        expect(typeof token).toBe('string')
+        expect((token as string).length).toBeGreaterThan(20)
+        const persisted = JSON.parse(readFileSync(join(test_dir, 'config.json'), 'utf-8')) as Record<string, unknown>
+        expect(persisted.server_api_token).toBe(token)
+    })
+
+    it('preserves server API token when resetting config', async () => {
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+            server_api_token: 'existing-token',
+            app_theme: 'dark',
+        }))
+        const store = await import('../../electron/config/store')
+
+        store.initConfigStore()
+        store.resetConfigToDefaults()
+        store.flush_config()
+
+        expect(store.getConfig('server_api_token')).toBe('existing-token')
+        expect(store.getConfig('app_theme')).toBe(DEFAULT_CONFIG.app_theme)
+    })
+
     it('preserves user-customized translate_service_list across init', async () => {
         const custom_list = ['bing@default', 'google@default']
         writeFileSync(join(test_dir, 'config.json'), JSON.stringify({

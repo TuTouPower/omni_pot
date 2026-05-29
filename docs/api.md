@@ -2,13 +2,14 @@
 
 Omni Pot 主进程会在本机绑定一个 HTTP 端口（默认 `127.0.0.1:20202`，可在「设置 → 高级」中修改 `server_port`），供外部脚本/快捷工具调用。
 
-> **范围**：仅监听 `127.0.0.1`，不对外网开放。所有路由都返回 JSON。CORS 仅允许 `http://localhost`、`http://127.0.0.1`、`https://localhost`、`https://127.0.0.1` 及这些来源的显式端口。
+> **范围**：仅监听 `127.0.0.1`，不对外网开放。所有路由都返回 JSON。CORS 仅允许 `http://localhost`、`http://127.0.0.1`、`https://localhost`、`https://127.0.0.1` 及这些来源的显式端口。公共端点必须携带 `X-Omni-Pot-Api-Token`，token 保存在用户数据目录的 `config.json` 中。
 
 ## 配置
 
 | 项 | 默认值 | 说明 |
 |---|---|---|
 | `server_port` | `20202` | HTTP 服务监听端口 |
+| `server_api_token` | 首次启动随机生成 | 外部脚本调用公共 HTTP API 时放入 `X-Omni-Pot-Api-Token` 请求头 |
 
 服务在 Omni Pot 启动时自动起；可通过 `setConfig('server_port', NEW)` 修改后重启应用生效。
 
@@ -23,7 +24,7 @@ Omni Pot 主进程会在本机绑定一个 HTTP 端口（默认 `127.0.0.1:20202
 - 响应：`{ "success": true }`
 
 ```bash
-curl -X POST -d "hello world" http://127.0.0.1:20202/translate
+curl -X POST -H "X-Omni-Pot-Api-Token: $OMNI_POT_API_TOKEN" -d "hello world" http://127.0.0.1:20202/translate
 ```
 
 ### `POST /dict` — 词典查询
@@ -33,7 +34,7 @@ curl -X POST -d "hello world" http://127.0.0.1:20202/translate
 - 响应：`{ "success": true }`；空文本返回 `400 { "success": false, "error": "empty body" }`。
 
 ```bash
-curl -X POST -d '{"text":"australia"}' -H 'Content-Type: application/json' http://127.0.0.1:20202/dict
+curl -X POST -H "X-Omni-Pot-Api-Token: $OMNI_POT_API_TOKEN" -d '{"text":"australia"}' -H 'Content-Type: application/json' http://127.0.0.1:20202/dict
 ```
 
 ### `POST /recognize` — 文字识别（占位）
@@ -44,11 +45,11 @@ curl -X POST -d '{"text":"australia"}' -H 'Content-Type: application/json' http:
 
 ### `GET /config` — 读取公开配置
 
-- 响应：公开 `AppConfig` JSON；`webdav_url`、`webdav_username`、`webdav_password` 返回 `[redacted]`。服务实例配置只公开 `enable`、`instanceName`，其他字段（如 `apiKey`、`endpoint`）不返回。
+- 响应：公开配置 allowlist JSON；`server_api_token`、`webdav_url`、`webdav_username`、`webdav_password` 不返回。服务实例配置只公开 `enable`、`instanceName`，其他字段（如 `apiKey`、`endpoint`）不返回。
 - 用于外部工具读取当前快捷键、服务列表、窗口尺寸等非敏感设置。
 
 ```bash
-curl http://127.0.0.1:20202/config | jq '.hotkey_selection_translate'
+curl -H "X-Omni-Pot-Api-Token: $OMNI_POT_API_TOKEN" http://127.0.0.1:20202/config | jq '.hotkey_translate'
 ```
 
 ### `GET /history` — 翻译历史分页
@@ -78,7 +79,7 @@ curl http://127.0.0.1:20202/config | jq '.hotkey_selection_translate'
   ```
 
 ```bash
-curl "http://127.0.0.1:20202/history?page=1&page_size=10"
+curl -H "X-Omni-Pot-Api-Token: $OMNI_POT_API_TOKEN" "http://127.0.0.1:20202/history?page=1&page_size=10"
 ```
 
 ---
@@ -91,6 +92,7 @@ curl "http://127.0.0.1:20202/history?page=1&page_size=10"
 
 ## 错误约定
 
+- `401 { "success": false, "error": "unauthorized" }` — 缺少或传错 `X-Omni-Pot-Api-Token`
 - `404 { "success": false, "error": "not found" }` — 路径未匹配
 - `400 { "success": false, "error": "<原因>" }` — 请求体非法
 - `500 { "success": false, "error": "<原因>" }` — 内部错误
