@@ -76,7 +76,7 @@
 - [ ] **凭据存储与备份加密**：`config.json` 明文保存 WebDAV 密码与 provider API key；备份 zip 未加密（`electron/backup/index.ts:82-147`、`350`）。凭据迁到 OS credential storage；备份默认排除或加密 secrets。
 - [ ] **preload API 按窗口拆分**：`electron/preload.ts:34-47/117-125/52-56` 把 config/backup/clipboard 全部暴露给所有 renderer；IPC handler（`config_handlers.ts`、`backup_handlers.ts`、`text_handlers.ts`）不校验 sender。按窗口拆分 preload；handler 校验 sender window label。
 - [x] **IPC config setter schema 校验**：`ipc/config_handlers.ts:15-24` 接收 `value: unknown` 直接写入；renderer 可持久化错误类型破坏端口、布尔开关等。IPC 边界加 schema。
-- [x] **OCR temp 文件随机化未收口**：`ipc/ocr_handlers.ts` 已从 `Date.now()` 改为 `randomUUID()`，但仍写入公共 tmp 路径；按审阅要求改为 `mkdtemp` 私有目录 + exclusive write。
+- [x] **OCR temp 文件随机化未收口**：`ipc/ocr_handlers.ts` 已使用 `randomUUID()` 生成临时目录名，在公共 tmp 下创建独立目录并 `chmod 0700` 后写入截图；`mkdir(..., { recursive: true })` 返回 `undefined`（目录已存在）不再误判失败。
 
 ### B. 自动更新（high）
 

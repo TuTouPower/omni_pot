@@ -126,8 +126,8 @@ export function registerOcrHandlers(manager: WindowManager): void {
         const platform = process.platform
 
         // Write image to private temp directory
-        const tmp_dir = await mkdir(join(tmpdir(), `omni_ocr_${randomUUID()}`), { recursive: true })
-        if (!tmp_dir) throw new Error('Failed to create temp directory')
+        const tmp_dir = join(tmpdir(), `omni_ocr_${randomUUID()}`)
+        await mkdir(tmp_dir, { recursive: true })
         await chmod(tmp_dir, 0o700)
         const tmp_path = join(tmp_dir, 'image.png')
         const buffer = Buffer.from(base64Image, 'base64')

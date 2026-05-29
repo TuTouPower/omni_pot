@@ -1,6 +1,77 @@
-import { describe, expect, it } from 'vitest'
-import { normalize_system_ocr_language } from '../../../electron/ipc/ocr_handlers'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { normalize_system_ocr_language, registerOcrHandlers } from '../../../electron/ipc/ocr_handlers'
 import { normalize_recognized_text } from '@shared/text_normalize'
+
+const mocks = vi.hoisted(() => ({
+    handlers: new Map<string, (...args: unknown[]) => unknown>(),
+    chmod: vi.fn(),
+    execFile: vi.fn(),
+    mkdir: vi.fn(),
+    rm: vi.fn(),
+    writeFile: vi.fn(),
+}))
+
+vi.mock('electron', () => ({
+    ipcMain: {
+        handle: vi.fn((channel: string, handler: (...args: unknown[]) => unknown) => {
+            mocks.handlers.set(channel, handler)
+        }),
+    },
+}))
+
+vi.mock('fs/promises', () => ({
+    default: {
+        chmod: mocks.chmod,
+        mkdir: mocks.mkdir,
+        rm: mocks.rm,
+        writeFile: mocks.writeFile,
+    },
+    chmod: mocks.chmod,
+    mkdir: mocks.mkdir,
+    rm: mocks.rm,
+    writeFile: mocks.writeFile,
+}))
+
+vi.mock('child_process', () => ({
+    default: { execFile: mocks.execFile },
+    execFile: mocks.execFile,
+}))
+
+afterEach(() => {
+    mocks.handlers.clear()
+    vi.clearAllMocks()
+})
+
+describe('registerOcrHandlers', () => {
+    it('accepts existing recursive temp directory when mkdir returns undefined', async () => {
+        mocks.mkdir.mockResolvedValue(undefined)
+        mocks.chmod.mockResolvedValue(undefined)
+        mocks.writeFile.mockResolvedValue(undefined)
+        mocks.rm.mockResolvedValue(undefined)
+        mocks.execFile.mockImplementation((
+            _file: string,
+            _args: string[],
+            _options: unknown,
+            callback: (error: Error | null, stdout: string, stderr: string) => void,
+        ) => {
+            callback(null, 'recognized text\n', '')
+        })
+
+        registerOcrHandlers({
+            focusOrCreate: vi.fn(),
+            sendWhenReady: vi.fn(),
+        } as never)
+
+        const handler = mocks.handlers.get('ocr:system-recognize')
+        await expect(handler?.({}, Buffer.from('image').toString('base64'), 'en-US')).resolves.toBe('recognized text')
+
+        const temp_dir = mocks.mkdir.mock.calls[0]?.[0] as string
+        expect(typeof temp_dir).toBe('string')
+        expect(mocks.chmod).toHaveBeenCalledWith(temp_dir, 0o700)
+        expect(mocks.writeFile).toHaveBeenCalledWith(expect.stringContaining('image.png'), expect.any(Buffer))
+        expect(mocks.rm).toHaveBeenCalledWith(temp_dir, { recursive: true, force: true })
+    })
+})
 
 describe('normalize_system_ocr_language', () => {
     it('accepts known Windows OCR language tags', () => {
