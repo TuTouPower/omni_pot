@@ -52,17 +52,22 @@ async function translate_stream(resp: Response): Promise<string> {
     const reader = resp.body?.getReader()
     const decoder = new TextDecoder()
     let result = ''
+    let buffer = ''
 
     while (reader) {
         const { done, value } = await reader.read()
         if (done) break
-        const chunk = decoder.decode(value, { stream: true })
-        for (const line of chunk.split('\n')) {
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
             const trimmed = line.trim()
             if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
-                const json = JSON.parse(trimmed.slice(6)) as OpenAIStreamChunk
-                const content = json.choices?.[0]?.delta?.content
-                if (content) result += content
+                try {
+                    const json = JSON.parse(trimmed.slice(6)) as OpenAIStreamChunk
+                    const content = json.choices?.[0]?.delta?.content
+                    if (content) result += content
+                } catch { /* skip malformed chunk */ }
             }
         }
     }
@@ -84,7 +89,9 @@ export const openaiService: TranslateService = {
         const model = (config.model as string) || 'gpt-3.5-turbo'
         const request_arguments_raw = (config.requestArguments as string) || '{"temperature":0.1}'
         let request_arguments: Record<string, unknown> = { temperature: 0.1 }
-        try { request_arguments = JSON.parse(request_arguments_raw) as Record<string, unknown> } catch { /* defaults */ }
+        try { request_arguments = JSON.parse(request_arguments_raw) as Record<string, unknown> } catch {
+            console.warn('[openai] requestArguments JSON parse failed, using defaults:', request_arguments_raw)
+        }
 
         const system_prompt = build_system_prompt(config, from, to)
         const url = build_url(config)
@@ -142,6 +149,7 @@ export const openaiService: TranslateService = {
         try {
             request_arguments = JSON.parse(request_arguments_raw) as Record<string, unknown>
         } catch {
+            console.warn('[openai] requestArguments JSON parse failed, using defaults:', request_arguments_raw)
             request_arguments = { temperature: 0.1 }
         }
 

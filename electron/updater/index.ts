@@ -35,12 +35,33 @@ interface DownloadProgress {
 }
 
 function compare_versions(current: string, latest: string): boolean {
-    const cur = current.replace(/^v/, '').split('.').map(Number)
-    const lat = latest.replace(/^v/, '').split('.').map(Number)
-    for (let i = 0; i < 3; i++) {
-        if ((lat[i] ?? 0) > (cur[i] ?? 0)) return true
-        if ((lat[i] ?? 0) < (cur[i] ?? 0)) return false
+    const parse_version = (v: string) => {
+        const cleaned = v.replace(/^v/, '')
+        const [version = '0', ...pre_parts] = cleaned.split('-')
+        const parts = version.split('.').map(Number)
+        const major = parts[0] ?? 0
+        const minor = parts[1] ?? 0
+        const patch = parts[2] ?? 0
+        const pre_release = pre_parts.length > 0 ? pre_parts.join('-') : null
+        return { major, minor, patch, pre_release }
     }
+
+    const cur = parse_version(current)
+    const lat = parse_version(latest)
+
+    // Compare major.minor.patch
+    if (lat.major !== cur.major) return lat.major > cur.major
+    if (lat.minor !== cur.minor) return lat.minor > cur.minor
+    if (lat.patch !== cur.patch) return lat.patch > cur.patch
+
+    // Same version numbers - pre-release handling
+    // 1.2.0-beta < 1.2.0 (pre-release is less than release)
+    if (cur.pre_release && !lat.pre_release) return true
+    if (!cur.pre_release && lat.pre_release) return false
+    if (cur.pre_release && lat.pre_release) {
+        return lat.pre_release > cur.pre_release
+    }
+
     return false
 }
 

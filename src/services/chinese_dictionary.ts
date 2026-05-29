@@ -1,6 +1,8 @@
 import type { TranslateService, DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { create_logger } from '../utils/logger'
 
+const log = create_logger('chinese_dictionary')
 const CHINESE_DICTIONARY_LANGUAGES: LanguageCode[] = ['auto', 'zh_cn']
 
 export const chineseDictionaryService: TranslateService = {
@@ -15,7 +17,8 @@ export const chineseDictionaryService: TranslateService = {
         try {
             const result = await window.electronAPI.chineseDict.lookup(word)
             return result ?? ''
-        } catch {
+        } catch (err) {
+            log.error('lookup failed: %s', err instanceof Error ? err.message : String(err))
             return ''
         }
     },
