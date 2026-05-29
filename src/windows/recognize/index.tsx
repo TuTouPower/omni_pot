@@ -321,15 +321,20 @@ export default function RecognizeWindow(): React.ReactElement {
     const config = useConfigStore((s) => s.config)
     const ocrRequestIdRef = useRef(0)
     const autoOcrImageRef = useRef('')
+    const lastOcrKeyRef = useRef('')
+    const recognizeAutoCopyRef = useRef(config.recognize_auto_copy)
+    recognizeAutoCopyRef.current = config.recognize_auto_copy
+    const handleNormalizeTextRef = useRef<(text: string) => string>((text) => text)
 
     const handleNormalizeText = useCallback((text: string): string => {
         return config.recognize_delete_newline ? normalize_recognized_text(text) : text
     }, [config.recognize_delete_newline])
+    handleNormalizeTextRef.current = handleNormalizeText
 
     // Listen for new screenshots from main process
     useEffect(() => {
         const unsub = window.electronAPI.ocr.onRecognizeShow((base64, text, m) => {
-            const next_text = handleNormalizeText(text)
+            const next_text = handleNormalizeTextRef.current(text)
             setRecognizeShowId((current) => current + 1)
             setImageBase64(base64)
             setRecognizedText(next_text)
@@ -338,12 +343,12 @@ export default function RecognizeWindow(): React.ReactElement {
             setEffectiveTargetLang(null)
             setDetectedSourceLang(null)
             setMode(m === 'translate' ? 'translate' : 'recognize')
-            if (config.recognize_auto_copy && next_text) {
+            if (recognizeAutoCopyRef.current && next_text) {
                 window.electronAPI.text.writeClipboard(next_text).catch(() => undefined)
             }
         })
         return unsub
-    }, [config.recognize_auto_copy, handleNormalizeText])
+    }, [])
 
     useEffect(() => {
         window.electronAPI.ready('recognize')
@@ -397,10 +402,12 @@ export default function RecognizeWindow(): React.ReactElement {
         return ocrRequestIdRef.current
     }, [])
 
-    // Auto-re-recognize when OCR language or service changes in recognize mode
+    // Auto-re-recognize when OCR language or service changes
     useEffect(() => {
-        if (mode !== 'recognize') return
         if (!imageBase64) return
+        const ocr_key = `${imageBase64.slice(0, 64)}:${selectedLanguage}:${effectiveService}`
+        if (lastOcrKeyRef.current === ocr_key) return
+        lastOcrKeyRef.current = ocr_key
         handleRecognize().catch(console.error)
     }, [selectedLanguage, effectiveService]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -421,7 +428,7 @@ export default function RecognizeWindow(): React.ReactElement {
         const requestId = bumpOcrRequestId()
         setIsTranslating(true)
         doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
-            .finally(() => { setIsTranslating(false); })
+            .finally(() => { if (ocrRequestIdRef.current === requestId) setIsTranslating(false) })
             .catch(console.error)
     }, [recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -541,7 +548,7 @@ export default function RecognizeWindow(): React.ReactElement {
         const requestId = bumpOcrRequestId()
         setIsTranslating(true)
         doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
-            .finally(() => { setIsTranslating(false); })
+            .finally(() => { if (ocrRequestIdRef.current === requestId) setIsTranslating(false) })
             .catch(console.error)
     }, [targetLanguage, effectiveTarget]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -592,13 +599,13 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [imageBase64])
 
     const handleSwap = useCallback(() => {
-        const src = selectedLanguage === 'auto' ? (selectedLanguage) : selectedLanguage
-        const tgt = effectiveTarget
-        setTargetLanguage(src === 'auto' ? tgt : src)
-        if (src !== 'auto') {
-            setSelectedLanguage(tgt)
+        if (selectedLanguage === 'auto') {
+            if (!detectedSourceLang) return
+            setSelectedLanguage(detectedSourceLang)
+            return
         }
-    }, [selectedLanguage, effectiveTarget])
+        setSelectedLanguage(effectiveTarget)
+    }, [selectedLanguage, effectiveTarget, detectedSourceLang])
 
     const is_translate_mode = mode === 'translate'
     const modeLabel = is_translate_mode ? t('recognize.translate') : t('recognize.title')

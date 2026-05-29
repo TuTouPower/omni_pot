@@ -31,7 +31,13 @@ function useTts() {
             set_is_playing(false)
         }
         set_is_playing(true)
-        await audio.play()
+        try {
+            await audio.play()
+        } catch {
+            URL.revokeObjectURL(url)
+            audio_ref.current = null
+            set_is_playing(false)
+        }
     }, [stop])
 
     return { is_playing, play, stop }

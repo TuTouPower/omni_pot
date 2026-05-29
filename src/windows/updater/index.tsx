@@ -78,15 +78,20 @@ export default function UpdaterWindow(): React.ReactElement {
     const [download_error, setDownloadError] = useState<string | null>(null)
     const [downloaded_path, setDownloadedPath] = useState<string | null>(null)
     const [downloading, setDownloading] = useState(false)
+    const [currentVersion, setCurrentVersion] = useState('')
+    const currentVersionRef = useRef(currentVersion)
+    currentVersionRef.current = currentVersion
     const main_release_received = useRef(false)
 
     useEffect(() => {
         const cleanup = window.electronAPI.update.onRelease((release_info) => {
             main_release_received.current = true
             setRelease(release_info)
+            setCurrentVersion(release_info.current_version)
             setError(null)
             setLoading(false)
         })
+        window.electronAPI.getVersion().then(setCurrentVersion).catch(() => {})
         window.electronAPI.ready('updater')
         return cleanup
     }, [])
@@ -111,7 +116,7 @@ export default function UpdaterWindow(): React.ReactElement {
                 if (main_release_received.current) return
                 setRelease({
                     version: latest_release.tag_name.replace(/^v/, ''),
-                    current_version: '0.1.0',
+                    current_version: currentVersionRef.current,
                     name: latest_release.name,
                     body: latest_release.body,
                     html_url: latest_release.html_url,
@@ -366,7 +371,7 @@ export default function UpdaterWindow(): React.ReactElement {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 8 }}>
                         <Icons.Check size={32} style={{ color: 'var(--brand-primary)' }} />
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{t('up_to_date', { defaultValue: '已是最新版本' })}</div>
-                        <div className="hint mono">v{'0.1.0'}</div>
+                        <div className="hint mono">v{currentVersion}</div>
                     </div>
                 )}
             </div>

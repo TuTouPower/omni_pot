@@ -77,6 +77,8 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     const internalRef = useRef<HTMLTextAreaElement>(null)
     const textAreaRef = inputRef ?? internalRef
     const isComposingRef = useRef(false)
+    const onTranslateRef = useRef(onTranslate)
+    onTranslateRef.current = onTranslate
     const dynamic_timer_ref = useRef<number | null>(null)
 
     const resize_source_area = useCallback(() => {
@@ -100,8 +102,8 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
 
     const handle_translate_now = useCallback(() => {
         cancel_dynamic_translate()
-        onTranslate()
-    }, [cancel_dynamic_translate, onTranslate])
+        onTranslateRef.current()
+    }, [cancel_dynamic_translate])
 
     const handleVariableCycle = useCallback(() => {
         const textarea = textAreaRef.current
@@ -119,7 +121,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         (e: React.KeyboardEvent) => {
             const nativeEvent = e.nativeEvent
             if (isComposingRef.current || nativeEvent.isComposing) return
-            if (e.key === 'U' && e.altKey && e.shiftKey) {
+            if ((e.key === 'U' || e.code === 'KeyU') && e.altKey && e.shiftKey) {
                 e.preventDefault()
                 handleVariableCycle()
                 return
@@ -172,10 +174,10 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         if (!dynamicTranslate || !sourceText.trim()) return
         dynamic_timer_ref.current = window.setTimeout(() => {
             dynamic_timer_ref.current = null
-            onTranslate()
+            onTranslateRef.current()
         }, 1000)
         return () => { cancel_dynamic_translate(); }
-    }, [sourceText, dynamicTranslate, onTranslate, cancel_dynamic_translate])
+    }, [sourceText, dynamicTranslate, cancel_dynamic_translate])
 
     return (
         <div className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '0 0 auto' }}>

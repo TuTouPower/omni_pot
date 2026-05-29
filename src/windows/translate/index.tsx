@@ -78,8 +78,12 @@ export default function TranslateWindow(): React.ReactElement {
     const configTargetLangRef = useRef(configTargetLang)
 
     useEffect(() => {
-        setStoreTargetLang(configTargetLang as LanguageCode)
-        setStoreSourceLang(configSourceLang as LanguageCode)
+        if (configTargetLang) {
+            setStoreTargetLang(configTargetLang as LanguageCode)
+        }
+        if (configSourceLang) {
+            setStoreSourceLang(configSourceLang as LanguageCode)
+        }
         const timer = window.setTimeout(() => { languageConfigReadyRef.current = true }, 0)
         return () => { window.clearTimeout(timer); }
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -129,8 +133,8 @@ export default function TranslateWindow(): React.ReactElement {
         const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
         if (!textToTranslate.trim()) return
 
-        log.info('translate start: src=%s→%s, text=%s, services=%d',
-            sourceLanguage, targetLanguage, textToTranslate.slice(0, 50), enabledServiceList.length)
+        log.info('translate start: src=%s→%s, len=%d, services=%d',
+            sourceLanguage, targetLanguage, textToTranslate.length, enabledServiceList.length)
 
         const id = nextRequestId()
         setIsTranslating(true)
