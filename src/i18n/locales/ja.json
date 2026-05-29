@@ -75,7 +75,15 @@
         "screenshot_translate": "スクリーンショットを翻訳",
         "screenshot_recognize": "スクリーンショットを認識",
         "clipboard_translate": "クリップボードから翻訳",
-        "selection_dictionary": "辞書検索"
+        "selection_dictionary": "辞書検索",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "サービス",
@@ -89,7 +97,19 @@
     "history": {
         "title": "履歴",
         "disable": "履歴を無効にする",
-        "clear": "すべての履歴を消去"
+        "clear": "すべての履歴を消去",
+        "enable": "Enable",
+        "all_time": "全期間",
+        "today": "今日",
+        "this_week": "今週",
+        "this_month": "今月",
+        "all_services": "全サービス",
+        "column_source": "原文",
+        "column_language": "言語",
+        "column_target": "訳文",
+        "column_time": "時刻",
+        "empty": "履歴がありません",
+        "showing": "{{start}} – {{end}} / 全 {{total}} 件"
     },
     "backup": {
         "title": "バックアップ",
@@ -100,7 +120,11 @@
     "about": {
         "title": "バージョン情報",
         "version": "バージョン",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "辞書",
@@ -108,7 +132,8 @@
         "no_result": "結果が見つかりません",
         "look_up": "検索",
         "lookup_failed": "検索に失敗しました",
-        "examples": "例文"
+        "examples": "例文",
+        "querying": "検索中…"
     },
     "ui": {
         "cancel": "キャンセル",
@@ -122,9 +147,18 @@
         "down": "下",
         "close": "閉じる",
         "press_shortcut": "ショートカットキーを押してください...",
-        "not_set": "未設定"
+        "not_set": "未設定",
+        "search": "Search..."
     },
     "minimize": "最小化",
     "maximize": "最大化",
-    "auto_detect_no_swap": "元の言語を検出してから交換できます"
+    "auto_detect_no_swap": "元の言語を検出してから交換できます",
+    "result": {
+        "translating": "翻訳中…"
+    },
+    "screenshot": {
+        "drag_hint": "ドラッグして選択",
+        "confirm": "確認",
+        "cancel": "キャンセル"
+    }
 }

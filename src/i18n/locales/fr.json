@@ -75,7 +75,15 @@
         "screenshot_translate": "Traduire la capture d'écran",
         "screenshot_recognize": "Reconnaître la capture d'écran",
         "clipboard_translate": "Traduire le presse-papiers",
-        "selection_dictionary": "Dictionnaire"
+        "selection_dictionary": "Dictionnaire",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "Services",
@@ -89,7 +97,19 @@
     "history": {
         "title": "Historique",
         "disable": "Désactiver l'historique",
-        "clear": "Effacer tout l'historique"
+        "clear": "Effacer tout l'historique",
+        "enable": "Enable",
+        "all_time": "Tout",
+        "today": "Aujourd'hui",
+        "this_week": "Cette semaine",
+        "this_month": "Ce mois",
+        "all_services": "Tous les services",
+        "column_source": "Source",
+        "column_language": "Langue",
+        "column_target": "Cible",
+        "column_time": "Heure",
+        "empty": "Aucun historique",
+        "showing": "{{start}} – {{end}} / {{total}} au total"
     },
     "backup": {
         "title": "Sauvegarde",
@@ -100,7 +120,11 @@
     "about": {
         "title": "À propos",
         "version": "Version",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "Dictionnaire",
@@ -108,7 +132,8 @@
         "no_result": "Aucun résultat trouvé",
         "look_up": "Rechercher",
         "lookup_failed": "Échec de la recherche",
-        "examples": "Exemples"
+        "examples": "Exemples",
+        "querying": "Recherche…"
     },
     "ui": {
         "cancel": "Annuler",
@@ -122,9 +147,18 @@
         "down": "Bas",
         "close": "Fermer",
         "press_shortcut": "Appuyez sur le raccourci...",
-        "not_set": "Non défini"
+        "not_set": "Non défini",
+        "search": "Search..."
     },
     "minimize": "Réduire",
     "maximize": "Agrandir",
-    "auto_detect_no_swap": "Détectez d’abord la langue source pour permuter"
+    "auto_detect_no_swap": "Détectez d’abord la langue source pour permuter",
+    "result": {
+        "translating": "Traduction…"
+    },
+    "screenshot": {
+        "drag_hint": "Glisser pour sélectionner",
+        "confirm": "Confirmer",
+        "cancel": "Annuler"
+    }
 }

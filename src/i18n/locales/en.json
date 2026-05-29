@@ -39,7 +39,8 @@
         "expand": "Expand",
         "collapse": "Collapse",
         "retry": "Retry",
-        "failed": "Translation failed"
+        "failed": "Translation failed",
+        "translating": "Translating…"
     },
     "welcome": {
         "title": "Welcome to Omni Pot",
@@ -182,7 +183,15 @@
         "screenshot_translate": "Screenshot Translate",
         "screenshot_recognize": "Screenshot Recognize",
         "clipboard_translate": "Clipboard Translate",
-        "selection_dictionary": "Dictionary"
+        "selection_dictionary": "Dictionary",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "Services",
@@ -210,7 +219,19 @@
     "history": {
         "title": "History",
         "disable": "Disable history",
-        "clear": "Clear"
+        "enable": "Enable",
+        "clear": "Clear",
+        "all_time": "All time",
+        "today": "Today",
+        "this_week": "This week",
+        "this_month": "This month",
+        "all_services": "All services",
+        "column_source": "Source",
+        "column_language": "Language",
+        "column_target": "Target",
+        "column_time": "Time",
+        "empty": "No history records",
+        "showing": "Showing {{start}} – {{end}} / {{total}} total"
     },
     "backup": {
         "title": "Backup",
@@ -223,7 +244,11 @@
         "version": "Version",
         "github": "GitHub",
         "check_update": "Check for updates",
-        "export_log": "Export Logs"
+        "export_log": "Export Logs",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "Dictionary",
@@ -233,7 +258,8 @@
         "lookup_failed": "Lookup failed",
         "examples": "Examples",
         "definitions": "Definitions",
-        "copied": "Copied"
+        "copied": "Copied",
+        "querying": "Querying…"
     },
     "config": {
         "title": "Settings"
@@ -251,9 +277,15 @@
         "down": "Down",
         "close": "Close",
         "press_shortcut": "Press shortcut...",
-        "not_set": "Not set"
+        "not_set": "Not set",
+        "search": "Search..."
     },
     "minimize": "Minimize",
     "maximize": "Maximize",
-    "auto_detect_no_swap": "Detect a source language before swapping"
+    "auto_detect_no_swap": "Detect a source language before swapping",
+    "screenshot": {
+        "drag_hint": "Drag to select",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
 }

@@ -80,8 +80,8 @@ function SortableCard({
                     <SvcTile name={serviceKey} />
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{svcLabel(serviceKey)}</div>
                     {is_loading && (
-                        <span className="dots" data-testid="result-loading" aria-label="翻译中" title="翻译中…">
-                            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>翻译中…</span>
+                        <span className="dots" data-testid="result-loading" aria-label={t('result.translating', { defaultValue: '翻译中…' })} title={t('result.translating', { defaultValue: '翻译中…' })}>
+                            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>{t('result.translating', { defaultValue: '翻译中…' })}</span>
                             <span /><span /><span />
                         </span>
                     )}

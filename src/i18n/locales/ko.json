@@ -75,7 +75,15 @@
         "screenshot_translate": "스크린샷 번역",
         "screenshot_recognize": "스크린샷 인식",
         "clipboard_translate": "클립보드 번역",
-        "selection_dictionary": "사전 검색"
+        "selection_dictionary": "사전 검색",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "서비스",
@@ -89,7 +97,19 @@
     "history": {
         "title": "기록",
         "disable": "기록 비활성화",
-        "clear": "모든 기록 삭제"
+        "clear": "모든 기록 삭제",
+        "enable": "Enable",
+        "all_time": "전체 기간",
+        "today": "오늘",
+        "this_week": "이번 주",
+        "this_month": "이번 달",
+        "all_services": "전체 서비스",
+        "column_source": "원문",
+        "column_language": "언어",
+        "column_target": "번역",
+        "column_time": "시간",
+        "empty": "기록 없음",
+        "showing": "{{start}} – {{end}} / 총 {{total}}건"
     },
     "backup": {
         "title": "백업",
@@ -100,7 +120,11 @@
     "about": {
         "title": "정보",
         "version": "버전",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "사전",
@@ -108,7 +132,8 @@
         "no_result": "결과를 찾을 수 없습니다",
         "look_up": "검색",
         "lookup_failed": "검색 실패",
-        "examples": "예문"
+        "examples": "예문",
+        "querying": "검색 중…"
     },
     "ui": {
         "cancel": "취소",
@@ -122,9 +147,18 @@
         "down": "아래",
         "close": "닫기",
         "press_shortcut": "단축키를 누르세요...",
-        "not_set": "설정 안 됨"
+        "not_set": "설정 안 됨",
+        "search": "Search..."
     },
     "minimize": "최소화",
     "maximize": "최대화",
-    "auto_detect_no_swap": "원본 언어를 감지한 후 교체할 수 있습니다"
+    "auto_detect_no_swap": "원본 언어를 감지한 후 교체할 수 있습니다",
+    "result": {
+        "translating": "번역 중…"
+    },
+    "screenshot": {
+        "drag_hint": "드래그하여 선택",
+        "confirm": "확인",
+        "cancel": "취소"
+    }
 }

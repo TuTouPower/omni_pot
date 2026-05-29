@@ -39,6 +39,15 @@ function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleC
     const serviceKey = getServiceKey(instanceKey)
     const service = translateServiceRegistry.get(serviceKey)
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
+    const copy_timer_ref = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    useEffect(() => {
+        return () => {
+            if (copy_timer_ref.current) {
+                clearTimeout(copy_timer_ref.current)
+            }
+        }
+    }, [])
 
     if (!service) return null
 
@@ -47,7 +56,7 @@ function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleC
         const text = dict_result_to_text(result)
         window.electronAPI.text.writeClipboard(text).catch(() => undefined)
         setCopied(true)
-        setTimeout(() => { setCopied(false); }, 1500)
+        copy_timer_ref.current = setTimeout(() => { setCopied(false); }, 1500)
     }
 
     const style: React.CSSProperties = {
@@ -67,8 +76,8 @@ function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleC
                     <SvcTile name={serviceKey} />
                     <div data-testid="dict-source-tag" style={{ fontSize: 13, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{svcLabel(serviceKey)}</div>
                     {isLoading && (
-                        <span className="dots" data-testid="dict-loading" aria-label="查询中" title="查询中…">
-                            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>查询中…</span>
+                        <span className="dots" data-testid="dict-loading" aria-label={t('dict.querying', { defaultValue: '查询中…' })} title={t('dict.querying', { defaultValue: '查询中…' })}>
+                            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>{t('dict.querying', { defaultValue: '查询中…' })}</span>
                             <span /><span /><span />
                         </span>
                     )}
@@ -230,7 +239,7 @@ export default function DictWindow(): React.ReactElement {
 
     const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
     const lookup_request_ref = useRef(0)
-    const inputRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     const handleLookup = useCallback(async (text: string) => {
         const trimmed = text.trim()
@@ -354,13 +363,13 @@ export default function DictWindow(): React.ReactElement {
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault()
-            const text = inputRef.current?.textContent.trim() ?? ''
+            const text = word.trim()
             if (text) handleLookup(text).catch(console.error)
         }
-    }, [handleLookup])
+    }, [word, handleLookup])
 
     const handleLookupClick = useCallback(() => {
-        const text = inputRef.current?.textContent.trim() ?? word.trim()
+        const text = word.trim()
         if (text) handleLookup(text).catch(console.error)
     }, [word, handleLookup])
 
@@ -409,25 +418,27 @@ export default function DictWindow(): React.ReactElement {
                 {/* Source word card */}
                 <div className="card" data-testid="dict-card" style={{ padding: 0, overflow: 'visible' }}>
                     <div style={{ padding: '12px 14px 4px' }}>
-                        <div
+                        <input
                             ref={inputRef}
-                            contentEditable
-                            suppressContentEditableWarning
                             data-testid="dict-word"
+                            value={word}
+                            onChange={(e) => { setWord(e.target.value) }}
                             onKeyDown={handleInputKeyDown}
+                            placeholder={t('dict.placeholder', { defaultValue: '输入单词...' })}
                             style={{
+                                width: '100%',
                                 fontSize: 18,
                                 fontWeight: 600,
                                 letterSpacing: '-0.005em',
                                 lineHeight: 1.35,
                                 outline: 'none',
-                                wordBreak: 'break-word',
+                                border: 'none',
+                                background: 'transparent',
                                 color: 'var(--text)',
                                 minHeight: 24,
+                                padding: 0,
                             }}
-                        >
-                            {word}
-                        </div>
+                        />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px 8px' }}>
                         <span data-testid="dict-detected-lang" style={{ fontSize: 12, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', paddingLeft: 4 }}>

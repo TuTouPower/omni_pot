@@ -90,14 +90,14 @@ function HotkeyField({ label, sub, configKey, activeField, onStartCapture }: Hot
                 setCurrentValue(tempValue)
                 setStatus('')
             } else if (result.reason === 'conflict') {
-                setStatus('快捷键冲突')
+                setStatus(t('hotkey.conflict', { defaultValue: '快捷键冲突' }))
             } else {
-                setStatus('绑定失败')
+                setStatus(t('hotkey.bind_failed', { defaultValue: '绑定失败' }))
             }
         } else {
             await window.electronAPI.hotkey.unregister(configKey, currentValue)
             setCurrentValue('')
-            setStatus('已清除')
+            setStatus(t('hotkey.cleared', { defaultValue: '已清除' }))
         }
         onStartCapture('') // exit capturing
     }
@@ -156,31 +156,31 @@ export default function HotkeySettings(): React.ReactElement {
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title={t('hotkey.title', { defaultValue: '快捷键' })} hint="按下组合键以录入 · Backspace 清除">
+            <ConfigCard title={t('hotkey.title', { defaultValue: '快捷键' })} hint={t('hotkey.capture_hint', { defaultValue: '按下组合键以录入 · Backspace 清除' })}>
                 <HotkeyField
                     label={t('hotkey.translate', { defaultValue: '翻译' })}
-                    sub={"选中文本时翻译该文本\n未选中时弹出空翻译窗口\n剪贴板监听开启时自动翻译剪贴板新文本"}
+                    sub={t('hotkey.translate_sub', { defaultValue: '选中文本时翻译该文本\n未选中时弹出空翻译窗口\n剪贴板监听开启时自动翻译剪贴板新文本' })}
                     configKey="hotkey_translate"
                     activeField={activeField}
                     onStartCapture={handleStartCapture}
                 />
                 <HotkeyField
                     label={t('hotkey.screenshot_recognize', { defaultValue: '文字识别' })}
-                    sub="截图后将文字提取到识别窗口"
+                    sub={t('hotkey.screenshot_recognize_sub', { defaultValue: '截图后将文字提取到识别窗口' })}
                     configKey="hotkey_ocr_recognize"
                     activeField={activeField}
                     onStartCapture={handleStartCapture}
                 />
                 <HotkeyField
                     label={t('hotkey.screenshot_translate', { defaultValue: '截图翻译' })}
-                    sub="截图、识别并自动翻译"
+                    sub={t('hotkey.screenshot_translate_sub', { defaultValue: '截图、识别并自动翻译' })}
                     configKey="hotkey_ocr_translate"
                     activeField={activeField}
                     onStartCapture={handleStartCapture}
                 />
                 <HotkeyField
                     label={t('hotkey.selection_dictionary', { defaultValue: '词典' })}
-                    sub="选中文本后按下快捷键查词典"
+                    sub={t('hotkey.selection_dictionary_sub', { defaultValue: '选中文本后按下快捷键查词典' })}
                     configKey="hotkey_selection_dictionary"
                     activeField={activeField}
                     onStartCapture={handleStartCapture}

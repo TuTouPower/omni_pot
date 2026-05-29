@@ -75,7 +75,15 @@
         "screenshot_translate": "Перевод скриншота",
         "screenshot_recognize": "Распознавание скриншота",
         "clipboard_translate": "Перевод из буфера обмена",
-        "selection_dictionary": "Словарь"
+        "selection_dictionary": "Словарь",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "Сервисы",
@@ -89,7 +97,19 @@
     "history": {
         "title": "История",
         "disable": "Отключить историю",
-        "clear": "Очистить всю историю"
+        "clear": "Очистить всю историю",
+        "enable": "Enable",
+        "all_time": "Всё время",
+        "today": "Сегодня",
+        "this_week": "Эта неделя",
+        "this_month": "Этот месяц",
+        "all_services": "Все сервисы",
+        "column_source": "Источник",
+        "column_language": "Язык",
+        "column_target": "Перевод",
+        "column_time": "Время",
+        "empty": "Нет истории",
+        "showing": "{{start}} – {{end}} / всего {{total}}"
     },
     "backup": {
         "title": "Резервное копирование",
@@ -100,7 +120,11 @@
     "about": {
         "title": "О программе",
         "version": "Версия",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "Словарь",
@@ -108,7 +132,8 @@
         "no_result": "Результаты не найдены",
         "look_up": "Найти",
         "lookup_failed": "Ошибка поиска",
-        "examples": "Примеры"
+        "examples": "Примеры",
+        "querying": "Поиск…"
     },
     "ui": {
         "cancel": "Отмена",
@@ -122,9 +147,18 @@
         "down": "Вниз",
         "close": "Закрыть",
         "press_shortcut": "Нажмите сочетание...",
-        "not_set": "Не задано"
+        "not_set": "Не задано",
+        "search": "Search..."
     },
     "minimize": "Свернуть",
     "maximize": "Развернуть",
-    "auto_detect_no_swap": "Сначала определите исходный язык, чтобы поменять"
+    "auto_detect_no_swap": "Сначала определите исходный язык, чтобы поменять",
+    "result": {
+        "translating": "Перевод…"
+    },
+    "screenshot": {
+        "drag_hint": "Перетащите для выбора",
+        "confirm": "Подтвердить",
+        "cancel": "Отмена"
+    }
 }

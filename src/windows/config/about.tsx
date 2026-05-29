@@ -4,8 +4,6 @@ import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow } from './config_components'
 
-const VERSION = '0.1.0'
-
 function platform_arch(): string {
     try {
         return `${process.platform}-${process.arch}`
@@ -24,6 +22,7 @@ export default function AboutPage(): React.ReactElement {
     const apiUrl = `http://127.0.0.1:${String(serverPort)}`
     const [configDir, setConfigDir] = useState('...')
     const [logDir, setLogDir] = useState('...')
+    const [version, setVersion] = useState('...')
     const [exporting, setExporting] = useState(false)
     const openExternal = (url: string): void => {
         window.electronAPI.shell.openExternal(url).catch(() => undefined)
@@ -32,6 +31,7 @@ export default function AboutPage(): React.ReactElement {
     useEffect(() => {
         window.electronAPI.log.getDir().then(setLogDir).catch(() => { setLogDir('unknown'); })
         window.electronAPI.config.getUserDir().then(setConfigDir).catch(() => { setConfigDir('unknown'); })
+        window.electronAPI.getVersion().then(setVersion).catch(() => { setVersion('unknown'); })
     }, [])
 
     const handleExportLog = (): void => {
@@ -62,7 +62,7 @@ export default function AboutPage(): React.ReactElement {
                     op
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Omni Pot</div>
-                <div className="hint mono" data-testid="about-version">version {VERSION} · {platform_arch()}</div>
+                <div className="hint mono" data-testid="about-version">version {version} · {platform_arch()}</div>
                 <div className="hint" style={{ maxWidth: 360 }}>
                     一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和内置服务设置。
                 </div>
@@ -98,14 +98,14 @@ export default function AboutPage(): React.ReactElement {
                 </ConfigRow>
                 <ConfigRow label="本机 API">
                     <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>
-                    <button className="ic-btn" title="复制路径" data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).catch(() => undefined); }}>
+                    <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>
-                <ConfigRow label="日志" sub="最近 7 天的日志打包为 zip，可附在反馈中">
+                <ConfigRow label={t('about.log', { defaultValue: '日志' })} sub={t('about.log_sub', { defaultValue: '最近 7 天的日志打包为 zip，可附在反馈中' })}>
                     <button className="btn sm" data-testid="about-export-log" disabled={exporting} onClick={handleExportLog}>
                         <Icons.Export size={12} />
-                        {exporting ? '导出中...' : t('about.export_log', { defaultValue: '导出日志' })}
+                        {exporting ? t('about.exporting', { defaultValue: '导出中...' }) : t('about.export_log', { defaultValue: '导出日志' })}
                     </button>
                 </ConfigRow>
             </ConfigCard>

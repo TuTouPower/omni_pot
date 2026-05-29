@@ -76,7 +76,15 @@
         "screenshot_translate": "截圖翻譯",
         "screenshot_recognize": "截圖辨識",
         "clipboard_translate": "剪貼簿翻譯",
-        "selection_dictionary": "詞典"
+        "selection_dictionary": "詞典",
+        "conflict": "快捷鍵衝突",
+        "bind_failed": "綁定失敗",
+        "cleared": "已清除",
+        "capture_hint": "按下組合鍵以錄入 · Backspace 清除",
+        "translate_sub": "選取文字時翻譯該文字\n未選取時彈出空白翻譯視窗\n剪貼簿監聽開啟時自動翻譯剪貼簿新文字",
+        "screenshot_recognize_sub": "截圖後將文字提取到辨識視窗",
+        "screenshot_translate_sub": "截圖、辨識並自動翻譯",
+        "selection_dictionary_sub": "選取文字後按下快捷鍵查詞典"
     },
     "service": {
         "title": "服務",
@@ -92,7 +100,19 @@
     "history": {
         "title": "歷史記錄",
         "disable": "停用歷史記錄",
-        "clear": "清空"
+        "enable": "啟用",
+        "clear": "清空",
+        "all_time": "全部時間",
+        "today": "今天",
+        "this_week": "本週",
+        "this_month": "本月",
+        "all_services": "全部服務",
+        "column_source": "原文",
+        "column_language": "語言",
+        "column_target": "譯文",
+        "column_time": "時間",
+        "empty": "暫無歷史記錄",
+        "showing": "顯示 {{start}} – {{end}} / 共 {{total}} 條"
     },
     "backup": {
         "title": "備份",
@@ -104,7 +124,11 @@
         "title": "關於",
         "version": "版本",
         "github": "GitHub",
-        "export_log": "匯出日誌"
+        "export_log": "匯出日誌",
+        "copy_path": "複製路徑",
+        "log": "日誌",
+        "log_sub": "最近 7 天的日誌打包為 zip，可附在回饋中",
+        "exporting": "匯出中..."
     },
     "dict": {
         "title": "詞典",
@@ -112,7 +136,8 @@
         "no_result": "未找到結果",
         "look_up": "查詢",
         "lookup_failed": "查詢失敗",
-        "examples": "例句"
+        "examples": "例句",
+        "querying": "查詢中…"
     },
     "config": {
         "title": "設定"
@@ -130,9 +155,18 @@
         "down": "下移",
         "close": "關閉",
         "press_shortcut": "按下快捷鍵...",
-        "not_set": "未設定"
+        "not_set": "未設定",
+        "search": "搜尋..."
     },
     "minimize": "最小化",
     "maximize": "最大化",
-    "auto_detect_no_swap": "偵測到來源語言後才能交換"
+    "auto_detect_no_swap": "偵測到來源語言後才能交換",
+    "result": {
+        "translating": "翻譯中…"
+    },
+    "screenshot": {
+        "drag_hint": "拖動選取區域",
+        "confirm": "確認",
+        "cancel": "取消"
+    }
 }

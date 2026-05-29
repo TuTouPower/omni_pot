@@ -40,7 +40,8 @@
         "expand": "展开",
         "collapse": "收起",
         "retry": "重试",
-        "failed": "翻译失败"
+        "failed": "翻译失败",
+        "translating": "翻译中…"
     },
     "welcome": {
         "title": "欢迎使用 Omni Pot",
@@ -183,7 +184,15 @@
         "screenshot_translate": "截图翻译",
         "screenshot_recognize": "文字识别",
         "clipboard_translate": "剪贴板翻译",
-        "selection_dictionary": "词典"
+        "selection_dictionary": "词典",
+        "conflict": "快捷键冲突",
+        "bind_failed": "绑定失败",
+        "cleared": "已清除",
+        "capture_hint": "按下组合键以录入 · Backspace 清除",
+        "translate_sub": "选中文本时翻译该文本\n未选中时弹出空翻译窗口\n剪贴板监听开启时自动翻译剪贴板新文本",
+        "screenshot_recognize_sub": "截图后将文字提取到识别窗口",
+        "screenshot_translate_sub": "截图、识别并自动翻译",
+        "selection_dictionary_sub": "选中文本后按下快捷键查词典"
     },
     "service": {
         "title": "服务",
@@ -211,7 +220,19 @@
     "history": {
         "title": "历史记录",
         "disable": "禁用历史记录",
-        "clear": "清空"
+        "enable": "启用",
+        "clear": "清空",
+        "all_time": "全部时间",
+        "today": "今天",
+        "this_week": "本周",
+        "this_month": "本月",
+        "all_services": "全部服务",
+        "column_source": "源文本",
+        "column_language": "语言",
+        "column_target": "译文",
+        "column_time": "时间",
+        "empty": "暂无历史记录",
+        "showing": "显示 {{start}} – {{end}} / 共 {{total}} 条"
     },
     "backup": {
         "title": "备份",
@@ -224,7 +245,11 @@
         "version": "版本",
         "github": "GitHub",
         "check_update": "检查更新",
-        "export_log": "导出日志"
+        "export_log": "导出日志",
+        "copy_path": "复制路径",
+        "log": "日志",
+        "log_sub": "最近 7 天的日志打包为 zip，可附在反馈中",
+        "exporting": "导出中..."
     },
     "dict": {
         "title": "词典",
@@ -234,7 +259,8 @@
         "lookup_failed": "查询失败",
         "examples": "例句",
         "definitions": "释义",
-        "copied": "已复制"
+        "copied": "已复制",
+        "querying": "查询中…"
     },
     "config": {
         "title": "设置"
@@ -252,9 +278,15 @@
         "down": "下移",
         "close": "关闭",
         "press_shortcut": "按下快捷键...",
-        "not_set": "未设置"
+        "not_set": "未设置",
+        "search": "搜索..."
     },
     "minimize": "最小化",
     "maximize": "最大化",
-    "auto_detect_no_swap": "检测到源语言后才能交换"
+    "auto_detect_no_swap": "检测到源语言后才能交换",
+    "screenshot": {
+        "drag_hint": "拖动选取区域",
+        "confirm": "确认",
+        "cancel": "取消"
+    }
 }

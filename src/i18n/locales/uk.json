@@ -75,7 +75,15 @@
         "screenshot_translate": "Переклад зображення",
         "screenshot_recognize": "Розпізнавання зображення",
         "clipboard_translate": "Переклад з буфера обміну",
-        "selection_dictionary": "Словник"
+        "selection_dictionary": "Словник",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "Сервіси",
@@ -89,7 +97,19 @@
     "history": {
         "title": "Історія",
         "disable": "Вимкнути історію",
-        "clear": "Очистити всю історію"
+        "clear": "Очистити всю історію",
+        "enable": "Enable",
+        "all_time": "Увесь час",
+        "today": "Сьогодні",
+        "this_week": "Цей тиждень",
+        "this_month": "Цей місяць",
+        "all_services": "Усі сервіси",
+        "column_source": "Джерело",
+        "column_language": "Мова",
+        "column_target": "Переклад",
+        "column_time": "Час",
+        "empty": "Немає історії",
+        "showing": "{{start}} – {{end}} / всього {{total}}"
     },
     "backup": {
         "title": "Резервне копіювання",
@@ -100,7 +120,11 @@
     "about": {
         "title": "Про програму",
         "version": "Версія",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "Словник",
@@ -108,7 +132,8 @@
         "no_result": "Результатів не знайдено",
         "look_up": "Шукати",
         "lookup_failed": "Помилка пошуку",
-        "examples": "Приклади"
+        "examples": "Приклади",
+        "querying": "Пошук…"
     },
     "ui": {
         "cancel": "Скасувати",
@@ -122,9 +147,18 @@
         "down": "Вниз",
         "close": "Закрити",
         "press_shortcut": "Натисніть комбінацію...",
-        "not_set": "Не задано"
+        "not_set": "Не задано",
+        "search": "Search..."
     },
     "minimize": "Згорнути",
     "maximize": "Розгорнути",
-    "auto_detect_no_swap": "Спочатку визначте мову джерела, щоб поміняти"
+    "auto_detect_no_swap": "Спочатку визначте мову джерела, щоб поміняти",
+    "result": {
+        "translating": "Переклад…"
+    },
+    "screenshot": {
+        "drag_hint": "Перетягніть для вибору",
+        "confirm": "Підтвердити",
+        "cancel": "Скасувати"
+    }
 }

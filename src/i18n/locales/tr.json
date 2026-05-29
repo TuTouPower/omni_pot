@@ -75,7 +75,15 @@
         "screenshot_translate": "Ekran görüntüsünü çevir",
         "screenshot_recognize": "Ekran görüntüsünü tanı",
         "clipboard_translate": "Panodan çevir",
-        "selection_dictionary": "Sözlük"
+        "selection_dictionary": "Sözlük",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "Hizmetler",
@@ -89,7 +97,19 @@
     "history": {
         "title": "Geçmiş",
         "disable": "Geçmişi devre dışı bırak",
-        "clear": "Tüm geçmişi temizle"
+        "clear": "Tüm geçmişi temizle",
+        "enable": "Enable",
+        "all_time": "Tüm zamanlar",
+        "today": "Bugün",
+        "this_week": "Bu hafta",
+        "this_month": "Bu ay",
+        "all_services": "Tüm hizmetler",
+        "column_source": "Kaynak",
+        "column_language": "Dil",
+        "column_target": "Hedef",
+        "column_time": "Zaman",
+        "empty": "Geçmiş yok",
+        "showing": "{{start}} – {{end}} / toplam {{total}}"
     },
     "backup": {
         "title": "Yedekleme",
@@ -100,7 +120,11 @@
     "about": {
         "title": "Hakkında",
         "version": "Sürüm",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "Sözlük",
@@ -108,7 +132,8 @@
         "no_result": "Sonuç bulunamadı",
         "look_up": "Ara",
         "lookup_failed": "Arama başarısız oldu",
-        "examples": "Örnekler"
+        "examples": "Örnekler",
+        "querying": "Aranıyor…"
     },
     "ui": {
         "cancel": "İptal",
@@ -122,9 +147,18 @@
         "down": "Aşağı",
         "close": "Kapat",
         "press_shortcut": "Kısayol tuşuna basın...",
-        "not_set": "Ayarlanmadı"
+        "not_set": "Ayarlanmadı",
+        "search": "Search..."
     },
     "minimize": "Küçült",
     "maximize": "Büyüt",
-    "auto_detect_no_swap": "Değiştirmek için önce kaynak dili algılayın"
+    "auto_detect_no_swap": "Değiştirmek için önce kaynak dili algılayın",
+    "result": {
+        "translating": "Çevriliyor…"
+    },
+    "screenshot": {
+        "drag_hint": "Seçmek için sürükleyin",
+        "confirm": "Onayla",
+        "cancel": "İptal"
+    }
 }

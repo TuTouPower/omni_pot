@@ -75,7 +75,15 @@
         "screenshot_translate": "ترجمة لقطة الشاشة",
         "screenshot_recognize": "تعريف لقطة الشاشة",
         "clipboard_translate": "ترجمة الحافظة",
-        "selection_dictionary": "قاموس"
+        "selection_dictionary": "قاموس",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "الخدمات",
@@ -89,7 +97,19 @@
     "history": {
         "title": "السجل",
         "disable": "تعطيل السجل",
-        "clear": "مسح جميع السجلات"
+        "clear": "مسح جميع السجلات",
+        "enable": "Enable",
+        "all_time": "كل الوقت",
+        "today": "اليوم",
+        "this_week": "هذا الأسبوع",
+        "this_month": "هذا الشهر",
+        "all_services": "كل الخدمات",
+        "column_source": "المصدر",
+        "column_language": "اللغة",
+        "column_target": "الهدف",
+        "column_time": "الوقت",
+        "empty": "لا يوجد سجل",
+        "showing": "{{start}} – {{end}} / {{total}} إجمالي"
     },
     "backup": {
         "title": "النسخ الاحتياطي",
@@ -100,7 +120,11 @@
     "about": {
         "title": "حول",
         "version": "الإصدار",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "القاموس",
@@ -108,7 +132,8 @@
         "no_result": "لم يتم العثور على نتائج",
         "look_up": "بحث",
         "lookup_failed": "فشل البحث",
-        "examples": "أمثلة"
+        "examples": "أمثلة",
+        "querying": "جارٍ البحث…"
     },
     "ui": {
         "cancel": "إلغاء",
@@ -122,9 +147,18 @@
         "down": "أسفل",
         "close": "إغلاق",
         "press_shortcut": "اضغط الاختصار...",
-        "not_set": "غير معين"
+        "not_set": "غير معين",
+        "search": "Search..."
     },
     "minimize": "تصغير",
     "maximize": "تكبير",
-    "auto_detect_no_swap": "اكتشف لغة المصدر أولاً للتبديل"
+    "auto_detect_no_swap": "اكتشف لغة المصدر أولاً للتبديل",
+    "result": {
+        "translating": "جارٍ الترجمة…"
+    },
+    "screenshot": {
+        "drag_hint": "اسحب للتحديد",
+        "confirm": "تأكيد",
+        "cancel": "إلغاء"
+    }
 }

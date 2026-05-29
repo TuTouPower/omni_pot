@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import jsQR from 'jsqr'
 import type { LanguageCode } from '@shared/types/language'
 import { type ServiceConfig, getServiceKey } from '@shared/types/service'
@@ -66,6 +67,7 @@ function crop_image(base64: string, rect: SelectionRect, container_size: { width
 }
 
 export default function ScreenshotWindow(): React.ReactElement {
+    const { t } = useTranslation()
     const [background, setBackground] = useState<string>('')
     const [mode, setMode] = useState<string>('recognize')
     const [selecting, setSelecting] = useState(false)
@@ -159,8 +161,8 @@ export default function ScreenshotWindow(): React.ReactElement {
             } else {
                 await window.electronAPI.ocr.openRecognize(cropped, full_text, 'recognize')
             }
-        } catch {
-            // crop or recognize failed
+        } catch (err) {
+            log.error('screenshot confirm failed: %s', err instanceof Error ? err.message : String(err))
         }
 
         await close_window()
@@ -298,14 +300,14 @@ export default function ScreenshotWindow(): React.ReactElement {
                         pointerEvents: 'none',
                     }}
                 >
-                    <span>拖动选取区域</span>
+                    <span>{t('screenshot.drag_hint', { defaultValue: '拖动选取区域' })}</span>
                     <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
                     <span>
-                        <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>↵</kbd> 确认
+                        <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>↵</kbd> {t('screenshot.confirm', { defaultValue: '确认' })}
                     </span>
                     <span style={{ color: 'oklch(70% 0.01 70)' }}>·</span>
                     <span>
-                        <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>Esc</kbd> 取消
+                        <kbd style={{ background: 'rgba(255,255,255,.1)', borderColor: 'rgba(255,255,255,.2)', color: '#fff' }}>Esc</kbd> {t('screenshot.cancel', { defaultValue: '取消' })}
                     </span>
                 </div>
             )}

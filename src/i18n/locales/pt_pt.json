@@ -75,7 +75,15 @@
         "screenshot_translate": "Traduzir captura de ecrã",
         "screenshot_recognize": "Reconhecer captura de ecrã",
         "clipboard_translate": "Traduzir da área de transferência",
-        "selection_dictionary": "Dicionário"
+        "selection_dictionary": "Dicionário",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "Serviços",
@@ -89,7 +97,19 @@
     "history": {
         "title": "Histórico",
         "disable": "Desativar histórico",
-        "clear": "Limpar todo o histórico"
+        "clear": "Limpar todo o histórico",
+        "enable": "Enable",
+        "all_time": "Tudo",
+        "today": "Hoje",
+        "this_week": "Esta semana",
+        "this_month": "Este mês",
+        "all_services": "Todos os serviços",
+        "column_source": "Origem",
+        "column_language": "Idioma",
+        "column_target": "Destino",
+        "column_time": "Hora",
+        "empty": "Sem histórico",
+        "showing": "{{start}} – {{end}} / {{total}} no total"
     },
     "backup": {
         "title": "Cópia de segurança",
@@ -100,7 +120,11 @@
     "about": {
         "title": "Acerca de",
         "version": "Versão",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "Dicionário",
@@ -108,7 +132,8 @@
         "no_result": "Nenhum resultado encontrado",
         "look_up": "Pesquisar",
         "lookup_failed": "Falha na pesquisa",
-        "examples": "Exemplos"
+        "examples": "Exemplos",
+        "querying": "Pesquisando…"
     },
     "ui": {
         "cancel": "Cancelar",
@@ -122,9 +147,18 @@
         "down": "Abaixo",
         "close": "Fechar",
         "press_shortcut": "Prima o atalho...",
-        "not_set": "Não definido"
+        "not_set": "Não definido",
+        "search": "Search..."
     },
     "minimize": "Minimizar",
     "maximize": "Maximizar",
-    "auto_detect_no_swap": "Detete primeiro o idioma de origem para trocar"
+    "auto_detect_no_swap": "Detete primeiro o idioma de origem para trocar",
+    "result": {
+        "translating": "Traduzindo…"
+    },
+    "screenshot": {
+        "drag_hint": "Arrastar para selecionar",
+        "confirm": "Confirmar",
+        "cancel": "Cancelar"
+    }
 }

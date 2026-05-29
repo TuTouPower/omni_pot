@@ -75,7 +75,15 @@
         "screenshot_translate": "ترجمه از عکس صفحه",
         "screenshot_recognize": "شناسایی از عکس صفحه",
         "clipboard_translate": "ترجمه کلیپ‌بورد",
-        "selection_dictionary": "دیکشنری"
+        "selection_dictionary": "دیکشنری",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "سرویس‌ها",
@@ -89,7 +97,19 @@
     "history": {
         "title": "تاریخچه",
         "disable": "غیرفعال کردن تاریخچه",
-        "clear": "پاک کردن تمام تاریخچه"
+        "clear": "پاک کردن تمام تاریخچه",
+        "enable": "Enable",
+        "all_time": "همه زمان‌ها",
+        "today": "امروز",
+        "this_week": "این هفته",
+        "this_month": "این ماه",
+        "all_services": "همه خدمات",
+        "column_source": "مبدا",
+        "column_language": "زبان",
+        "column_target": "مقصد",
+        "column_time": "زمان",
+        "empty": "تاریخچه‌ای وجود ندارد",
+        "showing": "{{start}} – {{end}} / مجموع {{total}}"
     },
     "backup": {
         "title": "پشتیبان‌گیری",
@@ -100,7 +120,11 @@
     "about": {
         "title": "درباره",
         "version": "نسخه",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "دیکشنری",
@@ -108,7 +132,8 @@
         "no_result": "نتیجه‌ای یافت نشد",
         "look_up": "جستجو",
         "lookup_failed": "جستجو ناموفق بود",
-        "examples": "مثال‌ها"
+        "examples": "مثال‌ها",
+        "querying": "در حال جستجو…"
     },
     "ui": {
         "cancel": "انصراف",
@@ -122,9 +147,18 @@
         "down": "پایین",
         "close": "بستن",
         "press_shortcut": "میانبر را فشار دهید...",
-        "not_set": "تنظیم نشده"
+        "not_set": "تنظیم نشده",
+        "search": "Search..."
     },
     "minimize": "کمینه",
     "maximize": "بیشینه",
-    "auto_detect_no_swap": "برای جابه‌جایی، ابتدا زبان مبدأ را تشخیص دهید"
+    "auto_detect_no_swap": "برای جابه‌جایی، ابتدا زبان مبدأ را تشخیص دهید",
+    "result": {
+        "translating": "در حال ترجمه…"
+    },
+    "screenshot": {
+        "drag_hint": "بکشید برای انتخاب",
+        "confirm": "تأیید",
+        "cancel": "لغو"
+    }
 }

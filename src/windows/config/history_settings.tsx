@@ -8,10 +8,10 @@ import { ConfigSwitch } from './config_components'
 const PAGE_SIZE = 20
 
 const TIME_FILTERS = [
-    { value: 0, label: '全部时间' },
-    { value: 1, label: '今天' },
-    { value: 7, label: '本周' },
-    { value: 30, label: '本月' },
+    { value: 0, labelKey: 'history.all_time' },
+    { value: 1, labelKey: 'history.today' },
+    { value: 7, labelKey: 'history.this_week' },
+    { value: 30, labelKey: 'history.this_month' },
 ] as const
 
 const SVC_ABBR: Record<string, string> = {
@@ -52,7 +52,13 @@ export default function HistorySettings(): React.ReactElement {
         setRecords(rows)
     }, [search, serviceFilter, timeFilter])
 
-    useEffect(() => { load_page(page).catch(console.error) }, [page, load_page])
+    useEffect(() => {
+        let cancelled = false
+        load_page(page).then(() => {
+            if (cancelled) return
+        }).catch(console.error)
+        return () => { cancelled = true }
+    }, [page, load_page])
 
     useEffect(() => {
         window.electronAPI.history.serviceKeys()
@@ -132,7 +138,7 @@ export default function HistorySettings(): React.ReactElement {
                     disabled={disabled}
                     style={{ fontSize: 12, opacity: disabled ? 0.5 : 1, background: 'var(--bg-sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', color: 'var(--text)', flexShrink: 0 }}
                 >
-                    <option value="">全部服务</option>
+                    <option value="">{t('history.all_services', { defaultValue: '全部服务' })}</option>
                     {serviceOptions.map((service_key) => (
                         <option key={service_key} value={service_key}>{service_key}</option>
                     ))}
@@ -145,7 +151,7 @@ export default function HistorySettings(): React.ReactElement {
                     style={{ fontSize: 12, opacity: disabled ? 0.5 : 1, background: 'var(--bg-sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', color: 'var(--text)', flexShrink: 0 }}
                 >
                     {TIME_FILTERS.map((f) => (
-                        <option key={f.value} value={f.value}>{f.label}</option>
+                        <option key={f.value} value={f.value}>{t(f.labelKey)}</option>
                     ))}
                 </select>
                 <div style={{ flex: 1 }} />
@@ -172,10 +178,10 @@ export default function HistorySettings(): React.ReactElement {
                         letterSpacing: '.05em',
                     }}>
                         <div />
-                        <div>源文本</div>
-                        <div>语言</div>
-                        <div>译文</div>
-                        <div>时间</div>
+                        <div>{t('history.column_source', { defaultValue: '源文本' })}</div>
+                        <div>{t('history.column_language', { defaultValue: '语言' })}</div>
+                        <div>{t('history.column_target', { defaultValue: '译文' })}</div>
+                        <div>{t('history.column_time', { defaultValue: '时间' })}</div>
                     </div>
                     {records.map((r, i) => (
                         <div
@@ -214,7 +220,7 @@ export default function HistorySettings(): React.ReactElement {
 
             {total === 0 && (
                 <div data-testid="history-empty" className="card" style={{ padding: 14, textAlign: 'center', opacity: disabled ? 0.5 : 1 }}>
-                    <p style={{ fontSize: 13, color: 'var(--text-mute)' }}>暂无历史记录</p>
+                    <p style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('history.empty', { defaultValue: '暂无历史记录' })}</p>
                 </div>
             )}
 
@@ -222,7 +228,7 @@ export default function HistorySettings(): React.ReactElement {
             {total > 0 && (
                 <div className="between">
                     <div data-testid="history-count" className="hint mono">
-                        显示 {(page - 1) * PAGE_SIZE + 1} – {Math.min(page * PAGE_SIZE, total)} / 共 {total.toLocaleString()} 条
+                        {t('history.showing', { defaultValue: '显示 {{start}} – {{end}} / 共 {{total}} 条', start: (page - 1) * PAGE_SIZE + 1, end: Math.min(page * PAGE_SIZE, total), total: total.toLocaleString() })}
                         <span data-testid="history-current-page" data-page={page} style={{ display: 'none' }}>{page}</span>
                         <span data-testid="history-total-pages" data-page={total_pages} style={{ display: 'none' }}>{total_pages}</span>
                         <span data-testid="history-page" style={{ display: 'none' }}>{page} / {total_pages}</span>
@@ -282,13 +288,13 @@ export default function HistorySettings(): React.ReactElement {
                         </div>
                         <div className="card-body">
                             <div>
-                                <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>源文本</label>
+                                <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>{t('history.column_source', { defaultValue: '源文本' })}</label>
                                 <div className="field" style={{ width: '100%' }}>
                                     <input data-testid="history-edit-source" value={editSource} onChange={(e) => { setEditSource(e.target.value); }} />
                                 </div>
                             </div>
                             <div>
-                                <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>译文</label>
+                                <label style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 4, display: 'block' }}>{t('history.column_target', { defaultValue: '译文' })}</label>
                                 <div className="field" style={{ width: '100%' }}>
                                     <input data-testid="history-edit-target" value={editTarget} onChange={(e) => { setEditTarget(e.target.value); }} />
                                 </div>

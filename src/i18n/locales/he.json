@@ -75,7 +75,15 @@
         "screenshot_translate": "תרגום צילום מסך",
         "screenshot_recognize": "זיהוי צילום מסך",
         "clipboard_translate": "תרגום לוח העתקה",
-        "selection_dictionary": "מילון"
+        "selection_dictionary": "מילון",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "שירותים",
@@ -89,7 +97,19 @@
     "history": {
         "title": "היסטוריה",
         "disable": "בטל היסטוריה",
-        "clear": "נקה את כל ההיסטוריה"
+        "clear": "נקה את כל ההיסטוריה",
+        "enable": "Enable",
+        "all_time": "כל הזמנים",
+        "today": "היום",
+        "this_week": "השבוע",
+        "this_month": "החודש",
+        "all_services": "כל השירותים",
+        "column_source": "מקור",
+        "column_language": "שפה",
+        "column_target": "יעד",
+        "column_time": "זמן",
+        "empty": "אין היסטוריה",
+        "showing": "{{start}} – {{end}} / {{total}} סה”כ"
     },
     "backup": {
         "title": "גיבוי",
@@ -100,7 +120,11 @@
     "about": {
         "title": "אודות",
         "version": "גרסה",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "מילון",
@@ -108,7 +132,8 @@
         "no_result": "לא נמצאו תוצאות",
         "look_up": "חיפוש",
         "lookup_failed": "החיפוש נכשל",
-        "examples": "דוגמאות"
+        "examples": "דוגמאות",
+        "querying": "מחפש…"
     },
     "ui": {
         "cancel": "ביטול",
@@ -122,9 +147,18 @@
         "down": "למטה",
         "close": "סגור",
         "press_shortcut": "לחץ קיצור...",
-        "not_set": "לא הוגדר"
+        "not_set": "לא הוגדר",
+        "search": "Search..."
     },
     "minimize": "מזער",
     "maximize": "הגדל",
-    "auto_detect_no_swap": "זהה קודם את שפת המקור כדי להחליף"
+    "auto_detect_no_swap": "זהה קודם את שפת המקור כדי להחליף",
+    "result": {
+        "translating": "מתרגם…"
+    },
+    "screenshot": {
+        "drag_hint": "גרור לבחירה",
+        "confirm": "אישור",
+        "cancel": "ביטול"
+    }
 }

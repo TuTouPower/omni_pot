@@ -75,7 +75,15 @@
         "screenshot_translate": "Omset skjermbilete",
         "screenshot_recognize": "Attkjenn skjermbilete",
         "clipboard_translate": "Omset frå utklippstavle",
-        "selection_dictionary": "Ordbok"
+        "selection_dictionary": "Ordbok",
+        "conflict": "Shortcut conflict",
+        "bind_failed": "Bind failed",
+        "cleared": "Cleared",
+        "capture_hint": "Press key combo to record · Backspace to clear",
+        "translate_sub": "Translate selected text\nShow empty translate window if none selected\nAuto-translate new clipboard text when clipboard monitor is on",
+        "screenshot_recognize_sub": "Extract text to recognize window after screenshot",
+        "screenshot_translate_sub": "Screenshot, recognize and auto-translate",
+        "selection_dictionary_sub": "Look up dictionary after selecting text"
     },
     "service": {
         "title": "Tenester",
@@ -89,7 +97,19 @@
     "history": {
         "title": "Historikk",
         "disable": "Deaktiver historikk",
-        "clear": "Tøm all historikk"
+        "clear": "Tøm all historikk",
+        "enable": "Enable",
+        "all_time": "Alltid",
+        "today": "I dag",
+        "this_week": "Denne veka",
+        "this_month": "Denne månaden",
+        "all_services": "Alle tenester",
+        "column_source": "Kjelde",
+        "column_language": "Språk",
+        "column_target": "Mål",
+        "column_time": "Tid",
+        "empty": "Ingen historikk",
+        "showing": "{{start}} – {{end}} / {{total}} totalt"
     },
     "backup": {
         "title": "Tryggleikskopi",
@@ -100,7 +120,11 @@
     "about": {
         "title": "Om",
         "version": "Versjon",
-        "github": "GitHub"
+        "github": "GitHub",
+        "copy_path": "Copy path",
+        "log": "Logs",
+        "log_sub": "Last 7 days of logs packaged as zip for feedback",
+        "exporting": "Exporting..."
     },
     "dict": {
         "title": "Ordbok",
@@ -108,7 +132,8 @@
         "no_result": "Ingen resultat funne",
         "look_up": "Slå opp",
         "lookup_failed": "Oppslag mislukkast",
-        "examples": "Døme"
+        "examples": "Døme",
+        "querying": "Søkjer…"
     },
     "ui": {
         "cancel": "Avbryt",
@@ -122,9 +147,18 @@
         "down": "Ned",
         "close": "Lukk",
         "press_shortcut": "Trykk snøggtast...",
-        "not_set": "Ikkje angitt"
+        "not_set": "Ikkje angitt",
+        "search": "Search..."
     },
     "minimize": "Minimer",
     "maximize": "Maksimer",
-    "auto_detect_no_swap": "Oppdag kjeldespråket først for å byte"
+    "auto_detect_no_swap": "Oppdag kjeldespråket først for å byte",
+    "result": {
+        "translating": "Omset…"
+    },
+    "screenshot": {
+        "drag_hint": "Dra for å velje",
+        "confirm": "Stadfest",
+        "cancel": "Avbryt"
+    }
 }
