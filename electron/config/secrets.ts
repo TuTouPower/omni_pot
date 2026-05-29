@@ -14,7 +14,8 @@ interface SecretMarker {
 type ConfigRecord = Record<string, unknown>
 
 const top_level_secret_keys = new Set(['server_api_token', 'webdav_password'])
-const service_secret_key_pattern = /(^|_)(password|secret|token|api_?key|app_?key|auth_?key|client_secret|access_?key|accesskey_secret)($|_)/i
+const service_secret_key_pattern = /(^|_)(password|secret|token|api_?key|app_?key|auth_?key|client_secret|access_?key|accesskey_secret|apisecret|secretkey|secret_key)($|_)/i
+const bare_secret_keys = new Set(['key'])
 
 function is_record(value: unknown): value is ConfigRecord {
     return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -27,7 +28,7 @@ function is_secret_marker(value: unknown): value is SecretMarker {
 }
 
 function is_service_secret_key(key: string): boolean {
-    return service_secret_key_pattern.test(key)
+    return service_secret_key_pattern.test(key) || bare_secret_keys.has(key.toLowerCase())
 }
 
 function has_service_instance_plain_secrets(service_instances: unknown): boolean {
@@ -55,7 +56,7 @@ export function has_plain_config_secrets(config: Partial<AppConfig>): boolean {
 function encrypt_secret(value: unknown): SecretMarker | undefined {
     if (value === undefined || value === '') return value as undefined
     if (!safeStorage.isEncryptionAvailable()) {
-        log_config_secrets.warn('safeStorage unavailable; omitting persisted secret')
+        log_config_secrets.warn('safeStorage unavailable; keeping secret in plaintext')
         return undefined
     }
     return {
@@ -82,6 +83,7 @@ function clone_config(config: Partial<AppConfig>): ConfigRecord {
 function transform_service_instance_secrets(
     service_instances: unknown,
     transform: (key: string, value: unknown) => unknown,
+    keep_on_undefined = false,
 ): unknown {
     if (!is_record(service_instances)) return service_instances
     const result: ServiceInstancesMap = {}
@@ -95,6 +97,9 @@ function transform_service_instance_secrets(
             for (const [key, value] of Object.entries(config)) {
                 if (is_service_secret_key(key)) {
                     const transformed = transform(key, value)
+                    if (transformed === undefined && keep_on_undefined && value !== undefined && value !== '') {
+                        continue
+                    }
                     if (transformed === undefined) config[key] = undefined
                     else config[key] = transformed
                 }
@@ -109,7 +114,11 @@ export function protect_config_secrets(config: Partial<AppConfig>): Partial<AppC
     const protected_config = clone_config(config)
     for (const key of top_level_secret_keys) {
         if (Object.prototype.hasOwnProperty.call(protected_config, key)) {
-            const protected_value = encrypt_secret(protected_config[key])
+            const original = protected_config[key]
+            const protected_value = encrypt_secret(original)
+            if (protected_value === undefined && original !== undefined && original !== '') {
+                continue
+            }
             if (protected_value === undefined) protected_config[key] = undefined
             else protected_config[key] = protected_value
         }
@@ -117,6 +126,7 @@ export function protect_config_secrets(config: Partial<AppConfig>): Partial<AppC
     protected_config.service_instances = transform_service_instance_secrets(
         protected_config.service_instances,
         (_key, value) => encrypt_secret(value),
+        true,
     )
     return protected_config
 }
