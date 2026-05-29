@@ -75,7 +75,7 @@ export function ConfigSwitch({ on, onChange, testId }: {
 
 function require_select_option<T>(options: T[], index: number): T {
     const option = options[index] ?? options[0]
-    if (option === undefined) throw new Error('select requires options')
+    if (option === undefined) return undefined as T
     return option
 }
 
@@ -95,7 +95,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     const selected_index = Math.max(0, options.findIndex((o) => o.value === value))
     const listbox_id = `${testId ?? 'config-select'}-listbox`
     const active_option = require_select_option(options, active_index)
-    const active_id = `${listbox_id}-option-${active_option.value}`
+    const active_id = active_option ? `${listbox_id}-option-${active_option.value}` : undefined
 
     const updateMenuPosition = React.useCallback(() => {
         const rect = ref.current?.getBoundingClientRect()
