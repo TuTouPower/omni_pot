@@ -123,16 +123,16 @@ https://github.com/pot-app/pot-desktop
 2. 剪贴板监听在剪贴板文本变化时调用 `text_translate`。
 3. `text_translate` 将文本存入 `StringWrapper`，创建/复用翻译窗口，发射 `new_text` 事件，并显示窗口。
 
-#### OCR 识别
+#### 文字识别
 
 1. 启用内部截图时，后端打开截图窗口 (Windows/Linux) 或运行 `screencapture -i -r` (macOS)。
 2. 裁剪后的图像保存为 `pot_screenshot_cut.png` 到应用缓存目录。
 3. 后端创建/复用 `recognize` 窗口并发射 `new_image` 事件。
 4. 识别前端通过 `get_base64` 加载缓存的裁剪图像并运行选定的 OCR 服务。
 
-#### OCR 翻译
+#### 截图翻译
 
-1. 启用内部截图时，后端捕获/裁剪截图，与 OCR 识别完全相同。
+1. 启用内部截图时，后端捕获/裁剪截图，与 文字识别完全相同。
 2. 后端调用 `image_translate`，写入哨兵字符串 `[IMAGE_TRANSLATE]`，创建/复用翻译窗口，并发射 `new_text` 事件。
 3. 翻译窗口的 `SourceArea` 处理 `[IMAGE_TRANSLATE]`，通过 `get_base64` 读取裁剪的截图。
 4. 它使用 `recognize_service_list` 中第一个配置的识别服务实例来对图像进行 OCR。
@@ -533,8 +533,8 @@ https://github.com/pot-app/pot-desktop
 |-------|-----------|---------|-------------------|
 | 划词翻译 | `hotkey_selection_translate` | `''` | `hotkey_selection_translate` |
 | 输入翻译 | `hotkey_input_translate` | `''` | `hotkey_input_translate` |
-| OCR 识别 | `hotkey_ocr_recognize` | `''` | `hotkey_ocr_recognize` |
-| OCR 翻译 | `hotkey_ocr_translate` | `''` | `hotkey_ocr_translate` |
+| 文字识别 | `hotkey_ocr_recognize` | `''` | `hotkey_ocr_recognize` |
+| 截图翻译 | `hotkey_ocr_translate` | `''` | `hotkey_ocr_translate` |
 
 **快捷键输入行为**：
 - 捕获组合键 (Ctrl/Shift/Alt/Meta + key)
@@ -1210,8 +1210,8 @@ https://github.com/pot-app/pot-desktop
 |-----|------|---------|-------------|
 | `hotkey_selection_translate` | string | `''` | 划词翻译快捷键 |
 | `hotkey_input_translate` | string | `''` | 输入翻译快捷键 |
-| `hotkey_ocr_recognize` | string | `''` | OCR 识别快捷键 |
-| `hotkey_ocr_translate` | string | `''` | OCR 翻译快捷键 |
+| `hotkey_ocr_recognize` | string | `''` | 文字识别快捷键 |
+| `hotkey_ocr_translate` | string | `''` | 截图翻译快捷键 |
 
 #### 服务列表
 
@@ -1353,12 +1353,12 @@ https://github.com/pot-app/pot-desktop
 | GET | `/config` | 打开配置窗口 |
 | GET | `/selection_translate` | 触发划词翻译 |
 | GET | `/input_translate` | 打开输入翻译窗口 |
-| GET | `/ocr_recognize` | OCR 识别（带截图） |
-| GET | `/ocr_recognize?screenshot=false` | OCR 识别（来自剪贴板/文件，无截图） |
-| GET | `/ocr_recognize?screenshot=true` | OCR 识别（带截图，显式形式） |
-| GET | `/ocr_translate` | OCR 翻译（带截图） |
-| GET | `/ocr_translate?screenshot=false` | OCR 翻译（无截图） |
-| GET | `/ocr_translate?screenshot=true` | OCR 翻译（带截图，显式形式） |
+| GET | `/ocr_recognize` | 文字识别（带截图） |
+| GET | `/ocr_recognize?screenshot=false` | 文字识别（来自剪贴板/文件，无截图） |
+| GET | `/ocr_recognize?screenshot=true` | 文字识别（带截图，显式形式） |
+| GET | `/ocr_translate` | 截图翻译（带截图） |
+| GET | `/ocr_translate?screenshot=false` | 截图翻译（无截图） |
+| GET | `/ocr_translate?screenshot=true` | 截图翻译（带截图，显式形式） |
 
 ### HTTP 行为说明
 
@@ -1381,8 +1381,8 @@ https://github.com/pot-app/pot-desktop
 | 剪贴板监听 | 复选框 | 切换剪贴板监听 |
 | 自动复制 | 子菜单 | 源文本 / 目标文本 / 源+目标 / 禁用 |
 | — | 分隔线 | — |
-| OCR 识别 | 按钮 | 触发 OCR 识别 |
-| OCR 翻译 | 按钮 | 触发 OCR 翻译 |
+| 文字识别 | 按钮 | 触发 文字识别 |
+| 截图翻译 | 按钮 | 触发 截图翻译 |
 | — | 分隔线 | — |
 | 配置 | 按钮 | 打开配置窗口 |
 | 检查更新 | 按钮 | 打开更新器窗口 |
@@ -1396,8 +1396,8 @@ https://github.com/pot-app/pot-desktop
 通过 `tray_click_event` 配置：
 - `config` — 打开配置窗口（默认）
 - `translate` — 打开翻译窗口
-- `ocr_recognize` — 触发 OCR 识别
-- `ocr_translate` — 触发 OCR 翻译
+- `ocr_recognize` — 触发 文字识别
+- `ocr_translate` — 触发 截图翻译
 - `disable` — 无操作
 
 ### 本地化
@@ -1414,8 +1414,8 @@ https://github.com/pot-app/pot-desktop
 |-----------|--------|
 | `hotkey_selection_translate` | 划词翻译（切换：显示/隐藏） |
 | `hotkey_input_translate` | 输入翻译（切换：显示/隐藏） |
-| `hotkey_ocr_recognize` | OCR 识别（带截图） |
-| `hotkey_ocr_translate` | OCR 翻译（带截图） |
+| `hotkey_ocr_recognize` | 文字识别（带截图） |
+| `hotkey_ocr_translate` | 截图翻译（带截图） |
 
 ### 注册
 
