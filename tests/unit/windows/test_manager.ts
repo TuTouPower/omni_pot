@@ -5,6 +5,8 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 // window lifecycle (create, focus, reuse, close, position) logic.
 // Real window behavior is covered by E2E (app_lifecycle.spec.ts,
 // updater_and_tray.spec.ts window-state assertions).
+const window_stubs: Record<string, unknown>[] = []
+
 function makeWindowStub(opts: unknown): Record<string, unknown> {
   const webContents: Record<string, unknown> = {
     loadFile: vi.fn(),
@@ -38,12 +40,14 @@ function makeWindowStub(opts: unknown): Record<string, unknown> {
     listenerCount: vi.fn().mockReturnValue(0),
     options: opts
   }
+  window_stubs.push(win)
   return win
 }
 
 vi.mock('electron', () => ({
   BrowserWindow: Object.assign(vi.fn().mockImplementation(makeWindowStub), {
     getAllWindows: vi.fn().mockReturnValue([]),
+    fromWebContents: vi.fn((webContents: unknown) => window_stubs.find((win) => win.webContents === webContents)),
   }),
   ipcMain: { on: vi.fn() },
   screen: {
@@ -73,7 +77,7 @@ vi.mock('../../electron/windows/translate_height_controller', () => ({
   TranslateHeightController: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
 }))
 
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
 import { WindowManager } from '../../../electron/windows/manager'
 import { WindowLabel } from '../../../electron/windows/types'
 
@@ -81,6 +85,7 @@ describe('WindowManager', () => {
   let manager: WindowManager
 
   beforeEach(() => {
+    window_stubs.length = 0
     vi.clearAllMocks()
     process.resourcesPath = '/mock/resources'
     manager = new WindowManager()
@@ -133,5 +138,21 @@ describe('WindowManager', () => {
     expect(closedHandler).toBeTypeOf('function')
     closedHandler()
     expect(manager.getWindow(WindowLabel.TRANSLATE)).toBeUndefined()
+  })
+
+  it('uses the real sender window label for renderer ready', () => {
+    const translate = manager.createWindow({
+      label: WindowLabel.TRANSLATE,
+      width: 350,
+      height: 420
+    }) as unknown as { webContents: { send: Mock; isLoading: Mock; once: Mock } }
+    translate.webContents.isLoading = vi.fn().mockReturnValue(false)
+    const ipc_main = ipcMain as unknown as { on: Mock }
+    const ready_handler = ipc_main.on.mock.calls.find((call) => call[0] === 'renderer:ready')?.[1] as (event: unknown, label: WindowLabel) => void
+
+    manager.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', 'queued')
+    ready_handler({ sender: translate.webContents }, WindowLabel.CONFIG)
+
+    expect(translate.webContents.send).toHaveBeenCalledWith('translate:from-selection', 'queued')
   })
 })

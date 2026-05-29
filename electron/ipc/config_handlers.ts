@@ -4,6 +4,9 @@ import { DEFAULT_CONFIG } from '@shared/types/config'
 import { getConfig, setConfig, getAllConfig, getUserDataDir } from '../config/store'
 import { rebuildMenu } from '../tray'
 import { log } from '../log'
+import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
+import { assert_sender_label } from './sender_validation'
 
 const log_ipc = log.scope('ipc:config')
 
@@ -21,9 +24,31 @@ function apply_auto_start(enabled: boolean): void {
   }
 }
 
-export function registerConfigHandlers(): void {
-  ipcMain.handle('config:get', (_event, key: ConfigKey) => getConfig(key))
-  ipcMain.handle('config:set', (_event, key: ConfigKey, value: unknown) => {
+const config_read_labels = [
+  WindowLabel.CONFIG,
+  WindowLabel.WELCOME,
+  WindowLabel.TRANSLATE,
+  WindowLabel.DICT,
+  WindowLabel.RECOGNIZE,
+  WindowLabel.SCREENSHOT,
+  WindowLabel.TRAY,
+  WindowLabel.UPDATER,
+] as const
+const config_write_labels = [
+  WindowLabel.CONFIG,
+  WindowLabel.WELCOME,
+  WindowLabel.TRANSLATE,
+  WindowLabel.DICT,
+  WindowLabel.RECOGNIZE,
+] as const
+
+export function registerConfigHandlers(manager: WindowManager): void {
+  ipcMain.handle('config:get', (event, key: ConfigKey) => {
+    assert_sender_label(manager, event, config_read_labels, 'config:get')
+    return getConfig(key)
+  })
+  ipcMain.handle('config:set', (event, key: ConfigKey, value: unknown) => {
+    assert_sender_label(manager, event, config_write_labels, 'config:set')
     if (!validate_config_value(key, value)) {
       log_ipc.warn('rejected config:set with wrong type for %s: expected %s, got %s',
         key, typeof DEFAULT_CONFIG[key], typeof value)
@@ -37,8 +62,14 @@ export function registerConfigHandlers(): void {
       apply_auto_start(value as boolean)
     }
   })
-  ipcMain.handle('config:getAll', () => getAllConfig())
-  ipcMain.handle('config:getUserDir', () => getUserDataDir())
+  ipcMain.handle('config:getAll', (event) => {
+    assert_sender_label(manager, event, config_read_labels, 'config:getAll')
+    return getAllConfig()
+  })
+  ipcMain.handle('config:getUserDir', (event) => {
+    assert_sender_label(manager, event, [WindowLabel.CONFIG], 'config:getUserDir')
+    return getUserDataDir()
+  })
 
   // Apply auto_start on startup
   if (getConfig('auto_start') && !process.env['OMNI_POT_E2E']) {

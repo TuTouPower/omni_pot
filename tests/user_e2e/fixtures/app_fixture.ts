@@ -129,7 +129,7 @@ export class AppFixture {
 
     async config(): Promise<ConfigPage> {
         const page = await this.waitForWindow(/#config/)
-        return new ConfigPage(page)
+        return new ConfigPage(page, this.api)
     }
 
     async updater(): Promise<UpdaterPage> {

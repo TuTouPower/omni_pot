@@ -3,9 +3,14 @@ import { AppFixture } from '../fixtures/app_fixture'
 import { TranslationTestServer } from '../fixtures/translation_test_server'
 import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
+const config_history_base_config = {
+    app_language: 'zh_cn',
+    welcome_dismissed: true,
+}
+
 test.describe('@ui config history and backup settings', () => {
     test('user sees a successful translation in history, edits it, and clears it', async () => {
-        const omni = await AppFixture.start({ config: { translate_source_language: 'en' } })
+        const omni = await AppFixture.start({ config: { ...config_history_base_config, translate_source_language: 'en' } })
         let server: TranslationTestServer | null = null
 
         try {
@@ -57,6 +62,7 @@ test.describe('@ui config history and backup settings', () => {
             const base_url = `http://127.0.0.1:${String(port)}`
             omni = await AppFixture.start({
                 config: {
+                    ...config_history_base_config,
                     translate_source_language: 'en',
                     translate_service_list: ['mymemory@first', 'mymemory@second'],
                     service_instances: {
@@ -86,7 +92,7 @@ test.describe('@ui config history and backup settings', () => {
     })
 
     test('user pages through history records', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: config_history_base_config })
 
         try {
             const config = await omni.openConfig()
@@ -118,7 +124,7 @@ test.describe('@ui config history and backup settings', () => {
     })
 
     test('user disables history and new translations are not recorded', async () => {
-        const omni = await AppFixture.start({ config: { history_disable: true } })
+        const omni = await AppFixture.start({ config: { ...config_history_base_config, history_disable: true } })
         let server: TranslationTestServer | null = null
 
         try {
@@ -142,7 +148,7 @@ test.describe('@ui config history and backup settings', () => {
     })
 
     test('user searches and filters history records from the toolbar', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: config_history_base_config })
 
         try {
             const config = await omni.openConfig()
@@ -191,7 +197,7 @@ test.describe('@ui config history and backup settings', () => {
     })
 
     test('history toolbar renders all controls on one row and disable switch grays out other controls', async () => {
-        const omni = await AppFixture.start({ config: { history_disable: false } })
+        const omni = await AppFixture.start({ config: { ...config_history_base_config, history_disable: false } })
 
         try {
             const config = await omni.openConfig()
@@ -255,7 +261,7 @@ test.describe('@ui config history and backup settings', () => {
     })
 
     test('user creates a local backup and restores config and history after restart', async () => {
-        const omni = await AppFixture.start({ config: { backup_type: 'webdav' } })
+        const omni = await AppFixture.start({ config: { ...config_history_base_config, backup_type: 'webdav' } })
         let server: TranslationTestServer | null = null
 
         try {

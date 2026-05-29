@@ -1,10 +1,13 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
 import { getUserDataDir } from '../config/store'
 import { getLogDir, log } from '../log'
 import { create_zip } from '../backup/index'
 import type { BackupFile } from '../backup/index'
 import { readdirSync, readFileSync, lstatSync } from 'fs'
 import { join } from 'path'
+import { assert_sender_label } from './sender_validation'
 
 function is_allowed_external_url(value: string): boolean {
     try {
@@ -17,18 +20,21 @@ function is_allowed_external_url(value: string): boolean {
     }
 }
 
-export function registerShellHandlers(): void {
-    ipcMain.handle('shell:openExternal', async (_event, url: string): Promise<boolean> => {
+export function registerShellHandlers(manager: WindowManager): void {
+    ipcMain.handle('shell:openExternal', async (event, url: string): Promise<boolean> => {
+        assert_sender_label(manager, event, [WindowLabel.CONFIG], 'shell:openExternal')
         if (!is_allowed_external_url(url)) return false
         await shell.openExternal(url)
         return true
     })
 
-    ipcMain.handle('log:getDir', (): string => {
+    ipcMain.handle('log:getDir', (event): string => {
+        assert_sender_label(manager, event, [WindowLabel.CONFIG], 'log:getDir')
         return getLogDir(getUserDataDir())
     })
 
-    ipcMain.handle('log:export', async (): Promise<{ success: boolean; path?: string; error?: string }> => {
+    ipcMain.handle('log:export', async (event): Promise<{ success: boolean; path?: string; error?: string }> => {
+        assert_sender_label(manager, event, [WindowLabel.CONFIG], 'log:export')
         try {
             const logDir = getLogDir(getUserDataDir())
             const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
@@ -58,7 +64,17 @@ export function registerShellHandlers(): void {
         }
     })
 
-    ipcMain.handle('log:write', (_event, level: string, scope: string, message: string, ...args: unknown[]): void => {
+    ipcMain.handle('log:write', (event, level: string, scope: string, message: string, ...args: unknown[]): void => {
+        assert_sender_label(manager, event, [
+            WindowLabel.CONFIG,
+            WindowLabel.WELCOME,
+            WindowLabel.TRANSLATE,
+            WindowLabel.DICT,
+            WindowLabel.RECOGNIZE,
+            WindowLabel.SCREENSHOT,
+            WindowLabel.TRAY,
+            WindowLabel.UPDATER,
+        ], 'log:write')
         const scoped = log.scope(`renderer:${scope}`)
         if (level === 'error') {
             scoped.error(message, ...args)

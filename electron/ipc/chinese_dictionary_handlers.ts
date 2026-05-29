@@ -12,6 +12,9 @@ import {
 import { getConfig } from '../config/store'
 import { log } from '../log'
 import type { DictResult } from '@shared/types/service'
+import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
+import { assert_sender_label } from './sender_validation'
 
 const log_chinese_dict_ipc = log.scope('chinese-dictionary-ipc')
 
@@ -112,8 +115,11 @@ function is_chinese(text: string): boolean {
     return /\p{Script=Han}/u.test(text)
 }
 
-export function registerChineseDictionaryHandlers(): void {
-    ipcMain.handle('chinese_dict:lookup', (_event, text: string): DictResult | null => {
+const chinese_dict_labels = [WindowLabel.CONFIG, WindowLabel.TRANSLATE, WindowLabel.DICT] as const
+
+export function registerChineseDictionaryHandlers(manager: WindowManager): void {
+    ipcMain.handle('chinese_dict:lookup', (event, text: string): DictResult | null => {
+        assert_sender_label(manager, event, chinese_dict_labels, 'chinese_dict:lookup')
         try {
             const enabled = getConfig('dict_chinese_enabled')
             if (enabled === false) return null
@@ -151,7 +157,8 @@ export function registerChineseDictionaryHandlers(): void {
         }
     })
 
-    ipcMain.handle('chinese_dict:check', () => {
+    ipcMain.handle('chinese_dict:check', (event) => {
+        assert_sender_label(manager, event, chinese_dict_labels, 'chinese_dict:check')
         const state = get_service_state()
         if (state !== 'ready') {
             return { ready: false, status: state, entry_count: 0 }
@@ -165,7 +172,8 @@ export function registerChineseDictionaryHandlers(): void {
         }
     })
 
-    ipcMain.handle('chinese_dict:reload', () => {
+    ipcMain.handle('chinese_dict:reload', (event) => {
+        assert_sender_label(manager, event, [WindowLabel.CONFIG], 'chinese_dict:reload')
         return { success: reload_db() }
     })
 }

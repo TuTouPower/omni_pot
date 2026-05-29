@@ -1,5 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import type { HistoryRecord } from '@shared/types/ipc'
+import type { E2eApi } from '../fixtures/e2e_api'
 
 function exact_text(text: string): RegExp {
     return new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
@@ -10,7 +11,7 @@ function css_attribute_value(value: string): string {
 }
 
 export class ConfigPage {
-    constructor(private page: Page) {}
+    constructor(private page: Page, private api?: E2eApi) {}
 
     window(): Locator {
         return this.page.getByTestId('config-window')
@@ -253,7 +254,9 @@ export class ConfigPage {
     }
 
     async addHistoryRecord(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<void> {
-        await this.page.evaluate((nextRecord) => window.electronAPI.history.add(nextRecord), record)
+        if (!this.api) throw new Error('E2E API is required to seed history')
+        const result = await this.api.addHistoryRecord(record)
+        if (!result.success) throw new Error(result.error ?? 'failed to seed history')
     }
 
     historyRecordCount(): Promise<number> {

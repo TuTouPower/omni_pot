@@ -9,6 +9,7 @@ import { WindowLabel } from '../windows/types'
 import { start_screenshot_capture } from '../screenshot'
 import { get_translate_window_options } from '../windows/translate_options'
 import { get_recognize_window_options } from '../windows/recognize_options'
+import { assert_sender_label } from './sender_validation'
 
 const SYSTEM_OCR_LANGUAGES = new Set([
     'en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'ko-KR', 'fr-FR', 'es-ES', 'ru-RU',
@@ -110,23 +111,27 @@ async function macos_ocr(image_path: string, lang: string): Promise<string> {
 }
 
 export function registerOcrHandlers(manager: WindowManager): void {
-    ipcMain.handle('ocr:capture-screenshot', async (_event, mode: 'recognize' | 'translate') => {
+    ipcMain.handle('ocr:capture-screenshot', async (event, mode: 'recognize' | 'translate') => {
+        assert_sender_label(manager, event, [WindowLabel.WELCOME, WindowLabel.CONFIG], 'ocr:capture-screenshot')
         return start_screenshot_capture(manager, mode)
     })
 
-    ipcMain.handle('ocr:open-recognize', (_event, base64Image: string, text: string, mode?: string) => {
+    ipcMain.handle('ocr:open-recognize', (event, base64Image: string, text: string, mode?: string) => {
+        assert_sender_label(manager, event, [WindowLabel.SCREENSHOT], 'ocr:open-recognize')
         manager.focusOrCreate(WindowLabel.RECOGNIZE, get_recognize_window_options())
 
         manager.sendWhenReady(WindowLabel.RECOGNIZE, 'recognize:show', base64Image, text, mode ?? 'recognize')
     })
 
-    ipcMain.handle('ocr:send-to-translate', (_event, text: string) => {
+    ipcMain.handle('ocr:send-to-translate', (event, text: string) => {
+        assert_sender_label(manager, event, [WindowLabel.RECOGNIZE], 'ocr:send-to-translate')
         manager.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
 
         manager.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-api', text)
     })
 
-    ipcMain.handle('ocr:system-recognize', async (_event, base64Image: string, lang: string): Promise<string> => {
+    ipcMain.handle('ocr:system-recognize', async (event, base64Image: string, lang: string): Promise<string> => {
+        assert_sender_label(manager, event, [WindowLabel.SCREENSHOT, WindowLabel.RECOGNIZE], 'ocr:system-recognize')
         const platform = process.platform
 
         // Write image to private temp directory

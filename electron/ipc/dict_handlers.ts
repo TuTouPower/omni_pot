@@ -6,6 +6,9 @@ import {
     lookup_english,
     type DictLookupResult
 } from '../dict'
+import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
+import { assert_sender_label } from './sender_validation'
 
 interface DictResult {
     type: 'dict'
@@ -50,8 +53,11 @@ function to_dict_result(entries: DictLookupResult[], is_en_to_zh: boolean): Dict
     }
 }
 
-export function registerDictHandlers(): void {
-    ipcMain.handle('dict:lookup', (_event, text: string, from: string) => {
+const dict_labels = [WindowLabel.CONFIG, WindowLabel.TRANSLATE, WindowLabel.DICT] as const
+
+export function registerDictHandlers(manager: WindowManager): void {
+    ipcMain.handle('dict:lookup', (event, text: string, from: string) => {
+        assert_sender_label(manager, event, dict_labels, 'dict:lookup')
         if (!is_ready()) return null
 
         const word = text.trim().split(/\s+/)[0]
@@ -68,7 +74,8 @@ export function registerDictHandlers(): void {
         }
     })
 
-    ipcMain.handle('dict:check', () => {
+    ipcMain.handle('dict:check', (event) => {
+        assert_sender_label(manager, event, dict_labels, 'dict:check')
         const ready = is_ready()
         return { ready, entry_count: ready ? get_entry_count() : 0 }
     })

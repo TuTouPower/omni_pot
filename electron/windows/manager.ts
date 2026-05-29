@@ -55,7 +55,13 @@ export class WindowManager {
 
   constructor() {
     // Listen for renderer-ready signals
-    ipcMain.on('renderer:ready', (_event, label: WindowLabel) => {
+    ipcMain.on('renderer:ready', (event, requested_label: WindowLabel) => {
+      const win = BrowserWindow.fromWebContents(event.sender)
+      const label = win ? this.getLabelById(win.id) : undefined
+      if (!label) return
+      if (requested_label !== label) {
+        log_wm.warn('renderer ready label mismatch: requested=%s actual=%s', requested_label, label)
+      }
       log_wm.info('renderer ready:', label)
       this.readyLabels.add(label)
       // Flush any queued messages

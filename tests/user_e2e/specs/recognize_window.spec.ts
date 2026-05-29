@@ -74,8 +74,8 @@ async function sample_ocr_image(page: Page): Promise<string> {
 }
 
 async function open_recognize_with_image(omni: AppFixture, image: string, text: string, mode: 'recognize' | 'translate' = 'recognize'): Promise<RecognizePage> {
-    const page = await omni.firstWindow()
-    await page.evaluate(({ image, text, mode }) => window.electronAPI.ocr.open_recognize(image, text, mode), { image, text, mode })
+    const result = await omni.api.openRecognize(image, text, mode)
+    if (!result.success) throw new Error(result.error ?? 'failed to open recognize window')
     return omni.recognize()
 }
 
@@ -269,7 +269,7 @@ test.describe('@ui recognize window', () => {
             await expect.poll(async () => recognize.page.evaluate(() => (window as unknown as { __baidu_ocr_request_count?: number }).__baidu_ocr_request_count ?? 0)).toBe(0)
 
             const non_qr_image = await sample_ocr_image(recognize.page)
-            await recognize.page.evaluate(({ image }) => window.electronAPI.ocr.open_recognize(image, '', 'recognize'), { image: non_qr_image })
+            await open_recognize_with_image(omni, non_qr_image, '')
             await expect(recognize.engineSelect()).toContainText('百度文字识别')
             await expect.poll(async () => (await recognize.getText()).length > 0,
                 { timeout: ocr_timeout_ms }).toBe(true)

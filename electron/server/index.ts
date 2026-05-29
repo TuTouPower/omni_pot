@@ -16,7 +16,8 @@ import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
 import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures, triggerTranslateEntry } from '../hotkey'
 import { readSelectedText, setE2eSelectedTextResult } from '../selection'
-import { get_history_page, get_history_count } from '../history'
+import { get_history_page, get_history_count, add_history } from '../history'
+import type { HistoryRecord } from '@shared/types/ipc'
 import { log } from '../log'
 import { bind_update_release_assets } from '../updater'
 
@@ -366,6 +367,16 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/trigger-screenshot') {
                 handle_trigger_screenshot(mgr, req, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/open-recognize') {
+                handle_open_recognize(mgr, req, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/add-history') {
+                handle_add_history(req, res)
                 return
             }
 
@@ -864,6 +875,67 @@ function handle_trigger_screenshot(
             const success = await start_screenshot_capture(mgr, mode)
             res.writeHead(success ? 200 : 500)
             res.end(JSON.stringify(success ? { success: true, mode } : { success: false, error: 'screenshot capture failed' }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
+        }
+    })().catch((err: unknown) => { log_server.error(err) })
+}
+
+function handle_open_recognize(
+    mgr: WindowManager,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    ;(async () => {
+        try {
+            const buf = await readBody(req, MAX_OCR_BODY_SIZE)
+            const body = parse_json_body(buf)
+            const image = typeof body.image === 'string' ? body.image : ''
+            const text = typeof body.text === 'string' ? body.text : ''
+            const mode = body.mode === 'translate' ? 'translate' : 'recognize'
+            if (!image) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'missing image' }))
+                return
+            }
+            mgr.focusOrCreate(WindowLabel.RECOGNIZE, get_recognize_window_options())
+            mgr.sendWhenReady(WindowLabel.RECOGNIZE, 'recognize:show', image, text, mode)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true, mode }))
+        } catch (err: unknown) {
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
+            res.writeHead(500)
+            res.end(JSON.stringify({ success: false, error: String(err) }))
+        }
+    })().catch((err: unknown) => { log_server.error(err) })
+}
+
+function is_history_record_seed(record: Record<string, unknown>): record is Omit<HistoryRecord, 'id' | 'created_at'> {
+    return typeof record.service_key === 'string'
+        && typeof record.source_text === 'string'
+        && typeof record.source_lang === 'string'
+        && typeof record.target_text === 'string'
+        && typeof record.target_lang === 'string'
+}
+
+function handle_add_history(
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+): void {
+    ;(async () => {
+        try {
+            const buf = await readBody(req)
+            const body = parse_json_body(buf)
+            if (!is_history_record_seed(body)) {
+                res.writeHead(400)
+                res.end(JSON.stringify({ success: false, error: 'invalid history record' }))
+                return
+            }
+            add_history(body)
+            res.writeHead(200)
+            res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
             if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)

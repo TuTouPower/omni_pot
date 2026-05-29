@@ -1,4 +1,5 @@
 import http from 'http'
+import type { HistoryRecord } from '@shared/types/ipc'
 
 function request(port: number, method: string, path: string, body?: unknown, token?: string, api_token?: string): Promise<unknown> {
     return new Promise((resolve, reject) => {
@@ -201,6 +202,14 @@ export class E2eApi {
 
     async triggerScreenshot(mode: 'recognize' | 'translate' = 'recognize'): Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }> {
         return this.request('POST', '/e2e/trigger-screenshot', { mode }) as Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }>
+    }
+
+    async openRecognize(image: string, text: string, mode: 'recognize' | 'translate' = 'recognize'): Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }> {
+        return this.request('POST', '/e2e/open-recognize', { image, text, mode }) as Promise<{ success: boolean; mode: 'recognize' | 'translate'; error?: string }>
+    }
+
+    async addHistoryRecord(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<{ success: boolean; error?: string }> {
+        return this.request('POST', '/e2e/add-history', record) as Promise<{ success: boolean; error?: string }>
     }
 
     async triggerInputTranslate(): Promise<{ success: boolean; error?: string }> {

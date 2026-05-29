@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { get_macos_ocr_script_path, normalize_system_ocr_language, registerOcrHandlers } from '../../../electron/ipc/ocr_handlers'
+import { WindowLabel } from '../../../electron/windows/types'
 import { normalize_recognized_text } from '@shared/text_normalize'
 
 const mocks = vi.hoisted(() => ({
     handlers: new Map<string, (...args: unknown[]) => unknown>(),
     chmod: vi.fn(),
     execFile: vi.fn(),
+    fromWebContents: vi.fn(),
     mkdir: vi.fn(),
     rm: vi.fn(),
     writeFile: vi.fn(),
@@ -16,6 +18,9 @@ vi.mock('electron', () => ({
         get isPackaged() {
             return false
         },
+    },
+    BrowserWindow: {
+        fromWebContents: mocks.fromWebContents,
     },
     ipcMain: {
         handle: vi.fn((channel: string, handler: (...args: unknown[]) => unknown) => {
@@ -64,13 +69,15 @@ describe('registerOcrHandlers', () => {
             callback(null, 'recognized text\n', '')
         })
 
+        mocks.fromWebContents.mockReturnValue({ id: 9 })
         registerOcrHandlers({
             focusOrCreate: vi.fn(),
             sendWhenReady: vi.fn(),
+            getLabelById: vi.fn(() => WindowLabel.RECOGNIZE),
         } as never)
 
         const handler = mocks.handlers.get('ocr:system-recognize')
-        await expect(handler?.({}, Buffer.from('image').toString('base64'), 'en-US')).resolves.toBe('recognized text')
+        await expect(handler?.({ sender: { id: 42 } }, Buffer.from('image').toString('base64'), 'en-US')).resolves.toBe('recognized text')
 
         const temp_dir = mocks.mkdir.mock.calls[0]?.[0] as string
         expect(typeof temp_dir).toBe('string')

@@ -1,4 +1,7 @@
-import { ipcMain, dialog } from 'electron'
+import { ipcMain, dialog, type IpcMainInvokeEvent } from 'electron'
+import type { WindowManager } from '../windows/manager'
+import { WindowLabel } from '../windows/types'
+import { assert_sender_label } from './sender_validation'
 import {
     create_local_backup,
     list_local_backups,
@@ -9,8 +12,13 @@ import {
     get_backup_path
 } from '../backup'
 
-export function registerBackupHandlers(): void {
-    ipcMain.handle('backup:create', () => {
+export function registerBackupHandlers(manager: WindowManager): void {
+    const assert_config_sender = (event: IpcMainInvokeEvent, channel: string): void => {
+        assert_sender_label(manager, event, [WindowLabel.CONFIG], channel)
+    }
+
+    ipcMain.handle('backup:create', (event) => {
+        assert_config_sender(event, 'backup:create')
         try {
             const path = create_local_backup()
             return { success: true, path }
@@ -19,11 +27,13 @@ export function registerBackupHandlers(): void {
         }
     })
 
-    ipcMain.handle('backup:list', () => {
+    ipcMain.handle('backup:list', (event) => {
+        assert_config_sender(event, 'backup:list')
         return list_local_backups()
     })
 
-    ipcMain.handle('backup:restore', (_event, name: string) => {
+    ipcMain.handle('backup:restore', (event, name: string) => {
+        assert_config_sender(event, 'backup:restore')
         try {
             restore_local_backup(name)
             return { success: true }
@@ -32,7 +42,8 @@ export function registerBackupHandlers(): void {
         }
     })
 
-    ipcMain.handle('backup:import', async () => {
+    ipcMain.handle('backup:import', async (event) => {
+        assert_config_sender(event, 'backup:import')
         const result = await dialog.showOpenDialog({
             title: '导入备份',
             filters: [{ name: 'ZIP 文件', extensions: ['zip'] }],
@@ -53,11 +64,13 @@ export function registerBackupHandlers(): void {
         }
     })
 
-    ipcMain.handle('backup:list-with-size', () => {
+    ipcMain.handle('backup:list-with-size', (event) => {
+        assert_config_sender(event, 'backup:list-with-size')
         return list_local_backups_with_size()
     })
 
-    ipcMain.handle('backup:delete', (_event, name: string) => {
+    ipcMain.handle('backup:delete', (event, name: string) => {
+        assert_config_sender(event, 'backup:delete')
         try {
             delete_local_backup(name)
             return { success: true }
@@ -66,7 +79,8 @@ export function registerBackupHandlers(): void {
         }
     })
 
-    ipcMain.handle('backup:get-path', (_event, name: string) => {
+    ipcMain.handle('backup:get-path', (event, name: string) => {
+        assert_config_sender(event, 'backup:get-path')
         return get_backup_path(name)
     })
 }

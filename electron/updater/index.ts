@@ -9,6 +9,7 @@ import type { WebContents } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { getConfig } from '../config/store'
+import { get_sender_label } from '../ipc/sender_validation'
 import { log } from '../log'
 
 const log_updater = log.scope('updater')
@@ -272,7 +273,7 @@ async function get_update_release_info(): Promise<UpdateReleaseInfo | null> {
 }
 
 export function assert_updater_sender(manager: WindowManager, web_contents: WebContents): void {
-    if (manager.getLabelById(web_contents.id) !== WindowLabel.UPDATER) {
+    if (get_sender_label(manager, web_contents) !== WindowLabel.UPDATER) {
         throw new Error('Unauthorized updater IPC sender')
     }
 }
