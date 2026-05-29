@@ -102,7 +102,7 @@
 - [x] **OCR 自动识别可能无限循环**：`src/windows/recognize/index.tsx:401-405` 自动切 QR 服务后再触发 effect。加 "已对 image+service 识别过" 缓存。
 - [x] **WebDAV 密码改 password 输入**：`src/windows/config/backup_settings.tsx:155-159` + `config_components.tsx:203`。
 - [x] **dict contentEditable 同步 store / 复制**：`src/windows/dict/index.tsx:319-337/385-402`。可见文本未通过 onInput 同步 store，copy 复制旧值；React 也会重置 caret。改用受控 input/textarea，或非受控 + ref。
-- [ ] **dict / 自定义下拉补 ARIA 与键盘**：`src/windows/dict/index.tsx:385-390`、`src/windows/config/config_components.tsx:135-172`、`src/windows/translate/language_area.tsx:69-111`、`src/windows/recognize/index.tsx:127-174`。补 textbox/combobox/listbox + 键盘导航或换原生 select。
+- [x] **dict / 自定义下拉补 ARIA 与键盘**：`src/windows/dict/index.tsx:385-390`、`src/windows/config/config_components.tsx:135-172`、`src/windows/translate/language_area.tsx:69-111`、`src/windows/recognize/index.tsx:127-174`。补 textbox/combobox/listbox + 键盘导航或换原生 select。
 - [x] **renderer 用 logger 替换 console**：`src/main.tsx:74`、`src/i18n/index.ts:49/53`、`src/stores/config_store.ts:39`、`src/windows/{translate,dict,recognize,screenshot,config}` 多处违反 CLAUDE.md。
 - [x] **截图/词典/翻译/快捷键设置内的硬编码中文走 i18n**：`src/windows/screenshot/index.tsx:303-310`、`src/windows/translate/target_area.tsx:83-84`、`src/windows/dict/index.tsx:70-71`、`src/windows/config/hotkey_settings.tsx:93-100/159/162/168-184`。
 - [x] **版本号统一来自 metadata**：`src/windows/config/about.tsx:7`、`src/windows/config/index.tsx:123-124`、`src/windows/updater/index.tsx:114/369` 硬编码。
@@ -134,8 +134,8 @@
 - [x] **网络门变量统一为 `OMNI_POT_EXTERNAL_SERVICE_TESTS`**：所有 opt-in 真实公网测试统一只认 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1`；`tests/unit/services/test_google.ts:4` 当前仍用 `RUN_NETWORK_TESTS`，若保留该用例也必须改名/迁移到 `external_services.spec.ts`。
 - [x] **`external_services.spec.ts` 不再 silent skip**：`tests/user_e2e/specs/external_services.spec.ts:118-120/146` 与上面的统一策略冲突；删除 Google 网络不可达 skip，让具体服务失败暴露。
 - [x] **`i18n.spec.ts` 文案来源审计**：`tests/user_e2e/specs/i18n.spec.ts` 的 locale 文案断言已从 `src/i18n/locales/*.json` 派生；原生语言名与托盘菜单固定源保留独立断言。
-- [ ] **`@core` 标签收敛**：`@core` 只保留最小关键路径（启动 → 翻译窗口可见 → 本地 stub 译文出现 → 关闭），其他 UI 细节迁到 `@ui`。
-- [ ] **timeout 标准化**：按 `docs/test_user_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
+- [x] **`@core` 标签收敛**：`@core` 只保留 `translate_core.spec.ts` 中“启动 → 翻译窗口可见 → 本地 stub 译文出现 → 关闭窗口”最小关键路径；生命周期、HTTP API、剪贴板等细节迁到 `@ui`。
+- [x] **timeout 标准化**：按 `docs/test_user_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 本地 stub 翻译 15s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
 - [x] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
 - [x] **HTTP server 单元/契约测试**：`tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/token/public config 安全边界；`app_http_api.spec.ts` 覆盖 auth、`/dict` 使用 text、`/history` 分页与公开配置 allowlist。
 - [x] **updater repo/allowlist 契约测试**：`tests/unit/updater.test.ts` 覆盖 release asset 绑定、下载 URL allowlist / redirect allowlist、updater sender 限制。
@@ -143,8 +143,8 @@
 - [x] **tray 用户可见字符串 contract 测试**：`tests/unit/tray_labels.test.ts` 锁定托盘 tooltip 为 Omni Pot，菜单中不出现 Pot Desktop。
 - [x] **screenshot overlay bounds 单测**：`tests/unit/screenshot_display.test.ts` 覆盖 `preload_screenshot_window()` / `start_screenshot_capture()` 的 `setBounds()`。
 - [x] **Cambridge 音频按钮 UI 回归**：`tests/unit/windows/dict_audio.test.ts` stub `Audio` 并断言发音按钮用 Cambridge URL 调 `play()`。
-- [ ] **pin/topmost 回归断言 pinned 状态**：`tests/user_e2e/specs/window_pin_topmost.spec.ts:87-98/176-186` 当前只检 `alwaysOnTop`。
-- [ ] **翻译窗口高度 cap 用 current display**：`tests/user_e2e/specs/translate_window_constraints.spec.ts:20-22` 走 `primaryDisplay()`；`docs/spec.md:240` 要求当前显示器；e2e fixture 暴露 current display 或补单测。
+- [x] **pin/topmost 回归断言 pinned 状态**：`tests/user_e2e/specs/window_pin_topmost.spec.ts:87-98/176-186` 当前只检 `alwaysOnTop`。
+- [x] **翻译窗口高度 cap 用 current display**：`tests/user_e2e/specs/translate_window_constraints.spec.ts:20-22` 走 `primaryDisplay()`；`docs/spec.md:240` 要求当前显示器；e2e fixture 暴露 current display 或补单测。
 - [x] **mock 测试加 `@electron-mock` / 原因标注**：`tests/unit/screenshot_display.test.ts:17-26`、`tests/unit/config_store_migration.test.ts:6-14` 违反 `docs/test.md §2.1`。
 
 ### G. 文档与项目约定
@@ -154,8 +154,8 @@
 - [x] **test 文档同步**：(1) `docs/test_user_e2e.md:413` 仍提"文字（字体+字号）"；(2) `:363` 词典 titlebar 漏 pin；(3) `:450-455` HTTP API 漏 `/dict`、`/history`；(4) `:234-238` endpoint 列表漏 `/e2e/set-config` 等 fixture；(5) `docs/test.md:24-27` 写 15 个 spec，`docs/test_user_e2e.md:54` 写 26 个，实际 27 个；(6) `docs/test.md:279` 表行漏 Google。
 - [x] **About / updater UI 链接同步**：仓库地址改公开 release 仓库。
 - [x] **`build_chinese_dictionary.ts` 收口**：(1) 注释要求单对象 JSON fail，但 `scripts/build_chinese_dictionary.ts:36-42` 实际接受；(2) `:197-199` 开启 WAL 但 `package.json:72-78` 只 include `.db`，结束前需 checkpoint/truncate。
-- [ ] **`shared/types/ipc.ts` 命名一致性**：`writeClipboardImage(base64Image)` vs handler 的 `base64_image` snake_case；`chineseDict:` 通道名混用 camelCase；`HistoryRecord.service_key` 与 `service.ts` `serviceKey` 不一致。
-- [ ] **archive 文档 OCR/识别术语**：`docs/archive/closed_issues/issues0518.md:41`、`docs/archive/old_pot/spec.md:126`、`docs/design/omni-pot/project/uploads/spec.md:113`、`docs/design/omni-pot/chats/chat1.md:306`。确认 archive 豁免否；不豁免则改"文字识别"。
+- [x] **`shared/types/ipc.ts` 命名一致性**：`writeClipboardImage(base64Image)` vs handler 的 `base64_image` snake_case；`chineseDict:` 通道名混用 camelCase；`HistoryRecord.service_key` 与 `service.ts` `serviceKey` 不一致。
+- [x] **archive 文档 OCR/识别术语**：`docs/archive/closed_issues/issues0518.md:41`、`docs/archive/old_pot/spec.md:126`、`docs/design/omni-pot/project/uploads/spec.md:113`、`docs/design/omni-pot/chats/chat1.md:306`。确认 archive 豁免否；不豁免则改"文字识别"。
 
 ### H. 热键冷启动延迟（`docs/runtime_issues.md` §4）
 
