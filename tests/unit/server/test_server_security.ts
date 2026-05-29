@@ -61,7 +61,7 @@ describe('server security helpers', () => {
     })
 
     it('allows only localhost origins with optional port', async () => {
-        const { is_origin_allowed } = await import('../../../electron/server')
+        const { is_origin_allowed, should_reject_origin } = await import('../../../electron/server')
 
         expect(is_origin_allowed('http://localhost')).toBe(true)
         expect(is_origin_allowed('http://127.0.0.1')).toBe(true)
@@ -75,6 +75,10 @@ describe('server security helpers', () => {
         expect(is_origin_allowed('http://localhost.evil.com')).toBe(false)
         expect(is_origin_allowed('http://evil.com')).toBe(false)
         expect(is_origin_allowed('')).toBe(false)
+        expect(should_reject_origin('http://evil.com')).toBe(true)
+        expect(should_reject_origin('http://localhost.evil.com')).toBe(true)
+        expect(should_reject_origin('http://localhost:5173')).toBe(false)
+        expect(should_reject_origin('')).toBe(false)
     })
 
     it('redacts public config secrets while keeping allowed service keys', async () => {

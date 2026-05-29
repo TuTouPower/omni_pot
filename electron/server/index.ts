@@ -48,6 +48,10 @@ export function is_origin_allowed(origin: string): boolean {
     }
 }
 
+export function should_reject_origin(origin: string): boolean {
+    return !!origin && !is_origin_allowed(origin)
+}
+
 class BodyTooLargeError extends Error {
     constructor() {
         super('Body too large')
@@ -139,9 +143,14 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
-            // CORS: allow only localhost origins
+            // CORS: allow only localhost origins and reject cross-site actions
             const origin = req.headers.origin ?? ''
-            if (is_origin_allowed(origin)) {
+            if (should_reject_origin(origin)) {
+                res.writeHead(403)
+                res.end(JSON.stringify({ success: false, error: 'forbidden' }))
+                return
+            }
+            if (origin) {
                 res.setHeader('Access-Control-Allow-Origin', origin)
             }
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
