@@ -48,7 +48,9 @@ export const googleService: TranslateService = {
     }
     const data = (await resp.json()) as Array<unknown>
     const segments = data[0] as Array<Array<unknown>> | undefined
-    if (!segments || segments.length === 0) return ''
+    if (!segments || segments.length === 0) {
+      throw new Error('Google translate returned empty response')
+    }
     return segments.map((seg) => {
       const value = seg[0]
       return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
