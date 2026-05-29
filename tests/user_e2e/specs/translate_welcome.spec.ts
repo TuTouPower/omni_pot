@@ -139,20 +139,17 @@ test.describe('@ui standalone welcome window', () => {
         }
     })
 
-    test('skip persists dismissed state and skipped startup has no welcome', async () => {
-        const userDataDirOmni = await AppFixture.start({ config: { app_language: 'zh_cn', welcome_dismissed: false } })
+    test('skip persists dismissed state and skipped restart has no welcome', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', welcome_dismissed: false } })
 
         try {
-            const page = await userDataDirOmni.welcome()
+            const page = await omni.welcome()
             await page.getByTestId('welcome-skip').click()
-            await expect_welcome_closed(userDataDirOmni)
-            await expect.poll(async () => (await userDataDirOmni.api.getConfig()).welcome_dismissed).toBe(true)
-        } finally {
-            await userDataDirOmni.stop()
-        }
+            await expect_welcome_closed(omni)
+            await expect.poll(async () => (await omni.api.getConfig()).welcome_dismissed).toBe(true)
 
-        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', welcome_dismissed: true } })
-        try {
+            await omni.restart()
+
             await expect.poll(async () => (await omni.api.windowState('welcome')).exists).toBe(false)
             const translate = await omni.translate()
             await expect(translate.sourceInput()).toBeVisible()
