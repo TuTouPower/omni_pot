@@ -52,13 +52,13 @@ export const systemOcrService: OcrService = {
 
     async recognize(base64Image: string, language: LanguageCode): Promise<string> {
         const lang = LANG_MAP[language] ?? ''
-        const result = await window.electronAPI.ocr.systemRecognize(base64Image, lang)
+        const result = await window.electronAPI.ocr.system_recognize(base64Image, lang)
         return result
     },
 
     async testConfig(): Promise<boolean> {
         try {
-            await window.electronAPI.ocr.systemRecognize('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'en-US')
+            await window.electronAPI.ocr.system_recognize('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'en-US')
             return true
         } catch {
             return false

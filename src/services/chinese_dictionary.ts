@@ -15,7 +15,7 @@ export const chineseDictionaryService: TranslateService = {
         if (!word) return ''
 
         try {
-            const result = await window.electronAPI.chineseDict.lookup(word)
+            const result = await window.electronAPI.chinese_dict.lookup(word)
             return result ?? ''
         } catch (err) {
             log.error('lookup failed: %s', err instanceof Error ? err.message : String(err))
@@ -25,7 +25,7 @@ export const chineseDictionaryService: TranslateService = {
 
     async testConfig(): Promise<boolean> {
         try {
-            const check = await window.electronAPI.chineseDict.check()
+            const check = await window.electronAPI.chinese_dict.check()
             return check.ready
         } catch {
             return false

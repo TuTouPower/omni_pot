@@ -61,7 +61,7 @@ export default function HistorySettings(): React.ReactElement {
     }, [page, load_page])
 
     useEffect(() => {
-        window.electronAPI.history.serviceKeys()
+        window.electronAPI.history.service_keys()
             .then(setServiceOptions)
             .catch(console.error)
     }, [records])

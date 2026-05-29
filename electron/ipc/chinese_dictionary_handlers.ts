@@ -113,7 +113,7 @@ function is_chinese(text: string): boolean {
 }
 
 export function registerChineseDictionaryHandlers(): void {
-    ipcMain.handle('chineseDict:lookup', (_event, text: string): DictResult | null => {
+    ipcMain.handle('chinese_dict:lookup', (_event, text: string): DictResult | null => {
         try {
             const enabled = getConfig('dict_chinese_enabled')
             if (enabled === false) return null
@@ -151,7 +151,7 @@ export function registerChineseDictionaryHandlers(): void {
         }
     })
 
-    ipcMain.handle('chineseDict:check', () => {
+    ipcMain.handle('chinese_dict:check', () => {
         const state = get_service_state()
         if (state !== 'ready') {
             return { ready: false, status: state, entry_count: 0 }
@@ -165,7 +165,7 @@ export function registerChineseDictionaryHandlers(): void {
         }
     })
 
-    ipcMain.handle('chineseDict:reload', () => {
+    ipcMain.handle('chinese_dict:reload', () => {
         return { success: reload_db() }
     })
 }

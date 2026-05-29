@@ -165,7 +165,7 @@ spec 列的（旧式）:
 | `translate` | `reportContentHeight`, `reportMinWidth` |
 | `shell` | `openExternal` |
 | `log` | `getDir`, `export`, `write` |
-| `chineseDict` | `lookup`, `check`, `reload`, `onStateChanged` |
+| `chinese_dict` | `lookup`, `check`, `reload`, `onStateChanged` |
 | `update` | `onRelease`, `downloadAndInstall`, `checkLatest`, `onDownloadProgress` |
 | `tray` | `show`, `close`, `action`, `labels`, `clipboardMonitoring`, `popupReady` |
 | `detect` | `local` |
@@ -176,8 +176,8 @@ spec 列的（旧式）:
 |---|---|
 | `window` | `setContentSize`, `setContentHeight`, `openConfig`, `onConfigNavigate` |
 | `config` | `getUserDir` |
-| `text` | `writeClipboardImage`, `onTranslateSelectionEmpty`, `onDictSelectionEmpty` |
-| `history` | `serviceKeys` |
+| `text` | `write_clipboard_image`, `onTranslateSelectionEmpty`, `onDictSelectionEmpty` |
+| `history` | `service_keys` |
 | `backup` | `listWithSize`, `import`, `delete`, `getPath` |
 
 ---
@@ -196,7 +196,7 @@ spec 列的（旧式）:
 | 6 | §18 `english_dictionary_service_list` | SPEC | spec 用单一 `dictionary_service_list` 描述词典，代码已拆分中文/英文两个独立列表；spec 需改为两个键 |
 | 7 | §19 `POST /recognize` 描述 | SPEC | 删除"预留（当前为 stub）"，改为已完整实现 |
 | 8 | §18 E2E 端点列表 | SPEC | 补齐 `/e2e/` 命名空间下 14 个端点 |
-| 9 | §18 IPC 通道表 | SPEC | 补 `translate`, `shell`, `log`, `chineseDict`, `update`, `tray`, `detect` 7 个命名空间及各命名空间内遗漏的方法 |
+| 9 | §18 IPC 通道表 | SPEC | 补 `translate`, `shell`, `log`, `chinese_dict`, `update`, `tray`, `detect` 7 个命名空间及各命名空间内遗漏的方法 |
 | 10 | §19 GET /config E2E 绕过 | SPEC | 补充 E2E token 存在时返回未脱敏配置的行为说明 |
 
 ### SPEC 需删除（3 项）

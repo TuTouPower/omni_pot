@@ -53,7 +53,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
   text: {
     getSelection: () => ipcRenderer.invoke('text:getSelection'),
     writeClipboard: (text) => ipcRenderer.invoke('text:writeClipboard', text),
-    writeClipboardImage: (base64Image) => ipcRenderer.invoke('text:writeClipboardImage', base64Image),
+    write_clipboard_image: (base64_image) => ipcRenderer.invoke('text:write_clipboard_image', base64_image),
     onTranslateSelectionPending: (callback) => {
       const handler = () => { callback(); }
       ipcRenderer.on('translate:selection-pending', handler)
@@ -97,9 +97,9 @@ const api: Omit<ElectronAPI, 'ready'> = {
   },
   ocr: {
     captureScreenshot: (mode) => ipcRenderer.invoke('ocr:capture-screenshot', mode),
-    openRecognize: (base64Image, text, mode) => ipcRenderer.invoke('ocr:open-recognize', base64Image, text, mode),
+    open_recognize: (base64_image, text, mode) => ipcRenderer.invoke('ocr:open-recognize', base64_image, text, mode),
     sendToTranslate: (text) => ipcRenderer.invoke('ocr:send-to-translate', text),
-    systemRecognize: (base64Image, lang) => ipcRenderer.invoke('ocr:system-recognize', base64Image, lang),
+    system_recognize: (base64_image, lang) => ipcRenderer.invoke('ocr:system-recognize', base64_image, lang),
     onScreenshotShow: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, base64: string, mode: string) => { callback(base64, mode); }
       ipcRenderer.on('screenshot:show', handler)
@@ -115,7 +115,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
     add: (record) => ipcRenderer.invoke('history:add', record),
     list: (page, pageSize, filters) => ipcRenderer.invoke('history:list', page, pageSize, filters),
     count: (filters) => ipcRenderer.invoke('history:count', filters),
-    serviceKeys: () => ipcRenderer.invoke('history:service-keys'),
+    service_keys: () => ipcRenderer.invoke('history:service-keys'),
     update: (id, sourceText, targetText) => ipcRenderer.invoke('history:update', id, sourceText, targetText),
     delete: (id) => ipcRenderer.invoke('history:delete', id),
     clear: () => ipcRenderer.invoke('history:clear')
@@ -129,10 +129,10 @@ const api: Omit<ElectronAPI, 'ready'> = {
     delete: (name) => ipcRenderer.invoke('backup:delete', name),
     getPath: (name) => ipcRenderer.invoke('backup:get-path', name)
   },
-  chineseDict: {
-    lookup: (text: string) => ipcRenderer.invoke('chineseDict:lookup', text),
-    check: () => ipcRenderer.invoke('chineseDict:check'),
-    reload: () => ipcRenderer.invoke('chineseDict:reload'),
+  chinese_dict: {
+    lookup: (text: string) => ipcRenderer.invoke('chinese_dict:lookup', text),
+    check: () => ipcRenderer.invoke('chinese_dict:check'),
+    reload: () => ipcRenderer.invoke('chinese_dict:reload'),
     onStateChanged: (callback: (state: ChineseDictServiceState) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, state: ChineseDictServiceState) => { callback(state); }
       ipcRenderer.on('chinese-dictionary:state-changed', handler)

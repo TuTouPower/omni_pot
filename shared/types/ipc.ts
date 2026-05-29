@@ -59,7 +59,7 @@ export interface ElectronAPI {
   text: {
     getSelection(): Promise<string>
     writeClipboard(text: string): Promise<void>
-    writeClipboardImage(base64Image: string): Promise<void>
+    write_clipboard_image(base64_image: string): Promise<void>
     onTranslateSelectionPending(callback: () => void): () => void
     onTranslateFromSelection(callback: (text: string) => void): () => void
     onTranslateSelectionEmpty(callback: () => void): () => void
@@ -71,9 +71,9 @@ export interface ElectronAPI {
   }
   ocr: {
     captureScreenshot(mode: 'recognize' | 'translate'): Promise<boolean>
-    openRecognize(base64Image: string, text: string, mode?: string): Promise<void>
+    open_recognize(base64_image: string, text: string, mode?: string): Promise<void>
     sendToTranslate(text: string): Promise<void>
-    systemRecognize(base64Image: string, lang: string): Promise<string>
+    system_recognize(base64_image: string, lang: string): Promise<string>
     onScreenshotShow(callback: (base64: string, mode: string) => void): () => void
     onRecognizeShow(callback: (base64: string, text: string, mode: string) => void): () => void
   }
@@ -81,7 +81,7 @@ export interface ElectronAPI {
     add(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<void>
     list(page: number, pageSize: number, filters?: { search?: string; service_key?: string; days?: number }): Promise<HistoryRecord[]>
     count(filters?: { search?: string; service_key?: string; days?: number }): Promise<number>
-    serviceKeys(): Promise<string[]>
+    service_keys(): Promise<string[]>
     update(id: number, sourceText: string, targetText: string): Promise<void>
     delete(id: number): Promise<void>
     clear(): Promise<void>
@@ -95,7 +95,7 @@ export interface ElectronAPI {
     delete(name: string): Promise<{ success: boolean; error?: string }>
     getPath(name: string): Promise<string>
   }
-  chineseDict: {
+  chinese_dict: {
     lookup(text: string): Promise<DictResult | null>
     check(): Promise<{ ready: boolean; status: ChineseDictServiceState; entry_count: number }>
     reload(): Promise<{ success: boolean }>

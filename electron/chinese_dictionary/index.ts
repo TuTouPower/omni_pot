@@ -122,7 +122,7 @@ export function set_service_state(state: ChineseDictServiceState): void {
     if (service_state === state) return
     service_state = state
     // Broadcast to currently-open windows. Renderers mounted later see the
-    // current state via the `chineseDict:check` IPC on mount.
+    // current state via the `chinese_dict:check` IPC on mount.
     for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed()) {
             win.webContents.send('chinese-dictionary:state-changed', state)
