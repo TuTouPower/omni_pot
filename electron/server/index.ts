@@ -28,16 +28,20 @@ const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
 
 export function is_host_allowed(host: string): boolean {
-    const match = /^(localhost|127\.0\.0\.1)(?::\d{1,5})?$/.exec(host)
-    return match !== null
+    if (!host) return false
+    try {
+        const url = new URL(`http://${host}`)
+        return url.hostname === 'localhost' || url.hostname === '127.0.0.1'
+    } catch {
+        return false
+    }
 }
 
 export function is_origin_allowed(origin: string): boolean {
     if (!origin) return false
+    if (!/^https?:\/\/(localhost|127\.0\.0\.1)(?::\d{1,5})?$/.test(origin)) return false
     try {
         const url = new URL(origin)
-        if (url.origin !== origin) return false
-        if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
         return url.hostname === 'localhost' || url.hostname === '127.0.0.1'
     } catch {
         return false

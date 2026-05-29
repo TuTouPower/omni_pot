@@ -16,13 +16,14 @@ test.describe('@core external HTTP API', () => {
             webdav_password: 'webdav-secret',
             service_instances: {
                 'bing@default': { serviceKey: 'bing', config: {} },
-                'mymemory@default': { serviceKey: 'mymemory', config: { api_key: 'mymemory-secret', custom_url: 'http://127.0.0.1:1' } },
+                'mymemory@default': { serviceKey: 'mymemory', config: { enable: true, instanceName: 'MyMemory E2E', api_key: 'mymemory-secret', custom_url: 'http://127.0.0.1:1' } },
                 'tesseract@default': { serviceKey: 'tesseract', config: {} },
-                'youdao@default': { serviceKey: 'youdao', config: { appkey: 'youdao-appkey', key: 'youdao-secret', instanceName: 'Youdao E2E' } },
+                'youdao@default': { serviceKey: 'youdao', config: { enable: true, appkey: 'youdao-appkey', key: 'youdao-secret', endpoint: 'https://api.example.com', instanceName: 'Youdao E2E' } },
             },
         })
 
         const config = await omni.api.get_config_via_external_api()
+        const service_instances = config.service_instances as Record<string, { serviceKey: string; config: Record<string, unknown> }>
 
         expect(config.server_port).toEqual(expect.any(Number))
         expect(config.welcome_dismissed).toBe(true)
@@ -32,12 +33,17 @@ test.describe('@core external HTTP API', () => {
         expect(config.recognize_service_list).toEqual(['tesseract@default', 'system@default', 'qrcode@default'])
         expect(config.dictionary_service_list).toEqual(['chinese_dictionary@default', 'ecdict@default'])
         expect(config.webdav_password).toBe('[redacted]')
-        expect(config.service_instances).toMatchObject({
+        expect(service_instances).toMatchObject({
             'bing@default': { serviceKey: 'bing', config: {} },
-            'mymemory@default': { serviceKey: 'mymemory', config: { api_key: '[redacted]', custom_url: '[redacted]' } },
+            'mymemory@default': { serviceKey: 'mymemory', config: { enable: true, instanceName: 'MyMemory E2E' } },
             'tesseract@default': { serviceKey: 'tesseract', config: {} },
-            'youdao@default': { serviceKey: 'youdao', config: { appkey: '[redacted]', key: '[redacted]', instanceName: 'Youdao E2E' } },
+            'youdao@default': { serviceKey: 'youdao', config: { enable: true, instanceName: 'Youdao E2E' } },
         })
+        expect(service_instances['mymemory@default'].config).not.toHaveProperty('api_key')
+        expect(service_instances['mymemory@default'].config).not.toHaveProperty('custom_url')
+        expect(service_instances['youdao@default'].config).not.toHaveProperty('appkey')
+        expect(service_instances['youdao@default'].config).not.toHaveProperty('key')
+        expect(service_instances['youdao@default'].config).not.toHaveProperty('endpoint')
     })
 
     test('POST /recognize returns the current stub response without an E2E token', async ({ omni }) => {

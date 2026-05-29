@@ -69,6 +69,8 @@ describe('server security helpers', () => {
         expect(is_origin_allowed('https://127.0.0.1')).toBe(true)
         expect(is_origin_allowed('http://localhost:5173')).toBe(true)
         expect(is_origin_allowed('https://127.0.0.1:5173')).toBe(true)
+        expect(is_origin_allowed('http://localhost:80')).toBe(true)
+        expect(is_origin_allowed('https://localhost:443')).toBe(true)
 
         expect(is_origin_allowed('http://localhost.evil.com')).toBe(false)
         expect(is_origin_allowed('http://evil.com')).toBe(false)
