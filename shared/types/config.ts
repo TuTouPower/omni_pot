@@ -164,7 +164,7 @@ export const DEFAULT_CONFIG: AppConfig = {
 
   service_instances: DEFAULT_SERVICE_INSTANCES,
 
-  backup_type: 'webdav',
+  backup_type: 'local',
   webdav_url: '',
   webdav_username: '',
   webdav_password: '',

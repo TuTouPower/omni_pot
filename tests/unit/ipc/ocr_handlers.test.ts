@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { normalize_system_ocr_language, registerOcrHandlers } from '../../../electron/ipc/ocr_handlers'
+import { get_macos_ocr_script_path, normalize_system_ocr_language, registerOcrHandlers } from '../../../electron/ipc/ocr_handlers'
 import { normalize_recognized_text } from '@shared/text_normalize'
 
 const mocks = vi.hoisted(() => ({
@@ -12,6 +12,11 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('electron', () => ({
+    app: {
+        get isPackaged() {
+            return false
+        },
+    },
     ipcMain: {
         handle: vi.fn((channel: string, handler: (...args: unknown[]) => unknown) => {
             mocks.handlers.set(channel, handler)
@@ -84,6 +89,12 @@ describe('normalize_system_ocr_language', () => {
 
     it('rejects language tags that could escape the PowerShell string', () => {
         expect(() => normalize_system_ocr_language("en-US'); Write-Error 'owned")).toThrow('Unsupported OCR language')
+    })
+})
+
+describe('get_macos_ocr_script_path', () => {
+    it('uses the development scripts path before packaging', () => {
+        expect(get_macos_ocr_script_path().replaceAll('\\', '/')).toContain('/scripts/macos_ocr.swift')
     })
 })
 

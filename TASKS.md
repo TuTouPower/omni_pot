@@ -119,9 +119,9 @@
 - [x] **Baidu OCR token 请求不要把 secret 拼到 URL**：`src/services/ocr/baidu_common.ts:8` 改 `URLSearchParams` / form body；`baidu_common.ts:19` 的 ttl < 1 天时 expiresAt 变负。
 - [x] **Bing/Google/Ollama 错误处理**：`bing.ts:124-127` 缺 `!resp.ok` 检查；`google.ts:50-56` 对合法空译响应抛错；`ollama.ts:62-67` 静默丢弃 malformed JSON。
 - [x] **Chinese Dictionary错误不再吞为空结果**：`src/services/chinese_dictionary.ts:15-20` DB 缺失 / IPC 失败 / SQL 错误与"无该词"不可区分；记录错误并 UI 暴露。
-- [ ] **macOS System OCR Swift 脚本打包**：`ipc/ocr_handlers.ts:90-98` 指向 `scripts/macos_ocr.swift`，但 `package.json:60-63` 的 app files 不含该脚本。改 extraResource 或内联 helper。
-- [ ] **macOS 划词实现或在 spec 标缺口**：`electron/selection/darwin.ts:3-5` 永远返回 `unsupported-platform`，与跨平台目标不符。
-- [ ] **WebDAV 备份能力对齐 spec**：`electron/backup/index.ts:338-356/383-428` 始终用本地 zip；`shared/types/config.ts:167-170` 默认 `backup_type: 'webdav'`；`docs/spec.md:571-576` 要求 WebDAV。实现或改默认 + 标 spec。
+- [x] **macOS System OCR Swift 脚本打包**：`scripts/macos_ocr.swift` 已作为 extraResource 打包，并在生产环境从 `process.resourcesPath/scripts/macos_ocr.swift` 读取。
+- [x] **macOS 划词实现或在 spec 标缺口**：`electron/selection/darwin.ts:3-5` 当前返回 `unsupported-platform`，已在 spec 标为当前缺口。
+- [x] **WebDAV 备份能力对齐 spec**：当前备份实现为本地 zip；默认 `backup_type` 已改为 `local`，spec 明确 WebDAV 仅保留配置项、远端同步未实现。
 - [x] **text clipboard IPC 限制大小**：`electron/ipc/text_handlers.ts:9-12` 限制 renderer base64 输入为 20MB（约 15MB raw image），避免无上限创建 `nativeImage`。
 - [x] **clipboard 多并发互不打断**：`electron/clipboard/index.ts` 的 clipboard monitor 抑制改为嵌套引用计数；`electron/selection/clipboard.ts` 的备份/恢复路径继续由抑制窗口保护，已补并发抑制单测。
 - [x] **DeepL free / Bing UA 风险标注**：`src/services/deepl.ts:32-45/140-144`、`bing.ts:55` 仿冒官方客户端，封禁即失效；在 spec/limitations 记录。
@@ -139,7 +139,7 @@
 - [x] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
 - [x] **HTTP server 单元/契约测试**：`tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/token/public config 安全边界；`app_http_api.spec.ts` 覆盖 auth、`/dict` 使用 text、`/history` 分页与公开配置 allowlist。
 - [x] **updater repo/allowlist 契约测试**：`tests/unit/updater.test.ts` 覆盖 release asset 绑定、下载 URL allowlist / redirect allowlist、updater sender 限制。
-- [ ] **backup WebDAV/local 行为单元测试**：`electron/backup/index.ts` 无对应测试。
+- [x] **backup WebDAV/local 行为单元测试**：`tests/unit/backup.test.ts` 覆盖本地备份创建、列表、恢复和路径穿越拒绝；WebDAV 远端同步已在 spec 标为未实现。
 - [ ] **tray 用户可见字符串 contract 测试**：捕获 `Pot Desktop` 类回归。
 - [ ] **screenshot overlay bounds 单测**：`tests/unit/screenshot_display.test.ts:36-48` 只测 capture，不覆盖 `preload_screenshot_window()` / `start_screenshot_capture()` 中的 `setBounds()`。
 - [ ] **Cambridge 音频按钮 UI 回归**：`src/windows/dict/index.tsx:97-102` 真实播放路径无 e2e；stub `Audio` 断言 `play()` URL。

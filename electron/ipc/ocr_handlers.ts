@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
 import { execFile } from 'child_process'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -88,10 +88,14 @@ function normalize_macos_ocr_language(lang: string): string {
     return ''
 }
 
+export function get_macos_ocr_script_path(): string {
+    if (app.isPackaged) return join(process.resourcesPath, 'scripts', 'macos_ocr.swift')
+    return join(__dirname, '..', '..', 'scripts', 'macos_ocr.swift')
+}
+
 async function macos_ocr(image_path: string, lang: string): Promise<string> {
     const bcp47 = normalize_macos_ocr_language(lang)
-    const swift_path = join(__dirname, '..', '..', 'scripts', 'macos_ocr.swift')
-    const args = [swift_path, image_path]
+    const args = [get_macos_ocr_script_path(), image_path]
     if (bcp47) args.push(bcp47)
 
     return new Promise((resolve, reject) => {

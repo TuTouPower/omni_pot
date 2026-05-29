@@ -92,7 +92,7 @@ describe('Config defaults', () => {
     })
 
     it('backup defaults', () => {
-        expect(DEFAULT_CONFIG.backup_type).toBe('webdav')
+        expect(DEFAULT_CONFIG.backup_type).toBe('local')
         expect(DEFAULT_CONFIG.webdav_url).toBe('')
     })
 

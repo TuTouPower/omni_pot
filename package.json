@@ -79,6 +79,10 @@
         ]
       },
       {
+        "from": "scripts/macos_ocr.swift",
+        "to": "scripts/macos_ocr.swift"
+      },
+      {
         "from": "public/logos",
         "to": ".",
         "filter": [
