@@ -12,7 +12,6 @@ import { youdaoService } from './youdao'
 import { volcengineService } from './volcengine'
 import { transmartService } from './transmart'
 import { tencentService } from './tencent'
-import { openaiService } from './openai'
 import { chatglmService } from './chatglm'
 import { geminiproService } from './geminipro'
 import { ollamaService } from './ollama'
@@ -36,7 +35,6 @@ export function registerAllServices(): void {
     translateServiceRegistry.register(volcengineService)
     translateServiceRegistry.register(transmartService)
     translateServiceRegistry.register(tencentService)
-    translateServiceRegistry.register(openaiService)
     translateServiceRegistry.register(chatglmService)
     translateServiceRegistry.register(geminiproService)
     translateServiceRegistry.register(ollamaService)

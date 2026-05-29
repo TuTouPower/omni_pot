@@ -182,7 +182,6 @@
 
 | 服务 | 状态 | 需要配置 | 备注 |
 |---|---|---|---|
-| OpenAI compatible | 当前代码存在 | API key / Azure key / 自定义 URL | 通常按 token 计费；如果用户填自建兼容服务，费用由该服务决定。 |
 | ChatGLM | 当前代码存在 | API key | 资料归类为按 token 计费/额度，未确认长期免费层。 |
 | Hirak Translation | 资料中候选 | API key | 资料列为 Requires API Key，未确认免费额度。 |
 

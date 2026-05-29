@@ -318,7 +318,7 @@ CSP 保持默认同源限制，但 `connect-src` 允许 `https:` 外部连接与
 
 - 源语言为 `auto` 时调用语言检测；中文长句（例如重复“我爱你”的文本）必须识别为简体中文，不得误判为日语；检测结果与目标语言相同时回退到 `translate_second_language`
 - 多服务 `Promise.allSettled` 并行翻译
-- 流式服务（OpenAI / Ollama / Gemini 等）通过 `translateStream` AsyncGenerator 增量更新卡片（节流 50ms）
+- 流式服务（Ollama / Gemini 等）通过 `translateStream` AsyncGenerator 增量更新卡片（节流 50ms）
 - `requestId` 机制：旧请求 ID 的结果被忽略，防止旧异步结果覆盖新输出
 - 翻译成功后写入历史记录，除非 `history_disable=true`；历史按**实例 key** 存储 `service_key`
 - 重试：单卡片重试只重新调用该服务实例
@@ -696,7 +696,7 @@ interface DictResult {
 
 ### 12.3 服务实例系统
 
-- 每个服务实例有唯一键：`{serviceKey}@{randomId}`（如 `openai@abc123`）
+- 每个服务实例有唯一键：`{serviceKey}@{randomId}`（如 `bing@abc123`）
 - 用户可添加同一服务的多个实例，配置各不相同
 - 首次启动为部分内置服务自动建默认实例（key 形如 `bing@default`）
 - `service_instances` 配置项存 `instanceKey → { serviceKey, config }` 映射
@@ -714,7 +714,7 @@ interface DictResult {
 
 ## 13. 翻译服务清单
 
-`src/services/` 注册 20 个翻译服务（`registerAllServices()`，**以代码为准**）：
+`src/services/` 注册 19 个翻译服务（`registerAllServices()`，**以代码为准**）：
 
 | # | 服务 | Key | 认证 / 说明 |
 |---|---|---|---|
@@ -731,13 +731,12 @@ interface DictResult {
 | 11 | 火山引擎 | `volcengine` | AppID + Secret |
 | 12 | TranSmart | `transmart` | Username + Token |
 | 13 | 腾讯 | `tencent` | TC3-HMAC-SHA256 |
-| 14 | OpenAI | `openai` | API Key，流式 |
-| 15 | ChatGLM | `chatglm` | API Key，流式 |
-| 16 | Gemini Pro | `geminipro` | API Key，流式 |
-| 17 | Ollama | `ollama` | 本地，流式 |
-| 18 | MyMemory | `mymemory` | 免费 |
-| 19 | Chinese Dictionary | `chinese_dictionary` | 离线（mapull/chinese-dictionary → SQLite 86MB），输出词典结果 |
-| 20 | CC-CEDICT | `ecdict` | 离线（CC-CEDICT SQLite），输出词典结果 |
+| 14 | ChatGLM | `chatglm` | API Key，流式 |
+| 15 | Gemini Pro | `geminipro` | API Key，流式 |
+| 16 | Ollama | `ollama` | 本地，流式 |
+| 17 | MyMemory | `mymemory` | 免费 |
+| 18 | Chinese Dictionary | `chinese_dictionary` | 离线（mapull/chinese-dictionary → SQLite 86MB），输出词典结果 |
+| 19 | CC-CEDICT | `ecdict` | 离线（CC-CEDICT SQLite），输出词典结果 |
 
 > 与原 Pot Desktop 3.0.7 的差异：本项目用 `mymemory` 替代了原版的
 > `yandex`、`bing_dict`。

@@ -290,7 +290,7 @@ class TranslatePage {
 - 默认翻译服务通过本地 HTTP stub 产出可控结果：用户启用多个翻译实例 → 在翻译窗口翻译一段文字 → 每张服务卡片都显示译文，无“翻译失败”；默认免费翻译服务真实出结果由 `external_services.spec.ts` 覆盖
 - 翻译成功写入历史；`history_disable=true` 时不写
 - `requestId`：用户连续两次翻译，旧结果不覆盖新结果
-- 流式服务（如已配置 openai 实例）结果卡片增量更新
+- 流式服务（如已配置 Ollama / Gemini 实例）结果卡片增量更新
 
 ### 5.3 translate_titlebar.spec.ts — 翻译窗口标题栏 · issues #4 #8
 

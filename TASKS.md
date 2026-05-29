@@ -113,12 +113,11 @@
 ### E. 翻译 / 词典 / OCR 服务正确性（high）
 
 - [ ] **所有 provider 加超时 + AbortController**：`src/services/*.ts` 全量；统一 `fetchWithTimeout` 默认 15s + abort。
-- [x] **OpenAI 流式 chunk 跨边界 / 异常**：`src/services/openai.ts:51-70/174-176` 未维护跨 chunk buffer，`JSON.parse` 无 try/catch（参考 `ollama.ts`）。补 buffer + per-chunk catch。
+- [x] **OpenAI 翻译服务已移除**：原 `src/services/openai.ts` 已删除，不再注册 OpenAI 翻译服务；相关流式 chunk / `requestArguments` 修复项不再适用。
 - [ ] **Youdao 签名统一**：`src/services/youdao.ts:50-55/76-83` 混用新版 input 截断和旧版 MD5（无 curtime/signType）。
 - [ ] **TranSmart 协议核对**：`src/services/transmart.ts:43-63`（form-urlencoded + Bearer）与 `scripts/test_pot_plugins.cjs:29-45`（JSON + Referer/UA、无 Bearer）冲突；统一并加契约测试。
 - [x] **Baidu OCR token 请求不要把 secret 拼到 URL**：`src/services/ocr/baidu_common.ts:8` 改 `URLSearchParams` / form body；`baidu_common.ts:19` 的 ttl < 1 天时 expiresAt 变负。
 - [x] **Bing/Google/Ollama 错误处理**：`bing.ts:124-127` 缺 `!resp.ok` 检查；`google.ts:50-56` 对合法空译响应抛错；`ollama.ts:62-67` 静默丢弃 malformed JSON。
-- [x] **OpenAI `requestArguments` JSON 解析失败显式报错**：`src/services/openai.ts:85-87/140-146` 当前静默回退默认值。
 - [x] **Chinese Dictionary错误不再吞为空结果**：`src/services/chinese_dictionary.ts:15-20` DB 缺失 / IPC 失败 / SQL 错误与"无该词"不可区分；记录错误并 UI 暴露。
 - [ ] **macOS System OCR Swift 脚本打包**：`ipc/ocr_handlers.ts:90-98` 指向 `scripts/macos_ocr.swift`，但 `package.json:60-63` 的 app files 不含该脚本。改 extraResource 或内联 helper。
 - [ ] **macOS 划词实现或在 spec 标缺口**：`electron/selection/darwin.ts:3-5` 永远返回 `unsupported-platform`，与跨平台目标不符。
