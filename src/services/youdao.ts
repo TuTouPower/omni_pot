@@ -1,6 +1,6 @@
 import type { TranslateService, ServiceConfig, DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
-import { md5 } from '@/lib/crypto'
+import { sha256 } from '@/lib/crypto'
 import { fetch_with_timeout } from './fetch_timeout'
 
 const YOUDAO_LANGUAGES: LanguageCode[] = [
@@ -48,11 +48,11 @@ function regex_capture(match: RegExpMatchArray, index: number): string {
     return match[index] ?? ''
 }
 
-function buildSign(appKey: string, text: string, salt: string, key: string): string {
+async function buildSign(appKey: string, text: string, salt: string, curtime: string, key: string): Promise<string> {
     const input = text.length <= 20
         ? text
         : text.slice(0, 10) + String(text.length) + text.slice(-10)
-    return md5(`${appKey}${input}${salt}${key}`)
+    return sha256(`${appKey}${input}${salt}${curtime}${key}`)
 }
 
 export const youdaoService: TranslateService = {
@@ -69,7 +69,8 @@ export const youdaoService: TranslateService = {
         const appKey = config.appkey as string
         const key = config.key as string
         const salt = crypto.randomUUID().replace(/-/g, '')
-        const sign = buildSign(appKey, text, salt, key)
+        const curtime = String(Math.floor(Date.now() / 1000))
+        const sign = await buildSign(appKey, text, salt, curtime, key)
 
         const fromLang = YOUDAO_LANG_MAP[from] ?? from
         const toLang = YOUDAO_LANG_MAP[to] ?? to
@@ -80,6 +81,8 @@ export const youdaoService: TranslateService = {
             to: toLang,
             appKey,
             salt,
+            curtime,
+            signType: 'v3',
             sign
         })
 

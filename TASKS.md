@@ -114,7 +114,7 @@
 
 - [x] **所有 provider 加超时 + AbortController**：`src/services/*.ts` 全量；统一 `fetchWithTimeout` 默认 15s + abort。
 - [x] **OpenAI 翻译服务已移除**：原 `src/services/openai.ts` 已删除，不再注册 OpenAI 翻译服务；相关流式 chunk / `requestArguments` 修复项不再适用。
-- [ ] **Youdao 签名统一**：`src/services/youdao.ts:50-55/76-83` 混用新版 input 截断和旧版 MD5（无 curtime/signType）。
+- [x] **Youdao 签名统一**：`src/services/youdao.ts` 使用有道 v3 签名参数：长文本 input 截断 + `curtime` + `signType=v3` + SHA-256。
 - [ ] **TranSmart 协议核对**：`src/services/transmart.ts:43-63`（form-urlencoded + Bearer）与 `scripts/test_pot_plugins.cjs:29-45`（JSON + Referer/UA、无 Bearer）冲突；统一并加契约测试。
 - [x] **Baidu OCR token 请求不要把 secret 拼到 URL**：`src/services/ocr/baidu_common.ts:8` 改 `URLSearchParams` / form body；`baidu_common.ts:19` 的 ttl < 1 天时 expiresAt 变负。
 - [x] **Bing/Google/Ollama 错误处理**：`bing.ts:124-127` 缺 `!resp.ok` 检查；`google.ts:50-56` 对合法空译响应抛错；`ollama.ts:62-67` 静默丢弃 malformed JSON。

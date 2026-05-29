@@ -727,7 +727,7 @@ interface DictResult {
 | 7 | 百度领域 | `baidu_field` | MD5 + field |
 | 8 | 彩云小译 | `caiyun` | Token |
 | 9 | 牛翻译 | `niutrans` | API Key |
-| 10 | 有道 | `youdao` | MD5 签名 |
+| 10 | 有道 | `youdao` | v3 SHA-256 签名（`curtime` + `signType=v3`） |
 | 11 | 火山引擎 | `volcengine` | AppID + Secret |
 | 12 | TranSmart | `transmart` | Username + Token |
 | 13 | 腾讯 | `tencent` | TC3-HMAC-SHA256 |
