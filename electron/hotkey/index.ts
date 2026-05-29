@@ -46,35 +46,48 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
   }
 }
 
+function readSelectedTextLater(): ReturnType<typeof readSelectedText> {
+    return Promise.resolve().then(() => readSelectedText())
+}
+
 export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: string): Promise<void> {
+    const started_at = Date.now()
     const result_promise = textOverride === undefined
-        ? readSelectedText()
-        : Promise.resolve({ text: textOverride, reason: textOverride.trim() ? undefined : 'empty' })
+        ? readSelectedTextLater()
+        : Promise.resolve({ text: textOverride, method: 'none' as const, reason: textOverride.trim() ? undefined : 'empty' as const })
 
     mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+    const show_ms = Date.now() - started_at
     mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-pending')
 
     const result = await result_promise
+    const total_ms = Date.now() - started_at
     if (!result.text.trim()) {
-        log_hotkey.info('translate entry: no text, reason=%s', result.reason ?? 'empty')
+        log_hotkey.info('translate entry: show_ms=%d total_ms=%d entry=empty reason=%s', show_ms, total_ms, result.reason ?? 'empty')
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:input-translate')
         return
     }
 
+    log_hotkey.info('translate entry: show_ms=%d total_ms=%d entry=selection reason=ok', show_ms, total_ms)
     mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-selection', result.text)
 }
 
-async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
-    const result = await readSelectedText()
+export async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
+    const started_at = Date.now()
+    const result_promise = readSelectedTextLater()
 
+    mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
+    const show_ms = Date.now() - started_at
+
+    const result = await result_promise
+    const total_ms = Date.now() - started_at
     if (!result.text.trim()) {
-        log_hotkey.info('selection dictionary: no text, reason=%s', result.reason ?? 'empty')
-        mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
+        log_hotkey.info('selection dictionary: show_ms=%d total_ms=%d entry=empty reason=%s', show_ms, total_ms, result.reason ?? 'empty')
         mgr.sendWhenReady(WindowLabel.DICT, 'dict:selection-empty')
         return
     }
 
-    mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
+    log_hotkey.info('selection dictionary: show_ms=%d total_ms=%d entry=selection reason=ok', show_ms, total_ms)
     mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', result.text)
 }
 

@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { WindowManager } from '../../../electron/windows/manager'
 
 const read_selected_text = vi.fn()
 const focus_or_create = vi.fn()
 const send_when_ready = vi.fn()
 const translate_options = { label: 'translate', width: 390, height: 160 }
+const dict_options = { label: 'dict', width: 350, height: 420 }
 
 vi.mock('electron', () => ({
     globalShortcut: {
@@ -24,8 +25,12 @@ vi.mock('../../../electron/windows/translate_options', () => ({
 }))
 
 vi.mock('../../../electron/windows/dict_options', () => ({
-    get_dict_window_options: () => ({ label: 'dict', width: 350, height: 420 }),
+    get_dict_window_options: () => dict_options,
 }))
+
+beforeEach(() => {
+    vi.clearAllMocks()
+})
 
 describe('translate hotkey entry', () => {
     it('opens translate window before selected text lookup finishes', async () => {
@@ -41,7 +46,10 @@ describe('translate hotkey entry', () => {
 
         expect(focus_or_create).toHaveBeenCalledWith('translate', translate_options)
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
+        expect(read_selected_text).not.toHaveBeenCalled()
 
+        await Promise.resolve()
+        expect(read_selected_text).toHaveBeenCalled()
         resolve_selection({ text: '', method: 'clipboard', reason: 'copy-failed' })
         await pending
 
@@ -49,8 +57,6 @@ describe('translate hotkey entry', () => {
     })
 
     it('sends selection-pending before from-selection when text is found', async () => {
-        send_when_ready.mockClear()
-        focus_or_create.mockClear()
         let resolve_selection: (value: { text: string; method: 'clipboard' }) => void = () => {}
         read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))
         const manager = {
@@ -63,11 +69,62 @@ describe('translate hotkey entry', () => {
 
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
         expect(send_when_ready).toHaveBeenCalledTimes(1)
+        expect(read_selected_text).not.toHaveBeenCalled()
 
+        await Promise.resolve()
+        expect(read_selected_text).toHaveBeenCalled()
         resolve_selection({ text: 'hello', method: 'clipboard' })
         await pending
 
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:from-selection', 'hello')
         expect(send_when_ready).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe('selection dictionary hotkey entry', () => {
+    it('opens dictionary window before selected text lookup finishes', async () => {
+        let resolve_selection: (value: { text: string; method: 'clipboard' }) => void = () => {}
+        read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))
+        const manager = {
+            focusOrCreate: focus_or_create,
+            sendWhenReady: send_when_ready,
+        } as unknown as WindowManager
+        const { triggerSelectionDictionary } = await import('../../../electron/hotkey/index')
+
+        const pending = triggerSelectionDictionary(manager)
+
+        expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
+        expect(send_when_ready).not.toHaveBeenCalled()
+        expect(read_selected_text).not.toHaveBeenCalled()
+
+        await Promise.resolve()
+        expect(read_selected_text).toHaveBeenCalled()
+        resolve_selection({ text: 'hello', method: 'clipboard' })
+        await pending
+
+        expect(send_when_ready).toHaveBeenCalledWith('dict', 'dict:lookup', 'hello')
+    })
+
+    it('sends empty selection after dictionary window opens', async () => {
+        let resolve_selection: (value: { text: string; method: 'clipboard'; reason: 'empty' }) => void = () => {}
+        read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))
+        const manager = {
+            focusOrCreate: focus_or_create,
+            sendWhenReady: send_when_ready,
+        } as unknown as WindowManager
+        const { triggerSelectionDictionary } = await import('../../../electron/hotkey/index')
+
+        const pending = triggerSelectionDictionary(manager)
+
+        expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
+        expect(send_when_ready).not.toHaveBeenCalled()
+        expect(read_selected_text).not.toHaveBeenCalled()
+
+        await Promise.resolve()
+        expect(read_selected_text).toHaveBeenCalled()
+        resolve_selection({ text: '', method: 'clipboard', reason: 'empty' })
+        await pending
+
+        expect(send_when_ready).toHaveBeenCalledWith('dict', 'dict:selection-empty')
     })
 })

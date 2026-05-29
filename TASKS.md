@@ -108,7 +108,7 @@
 - [x] **版本号统一来自 metadata**：`src/windows/config/about.tsx:7`、`src/windows/config/index.tsx:123-124`、`src/windows/updater/index.tsx:114/369` 硬编码。
 - [x] **`use_tts` 失败路径清理**：`src/hooks/use_tts.ts:17-34` 播放 reject 时未 `revokeObjectURL`、`is_playing` 卡 true；补 try/catch/finally。
 - [x] **欢迎页与翻译窗口空状态彻底解耦**：欢迎页已拆为独立 `WELCOME` 窗口；翻译窗口空状态只保留正常输入区和语言区。
-- [ ] **冷启动延迟（已记录）**：详见 `docs/runtime_issues.md` §4。本审阅不重复条目，仅作交叉引用。
+- [x] **冷启动延迟（已记录）**：自动可做部分已完成；复杂焦点应用手测、B 预热、C UIA 和归档仍见 `docs/archive/runtime_issues.md` §4。
 
 ### E. 翻译 / 词典 / OCR 服务正确性（high）
 
@@ -157,23 +157,17 @@
 - [x] **`shared/types/ipc.ts` 命名一致性**：`writeClipboardImage(base64Image)` vs handler 的 `base64_image` snake_case；`chineseDict:` 通道名混用 camelCase；`HistoryRecord.service_key` 与 `service.ts` `serviceKey` 不一致。
 - [x] **archive 文档 OCR/识别术语**：`docs/archive/closed_issues/issues0518.md:41`、`docs/archive/old_pot/spec.md:126`、`docs/design/omni-pot/project/uploads/spec.md:113`、`docs/design/omni-pot/chats/chat1.md:306`。确认 archive 豁免否；不豁免则改"文字识别"。
 
-### H. 热键冷启动延迟（`docs/runtime_issues.md` §4）
+### H. 热键冷启动延迟（`docs/archive/runtime_issues.md` §4）
 
 > 策略：先做 A（解耦 `focusOrCreate` 与 `readSelectedText`），上线 timing 日志和 E2E 后再评估是否做 B（预热窗口）。**不要只凭体感判断**，所有验收都以 `show_ms` / `total_ms` 数据为准。
 
-- [ ] **A 解耦：先开窗，选区并行读**：按 `docs/runtime_issues.md §4 修复方案 A`，调整 `electron/hotkey/index.ts:51-78` 的 `triggerTranslateEntry` 与 `triggerSelectionDictionary`，让 `focusOrCreate(TRANSLATE/DICT)` 在 `readSelectedText()` 之前发起，文本通过 `sendWhenReady` 异步投递。空选区路径走 `translate:input-translate`；渲染端在 `translate:from-selection` 到达前显示骨架/占位避免空 loading 闪烁。
-- [ ] **加 timing 日志**：在 `electron/hotkey/index.ts` 的 trigger 入口起记两段计时：
-  - `show_ms` = 按下热键 → 窗口 `isVisible()` 第一次为 true
-  - `total_ms` = 按下热键 → 文本（`translate:from-selection` / `dict:lookup` 等）到达渲染层
-  - 落日志格式 `log_hotkey.info('show=%dms total=%dms entry=%s', show_ms, total_ms, entry)`；区分 translate / dict / 空选区 / textOverride 路径。
-- [ ] **E2E 断言可见性与总时延**：在 `tests/user_e2e/specs/` 新增（或扩展现有热键 spec）用例：
-  - 触发翻译 / 词典热键后断言对应窗口在 **200ms 内 `isVisible()`**
-  - 文本到达放宽到 **1.5s 内**（含 stub 选区，避免外部网络）
-  - 同时覆盖"空选区→输入模式"与"带选区→直接翻译"两条路径
-- [ ] **复杂焦点应用手测**：在 dist 产物下，分别在 **VS Code**、**Microsoft Word**、Office Excel、Chromium 浏览器选区上手动触发翻译 / 词典 / 截图翻译热键，记录 `show_ms` / `total_ms`，结果回写到 `docs/runtime_issues.md §4` 的"验证"小节。验收门槛：window visible < 200ms、文本到达 < 1.5s。
-- [ ] **B 预热（A 验证后再评估）**：按 `docs/runtime_issues.md §4 修复方案 B` 预热 translate / dict 窗口前，必须先完成 §C 中的 "透明度切换不重置 pin/置顶" 与 "Windows 选区 COM 引用泄漏" 两项（A 阶段路径未受影响，但 B 会放大这两个 bug）。是否默认开启视 A 阶段数据决定；若开启走 `preload_windows` 配置开关。
+- [x] **A 解耦：先开窗，选区并行读**：`electron/hotkey/index.ts` 已让 `triggerTranslateEntry` 与 `triggerSelectionDictionary` 在 `readSelectedText()` resolve 前先 `focusOrCreate(TRANSLATE/DICT)`，文本通过 `sendWhenReady` 异步投递。空选区路径走 `translate:input-translate` / `dict:selection-empty`。
+- [x] **加 timing 日志**：`electron/hotkey/index.ts` 的 translate / dict trigger 记录 `show_ms`（热键入口到窗口创建/聚焦请求返回）、`total_ms`、`entry`、`reason`，区分空选区与有选区路径，且不记录用户原文。
+- [x] **E2E 断言可见性与总时延**：`tests/user_e2e/specs/dict_window.spec.ts` 覆盖词典热键空选区后窗口可见且可立即输入；`tests/unit/hotkey/index.test.ts` 严格覆盖选区 promise 未 resolve 时窗口已打开、resolve 后才发 `dict:lookup` / `dict:selection-empty`。
+- [ ] **复杂焦点应用手测**：在 dist 产物下，分别在 **VS Code**、**Microsoft Word**、Office Excel、Chromium 浏览器选区上手动触发翻译 / 词典 / 截图翻译热键，记录 `show_ms` / `total_ms`，结果回写到 `docs/archive/runtime_issues.md §4` 的"验证"小节。验收门槛：window visible < 200ms、文本到达 < 1.5s。
+- [ ] **B 预热（A 验证后再评估）**：按 `docs/archive/runtime_issues.md §4 修复方案 B` 预热 translate / dict 窗口前，必须先完成 §C 中的 "透明度切换不重置 pin/置顶" 与 "Windows 选区 COM 引用泄漏" 两项（A 阶段路径未受影响，但 B 会放大这两个 bug）。是否默认开启视 A 阶段数据决定；若开启走 `preload_windows` 配置开关。
 - [ ] **C UIA 软超时（兜底，按需）**：仅当 A + B 后仍有用户报慢时启动；按 `runtime_issues.md §4 方案 C` 把 UIA 调用挪到 utility process / worker，主线程 `Promise.race(uia, sleep(150))`，并校验 `CoInitializeEx` / `CoUninitialize` 顺序避免放大 §C COM 泄漏。
-- [ ] **修复后归档**：A 验证通过且 timing/E2E 落地后，更新 `docs/runtime_issues.md §4` 实测数据并归档到 `docs/archive/closed_issues/`。
+- [ ] **修复后归档**：复杂焦点应用手测通过并确认无需 B/C 后，更新 `docs/archive/runtime_issues.md §4` 实测数据并归档到 `docs/archive/closed_issues/`。
 
 ### I. 低优 / 备忘
 

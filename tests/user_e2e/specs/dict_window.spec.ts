@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import { build_cambridge_dict_init_script, cambridge_dict_hello_payload, cambridge_dict_reconcile_payload } from '../fixtures/stub_payloads'
-import { ocr_timeout_ms } from '../fixtures/timeout_constants'
+import { ocr_timeout_ms, ui_timeout_ms } from '../fixtures/timeout_constants'
 const cambridge_dict_config = {
     welcome_dismissed: true,
     dictionary_service_list: [],
@@ -78,6 +78,7 @@ test.describe('@ui dict window', () => {
         try {
             const result = await omni.api.triggerHotkey('hotkey_selection_dictionary', '')
             expect(result.success).toBe(true)
+            await expect.poll(async () => (await omni.api.windowState('dict')).visible, { timeout: ui_timeout_ms }).toBe(true)
             const dict = await omni.dict()
 
             await expect(dict.word()).toHaveValue('')
