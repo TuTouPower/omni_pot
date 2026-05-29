@@ -843,17 +843,6 @@ https://github.com/pot-app/pot-desktop
 | 语言 (auto + 31) | LLM 语言枚举：所有配置的标准目标语言加粤语 (`yue`) |
 | 特性 | 本地 LLM，流式输出，从 UI 拉取模型，显示已安装模型状态 |
 
-### 8.16 OpenAI
-
-| 字段 | 值 |
-|-------|-------|
-| Key | `openai` |
-| 配置 | `service` (openai/azure), `requestPath`, `model` (默认: `gpt-3.5-turbo`), `apiKey`, `stream` (boolean), `promptList`, `requestArguments` (JSON) |
-| 默认 URL | `https://api.openai.com/v1/chat/completions` |
-| 语言 (auto + 31) | LLM 语言枚举：所有配置的标准目标语言加粤语 (`yue`) |
-| 特性 | OpenAI + Azure OpenAI 模式，流式输出，可自定义 prompt |
-| 请求参数默认值 | `{"temperature":0.1,"top_p":0.99,"frequency_penalty":0,"presence_penalty":0}` |
-
 ### 8.17 腾讯
 
 | 字段 | 值 |

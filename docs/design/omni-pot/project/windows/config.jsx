@@ -348,7 +348,7 @@ const PageHistory = () => {
   const [enabled, setEnabled] = useStateC(true);
   const rows = [
     { svc:'deepl', src:'reconcile', from:'en', to:'zh_cn', dst:'调和；使一致', t:'2 分钟前' },
-    { svc:'openai', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
+    { svc:'bing', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
     { svc:'google', src:'eventual consistency', from:'en', to:'zh_cn', dst:'最终一致性', t:'8 分钟前' },
     { svc:'cambridge_dict', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
     { svc:'mymemory', src:'走り抜ける', from:'ja', to:'zh_cn', dst:'跑着穿过', t:'今天 11:08' },
