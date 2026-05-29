@@ -256,14 +256,6 @@ function validate_backup_config(data: Buffer): void {
     if (!is_plain_config(parsed)) {
         throw new Error('Invalid backup config')
     }
-    const config = parsed
-    const known_keys = new Set<string>(Object.keys(DEFAULT_CONFIG))
-    known_keys.add('__initialized')
-    for (const key of Object.keys(config)) {
-        if (!known_keys.has(key)) {
-            throw new Error(`Backup config contains unknown key: ${key}`)
-        }
-    }
 }
 
 function validate_backup_entries(entry_by_name: Map<string, Buffer>): void {
