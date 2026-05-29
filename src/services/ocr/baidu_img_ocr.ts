@@ -2,6 +2,7 @@ import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import { md5 } from '@/lib/crypto'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const BAIDU_IMG_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -68,7 +69,7 @@ export const baiduImgOcrService: OcrService = {
         form.append('version', '3')
         form.append('sign', sign)
 
-        const resp = await fetch('https://fanyi-api.baidu.com/api/trans/sdk/picture', {
+        const resp = await fetch_with_timeout('https://fanyi-api.baidu.com/api/trans/sdk/picture', {
             method: 'POST',
             body: form
         })

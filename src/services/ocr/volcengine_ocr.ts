@@ -2,6 +2,7 @@ import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import { signVolcengineRequest } from '../volcengine_sign'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const VOLCENGINE_OCR_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -30,7 +31,7 @@ export const volcengineOcrService: OcrService = {
             action: 'OCRTarget', version: '2022-08-31', body
         })
 
-        const resp = await fetch(url, {
+        const resp = await fetch_with_timeout(url, {
             method: 'POST', headers, body
         })
 

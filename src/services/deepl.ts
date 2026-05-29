@@ -1,5 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const DEEPL_LANGUAGES: LanguageCode[] = [
   'auto', 'zh_cn', 'zh_tw', 'ja', 'en', 'ko', 'fr', 'es', 'ru', 'de',
@@ -137,7 +138,7 @@ async function translate_free(
       }
     }
 
-    const resp = await fetch('https://www2.deepl.com/jsonrpc', {
+    const resp = await fetch_with_timeout('https://www2.deepl.com/jsonrpc', {
       method: 'POST',
       headers: DEEPL_FREE_HEADERS,
       body: format_post_json(post_data)
@@ -225,7 +226,7 @@ export const deeplService: TranslateService = {
       headers['Authorization'] = `DeepL-Auth-Key ${authKey}`
     }
 
-    const resp = await fetch(url, {
+    const resp = await fetch_with_timeout(url, {
       method: 'POST',
       headers,
       body: new URLSearchParams(body).toString()

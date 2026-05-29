@@ -1,6 +1,7 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { signTencentRequest } from './tencent_sign'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const TENCENT_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru', 'de',
@@ -61,7 +62,7 @@ export const tencentService: TranslateService = {
             action: 'TextTranslate', version: '2018-03-21', body
         })
 
-        const resp = await fetch('https://tmt.tencentcloudapi.com', {
+        const resp = await fetch_with_timeout('https://tmt.tencentcloudapi.com', {
             method: 'POST', headers, body
         })
 

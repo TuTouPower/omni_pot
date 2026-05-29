@@ -2,6 +2,7 @@ import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import { hmac, sha256 } from '@/lib/crypto'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const VOLCENGINE_MULTI_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -71,7 +72,7 @@ export const volcengineMultiLangOcrService: OcrService = {
 
         const authorization = `HMAC-SHA256 Credential=${appid}/${credential_scope}, SignedHeaders=${signed_header_keys}, Signature=${signature}`
 
-        const resp = await fetch(`https://${host}/?${norm_query}`, {
+        const resp = await fetch_with_timeout(`https://${host}/?${norm_query}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

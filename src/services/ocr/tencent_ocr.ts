@@ -2,6 +2,7 @@ import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import { signTencentRequest } from '../tencent_sign'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const TENCENT_OCR_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -30,7 +31,7 @@ export const tencentOcrService: OcrService = {
             action: 'GeneralBasicOCR', version: '2018-11-19', body
         })
 
-        const resp = await fetch('https://ocr.tencentcloudapi.com', {
+        const resp = await fetch_with_timeout('https://ocr.tencentcloudapi.com', {
             method: 'POST', headers, body
         })
 

@@ -1,6 +1,7 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { hmac, hexToBase64 } from '@/lib/crypto'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const ALIBABA_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'yue', 'ja', 'en', 'ko', 'fr', 'es', 'ru',
@@ -97,7 +98,7 @@ export const alibabaService: TranslateService = {
             url.searchParams.set(k, v)
         }
 
-        const resp = await fetch(url.toString())
+        const resp = await fetch_with_timeout(url.toString())
         if (!resp.ok) {
             throw new Error(`Alibaba translate API error: ${String(resp.status)}`)
         }

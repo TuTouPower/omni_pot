@@ -1,6 +1,7 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { signVolcengineRequest } from './volcengine_sign'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const VOLCENGINE_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'ja', 'en', 'ko', 'fr', 'es', 'ru', 'de',
@@ -70,7 +71,7 @@ export const volcengineService: TranslateService = {
             action: 'TranslateText', version: '2020-06-01', body
         })
 
-        const resp = await fetch(url, {
+        const resp = await fetch_with_timeout(url, {
             method: 'POST', headers, body
         })
 

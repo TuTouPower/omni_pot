@@ -1,6 +1,7 @@
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const SIMPLE_LATEX_LANGUAGES: LanguageCode[] = ['auto', 'zh_cn', 'zh_tw', 'en']
 
@@ -21,7 +22,7 @@ export const simpleLatexOcrService: OcrService = {
         const form = new FormData()
         form.append('file', blob, 'image.png')
 
-        const resp = await fetch('https://server.simpletex.cn/api/latex_ocr/v2', {
+        const resp = await fetch_with_timeout('https://server.simpletex.cn/api/latex_ocr/v2', {
             method: 'POST',
             headers: { token },
             body: form

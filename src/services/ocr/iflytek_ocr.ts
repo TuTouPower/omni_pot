@@ -2,6 +2,7 @@ import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import { iflytek_auth } from './iflytek_auth'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const SERVICE_ID = 'sf8e6aca1'
 
@@ -49,7 +50,7 @@ export const iflytekOcrService: OcrService = {
             }
         }
 
-        const resp = await fetch(url, {
+        const resp = await fetch_with_timeout(url, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(body)

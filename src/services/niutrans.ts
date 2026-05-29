@@ -1,5 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const NIUTRANS_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'yue', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -68,7 +69,7 @@ export const niutransService: TranslateService = {
             apikey
         })
 
-        const resp = await fetch(
+        const resp = await fetch_with_timeout(
             `${protocol}://api.niutrans.com/NiuTransServer/translation?${params.toString()}`
         )
         if (!resp.ok) {

@@ -2,6 +2,7 @@ import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 import { iflytek_intsig_auth } from './iflytek_auth'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const IFLYTEK_INTSIG_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -34,7 +35,7 @@ export const iflytekIntsigOcrService: OcrService = {
 
         const authorization = await iflytek_intsig_auth(apikey, apisecret, host, date, request_line, body_json)
 
-        const resp = await fetch(`https://${host}/v2/itr`, {
+        const resp = await fetch_with_timeout(`https://${host}/v2/itr`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

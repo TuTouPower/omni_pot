@@ -1,6 +1,7 @@
 import type { TranslateService, ServiceConfig, DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { md5 } from '@/lib/crypto'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const YOUDAO_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'yue', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -82,7 +83,7 @@ export const youdaoService: TranslateService = {
             sign
         })
 
-        const resp = await fetch(`https://openapi.youdao.com/api?${params.toString()}`)
+        const resp = await fetch_with_timeout(`https://openapi.youdao.com/api?${params.toString()}`)
         if (!resp.ok) {
             throw new Error(`Youdao translate API error: ${String(resp.status)}`)
         }

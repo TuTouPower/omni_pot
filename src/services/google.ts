@@ -1,5 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const GOOGLE_LANGUAGES: LanguageCode[] = [
   'auto', 'zh_cn', 'zh_tw', 'ja', 'en', 'ko', 'fr', 'es', 'ru', 'de',
@@ -41,7 +42,7 @@ export const googleService: TranslateService = {
     url.searchParams.set('dt', 't')
     url.searchParams.set('q', text)
 
-    const resp = await fetch(url.toString())
+    const resp = await fetch_with_timeout(url.toString())
     if (!resp.ok) {
       throw new Error(`Google translate API ${String(resp.status)}`)
     }

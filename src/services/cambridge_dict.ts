@@ -1,5 +1,6 @@
 import type { TranslateService, DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const CAMBRIDGE_LANGUAGES: LanguageCode[] = ['auto', 'en', 'zh_cn', 'zh_tw']
 
@@ -50,7 +51,7 @@ export const cambridgeDictService: TranslateService = {
 
         const url = `https://dictionary.cambridge.org/search/direct/?datasetsearch=${dataset}&q=${encodeURIComponent(text)}`
 
-        const resp = await fetch(url, {
+        const resp = await fetch_with_timeout(url, {
             headers: {
                 'Accept': 'text/html',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'

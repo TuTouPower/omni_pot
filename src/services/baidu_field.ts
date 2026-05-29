@@ -1,6 +1,7 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { md5 } from '@/lib/crypto'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const BAIDU_FIELD_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'yue', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -71,7 +72,7 @@ export const baiduFieldService: TranslateService = {
             domain: field
         })
 
-        const resp = await fetch(
+        const resp = await fetch_with_timeout(
             `https://fanyi-api.baidu.com/api/trans/vip/fieldtranslate?${params.toString()}`
         )
         if (!resp.ok) {

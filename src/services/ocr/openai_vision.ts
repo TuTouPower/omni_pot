@@ -1,6 +1,7 @@
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
+import { fetch_with_timeout } from '../fetch_timeout'
 
 const OPENAI_VISION_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -55,7 +56,7 @@ export const openaiVisionOcrService: OcrService = {
             headers['Authorization'] = `Bearer ${api_key}`
         }
 
-        const resp = await fetch(url, {
+        const resp = await fetch_with_timeout(url, {
             method: 'POST',
             headers,
             body: JSON.stringify(payload)

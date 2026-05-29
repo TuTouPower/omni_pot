@@ -1,5 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const GEMINI_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'yue', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -46,7 +47,7 @@ export const geminiproService: TranslateService = {
             gen_config.thinkingBudget = thinking_budget
         }
 
-        const resp = await fetch(url, {
+        const resp = await fetch_with_timeout(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)

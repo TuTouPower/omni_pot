@@ -1,5 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const MYMEMORY_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'ja', 'en', 'ko', 'fr', 'es', 'ru', 'de',
@@ -42,7 +43,7 @@ export const mymemoryService: TranslateService = {
             url.searchParams.set('key', config.api_key as string)
         }
 
-        const resp = await fetch(url.toString())
+        const resp = await fetch_with_timeout(url.toString())
         if (!resp.ok) {
             throw new Error(`MyMemory API ${String(resp.status)}`)
         }

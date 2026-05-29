@@ -1,5 +1,6 @@
 import type { TranslateService } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const BING_LANGUAGES: LanguageCode[] = [
   'auto', 'zh_cn', 'zh_tw', 'yue', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -57,7 +58,7 @@ const BING_HEADERS = {
 
 async function getPageConfig(): Promise<BingPageConfig> {
   if (cachedConfig && Date.now() < configExpiresAt) return cachedConfig
-  const resp = await fetch('https://www.bing.com/translator', { headers: BING_HEADERS })
+  const resp = await fetch_with_timeout('https://www.bing.com/translator', { headers: BING_HEADERS })
   const html = await resp.text()
   const ig_match = html.match(/IG:"([^"]+)"/)
   const iid_match = html.match(/data-iid="([^"]+)"/)
@@ -103,7 +104,7 @@ export const bingService: TranslateService = {
     const toLang = BING_LANG_MAP[to] ?? to
 
     const url = `${baseUrl}/ttranslatev3?isVertical=1&IG=${ig}&IID=${iid}`
-    const resp = await fetch(url, {
+    const resp = await fetch_with_timeout(url, {
       method: 'POST',
       headers: {
         ...BING_HEADERS,

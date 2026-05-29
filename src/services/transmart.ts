@@ -1,5 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const TRANSMART_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru', 'de',
@@ -53,7 +54,7 @@ export const transmartService: TranslateService = {
             revision: '1'
         })
 
-        const resp = await fetch('https://transmart.qq.com/api/imt', {
+        const resp = await fetch_with_timeout('https://transmart.qq.com/api/imt', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

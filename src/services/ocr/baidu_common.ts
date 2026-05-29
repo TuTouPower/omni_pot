@@ -1,3 +1,4 @@
+import { fetch_with_timeout } from '../fetch_timeout'
 const tokenCache = new Map<string, { token: string; expiresAt: number }>()
 
 export async function getAccessToken(clientId: string, clientSecret: string): Promise<string> {
@@ -5,7 +6,7 @@ export async function getAccessToken(clientId: string, clientSecret: string): Pr
     const cached = tokenCache.get(cacheKey)
     if (cached && Date.now() < cached.expiresAt) return cached.token
 
-    const resp = await fetch('https://aip.baidubce.com/oauth/2.0/token', {
+    const resp = await fetch_with_timeout('https://aip.baidubce.com/oauth/2.0/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({

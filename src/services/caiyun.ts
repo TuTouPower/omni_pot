@@ -1,5 +1,6 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { fetch_with_timeout } from './fetch_timeout'
 
 const CAIYUN_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja'
@@ -32,7 +33,7 @@ export const caiyunService: TranslateService = {
             ? 'auto2zh'
             : `${fromLang}2${toLang}`
 
-        const resp = await fetch('https://api.interpreter.caiyunai.com/v1/translator', {
+        const resp = await fetch_with_timeout('https://api.interpreter.caiyunai.com/v1/translator', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
