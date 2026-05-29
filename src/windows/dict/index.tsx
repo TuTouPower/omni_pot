@@ -255,7 +255,7 @@ export default function DictWindow(): React.ReactElement {
         const lookupWord = trimmed.split(' ')[0] ?? ''
         const detected = await detectLanguage(lookupWord)
         if (lookup_request_ref.current !== request_id) return
-        log.info('lookup: word=%s, detected=%s', lookupWord, detected)
+        log.info('lookup: len=%d, detected=%s', lookupWord.length, detected)
         setDetectedLanguage(detected)
 
         const isEn = detected === 'en'

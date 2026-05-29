@@ -72,7 +72,7 @@
 - [x] **本地 HTTP API 加认证 + 收紧 CORS**：公共 HTTP API 已要求 `X-Omni-Pot-Api-Token`，Host 仅允许 localhost/127.0.0.1，非法 Origin 在路由执行前 403。
 - [x] **`/config` 改为 public allowlist**：`/config` 公开响应改为顶层 allowlist，不返回 `server_api_token` / WebDAV 凭据；service instance config 只返回 `enable` / `instanceName`。
 - [x] **`/history` 端点隐私**：公共 `/history` 需 API token，且默认截断 source/target；完整文本只允许 E2E token 路径用于测试。
-- [ ] **翻译/TTS 原文不再写入持久日志**：`src/windows/translate/index.tsx:131-132`、`src/services/tts/system_tts.ts:78-80` 记录 `text.slice(0, 50)`，落盘到 `%APPDATA%/omni_pot/logs/main.log` 并进入导出日志包。只记录长度/语言/服务数量/request id/耗时。
+- [x] **翻译/TTS 原文不再写入持久日志**：翻译、System TTS、词典查询日志只记录语言、长度、服务数等元数据；剪贴板监听也只记录文本长度，不落原文片段。
 - [ ] **凭据存储与备份加密**：`config.json` 明文保存 WebDAV 密码与 provider API key；备份 zip 未加密（`electron/backup/index.ts:82-147`、`350`）。凭据迁到 OS credential storage；备份默认排除或加密 secrets。
 - [ ] **preload API 按窗口拆分**：`electron/preload.ts:34-47/117-125/52-56` 把 config/backup/clipboard 全部暴露给所有 renderer；IPC handler（`config_handlers.ts`、`backup_handlers.ts`、`text_handlers.ts`）不校验 sender。按窗口拆分 preload；handler 校验 sender window label。
 - [x] **IPC config setter schema 校验**：`ipc/config_handlers.ts:15-24` 接收 `value: unknown` 直接写入；renderer 可持久化错误类型破坏端口、布尔开关等。IPC 边界加 schema。

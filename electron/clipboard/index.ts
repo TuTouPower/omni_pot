@@ -32,7 +32,7 @@ export function pollClipboardMonitorOnce(mgr: WindowManager): void {
 
     if (current !== last_text && current.trim()) {
         last_text = current
-        log_clipboard.info('monitor triggered: text=%s', current.slice(0, 50))
+        log_clipboard.info('monitor triggered: len=%d', current.length)
         mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
         mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:from-clipboard', current)
     }
