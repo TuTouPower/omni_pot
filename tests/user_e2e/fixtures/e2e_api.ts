@@ -177,6 +177,18 @@ export class E2eApi {
         }>
     }
 
+    async windowDisplay(label = 'translate'): Promise<{
+        success: boolean
+        label: string
+        workArea: { x: number; y: number; width: number; height: number }
+    }> {
+        return this.request('GET', `/e2e/window-display?label=${encodeURIComponent(label)}`) as Promise<{
+            success: boolean
+            label: string
+            workArea: { x: number; y: number; width: number; height: number }
+        }>
+    }
+
     async primaryDisplay(): Promise<{
         success: boolean
         workArea: { x: number; y: number; width: number; height: number }

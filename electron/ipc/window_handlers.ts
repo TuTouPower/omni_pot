@@ -25,18 +25,18 @@ export function registerWindowHandlers(manager: WindowManager): void {
     const [max_w = 0, max_h = 0] = win.getMaximumSize()
     const w = Math.max(min_w, max_w > 0 ? Math.min(max_w, Math.round(width)) : Math.round(width))
     const h = Math.max(min_h, max_h > 0 ? Math.min(max_h, Math.round(height)) : Math.round(height))
-    win.setContentSize(w, h)
+    const bounds = win.getBounds()
+    win.setBounds({ ...bounds, width: w, height: h })
   })
   ipcMain.handle('window:setContentHeight', (event, height: number) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return
     const bounds = win.getBounds()
-    const [current_w = bounds.width, current_h = bounds.height] = win.getContentSize()
+    const [, current_h = bounds.height] = win.getContentSize()
     const [, min_h = 0] = win.getMinimumSize()
-    const [, max_h = 0] = win.getMaximumSize()
-    const h = Math.max(min_h, max_h > 0 ? Math.min(max_h, Math.round(height)) : Math.round(height))
+    const h = Math.max(min_h, Math.round(height))
     if (Math.abs(current_h - h) <= 1) return
-    win.setContentSize(current_w, h)
+    win.setBounds({ ...bounds, height: h })
   })
   ipcMain.handle('window:getLabel', (event): string => {
     const win = BrowserWindow.fromWebContents(event.sender)
