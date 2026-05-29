@@ -166,7 +166,7 @@ spec 列的（旧式）:
 | `shell` | `openExternal` |
 | `log` | `getDir`, `export`, `write` |
 | `chineseDict` | `lookup`, `check`, `reload`, `onStateChanged` |
-| `update` | `onRelease`, `downloadAndInstall`, `onDownloadProgress` |
+| `update` | `onRelease`, `downloadAndInstall`, `checkLatest`, `onDownloadProgress` |
 | `tray` | `show`, `close`, `action`, `labels`, `clipboardMonitoring`, `popupReady` |
 | `detect` | `local` |
 

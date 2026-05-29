@@ -20,12 +20,36 @@ interface GitHubRelease {
     name: string
     body: string
     html_url: string
+    published_at: string
     assets: Array<{ name: string; browser_download_url: string; size?: number }>
+}
+
+interface UpdateReleaseInfo {
+    version: string
+    current_version: string
+    name: string
+    body: string
+    html_url: string
+    published_at: string
+    assets: Array<{ name: string; url: string; size?: number }>
 }
 
 interface DownloadAsset {
     name: string
     url: string
+}
+
+let bound_update_assets = new Map<string, DownloadAsset>()
+
+export function bind_update_release_assets(assets: DownloadAsset[]): void {
+    bound_update_assets = new Map(assets.map((asset) => [asset.name, asset]))
+}
+
+export function resolve_bound_update_asset(asset_name: unknown): DownloadAsset {
+    if (typeof asset_name !== 'string') throw new Error('Invalid update asset')
+    const asset = bound_update_assets.get(asset_name)
+    if (!asset) throw new Error('Unknown update asset')
+    return asset
 }
 
 interface DownloadProgress {
@@ -80,7 +104,7 @@ function is_release_redirect_url(url: URL): boolean {
     )
 }
 
-function assert_allowed_download_url(download_url: string, is_redirect: boolean): URL {
+export function assert_allowed_download_url(download_url: string, is_redirect: boolean): URL {
     const parsed_url = new URL(download_url)
     if (is_e2e_update_url(parsed_url)) return parsed_url
     if (is_redirect ? is_release_redirect_url(parsed_url) : is_release_asset_url(parsed_url)) return parsed_url
@@ -195,15 +219,55 @@ function download_asset(asset: DownloadAsset, web_contents: WebContents): Promis
     })
 }
 
-export function registerUpdateHandlers(): void {
-    ipcMain.handle('updater:downloadAndInstall', async (event, asset: DownloadAsset): Promise<{ success: boolean; path?: string; error?: string }> => {
+async function get_update_release_info(): Promise<UpdateReleaseInfo | null> {
+    const resp = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`, {
+        headers: { 'User-Agent': 'omni_pot-updater' }
+    })
+    if (!resp.ok) throw new Error(`HTTP ${String(resp.status)}`)
+
+    const release = await resp.json() as GitHubRelease
+    const current_version = app.getVersion()
+    const latest_version = release.tag_name.replace(/^v/, '')
+    if (!compare_versions(current_version, latest_version)) return null
+
+    return {
+        version: latest_version,
+        current_version,
+        name: release.name,
+        body: release.body,
+        html_url: release.html_url,
+        published_at: release.published_at,
+        assets: release.assets.map((asset) => ({ name: asset.name, url: asset.browser_download_url, size: asset.size })),
+    }
+}
+
+export function assert_updater_sender(manager: WindowManager, web_contents: WebContents): void {
+    if (manager.getLabelById(web_contents.id) !== WindowLabel.UPDATER) {
+        throw new Error('Unauthorized updater IPC sender')
+    }
+}
+
+export function registerUpdateHandlers(manager: WindowManager): void {
+    ipcMain.handle('updater:downloadAndInstall', async (event, asset_name: string): Promise<{ success: boolean; path?: string; error?: string }> => {
         try {
-            const output_path = await download_asset(asset, event.sender)
+            assert_updater_sender(manager, event.sender)
+            const output_path = await download_asset(resolve_bound_update_asset(asset_name), event.sender)
             if (process.env['OMNI_POT_E2E'] !== '1') {
                 const error = await shell.openPath(output_path)
                 if (error) throw new Error(error)
             }
             return { success: true, path: output_path }
+        } catch (error) {
+            return { success: false, error: String(error) }
+        }
+    })
+
+    ipcMain.handle('updater:checkLatest', async (event): Promise<{ success: boolean; release?: UpdateReleaseInfo; error?: string }> => {
+        try {
+            assert_updater_sender(manager, event.sender)
+            const release_info = await get_update_release_info()
+            if (release_info) bind_update_release_assets(release_info.assets)
+            return release_info ? { success: true, release: release_info } : { success: true }
         } catch (error) {
             return { success: false, error: String(error) }
         }
@@ -217,19 +281,9 @@ export async function checkForUpdate(manager: WindowManager, silent = true): Pro
     }
 
     try {
-        const resp = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`, {
-            headers: { 'User-Agent': 'omni_pot-updater' }
-        })
-        if (!resp.ok) {
-            if (!silent) dialog.showErrorBox('Update Check Failed', `HTTP ${String(resp.status)}`)
-            return
-        }
-
-        const release = await resp.json() as GitHubRelease
+        const release_info = await get_update_release_info()
         const current_version = app.getVersion()
-        const latest_version = release.tag_name.replace(/^v/, '')
-
-        if (!compare_versions(current_version, latest_version)) {
+        if (!release_info) {
             if (!silent) {
                 dialog.showMessageBox({
                     type: 'info',
@@ -240,7 +294,6 @@ export async function checkForUpdate(manager: WindowManager, silent = true): Pro
             return
         }
 
-        // Open updater window with release info
         manager.focusOrCreate(WindowLabel.UPDATER, {
             label: WindowLabel.UPDATER,
             width: 480,
@@ -248,15 +301,8 @@ export async function checkForUpdate(manager: WindowManager, silent = true): Pro
             resizable: true
         })
 
-        // Send release data to updater window once ready
-        manager.sendWhenReady(WindowLabel.UPDATER, 'updater:release', {
-            version: latest_version,
-            current_version,
-            name: release.name,
-            body: release.body,
-            html_url: release.html_url,
-            assets: release.assets.map((a) => ({ name: a.name, url: a.browser_download_url, size: a.size }))
-        })
+        bind_update_release_assets(release_info.assets)
+        manager.sendWhenReady(WindowLabel.UPDATER, 'updater:release', release_info)
     } catch (err) {
         if (!silent) {
             dialog.showErrorBox('Update Check Failed', String(err))

@@ -81,7 +81,7 @@
 ### B. 自动更新（high）
 
 - [ ] **更新包签名/哈希校验**：`updater/index.ts:177-185` 下载后直接 `shell.openPath`，仅 URL allowlist。补 Authenticode/签名哈希校验。
-- [ ] **updater IPC 限定 sender**：`updater/index.ts:177-189` handler 不校验 sender window，asset URL 来自 renderer。限制只允许 updater window 调用，asset 由 main 从 release metadata 绑定。
+- [x] **updater IPC 限定 sender**：`updater:downloadAndInstall` 只允许 updater 窗口调用；renderer 只传 asset name，下载 URL 由 main 缓存的 release metadata 绑定。
 
 ### C. 数据可靠性与状态（high）
 
@@ -138,7 +138,7 @@
 - [ ] **timeout 标准化**：按 `docs/test_user_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
 - [x] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
 - [x] **HTTP server 单元/契约测试**：`tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/token/public config 安全边界；`app_http_api.spec.ts` 覆盖 auth、`/dict` 使用 text、`/history` 分页与公开配置 allowlist。
-- [ ] **updater repo/allowlist 契约测试**：`electron/updater/index.ts` 无对应测试。
+- [x] **updater repo/allowlist 契约测试**：`tests/unit/updater.test.ts` 覆盖 release asset 绑定、下载 URL allowlist / redirect allowlist、updater sender 限制。
 - [ ] **backup WebDAV/local 行为单元测试**：`electron/backup/index.ts` 无对应测试。
 - [ ] **tray 用户可见字符串 contract 测试**：捕获 `Pot Desktop` 类回归。
 - [ ] **screenshot overlay bounds 单测**：`tests/unit/screenshot_display.test.ts:36-48` 只测 capture，不覆盖 `preload_screenshot_window()` / `start_screenshot_capture()` 中的 `setBounds()`。

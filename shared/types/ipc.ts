@@ -115,7 +115,16 @@ export interface ElectronAPI {
       published_at: string
       assets: Array<{ name: string; url: string; size?: number }>
     }) => void): () => void
-    downloadAndInstall(asset: { name: string; url: string }): Promise<{ success: boolean; path?: string; error?: string }>
+    downloadAndInstall(asset_name: string): Promise<{ success: boolean; path?: string; error?: string }>
+    checkLatest(): Promise<{ success: boolean; release?: {
+      version: string
+      current_version: string
+      name: string
+      body: string
+      html_url: string
+      published_at: string
+      assets: Array<{ name: string; url: string; size?: number }>
+    }; error?: string }>
     onDownloadProgress(callback: (progress: { downloaded: number; total: number; percent: number }) => void): () => void
   }
   tray: {

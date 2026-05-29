@@ -24,51 +24,6 @@ interface DownloadProgress {
     percent: number
 }
 
-const REPO_OWNER = 'TuTouPower'
-const REPO_NAME = 'omni_pot_release'
-
-interface GithubReleaseAsset {
-    name: string
-    browser_download_url: string
-    size?: number
-}
-
-interface GithubRelease {
-    tag_name: string
-    name: string
-    body: string
-    html_url: string
-    published_at: string
-    assets: GithubReleaseAsset[]
-}
-
-function is_record(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null
-}
-
-function read_string(value: unknown): string | null {
-    return typeof value === 'string' ? value : null
-}
-
-function is_github_release_asset(value: unknown): value is GithubReleaseAsset {
-    if (!is_record(value)) return false
-    return typeof value.name === 'string'
-        && typeof value.browser_download_url === 'string'
-        && (value.size === undefined || typeof value.size === 'number')
-}
-
-function parse_github_release(value: unknown): GithubRelease | null {
-    if (!is_record(value)) return null
-    const tag_name = read_string(value.tag_name)
-    const name = read_string(value.name)
-    const body = read_string(value.body)
-    const html_url = read_string(value.html_url)
-    const published_at = read_string(value.published_at)
-    if (tag_name === null || name === null || body === null || html_url === null || published_at === null) return null
-    const assets = Array.isArray(value.assets) ? value.assets.filter(is_github_release_asset) : []
-    return { tag_name, name, body, html_url, published_at, assets }
-}
-
 export default function UpdaterWindow(): React.ReactElement {
     const { t } = useTranslation()
     const [release, setRelease] = useState<ReleaseInfo | null>(null)
@@ -79,8 +34,6 @@ export default function UpdaterWindow(): React.ReactElement {
     const [downloaded_path, setDownloadedPath] = useState<string | null>(null)
     const [downloading, setDownloading] = useState(false)
     const [currentVersion, setCurrentVersion] = useState('')
-    const currentVersionRef = useRef(currentVersion)
-    currentVersionRef.current = currentVersion
     const main_release_received = useRef(false)
 
     useEffect(() => {
@@ -104,36 +57,22 @@ export default function UpdaterWindow(): React.ReactElement {
     }, [])
 
     useEffect(() => {
-        const fetch_latest = async () => {
-            try {
-                const resp = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`, {
-                    headers: { 'User-Agent': 'omni_pot-updater' }
-                })
-                if (!resp.ok) throw new Error(`HTTP ${String(resp.status)}`)
-                const data: unknown = await resp.json()
-                const latest_release = parse_github_release(data)
-                if (latest_release === null) throw new Error('Invalid GitHub release response')
-                if (main_release_received.current) return
-                setRelease({
-                    version: latest_release.tag_name.replace(/^v/, ''),
-                    current_version: currentVersionRef.current,
-                    name: latest_release.name,
-                    body: latest_release.body,
-                    html_url: latest_release.html_url,
-                    published_at: latest_release.published_at,
-                    assets: latest_release.assets.map((asset) => ({
-                        name: asset.name,
-                        url: asset.browser_download_url,
-                        size: asset.size
-                    }))
-                })
-            } catch (err) {
-                if (!main_release_received.current) setError(String(err))
-            } finally {
-                if (!main_release_received.current) setLoading(false)
+        let cancelled = false
+        window.electronAPI.update.checkLatest().then((result) => {
+            if (cancelled || main_release_received.current) return
+            if (result.success) {
+                setRelease(result.release ?? null)
+                setError(null)
+            } else {
+                setError(result.error ?? 'Update check failed')
             }
-        }
-        fetch_latest().catch(console.error)
+            setLoading(false)
+        }).catch((err: unknown) => {
+            if (cancelled || main_release_received.current) return
+            setError(String(err))
+            setLoading(false)
+        })
+        return () => { cancelled = true }
     }, [])
 
     const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
@@ -144,7 +83,7 @@ export default function UpdaterWindow(): React.ReactElement {
         setDownloadError(null)
         setDownloadedPath(null)
         setDownloadProgress({ downloaded: 0, total: asset.size ?? 0, percent: 0 })
-        window.electronAPI.update.downloadAndInstall(asset)
+        window.electronAPI.update.downloadAndInstall(asset.name)
             .then((result) => {
                 if (result.success) {
                     setDownloadedPath(result.path ?? asset.name)

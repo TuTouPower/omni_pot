@@ -537,8 +537,8 @@ class TranslatePage {
 
 - 全部测试模拟真实用户操作；除 `external_services.spec.ts` 外，外部翻译/词典/文字识别服务用本地可控 stub 模拟响应。
 - 本地能力真实测试：`chinese_dictionary`、Tesseract、System TTS。
-- 更新检查：`/e2e/mock-update` 注入假”有新版本”数据，避免依赖真实 GitHub release ——
-  这只是数据桩，用户操作（点更新器按钮）仍是真实的；下载 URL 在生产环境限制为本仓库 GitHub release asset 与 GitHub 可信重定向，测试环境才允许 localhost HTTP 资产。
+- 更新检查：`/e2e/mock-update` 注入假“有新版本”数据，避免依赖真实 GitHub release ——
+  这只是数据桩，用户操作（点更新器按钮）仍是真实的；下载 IPC 只传 asset name，URL 由主进程绑定的 release metadata 决定；生产环境限制为本仓库 GitHub release asset 与 GitHub 可信重定向，测试环境才允许 localhost HTTP 资产。
 - 截图/OCR：真实路径优先；CI 无显示器时降级为窗口创建与取消路径。
 
 ### 6.5 本地可控 HTTP 服务策略

@@ -18,6 +18,7 @@ import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailure
 import { readSelectedText, setE2eSelectedTextResult } from '../selection'
 import { get_history_page, get_history_count } from '../history'
 import { log } from '../log'
+import { bind_update_release_assets } from '../updater'
 
 const log_server = log.scope('server')
 
@@ -999,6 +1000,7 @@ function handle_mock_update(
                 assets: parse_mock_update_assets(body.assets),
             }
 
+            bind_update_release_assets(release.assets)
             mgr.focusOrCreate(WindowLabel.UPDATER, {
                 label: WindowLabel.UPDATER,
                 width: 480,

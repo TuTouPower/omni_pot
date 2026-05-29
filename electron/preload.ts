@@ -150,6 +150,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
       return () => { ipcRenderer.off('updater:release', handler) }
     },
     downloadAndInstall: (asset) => ipcRenderer.invoke('updater:downloadAndInstall', asset),
+    checkLatest: () => ipcRenderer.invoke('updater:checkLatest'),
     onDownloadProgress: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, progress: Parameters<typeof callback>[0]) => { callback(progress); }
       ipcRenderer.on('updater:download-progress', handler)

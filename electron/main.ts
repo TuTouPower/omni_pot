@@ -110,7 +110,7 @@ if (!gotLock) {
     registerChineseDictionaryHandlers()
     registerDictHandlers()
     registerDetectHandlers()
-    registerUpdateHandlers()
+    registerUpdateHandlers(manager)
     registerTrayHandlers()
     log_main.info('IPC handlers: all registered')
 
