@@ -98,7 +98,7 @@ React 18 + NextUI，技术老旧；本项目从零实现 spec 中定义的全部
 
 | 层 | 技术 |
 |---|---|
-| 桌面框架 | Electron 35+ |
+| 桌面框架 | Electron 39+ |
 | 前端 | React 19 + TypeScript |
 | 构建 | electron-vite + electron-builder |
 | 样式 | Tailwind CSS + 自定义 design tokens（CSS 变量） |
@@ -145,7 +145,7 @@ enum WindowLabel {
 | 识别 / 截图翻译 | `recognize` | 800×400 | — | 未固定时失焦自动关闭；文字识别与截图翻译共用同一个截图翻译窗口布局 |
 | 词典 | `dict` | 400×500（快捷键）/ 350×420（HTTP） | — | 未固定时失焦自动关闭、可置顶 |
 | 设置 | `config` | 720×740 | — | — |
-| 更新器 | `updater` | 600×400 | — | — |
+| 更新器 | `updater` | 480×520 | — | — |
 
 > 所有窗口均为 frameless（`frame: false`），使用自绘标题栏。
 
@@ -406,7 +406,7 @@ renderer: cc_cedict.translate(word)
 ### 行为
 
 1. 窗口全屏打开，始终置顶
-2. 主进程启动时预加载隐藏截图窗口；触发截图时先显示覆盖层，再异步捕获屏幕并发送背景图
+2. 主进程启动时预加载隐藏截图窗口；触发截图时先通过 `desktopCapturer` 捕获屏幕，再显示窗口并发送背景图
 3. 主进程通过 `desktopCapturer` 捕获屏幕，渲染为全屏背景
 4. **鼠标拖拽**创建选择矩形（主色描边 + 半透明遮罩，四角句柄，尺寸标签）
 5. **Enter / 鼠标释放**：裁剪选区，返回 base64 图片，关闭窗口
@@ -1215,6 +1215,16 @@ Electron 多窗口管理器、翻译窗口（SourceArea + LanguageArea + TargetA
 
 HTTP API 服务器、备份与恢复（WebDAV / 本地）、自动更新、完整 i18n、
 剪贴板监听、翻译历史记录（SQLite）、Chinese Dictionary、设置页完整实现。
+
+---
+
+## 33. 已知外部风险
+
+| 风险 | 说明 |
+|---|---|
+| DeepL free UA 仿冒 | `src/services/deepl.ts` 使用 `DeepL/...` 官方客户端 User-Agent 绕过免费版限制，DeepL 随时可封禁。 |
+| Bing 翻译 UA 仿冒 | `src/services/bing.ts` 使用普通浏览器 UA，Bing 可检测并限制异常流量模式。 |
+| Cambridge 正则 HTML 依赖 | `src/services/cambridge_dict.ts` 用正则解析 HTML，Cambridge 改版可能导致解析失败。 |
 
 ---
 

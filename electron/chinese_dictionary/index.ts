@@ -164,6 +164,9 @@ export function fts_search(prefix: string, limit = 5): WordRow[] {
     if (!database) return []
     const cleaned = prefix.replace(/[^\p{Script=Han}a-zA-Z0-9]/gu, '')
     if (!cleaned) return []
+    // FTS5 prefix search with single character is slow on large databases
+    // Require at least 2 characters for prefix search
+    if (cleaned.length < 2) return []
     const query = `${cleaned}*`
     const stmt = stmt_cache.get('fts_search') ?? database.prepare(`
         SELECT words.word, words.pinyin, words.explanation

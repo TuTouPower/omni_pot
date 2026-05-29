@@ -51,7 +51,7 @@ tests/user_e2e/
 │   ├── screenshot_page.ts
 │   ├── config_page.ts
 │   └── updater_page.ts
-└── specs/                  # 测试用例文件（见第 5 节；当前实际 26 个 spec，含设计文档列出的 17 个 + issue 衍生的 9 个）
+└── specs/                  # 测试用例文件（见第 5 节；当前实际 27 个 spec）
 ```
 
 > 历史规划的 `pages/tray.ts` 与 `data/` 目录未落地：托盘走 `/e2e/tray-action` 与 `/e2e/tray-menu` HTTP 端点，无需 Page Object；样例图片直接放在 `fixtures/qr_test.png`。后续若有大量 OCR 样图，再独立拆 `data/` 目录。
@@ -233,8 +233,9 @@ class TranslatePage {
 
 当前已有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、
 `/trigger-clipboard-translate`、`/capture-clock`、`POST /e2e/open-window`、
-`POST /e2e/reset-config`、`GET /e2e/clipboard`、`GET /e2e/clipboard-image`、`GET /e2e/window-state`、
+`POST /e2e/reset-config`、`POST /e2e/set-config`、`GET /e2e/clipboard`、`GET /e2e/clipboard-image`、`GET /e2e/window-state`、
 `GET /e2e/primary-display`、`POST /e2e/trigger-screenshot`、`POST /e2e/trigger-input-translate`、
+`POST /e2e/trigger-hotkey`、`POST /e2e/hotkey-system-failures`、
 `POST /e2e/tray-action`、`GET /e2e/tray-menu`、`POST /e2e/mock-update`。
 
 | 端点 | 用途 |
@@ -360,7 +361,7 @@ class TranslatePage {
 ### 5.8 dict_window.spec.ts — 词典窗口
 
 - `/trigger-dict` 打开词典窗口
-- 标题栏：置顶 → wordmark → 模式标签 `词典`，右上角关闭按钮
+- 标题栏：置顶 → wordmark → 模式标签 `词典` → 固定按钮，右上角关闭按钮
 - 查英文词（`hello`）：Cambridge Dictionary 响应，断言**不渲染任何 Chinese Dictionary 卡片**
 - 查中文词：**只渲染 Chinese Dictionary**（chinese_dictionary 中文释义），断言**不渲染任何英文词典卡片**
 - 查中文词"经济"/"学习"等常用字词：Chinese Dictionary 卡片出现且含真实内容
@@ -411,7 +412,7 @@ class TranslatePage {
 - 侧栏：logo + 8 个导航项 + 版本号；**侧栏不含置顶 / 固定按钮**
 - 顶栏：软件名 + 当前页面名 + 最小化/最大化/关闭三件套，**无置顶 / 固定按钮**
 - 点击各导航项切换页面，激活项高亮、图标主色
-- **通用页**：界面语言归"应用"卡片；外观卡片含主题/主色/文字（字体+字号）/透明/托盘点击行为；应用卡片含 API 端口/开机自启/检查更新
+- **通用页**：界面语言归"应用"卡片；外观卡片含主题/主色/文字/字号/透明/托盘点击行为；应用卡片含 API 端口/开机自启/检查更新
   逐项读写 → 断言 `config.json` 持久化
 - **翻译页**：语言（源/目标/第二语言，**无检测引擎**）、行为（自动复制开关、增量翻译、动态翻译、自动去除换行、禁用历史）、窗口三组卡片逐项读写持久化；语言下拉项以**该语言自身文字**显示（English / 日本語 / ...），不带 AUTO/ZH 字母前缀
 - **文字识别页**：仅 4 项 —— 默认识别引擎（`recognize_engine`）、默认识别语言（`recognize_language`，默认 auto）、自动去除换行（`recognize_delete_newline`，默认 false）、自动复制（`recognize_auto_copy`，默认 true）。断言**不存在**失焦关闭、隐藏窗口、动态识别、默认导出格式、窗口/截图卡片
@@ -450,7 +451,7 @@ class TranslatePage {
 
 ### 5.14 app_http_api.spec.ts — 应用 HTTP API 集成边界
 
-- 覆盖 spec §20 的公开 HTTP API：`POST /translate`、`GET /config`、`POST /recognize`
+- 覆盖 spec §20 的公开 HTTP API：`POST /translate`、`GET /config`、`POST /recognize`、`POST /dict`、`GET /history`
 - 文件名使用 `app_http_api`，避免与真实外部服务连通性 spec 混淆
 - 不带 `OMNI_POT_E2E_TOKEN` 调用公开端点，验证它们不依赖 E2E-only `/trigger-*` 路径
 - `POST /translate` 断言请求体文本进入翻译窗口源文本区；`GET /config` 返回公开配置且敏感字段脱敏；`POST /recognize` 返回当前 stub JSON（`success: true` + mode）

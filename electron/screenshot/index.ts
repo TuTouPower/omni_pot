@@ -70,7 +70,8 @@ export async function start_screenshot_capture(
         log.info('[screenshot] sending screenshot:show, base64 length =', base64.length, 'mode =', mode)
         manager.sendWhenReady(WindowLabel.SCREENSHOT, 'screenshot:show', base64, mode)
         return true
-    } catch {
+    } catch (err) {
+        log.error('[screenshot] capture failed:', err instanceof Error ? err.message : String(err))
         win?.close()
         return false
     }

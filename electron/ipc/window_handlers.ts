@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, app } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 
@@ -71,4 +71,5 @@ export function registerWindowHandlers(manager: WindowManager): void {
     const controller = manager.getTranslateHeightController()
     controller?.report_min_width(width)
   })
+  ipcMain.handle('app:getVersion', () => app.getVersion())
 }

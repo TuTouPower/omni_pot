@@ -24,7 +24,7 @@
 > 两个测试文档的分工：
 > **本文档（`test.md`）** = 测试总则与约定（分层、原则、快捷键策略、运行命令）。
 > **`test_user_e2e.md`** = 用户端到端测试的设计方案（基础设施架构、Page Object、
-> 15 个 spec 各测什么、实施路线）。
+> 27 个 spec 各测什么、实施路线）。
 
 ---
 
@@ -199,8 +199,8 @@
 | `detect.test.ts` | 语言检测逻辑 |
 | `config_defaults.test.ts` | 所有配置项默认值与 spec 一致性 |
 | `e2e_stub_payloads.test.ts` | E2E 本地 stub payload 与 init script helper |
-| `services/test_bing.ts` | Bing 翻译服务适配器 |
-| `services/test_deepl.ts` | DeepL 翻译服务适配器 |
+| `services/bing.test.ts` | Bing 翻译服务适配器 |
+| `services/deepl.test.ts` | DeepL 翻译服务适配器 |
 | `services/test_google.ts` | Google 翻译服务适配器 |
 | `services/test_registry.ts` | 服务注册表 |
 | `services/test_detect.test.ts` | 语言检测逻辑 |
@@ -276,7 +276,7 @@
 | `config_service_mgmt.spec.ts` | 服务管理（添加/删除/排序实例） |
 | `config_history_backup.spec.ts` | 历史记录、备份恢复 |
 | `terminology_settings.spec.ts` | 术语表设置 |
-| `external_services.spec.ts` | 真实外部服务连通性（Bing、DeepL、MyMemory、Cambridge、Free Dict） |
+| `external_services.spec.ts` | 真实外部服务连通性（Bing、Google、DeepL、MyMemory、Cambridge） |
 | `app_http_api.spec.ts` | 主进程 HTTP API 端点 |
 | `i18n.spec.ts` | 多语言切换、翻译完整性 |
 | `updater_and_tray.spec.ts` | 更新检查、托盘弹窗、托盘布局 |
