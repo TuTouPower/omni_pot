@@ -52,6 +52,8 @@ describe('server security helpers', () => {
         expect(is_host_allowed('127.0.0.1')).toBe(true)
         expect(is_host_allowed('127.0.0.1:20202')).toBe(true)
 
+        expect(is_host_allowed('localhost:5173')).toBe(false)
+        expect(is_host_allowed('127.0.0.1:65535')).toBe(false)
         expect(is_host_allowed('localhost.evil.com:20202')).toBe(false)
         expect(is_host_allowed('127.0.0.1.evil.com')).toBe(false)
         expect(is_host_allowed('evil.com')).toBe(false)
@@ -103,8 +105,8 @@ describe('server security helpers', () => {
         expect(public_instance.config).toEqual({
             enable: true,
             instanceName: 'Secret Service',
-            apiKey: '[redacted]',
-            endpoint: '[redacted]',
         })
+        expect(public_instance.config).not.toHaveProperty('apiKey')
+        expect(public_instance.config).not.toHaveProperty('endpoint')
     })
 })

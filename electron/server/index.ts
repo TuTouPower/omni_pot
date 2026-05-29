@@ -27,14 +27,15 @@ const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
 const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
 
-export function is_host_allowed(host: string): boolean {
-    const normalized_host = host.toLowerCase()
-    if (normalized_host === 'localhost' || normalized_host === '127.0.0.1') return true
+const ALLOWED_HOSTS = new Set([
+    'localhost',
+    'localhost:20202',
+    '127.0.0.1',
+    '127.0.0.1:20202',
+])
 
-    const match = /^(localhost|127\.0\.0\.1):(\d{1,5})$/i.exec(host)
-    if (!match) return false
-    const port_number = Number(match[2])
-    return Number.isInteger(port_number) && port_number >= 1 && port_number <= 65535
+export function is_host_allowed(host: string): boolean {
+    return ALLOWED_HOSTS.has(host)
 }
 
 export function is_origin_allowed(origin: string): boolean {
@@ -94,10 +95,7 @@ const SENSITIVE_CONFIG_KEYS = new Set([
 ])
 
 function redact_service_config(config: Record<string, unknown>): Record<string, unknown> {
-    return Object.fromEntries(Object.entries(config).map(([key, value]) => [
-        key,
-        PUBLIC_SERVICE_CONFIG_KEYS.has(key) ? value : REDACTED_CONFIG_VALUE,
-    ]))
+    return Object.fromEntries(Object.entries(config).filter(([key]) => PUBLIC_SERVICE_CONFIG_KEYS.has(key)))
 }
 
 export function get_public_config_from_config(config: AppConfig): PublicConfig {
