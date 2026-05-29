@@ -154,6 +154,7 @@ function PillSelect({
             else select_option(require_pill_option(options, active_index_ref.current).value)
         } else if (event.key === 'Escape') {
             event.preventDefault()
+            event.stopPropagation()
             setOpen(false)
         }
     }, [move_active, open_menu, options, select_option])

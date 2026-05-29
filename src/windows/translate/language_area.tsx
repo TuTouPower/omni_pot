@@ -75,6 +75,7 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
             else if (active_code) select_code(active_code)
         } else if (e.key === 'Escape') {
             e.preventDefault()
+            e.stopPropagation()
             setOpen(false)
         }
     }, [active_code, move_active, open, open_menu, select_code])
