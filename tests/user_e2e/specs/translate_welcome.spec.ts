@@ -1,9 +1,10 @@
 import { type Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { ui_timeout_ms } from '../fixtures/timeout_constants'
 
 async function expect_welcome_closed(omni: AppFixture): Promise<void> {
-    await expect.poll(async () => (await omni.api.windowState('welcome')).exists, { timeout: 5_000 }).toBe(false)
+    await expect.poll(async () => (await omni.api.windowState('welcome')).exists, { timeout: ui_timeout_ms }).toBe(false)
 }
 
 async function close_welcome_without_dismiss(page: Page): Promise<void> {
@@ -30,6 +31,23 @@ test.describe('@ui standalone welcome window', () => {
             const page = await omni.welcome()
             await expect(page).toHaveURL(/#welcome/)
             await expect(page.getByTestId('welcome-empty')).toBeVisible()
+            await expect.poll(async () => page.evaluate(() => {
+                const titlebar = document.querySelector('[data-testid="titlebar"]')
+                const main = document.querySelector('[data-testid="welcome-empty"]')
+                if (!(titlebar instanceof HTMLElement) || !(main instanceof HTMLElement)) return false
+
+                const main_rect = main.getBoundingClientRect()
+                const main_padding_bottom = Number.parseFloat(getComputedStyle(main).paddingBottom) || 0
+                const child_bottom = Array.from(main.children).reduce((bottom, child) => {
+                    if (!(child instanceof HTMLElement)) return bottom
+                    return Math.max(bottom, child.getBoundingClientRect().bottom - main_rect.top)
+                }, 0)
+                const main_height = Math.max(main.scrollHeight, child_bottom + main_padding_bottom)
+                const content_height = Math.ceil(titlebar.getBoundingClientRect().height + main_height)
+                return Math.abs(window.innerHeight - content_height) <= 2
+            })).toBe(true)
+            await expect(page.getByTestId('welcome-configure-hotkeys')).toBeInViewport()
+            await expect(page.getByTestId('welcome-skip')).toBeInViewport()
             await expect(page.getByTestId('titlebar-mode')).not.toContainText('翻译')
             await expect(page.getByTestId('titlebar-pin')).toHaveCount(0)
             await expect(page.getByTestId('titlebar-topmost')).toHaveCount(0)
@@ -99,7 +117,7 @@ test.describe('@ui standalone welcome window', () => {
                 const page = await omni.welcome()
                 await page.getByTestId(test_id).click()
                 await expect_welcome_closed(omni)
-                await expect.poll(async () => (await omni.api.windowState('screenshot')).exists, { timeout: 5_000 }).toBe(true)
+                await expect.poll(async () => (await omni.api.windowState('screenshot')).exists, { timeout: ui_timeout_ms }).toBe(true)
             } finally {
                 await omni.stop()
             }

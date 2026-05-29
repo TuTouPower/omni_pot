@@ -354,6 +354,11 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/window-display') {
+                handle_window_display(mgr, url, res)
+                return
+            }
+
             if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/primary-display') {
                 handle_primary_display(res)
                 return
@@ -807,6 +812,30 @@ function handleWindowState(
         transparent: mgr.isTransparent(label as WindowLabel),
         bounds: win.getBounds(),
     }))
+}
+
+function handle_window_display(
+    mgr: WindowManager,
+    url: URL,
+    res: http.ServerResponse
+): void {
+    const label = url.searchParams.get('label') || WindowLabel.TRANSLATE
+    if (!Object.values(WindowLabel).includes(label as WindowLabel)) {
+        res.writeHead(400)
+        res.end(JSON.stringify({ success: false, error: `unknown label: ${label}` }))
+        return
+    }
+
+    const win = mgr.getWindow(label as WindowLabel)
+    if (!win) {
+        res.writeHead(404)
+        res.end(JSON.stringify({ success: false, error: `missing window: ${label}` }))
+        return
+    }
+
+    const display = screen.getDisplayMatching(win.getBounds())
+    res.writeHead(200)
+    res.end(JSON.stringify({ success: true, label, workArea: display.workArea }))
 }
 
 function handle_primary_display(res: http.ServerResponse): void {

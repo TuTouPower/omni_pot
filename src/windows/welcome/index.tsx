@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
@@ -63,6 +63,8 @@ export default function WelcomeWindow(): React.ReactElement {
     const hotkey_selection_dictionary = useConfigStore((s) => s.config.hotkey_selection_dictionary)
     const hotkey_ocr_recognize = useConfigStore((s) => s.config.hotkey_ocr_recognize)
     const hotkey_ocr_translate = useConfigStore((s) => s.config.hotkey_ocr_translate)
+    const titlebar_ref = useRef<HTMLDivElement>(null)
+    const main_ref = useRef<HTMLElement>(null)
 
     const items: HintItem[] = useMemo(() => [
         {
@@ -106,6 +108,43 @@ export default function WelcomeWindow(): React.ReactElement {
             test_id: 'welcome-ocr-translate',
         },
     ], [hotkey_translate, hotkey_selection_dictionary, hotkey_ocr_recognize, hotkey_ocr_translate])
+
+    useLayoutEffect(() => {
+        const resize_to_content = (): void => {
+            const titlebar = titlebar_ref.current
+            const main = main_ref.current
+            if (!titlebar || !main) return
+
+            const titlebar_height = titlebar.getBoundingClientRect().height
+            const main_rect = main.getBoundingClientRect()
+            const main_style = getComputedStyle(main)
+            const main_padding_bottom = Number.parseFloat(main_style.paddingBottom) || 0
+            const child_bottom = Array.from(main.children).reduce((bottom, child) => {
+                if (!(child instanceof HTMLElement)) return bottom
+                return Math.max(bottom, child.getBoundingClientRect().bottom - main_rect.top)
+            }, 0)
+            const main_height = Math.max(main.scrollHeight, child_bottom + main_padding_bottom)
+            const content_height = Math.ceil(titlebar_height + main_height)
+            if (content_height > 0) window.electronAPI.window.setContentHeight(content_height).catch(() => undefined)
+        }
+
+        resize_to_content()
+        const animation_frame = window.requestAnimationFrame(resize_to_content)
+        const timeout = window.setTimeout(resize_to_content, 50)
+        const observer = new ResizeObserver(resize_to_content)
+        if (titlebar_ref.current) observer.observe(titlebar_ref.current)
+        if (main_ref.current) {
+            observer.observe(main_ref.current)
+            Array.from(main_ref.current.children).forEach((child) => { observer.observe(child) })
+        }
+        document.fonts.ready.then(resize_to_content).catch(() => undefined)
+
+        return () => {
+            window.cancelAnimationFrame(animation_frame)
+            window.clearTimeout(timeout)
+            observer.disconnect()
+        }
+    }, [])
 
     const finish_welcome = useCallback(async (): Promise<void> => {
         await window.electronAPI.config.set('welcome_dismissed', true)
@@ -168,7 +207,7 @@ export default function WelcomeWindow(): React.ReactElement {
 
     return (
         <div className="op-window" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-            <div className="op-titlebar" data-testid="titlebar">
+            <div className="op-titlebar" data-testid="titlebar" ref={titlebar_ref}>
                 <div className="op-wordmark" data-testid="titlebar-wordmark">Omni Pot</div>
                 <span className="op-mode" data-testid="titlebar-mode">{t('welcome.window_title', { defaultValue: '欢迎' })}</span>
                 <div style={{ flex: 1 }} />
@@ -176,7 +215,7 @@ export default function WelcomeWindow(): React.ReactElement {
                     <Icons.Close size={20} />
                 </button>
             </div>
-            <main data-testid="welcome-empty" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px 16px' }}>
+            <main ref={main_ref} data-testid="welcome-empty" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px 16px' }}>
                 <div style={{ padding: '6px 4px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div className="svc-tile" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--brand-primary)', color: '#fff', borderColor: 'transparent', fontSize: 12 }}>op</div>
                     <div className="stack">
