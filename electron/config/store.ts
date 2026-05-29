@@ -121,6 +121,15 @@ export function initConfigStore(): void {
         saveToDisk()
     }
 
+    // Migrate: remove stale openai@ entries from translate_service_list
+    if (Array.isArray(data.translate_service_list)) {
+        const filtered = data.translate_service_list.filter((key: string) => !key.startsWith('openai@'))
+        if (filtered.length !== data.translate_service_list.length) {
+            data.translate_service_list = filtered
+            saveToDisk()
+        }
+    }
+
     // Migrate: replace the old factory default translate_service_list
     // (bing/google/deepl) with the new free defaults (bing/deepl/mymemory)
     // for users who never customized it. Leave user-customized lists alone.
