@@ -178,7 +178,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     }, [open, updateMenuPosition])
 
     React.useEffect(() => {
-        if (!open) return
+        if (!open || !active_id) return
         document.getElementById(active_id)?.scrollIntoView({ block: 'nearest' })
     }, [active_id, open])
 

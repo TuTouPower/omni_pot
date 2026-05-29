@@ -3,7 +3,6 @@ import { randomUUID } from 'crypto'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, lstatSync, renameSync, mkdtempSync, rmSync } from 'fs'
 import { cancel_pending_config_save, flush_config, getAllConfig, getUserDataDir, reload_config_from_disk, broadcastAllConfig } from '../config/store'
 import { sanitize_config_secrets } from '../config/secrets'
-import { DEFAULT_CONFIG } from '@shared/types/config'
 import { close_history } from '../history'
 
 interface BackupFile {
