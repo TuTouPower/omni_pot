@@ -140,9 +140,9 @@
 - [x] **HTTP server 单元/契约测试**：`tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/token/public config 安全边界；`app_http_api.spec.ts` 覆盖 auth、`/dict` 使用 text、`/history` 分页与公开配置 allowlist。
 - [x] **updater repo/allowlist 契约测试**：`tests/unit/updater.test.ts` 覆盖 release asset 绑定、下载 URL allowlist / redirect allowlist、updater sender 限制。
 - [x] **backup WebDAV/local 行为单元测试**：`tests/unit/backup.test.ts` 覆盖本地备份创建、列表、恢复和路径穿越拒绝；WebDAV 远端同步已在 spec 标为未实现。
-- [ ] **tray 用户可见字符串 contract 测试**：捕获 `Pot Desktop` 类回归。
-- [ ] **screenshot overlay bounds 单测**：`tests/unit/screenshot_display.test.ts:36-48` 只测 capture，不覆盖 `preload_screenshot_window()` / `start_screenshot_capture()` 中的 `setBounds()`。
-- [ ] **Cambridge 音频按钮 UI 回归**：`src/windows/dict/index.tsx:97-102` 真实播放路径无 e2e；stub `Audio` 断言 `play()` URL。
+- [x] **tray 用户可见字符串 contract 测试**：`tests/unit/tray_labels.test.ts` 锁定托盘 tooltip 为 Omni Pot，菜单中不出现 Pot Desktop。
+- [x] **screenshot overlay bounds 单测**：`tests/unit/screenshot_display.test.ts` 覆盖 `preload_screenshot_window()` / `start_screenshot_capture()` 的 `setBounds()`。
+- [x] **Cambridge 音频按钮 UI 回归**：`tests/unit/windows/dict_audio.test.ts` stub `Audio` 并断言发音按钮用 Cambridge URL 调 `play()`。
 - [ ] **pin/topmost 回归断言 pinned 状态**：`tests/user_e2e/specs/window_pin_topmost.spec.ts:87-98/176-186` 当前只检 `alwaysOnTop`。
 - [ ] **翻译窗口高度 cap 用 current display**：`tests/user_e2e/specs/translate_window_constraints.spec.ts:20-22` 走 `primaryDisplay()`；`docs/spec.md:240` 要求当前显示器；e2e fixture 暴露 current display 或补单测。
 - [x] **mock 测试加 `@electron-mock` / 原因标注**：`tests/unit/screenshot_display.test.ts:17-26`、`tests/unit/config_store_migration.test.ts:6-14` 违反 `docs/test.md §2.1`。

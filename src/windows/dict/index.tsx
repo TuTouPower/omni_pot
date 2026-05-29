@@ -29,7 +29,7 @@ function dict_result_to_text(result: DictResult): string {
         .join('\n')
 }
 
-function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleCollapse, hidePosTag }: {
+export function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleCollapse, hidePosTag }: {
     instanceKey: string; result: DictResult | null | undefined; isLoading: boolean
     collapsed?: boolean; onToggleCollapse?: () => void
     hidePosTag?: boolean

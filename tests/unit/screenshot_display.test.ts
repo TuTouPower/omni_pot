@@ -27,7 +27,7 @@ vi.mock('../../electron/log', () => ({
     log: { info: vi.fn(), scope: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })) },
 }))
 
-import { capture_screenshot, get_screenshot_display } from '../../electron/screenshot'
+import { capture_screenshot, get_screenshot_display, preload_screenshot_window, start_screenshot_capture } from '../../electron/screenshot'
 
 describe('screenshot display selection', () => {
     beforeEach(() => {
@@ -53,5 +53,38 @@ describe('screenshot display selection', () => {
         const base64 = await capture_screenshot({ ...display_b, id: 3 } as Display)
 
         expect(Buffer.from(base64, 'base64').toString()).toBe('primary')
+    })
+
+    it('positions the preloaded overlay on the selected display bounds', () => {
+        const win = { setBounds: vi.fn() }
+        const manager = { createWindow: vi.fn(() => win) }
+
+        preload_screenshot_window(manager as never)
+
+        expect(manager.createWindow).toHaveBeenCalledWith(expect.objectContaining({
+            label: 'screenshot',
+            width: 2560,
+            height: 1440,
+            show: false,
+        }))
+        expect(win.setBounds).toHaveBeenCalledWith({ x: 1920, y: 0, width: 2560, height: 1440 })
+    })
+
+    it('positions the active overlay on the selected display bounds', async () => {
+        const win = { setBounds: vi.fn(), show: vi.fn(), focus: vi.fn(), close: vi.fn() }
+        const manager = {
+            focusOrCreate: vi.fn(() => win),
+            sendWhenReady: vi.fn(),
+        }
+
+        await expect(start_screenshot_capture(manager as never, 'translate')).resolves.toBe(true)
+
+        expect(manager.focusOrCreate).toHaveBeenCalledWith('screenshot', expect.objectContaining({
+            width: 2560,
+            height: 1440,
+            show: true,
+        }))
+        expect(win.setBounds).toHaveBeenCalledWith({ x: 1920, y: 0, width: 2560, height: 1440 })
+        expect(manager.sendWhenReady).toHaveBeenCalledWith('screenshot', 'screenshot:show', expect.any(String), 'translate')
     })
 })
