@@ -1,4 +1,5 @@
 import http from 'http'
+import { createHash } from 'crypto'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 
@@ -109,6 +110,7 @@ test.describe('@ui updater and tray', () => {
 
     test('user downloads an update asset and sees progress complete', async () => {
         const asset_body = Buffer.alloc(64 * 1024, 'a')
+        const asset_digest = `sha256:${createHash('sha256').update(asset_body).digest('hex')}`
         const asset_server = await start_update_asset_server(asset_body)
         const omni = await AppFixture.start({ config: TEST_CONFIG })
         try {
@@ -123,6 +125,7 @@ test.describe('@ui updater and tray', () => {
                     name: 'omni_pot-e2e-update.bin',
                     url: asset_server.url,
                     size: asset_body.length,
+                    digest: asset_digest,
                 }],
             })
 

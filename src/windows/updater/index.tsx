@@ -6,6 +6,7 @@ interface ReleaseAsset {
     name: string
     url: string
     size?: number
+    digest?: string
 }
 
 interface ReleaseInfo {

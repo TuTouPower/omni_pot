@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { WebContents } from 'electron'
 import { WindowLabel } from '../../electron/windows/types'
@@ -46,6 +47,16 @@ describe('updater security helpers', () => {
         expect(assert_allowed_download_url('https://objects.githubusercontent.com/github-production-release-asset/file', true).hostname).toBe('objects.githubusercontent.com')
         expect(() => { assert_allowed_download_url('https://objects.githubusercontent.com/github-production-release-asset/file', false) }).toThrow('Unsupported update download URL')
         expect(() => { assert_allowed_download_url('https://example.com/omni_pot.exe', false) }).toThrow('Unsupported update download URL')
+    })
+
+    it('parses only GitHub sha256 asset digests', async () => {
+        const { parse_sha256_digest } = await import('../../electron/updater')
+        const hash = createHash('sha256').update('update').digest('hex')
+
+        expect(parse_sha256_digest(`sha256:${hash}`)).toBe(hash)
+        expect(parse_sha256_digest(undefined)).toBeNull()
+        expect(() => { parse_sha256_digest(hash) }).toThrow('Unsupported update asset digest')
+        expect(() => { parse_sha256_digest('md5:00000000000000000000000000000000') }).toThrow('Unsupported update asset digest')
     })
 
     it('limits download IPC to the updater window', async () => {

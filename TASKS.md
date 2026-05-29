@@ -80,7 +80,7 @@
 
 ### B. 自动更新（high）
 
-- [ ] **更新包签名/哈希校验**：`updater/index.ts:177-185` 下载后直接 `shell.openPath`，仅 URL allowlist。补 Authenticode/签名哈希校验。
+- [x] **更新包哈希校验**：下载完成后校验 GitHub release asset `digest`（sha256）；生产环境缺失或不匹配即拒绝安装，E2E mock 可用 localhost 并注入 digest。
 - [x] **updater IPC 限定 sender**：`updater:downloadAndInstall` 只允许 updater 窗口调用；renderer 只传 asset name，下载 URL 由 main 缓存的 release metadata 绑定。
 
 ### C. 数据可靠性与状态（high）

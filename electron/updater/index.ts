@@ -1,5 +1,6 @@
 import { app, dialog, ipcMain, shell } from 'electron'
-import { createWriteStream } from 'fs'
+import { createReadStream, createWriteStream } from 'fs'
+import { createHash } from 'crypto'
 import { mkdir, rm } from 'fs/promises'
 import { get, type ClientRequest, type IncomingMessage } from 'http'
 import { get as get_https } from 'https'
@@ -21,7 +22,7 @@ interface GitHubRelease {
     body: string
     html_url: string
     published_at: string
-    assets: Array<{ name: string; browser_download_url: string; size?: number }>
+    assets: Array<{ name: string; browser_download_url: string; size?: number; digest?: string }>
 }
 
 interface UpdateReleaseInfo {
@@ -31,12 +32,13 @@ interface UpdateReleaseInfo {
     body: string
     html_url: string
     published_at: string
-    assets: Array<{ name: string; url: string; size?: number }>
+    assets: Array<{ name: string; url: string; size?: number; digest?: string }>
 }
 
 interface DownloadAsset {
     name: string
     url: string
+    digest?: string
 }
 
 let bound_update_assets = new Map<string, DownloadAsset>()
@@ -219,6 +221,34 @@ function download_asset(asset: DownloadAsset, web_contents: WebContents): Promis
     })
 }
 
+export function parse_sha256_digest(digest: string | undefined): string | null {
+    if (!digest) return null
+    const match = /^sha256:([a-f0-9]{64})$/i.exec(digest)
+    const expected = match?.[1]
+    if (!expected) throw new Error('Unsupported update asset digest')
+    return expected.toLowerCase()
+}
+
+function hash_file_sha256(path: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const hash = createHash('sha256')
+        const stream = createReadStream(path)
+        stream.on('data', (chunk: Buffer) => { hash.update(chunk) })
+        stream.on('error', reject)
+        stream.on('end', () => { resolve(hash.digest('hex')) })
+    })
+}
+
+async function verify_download_digest(path: string, digest: string | undefined): Promise<void> {
+    const expected = parse_sha256_digest(digest)
+    if (!expected) {
+        if (process.env['OMNI_POT_E2E'] === '1') return
+        throw new Error('Missing update asset digest')
+    }
+    const actual = await hash_file_sha256(path)
+    if (actual !== expected) throw new Error('Update asset digest mismatch')
+}
+
 async function get_update_release_info(): Promise<UpdateReleaseInfo | null> {
     const resp = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`, {
         headers: { 'User-Agent': 'omni_pot-updater' }
@@ -237,7 +267,7 @@ async function get_update_release_info(): Promise<UpdateReleaseInfo | null> {
         body: release.body,
         html_url: release.html_url,
         published_at: release.published_at,
-        assets: release.assets.map((asset) => ({ name: asset.name, url: asset.browser_download_url, size: asset.size })),
+        assets: release.assets.map((asset) => ({ name: asset.name, url: asset.browser_download_url, size: asset.size, digest: asset.digest })),
     }
 }
 
@@ -251,7 +281,9 @@ export function registerUpdateHandlers(manager: WindowManager): void {
     ipcMain.handle('updater:downloadAndInstall', async (event, asset_name: string): Promise<{ success: boolean; path?: string; error?: string }> => {
         try {
             assert_updater_sender(manager, event.sender)
-            const output_path = await download_asset(resolve_bound_update_asset(asset_name), event.sender)
+            const asset = resolve_bound_update_asset(asset_name)
+            const output_path = await download_asset(asset, event.sender)
+            await verify_download_digest(output_path, asset.digest)
             if (process.env['OMNI_POT_E2E'] !== '1') {
                 const error = await shell.openPath(output_path)
                 if (error) throw new Error(error)

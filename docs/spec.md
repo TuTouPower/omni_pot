@@ -638,7 +638,7 @@ renderer: useConfigStore
 | 操作按钮 | `稍后提醒`（关闭窗口）、`立即更新`（触发应用内下载安装；下载中按钮禁用并显示"下载中…"） |
 
 状态：加载中 → 更新详情 / 检查失败 / 已是最新版本 / 下载中 / 下载完成待安装。
-下载流程由 `electron/updater/index.ts` 实现，使用 GitHub release assets 作为下载源；生产环境只接受 `TuTouPower/omni_pot_release` 的 GitHub release asset URL 及 GitHub 返回的可信下载重定向。下载 IPC 只能由更新器窗口调用，renderer 只传 asset name，实际下载 URL 必须由主进程从 release metadata 绑定，不能信任 renderer 传入的任意下载 URL。
+下载流程由 `electron/updater/index.ts` 实现，使用 GitHub release assets 作为下载源；生产环境只接受 `TuTouPower/omni_pot_release` 的 GitHub release asset URL 及 GitHub 返回的可信下载重定向。下载 IPC 只能由更新器窗口调用，renderer 只传 asset name，实际下载 URL 必须由主进程从 release metadata 绑定，不能信任 renderer 传入的任意下载 URL。下载完成后必须校验 GitHub release asset 的 `sha256` digest，缺失或不匹配时拒绝安装。
 
 ---
 

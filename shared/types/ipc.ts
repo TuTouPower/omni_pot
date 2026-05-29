@@ -113,7 +113,7 @@ export interface ElectronAPI {
       body: string
       html_url: string
       published_at: string
-      assets: Array<{ name: string; url: string; size?: number }>
+      assets: Array<{ name: string; url: string; size?: number; digest?: string }>
     }) => void): () => void
     downloadAndInstall(asset_name: string): Promise<{ success: boolean; path?: string; error?: string }>
     checkLatest(): Promise<{ success: boolean; release?: {
@@ -123,7 +123,7 @@ export interface ElectronAPI {
       body: string
       html_url: string
       published_at: string
-      assets: Array<{ name: string; url: string; size?: number }>
+      assets: Array<{ name: string; url: string; size?: number; digest?: string }>
     }; error?: string }>
     onDownloadProgress(callback: (progress: { downloaded: number; total: number; percent: number }) => void): () => void
   }
