@@ -99,7 +99,7 @@ export class WindowManager {
       if (opts.label === WindowLabel.TRANSLATE && getConfig('translate_window_position') === 'pre_state') {
         const saved_x = getConfig('translate_window_position_x') as number
         const saved_y = getConfig('translate_window_position_y') as number
-        if (saved_x > 0 && saved_y > 0) {
+        if (typeof saved_x === 'number' && typeof saved_y === 'number') {
           x = saved_x
           y = saved_y
         }
