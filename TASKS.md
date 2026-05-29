@@ -137,7 +137,7 @@
 - [ ] **`@core` 标签收敛**：`@core` 只保留最小关键路径（启动 → 翻译窗口可见 → 本地 stub 译文出现 → 关闭），其他 UI 细节迁到 `@ui`。
 - [ ] **timeout 标准化**：按 `docs/test_user_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
 - [x] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
-- [ ] **HTTP server 单元/契约测试**：当前 `tests/` 无 server-focused 测试；覆盖 CORS、auth、body limit、redaction、history privacy、`/dict` 真正使用 text、`/history` seed 多条断言分页（`docs/spec.md:927-934`，对比 `tests/user_e2e/specs/app_http_api.spec.ts:49-64`）。
+- [ ] **HTTP server 单元/契约测试**：已新增 `tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/public config 安全边界；仍需补 auth、body limit、history privacy、`/dict` 真正使用 text、`/history` seed 多条断言分页（`docs/spec.md:927-934`，对比 `tests/user_e2e/specs/app_http_api.spec.ts:49-64`）。
 - [ ] **updater repo/allowlist 契约测试**：`electron/updater/index.ts` 无对应测试。
 - [ ] **backup WebDAV/local 行为单元测试**：`electron/backup/index.ts` 无对应测试。
 - [ ] **tray 用户可见字符串 contract 测试**：捕获 `Pot Desktop` 类回归。
