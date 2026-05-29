@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, normalize } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { setTimeout as sleep } from 'node:timers/promises'
 
 const repo_root = dirname(dirname(fileURLToPath(import.meta.url)))
 const package_json = JSON.parse(readFileSync(join(repo_root, 'package.json'), 'utf8'))
@@ -94,7 +95,7 @@ function write_error(message) {
     process.stderr.write(`${message}\n`)
 }
 
-function close_release_processes(targets) {
+async function close_release_processes(targets) {
     if (process.platform !== 'win32' || targets.length === 0) return
 
     let closed_any = false
@@ -108,7 +109,7 @@ function close_release_processes(targets) {
     }
 
     // Wait briefly, then force-kill any that ignored the graceful signal.
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500)
+    await sleep(1500)
     const still_running = release_processes()
     for (const t of still_running) {
         const result = spawnSync('taskkill', ['/pid', String(t.pid), '/t', '/f'], {
@@ -128,12 +129,12 @@ function close_release_processes(targets) {
     }
 }
 
-function wait_for_unlocked_files(timeout_ms = 10_000) {
+async function wait_for_unlocked_files(timeout_ms = 10_000) {
     const start = Date.now()
     while (Date.now() - start < timeout_ms) {
         const locked_files = output_files.filter(is_locked)
         if (locked_files.length === 0) return []
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500)
+        await sleep(500)
     }
     return output_files.filter(is_locked)
 }
@@ -142,11 +143,11 @@ let locked_files = output_files.filter(is_locked)
 let targets = release_processes()
 if (targets.length > 0 && locked_files.length > 0) {
     write_error(`Closing release Omni Pot processes before packaging: ${targets.map((t) => `${t.name}#${String(t.pid)}`).join(', ')}`)
-    close_release_processes(targets)
+    await close_release_processes(targets)
 }
 
 targets = release_processes()
-locked_files = wait_for_unlocked_files()
+locked_files = await wait_for_unlocked_files()
 
 if (targets.length === 0 && locked_files.length === 0) {
     process.exit(0)

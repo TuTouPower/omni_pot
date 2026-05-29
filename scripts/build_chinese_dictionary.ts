@@ -35,8 +35,7 @@ function load_json(filename: string): unknown[] {
             parsed = JSON.parse(raw)
         } else if (trimmed.startsWith('{')) {
             // Some upstream files are a sequence of comma-separated objects without
-            // top-level brackets; wrap them. Anything else (single object, NDJSON,
-            // malformed) must fail loud rather than silently produce garbage.
+            // top-level brackets; wrap them. Single objects are also accepted.
             const body = raw.trimEnd().replace(/,\s*$/, '')
             parsed = JSON.parse('[' + body + ']')
         } else {
@@ -253,6 +252,8 @@ function build(): void {
     insert_meta.run('source_commit', source_commit)
     insert_meta.run('build_time', build_time)
 
+    // Checkpoint WAL to ensure all data is in the main db file
+    db.pragma('wal_checkpoint(TRUNCATE)')
     db.close()
 
     // 9. Copy LICENSE (skip if already committed to repo)

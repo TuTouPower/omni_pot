@@ -36,7 +36,7 @@ const tests = [
                 body: JSON.stringify({
                     header: {
                         fn: "auto_translation",
-                        client_key: "browser-chrome-120.0.0-Windows-df4bd4c5-a65d-44b2-a40f-42f34f3535f2-1677486696487",
+                        client_key: process.env.TRANSMART_CLIENT_KEY || "browser-chrome-120.0.0-Windows-df4bd4c5-a65d-44b2-a40f-42f34f3535f2-1677486696487",
                     },
                     type: "plain",
                     model_category: "normal",
@@ -64,7 +64,7 @@ const tests = [
                     "Referer": "http://res.d.hjfile.cn/app/trans",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                    "Cookie": "HJ_UID=390f25c7-c9f3-b237-f639-62bd23cd431f; HJC_USRC=uzhi; HJC_NUID=1",
+                    "Cookie": process.env.HUJIANG_COOKIE || "HJ_UID=390f25c7-c9f3-b237-f639-62bd23cd431f; HJC_USRC=uzhi; HJC_NUID=1",
                 },
                 body: form,
             });
@@ -81,7 +81,7 @@ const tests = [
             const crypto = await import("node:crypto");
 
             const mysticTime = Date.now().toString();
-            const signStr = `client=fanyideskweb&mysticTime=${mysticTime}&product=webfanyi&key=Vy4EQ1uwPkUoqvcP1nIu6WiAjxFeA3Y3`;
+            const signStr = `client=fanyideskweb&mysticTime=${mysticTime}&product=webfanyi&key=${process.env.YOUDAO_SIGN_KEY || 'Vy4EQ1uwPkUoqvcP1nIu6WiAjxFeA3Y3'}`;
             const sign = crypto.createHash("md5").update(signStr).digest("hex");
 
             const form = new URLSearchParams();
@@ -115,8 +115,8 @@ const tests = [
 
             // AES decrypt
             try {
-                const aesKey = "ydsecret://query/key/B*RGygVywfNBwpmBaZg*WT7SIOUP2T0C9WHMZN39j^DAdaZhAnxvGcCY6VYFwnHl";
-                const aesIv = "ydsecret://query/iv/C@lZe2YzHtZ2CYgaXKSVfsb7Y4QWHjITPPZ0nQp87fBeJ!Iv6v^6fvi2WN@bYpJ4";
+                const aesKey = process.env.YOUDAO_AES_KEY || "ydsecret://query/key/B*RGygVywfNBwpmBaZg*WT7SIOUP2T0C9WHMZN39j^DAdaZhAnxvGcCY6VYFwnHl";
+                const aesIv = process.env.YOUDAO_AES_IV || "ydsecret://query/iv/C@lZe2YzHtZ2CYgaXKSVfsb7Y4QWHjITPPZ0nQp87fBeJ!Iv6v^6fvi2WN@bYpJ4";
                 const key = crypto.createHash("md5").update(aesKey).digest();
                 const iv = crypto.createHash("md5").update(aesIv).digest();
                 const b64 = rawText.replace(/-/g, "+").replace(/_/g, "/");
@@ -159,7 +159,7 @@ const tests = [
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-authorization": "token ssdj273ksdiwi923bsd9",
+                    "x-authorization": `token ${process.env.CAIYUN_TOKEN || 'ssdj273ksdiwi923bsd9'}`,
                     "User-Agent": "caiyunInterpreter/5 CFNetwork/1404.0.5 Darwin/22.3.0",
                 },
                 body: JSON.stringify({
@@ -189,7 +189,7 @@ const tests = [
                 target: "auto",
                 sourceText: text,
                 platform: "WeChat_APP",
-                guid: "oqdgX0SIwhvM0TmqzTHghWBvfk22",
+                guid: process.env.WECHAT_GUID || "oqdgX0SIwhvM0TmqzTHghWBvfk22",
                 candidateLangs: `${from}|${to}`,
             });
             const res = await fetch(`https://wxapp.translator.qq.com/api/translate?${params}`, {
