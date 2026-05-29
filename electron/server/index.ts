@@ -27,15 +27,9 @@ const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
 const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
 
-const ALLOWED_HOSTS = new Set([
-    'localhost',
-    'localhost:20202',
-    '127.0.0.1',
-    '127.0.0.1:20202',
-])
-
 export function is_host_allowed(host: string): boolean {
-    return ALLOWED_HOSTS.has(host)
+    const match = /^(localhost|127\.0\.0\.1)(?::\d{1,5})?$/.exec(host)
+    return match !== null
 }
 
 export function is_origin_allowed(origin: string): boolean {

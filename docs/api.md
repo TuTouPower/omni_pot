@@ -2,7 +2,7 @@
 
 Omni Pot 主进程会在本机绑定一个 HTTP 端口（默认 `127.0.0.1:20202`，可在「设置 → 高级」中修改 `server_port`），供外部脚本/快捷工具调用。
 
-> **范围**：仅监听 `127.0.0.1`，不对外网开放。所有路由都返回 JSON。CORS 已放开（`Access-Control-Allow-Origin: *`），方便本机网页/扩展调用。
+> **范围**：仅监听 `127.0.0.1`，不对外网开放。所有路由都返回 JSON。CORS 仅允许 `http://localhost`、`http://127.0.0.1`、`https://localhost`、`https://127.0.0.1` 及这些来源的显式端口。
 
 ## 配置
 
@@ -44,7 +44,7 @@ curl -X POST -d '{"text":"australia"}' -H 'Content-Type: application/json' http:
 
 ### `GET /config` — 读取公开配置
 
-- 响应：公开 `AppConfig` JSON；`webdav_password` 与服务实例配置中的密码、secret、token、API key 等敏感字段返回 `[redacted]`。
+- 响应：公开 `AppConfig` JSON；`webdav_url`、`webdav_username`、`webdav_password` 返回 `[redacted]`。服务实例配置只公开 `enable`、`instanceName`，其他字段（如 `apiKey`、`endpoint`）不返回。
 - 用于外部工具读取当前快捷键、服务列表、窗口尺寸等非敏感设置。
 
 ```bash

@@ -52,8 +52,8 @@ describe('server security helpers', () => {
         expect(is_host_allowed('127.0.0.1')).toBe(true)
         expect(is_host_allowed('127.0.0.1:20202')).toBe(true)
 
-        expect(is_host_allowed('localhost:5173')).toBe(false)
-        expect(is_host_allowed('127.0.0.1:65535')).toBe(false)
+        expect(is_host_allowed('localhost:5173')).toBe(true)
+        expect(is_host_allowed('127.0.0.1:65535')).toBe(true)
         expect(is_host_allowed('localhost.evil.com:20202')).toBe(false)
         expect(is_host_allowed('127.0.0.1.evil.com')).toBe(false)
         expect(is_host_allowed('evil.com')).toBe(false)
