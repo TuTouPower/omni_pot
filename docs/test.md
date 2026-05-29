@@ -261,7 +261,7 @@
 | `translate_language_area.spec.ts` | 语言选择、自动检测、方向切换 |
 | `translate_result_cards.spec.ts` | 结果卡片（复制、TTS、重试） |
 | `translate_result_states.spec.ts` | 加载态、错误态、空态 |
-| `translate_welcome.spec.ts` | 欢迎空状态 |
+| `translate_welcome.spec.ts` | 独立欢迎窗口（启动、入口、跳过持久化） |
 | `translate_titlebar.spec.ts` | 标题栏按钮（置顶、固定、关闭） |
 | `translate_pin_topmost.spec.ts` | 固定/置顶独立状态 |
 | `window_pin_topmost.spec.ts` | 词典/文字识别窗口固定/置顶独立状态 |
