@@ -175,8 +175,8 @@ describe('Config Store integration', () => {
         expect(store.getConfig('server_api_token')).toBe('plain-token')
         expect(store.getConfig('webdav_password')).toBe('plain-webdav-password')
         const service_instances = store.getConfig('service_instances') as Record<string, { config: Record<string, unknown> }>
-        expect(service_instances['custom@default']?.config.api_key).toBe('plain-provider-key')
-        expect(service_instances['custom@default']?.config.endpoint).toBe('https://example.test')
+        expect(service_instances['custom@default'].config.api_key).toBe('plain-provider-key')
+        expect(service_instances['custom@default'].config.endpoint).toBe('https://example.test')
 
         const persisted_text = readFileSync(join(test_dir, 'config.json'), 'utf-8')
         expect(persisted_text).not.toContain('plain-token')
@@ -202,7 +202,8 @@ describe('Config Store integration', () => {
         expect((token as string).length).toBeGreaterThan(20)
         const persisted_text = readFileSync(join(test_dir, 'config.json'), 'utf-8')
         expect(persisted_text).not.toContain(token as string)
-        expect(JSON.parse(persisted_text).server_api_token).toMatchObject({ __omni_pot_secret: 1 })
+        const persisted = JSON.parse(persisted_text) as Record<string, unknown>
+        expect(persisted.server_api_token).toMatchObject({ __omni_pot_secret: 1 })
     })
 
     it('preserves server API token when resetting config', async () => {

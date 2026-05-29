@@ -76,7 +76,7 @@ function decrypt_secret(value: unknown): unknown {
 }
 
 function clone_config(config: Partial<AppConfig>): ConfigRecord {
-    return structuredClone(config) as ConfigRecord
+    return structuredClone(config)
 }
 
 function transform_service_instance_secrets(
@@ -95,7 +95,7 @@ function transform_service_instance_secrets(
             for (const [key, value] of Object.entries(config)) {
                 if (is_service_secret_key(key)) {
                     const transformed = transform(key, value)
-                    if (transformed === undefined) delete config[key]
+                    if (transformed === undefined) config[key] = undefined
                     else config[key] = transformed
                 }
             }
@@ -110,15 +110,15 @@ export function protect_config_secrets(config: Partial<AppConfig>): Partial<AppC
     for (const key of top_level_secret_keys) {
         if (Object.prototype.hasOwnProperty.call(protected_config, key)) {
             const protected_value = encrypt_secret(protected_config[key])
-            if (protected_value === undefined) delete protected_config[key]
+            if (protected_value === undefined) protected_config[key] = undefined
             else protected_config[key] = protected_value
         }
     }
     protected_config.service_instances = transform_service_instance_secrets(
         protected_config.service_instances,
         (_key, value) => encrypt_secret(value),
-    ) as ServiceInstancesMap | undefined
-    return protected_config as Partial<AppConfig>
+    )
+    return protected_config
 }
 
 export function unprotect_config_secrets(config: Partial<AppConfig>): Partial<AppConfig> {
@@ -126,25 +126,25 @@ export function unprotect_config_secrets(config: Partial<AppConfig>): Partial<Ap
     for (const key of top_level_secret_keys) {
         if (Object.prototype.hasOwnProperty.call(unprotected_config, key)) {
             const value = decrypt_secret(unprotected_config[key])
-            if (value === undefined) delete unprotected_config[key]
+            if (value === undefined) unprotected_config[key] = undefined
             else unprotected_config[key] = value
         }
     }
     unprotected_config.service_instances = transform_service_instance_secrets(
         unprotected_config.service_instances,
         (_key, value) => decrypt_secret(value),
-    ) as ServiceInstancesMap | undefined
-    return unprotected_config as Partial<AppConfig>
+    )
+    return unprotected_config
 }
 
 export function sanitize_config_secrets(config: Partial<AppConfig>): Partial<AppConfig> {
     const sanitized_config = clone_config(config)
     for (const key of top_level_secret_keys) {
-        delete sanitized_config[key]
+        sanitized_config[key] = undefined
     }
     sanitized_config.service_instances = transform_service_instance_secrets(
         sanitized_config.service_instances,
         () => undefined,
-    ) as ServiceInstancesMap | undefined
-    return sanitized_config as Partial<AppConfig>
+    )
+    return sanitized_config
 }
