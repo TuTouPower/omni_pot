@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import type { AppConfig, ConfigKey } from '@shared/types/config'
 import { DEFAULT_CONFIG } from '@shared/types/config'
+import { create_logger } from '../utils/logger'
 
+const log = create_logger('config_store')
 let listenerRegistered = false
 
 interface ConfigStore {
@@ -33,9 +35,13 @@ export const useConfigStore = create<ConfigStore>()((set, get) => ({
   get: (key) => get().config[key],
 
   set: (key, value) => {
+    const prev = get().config[key]
     set((state) => ({
       config: { ...state.config, [key]: value }
     }))
-    window.electronAPI.config.set(key, value).catch(console.error)
+    window.electronAPI.config.set(key, value).catch((err: unknown) => {
+      log.error('config.set(%s) failed, reverting: %s', key, err instanceof Error ? err.message : String(err))
+      set((state) => ({ config: { ...state.config, [key]: prev } }))
+    })
   }
 }))

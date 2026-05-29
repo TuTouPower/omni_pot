@@ -21,7 +21,12 @@ interface NavItem {
 export default function ConfigWindow(): React.ReactElement {
     const { t } = useTranslation()
     const [activePage, setActivePage] = useState<ConfigPage>('general')
+    const [version, setVersion] = useState('')
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
+
+    useEffect(() => {
+        window.electronAPI.getVersion().then(setVersion).catch(() => {})
+    }, [])
 
     useEffect(() => {
         window.electronAPI.ready('config')
@@ -121,7 +126,7 @@ export default function ConfigWindow(): React.ReactElement {
                         ))}
                     </div>
                     <div style={{ padding: '8px 12px', borderTop: '1px solid var(--line-soft)' }}>
-                        <div className="hint mono" data-testid="config-version" style={{ fontSize: 10.5 }}>v0.1.0</div>
+                        <div className="hint mono" data-testid="config-version" style={{ fontSize: 10.5 }}>v{version}</div>
                     </div>
                 </div>
 

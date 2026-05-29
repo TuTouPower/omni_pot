@@ -21,6 +21,7 @@ export interface HotkeyRegisterResult {
 
 export interface ElectronAPI {
   ready(label: string): void
+  getVersion(): Promise<string>
   window: {
     close(): Promise<void>
     minimize(): Promise<void>

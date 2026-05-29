@@ -20,6 +20,9 @@ import uk from './locales/uk.json'
 import ar from './locales/ar.json'
 import he from './locales/he.json'
 import { useConfigStore } from '../stores/config_store'
+import { create_logger } from '../utils/logger'
+
+const log = create_logger('i18n')
 
 i18n.use(initReactI18next).init({
     resources: {
@@ -46,11 +49,11 @@ i18n.use(initReactI18next).init({
     lng: 'en',
     fallbackLng: 'en',
     interpolation: { escapeValue: false }
-}).catch(console.error)
+}).catch((err: unknown) => { log.error('i18n init failed: %s', err instanceof Error ? err.message : String(err)) })
 
 export function bindI18nToConfig(): void {
     const apply = (lang: string): void => {
-        if (i18n.language !== lang) i18n.changeLanguage(lang).catch(console.error)
+        if (i18n.language !== lang) i18n.changeLanguage(lang).catch((err: unknown) => { log.error('changeLanguage failed: %s', err instanceof Error ? err.message : String(err)) })
     }
     apply(useConfigStore.getState().config.app_language)
     useConfigStore.subscribe((state, prev) => {

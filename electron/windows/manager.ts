@@ -83,8 +83,22 @@ export class WindowManager {
     const display = screen.getDisplayNearestPoint(point)
     const { workArea } = display
     const shouldPosition = opts.label !== WindowLabel.DAEMON
-    const x = shouldPosition ? Math.round(workArea.x + (workArea.width - opts.width) / 2) : undefined
-    const y = shouldPosition ? Math.round(workArea.y + (workArea.height - opts.height) / 2) : undefined
+    let x: number | undefined
+    let y: number | undefined
+    if (shouldPosition) {
+      if (opts.label === WindowLabel.TRANSLATE && getConfig('translate_window_position') === 'pre_state') {
+        const saved_x = getConfig('translate_window_position_x') as number
+        const saved_y = getConfig('translate_window_position_y') as number
+        if (saved_x > 0 && saved_y > 0) {
+          x = saved_x
+          y = saved_y
+        }
+      }
+      if (x === undefined || y === undefined) {
+        x = Math.round(workArea.x + (workArea.width - opts.width) / 2)
+        y = Math.round(workArea.y + (workArea.height - opts.height) / 2)
+      }
+    }
 
     const use_configured_transparency = opts.label !== WindowLabel.DAEMON && opts.label !== WindowLabel.SCREENSHOT
     const transparent = opts.transparent ?? (use_configured_transparency && Boolean(getConfig('transparent')))
@@ -188,6 +202,15 @@ export class WindowManager {
         }, 300)
         win.on('resize', persistSize)
       }
+      if (getConfig('translate_window_position') === 'pre_state') {
+        const persistPosition = debounce(() => {
+          if (win.isDestroyed()) return
+          const [px, py] = win.getPosition()
+          setConfig('translate_window_position_x', px)
+          setConfig('translate_window_position_y', py)
+        }, 300)
+        win.on('move', persistPosition)
+      }
     }
     if (opts.label === WindowLabel.DICT) {
       attach_dict_resize_persistence(win)
@@ -224,11 +247,11 @@ export class WindowManager {
           }
           if (opts.label === WindowLabel.DICT) {
             setConfig('dict_always_on_top', false)
-            setConfig('translate_pinned', false)
+            setConfig('dict_pinned', false)
           }
           if (opts.label === WindowLabel.RECOGNIZE) {
             setConfig('recognize_always_on_top', false)
-            setConfig('translate_pinned', false)
+            setConfig('recognize_pinned', false)
           }
         }
       }

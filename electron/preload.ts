@@ -3,6 +3,7 @@ import type { ElectronAPI, ChineseDictServiceState } from '@shared/types/ipc'
 import type { ConfigKey } from '@shared/types/config'
 
 const api: Omit<ElectronAPI, 'ready'> = {
+  getVersion: () => ipcRenderer.invoke('app:getVersion'),
   window: {
     close: () => ipcRenderer.invoke('window:close'),
     minimize: () => ipcRenderer.invoke('window:minimize'),

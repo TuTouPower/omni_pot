@@ -6,6 +6,9 @@ import { registerAllServices } from './services'
 import { useConfigStore } from './stores/config_store'
 import type { AppConfig, AppPrimaryColor } from '@shared/types/config'
 import { bindI18nToConfig } from './i18n'
+import { create_logger } from './utils/logger'
+
+const log = create_logger('main')
 
 const theme_query = window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -71,4 +74,4 @@ async function bootstrap(): Promise<void> {
   )
 }
 
-bootstrap().catch(console.error)
+bootstrap().catch((err: unknown) => { log.error('bootstrap failed: %s', err instanceof Error ? err.message : String(err)) })
