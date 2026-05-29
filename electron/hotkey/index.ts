@@ -56,11 +56,11 @@ export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: s
         ? readSelectedTextLater()
         : Promise.resolve({ text: textOverride, method: 'none' as const, reason: textOverride.trim() ? undefined : 'empty' as const })
 
+    const result = await result_promise
     mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
     const show_ms = Date.now() - started_at
     mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-pending')
 
-    const result = await result_promise
     const total_ms = Date.now() - started_at
     if (!result.text.trim()) {
         log_hotkey.info('translate entry: show_ms=%d total_ms=%d entry=empty reason=%s', show_ms, total_ms, result.reason ?? 'empty')
@@ -76,10 +76,10 @@ export async function triggerSelectionDictionary(mgr: WindowManager): Promise<vo
     const started_at = Date.now()
     const result_promise = readSelectedTextLater()
 
+    const result = await result_promise
     mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
     const show_ms = Date.now() - started_at
 
-    const result = await result_promise
     const total_ms = Date.now() - started_at
     if (!result.text.trim()) {
         log_hotkey.info('selection dictionary: show_ms=%d total_ms=%d entry=empty reason=%s', show_ms, total_ms, result.reason ?? 'empty')
