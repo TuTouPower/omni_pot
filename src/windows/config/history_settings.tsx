@@ -16,7 +16,7 @@ const TIME_FILTERS = [
 
 const SVC_ABBR: Record<string, string> = {
     bing: 'BI', deepl: 'DL', google: 'GG', openai: 'AI', mymemory: 'MM',
-    free_dictionary: 'FD', geminipro: 'GP', baidu: 'BD',
+    geminipro: 'GP', baidu: 'BD',
     tencent: 'TC', alibaba: 'AL', caiyun: 'CY', youdao: 'YD',
     sogai: 'SG', translatetranslate: 'TT', cambridge_dict: 'CD',
 }

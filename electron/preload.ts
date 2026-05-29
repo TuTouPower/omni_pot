@@ -134,8 +134,8 @@ const api: Omit<ElectronAPI, 'ready'> = {
     reload: () => ipcRenderer.invoke('chineseDict:reload'),
     onStateChanged: (callback: (state: ChineseDictServiceState) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, state: ChineseDictServiceState) => { callback(state); }
-      ipcRenderer.on('chineseDict:state-changed', handler)
-      return () => { ipcRenderer.off('chineseDict:state-changed', handler) }
+      ipcRenderer.on('chinese-dictionary:state-changed', handler)
+      return () => { ipcRenderer.off('chinese-dictionary:state-changed', handler) }
     },
   },
   dict: {

@@ -9,6 +9,7 @@ export default tseslint.config(
             'out/**',
             'dist/**',
             'release/**',
+            '.claude/**',
             'playwright-report/**',
             'tests/user_e2e/test-results/**',
             'data/**',

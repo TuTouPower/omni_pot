@@ -8,12 +8,12 @@ import {
     get_entry_count,
     get_service_state,
     reload_db,
-} from '../chinese_dict'
+} from '../chinese_dictionary'
 import { getConfig } from '../config/store'
 import { log } from '../log'
 import type { DictResult } from '@shared/types/service'
 
-const log_chinese_dict_ipc = log.scope('chinese-dict-ipc')
+const log_chinese_dict_ipc = log.scope('chinese-dictionary-ipc')
 
 interface ExplanationEntry {
     pinyin: string
@@ -112,7 +112,7 @@ function is_chinese(text: string): boolean {
     return /\p{Script=Han}/u.test(text)
 }
 
-export function registerChineseDictHandlers(): void {
+export function registerChineseDictionaryHandlers(): void {
     ipcMain.handle('chineseDict:lookup', (_event, text: string): DictResult | null => {
         try {
             const enabled = getConfig('dict_chinese_enabled')

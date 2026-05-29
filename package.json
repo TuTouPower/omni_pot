@@ -24,7 +24,7 @@
     "test:e2e:ui": "node scripts/ensure_electron_abi.mjs && npx playwright test --project=ui --pass-with-no-tests",
     "test:e2e:external": "node scripts/ensure_electron_abi.mjs && node -e \"const { spawnSync } = require('node:child_process'); const result = spawnSync('npx', ['playwright', 'test', '--project=external'], { stdio: 'inherit', shell: true, env: { ...process.env, OMNI_POT_EXTERNAL_SERVICE_TESTS: '1' } }); process.exit(result.status ?? 1)\"",
     "test:e2e:all": "node scripts/ensure_electron_abi.mjs && node -e \"const { spawnSync } = require('node:child_process'); const result = spawnSync('npx', ['playwright', 'test', '--project=full'], { stdio: 'inherit', shell: true, env: { ...process.env, OMNI_POT_EXTERNAL_SERVICE_TESTS: '1' } }); process.exit(result.status ?? 1)\"",
-    "build:chinese-dict": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dict.ts",
+    "build:chinese-dictionary": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dictionary.ts",
     "start": "electron-vite preview"
   },
   "dependencies": {
@@ -73,7 +73,7 @@
         "from": "resources/data/dict/",
         "to": "data/dict/",
         "filter": [
-          "chinese_dict.db",
+          "chinese_dictionary.db",
           "chinese-dictionary-LICENSE",
           "cc_cedict.db"
         ]

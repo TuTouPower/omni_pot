@@ -28,7 +28,7 @@ function main() {
         const steps = [
             [npm_cmd, ['run', 'dist:check-locks']],
             ['node', ['scripts/ensure_node_abi.mjs']],
-            [npm_cmd, ['run', 'build:chinese-dict']],
+            [npm_cmd, ['run', 'build:chinese-dictionary']],
             [npm_cmd, ['run', 'build']],
             ['node', ['scripts/ensure_electron_abi.mjs']],
             [npm_cmd, ['run', 'dist:check-locks']],

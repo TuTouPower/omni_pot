@@ -12,7 +12,7 @@ playwright-report/
 tests/user_e2e/test-results/
 data/
 !data/dict/
-resources/data/dict/chinese_dict.db
+resources/data/dict/chinese_dictionary.db
 *.db-shm
 *.db-wal
 github_repo/1.txt

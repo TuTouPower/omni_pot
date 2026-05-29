@@ -10,8 +10,7 @@ export const ecdictService: TranslateService = {
 
     async translate(
         text: string,
-        from: LanguageCode,
-        _to: LanguageCode
+        from: LanguageCode
     ): Promise<string | DictResult> {
         const result = await window.electronAPI.dict.lookup(text, from)
         if (!result) return ''

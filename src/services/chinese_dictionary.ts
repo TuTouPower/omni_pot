@@ -5,7 +5,7 @@ const CHINESE_DICTIONARY_LANGUAGES: LanguageCode[] = ['auto', 'zh_cn']
 
 export const chineseDictionaryService: TranslateService = {
     key: 'chinese_dictionary',
-    name: '中文词典',
+    name: 'Chinese Dictionary',
     languages: CHINESE_DICTIONARY_LANGUAGES,
 
     async translate(text: string): Promise<string | DictResult> {

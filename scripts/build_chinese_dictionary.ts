@@ -7,21 +7,21 @@ import { execFileSync } from 'child_process'
 const PINNED_COMMIT = 'e804ada333b68afddfdccbe8dcc938a72da157a7'
 const LOCAL_DATA_DIR = join(__dirname, '..', 'github_repo', 'chinese-dictionary')
 const WSL_DATA_DIR = '\\\\wsl.localhost\\Ubuntu-22.04\\home\\karon\\karson_ubuntu\\github_repo\\chinese-dictionary'
-const DATA_DIR = process.env['CHINESE_DICT_DATA_DIR'] || (existsSync(LOCAL_DATA_DIR) ? LOCAL_DATA_DIR : WSL_DATA_DIR)
+const DATA_DIR = process.env['CHINESE_DICTIONARY_DATA_DIR'] || (existsSync(LOCAL_DATA_DIR) ? LOCAL_DATA_DIR : WSL_DATA_DIR)
 const OUTPUT_DIR = join(__dirname, '..', 'resources', 'data', 'dict')
-const OUTPUT_DB = join(OUTPUT_DIR, 'chinese_dict.db')
+const OUTPUT_DB = join(OUTPUT_DIR, 'chinese_dictionary.db')
 const MAX_WORD_LEN = 100
 const MAX_EXPLANATION_LEN = 10000
 const WARN_SIZE_MB = 100
 const FAIL_SIZE_MB = 150
 
 function fail(msg: string): never {
-    console.error(`[build:chinese-dict] FATAL: ${msg}`)
+    console.error(`[build:chinese-dictionary] FATAL: ${msg}`)
     process.exit(1)
 }
 
 function warn(msg: string): void {
-    console.warn(`[build:chinese-dict] WARN: ${msg}`)
+    console.warn(`[build:chinese-dictionary] WARN: ${msg}`)
 }
 
 function load_json(filename: string): unknown[] {
@@ -60,10 +60,10 @@ function get_source_commit(): string {
 }
 
 function import_words(db: Database.Database): number {
-    console.log('[build:chinese-dict] Loading word.json...')
+    console.log('[build:chinese-dictionary] Loading word.json...')
     const words_raw = load_json('word/word.json') as Array<Record<string, unknown>>
 
-    console.log(`[build:chinese-dict] Inserting ${words_raw.length} words...`)
+    console.log(`[build:chinese-dictionary] Inserting ${words_raw.length} words...`)
     const insert_word = db.prepare('INSERT INTO words (word, pinyin, explanation) VALUES (?, ?, ?)')
     let word_count = 0
     const insert_words = db.transaction(() => {
@@ -84,9 +84,9 @@ function import_words(db: Database.Database): number {
 }
 
 function import_chars(db: Database.Database): number {
-    console.log('[build:chinese-dict] Loading char_detail.json...')
+    console.log('[build:chinese-dictionary] Loading char_detail.json...')
     const chars_raw = load_json('character/char_detail.json') as Array<Record<string, unknown>>
-    console.log(`[build:chinese-dict] Inserting ${chars_raw.length} characters...`)
+    console.log(`[build:chinese-dictionary] Inserting ${chars_raw.length} characters...`)
     const insert_char = db.prepare('INSERT INTO characters (char, pinyin, explanation, speech, words) VALUES (?, ?, ?, ?, ?)')
     let char_count = 0
     const insert_chars = db.transaction(() => {
@@ -140,9 +140,9 @@ function import_chars(db: Database.Database): number {
 }
 
 function import_idioms(db: Database.Database): number {
-    console.log('[build:chinese-dict] Loading idiom.json...')
+    console.log('[build:chinese-dictionary] Loading idiom.json...')
     const idioms_raw = load_json('idiom/idiom.json') as Array<Record<string, unknown>>
-    console.log(`[build:chinese-dict] Inserting ${idioms_raw.length} idioms...`)
+    console.log(`[build:chinese-dictionary] Inserting ${idioms_raw.length} idioms...`)
     const insert_idiom = db.prepare('INSERT INTO idioms (word, pinyin, explanation, source, example, similar, opposite) VALUES (?, ?, ?, ?, ?, ?, ?)')
     let idiom_count = 0
     const insert_idioms = db.transaction(() => {
@@ -169,10 +169,10 @@ function build(): void {
     // 1. Validate source directory
     if (!existsSync(DATA_DIR)) {
         if (existsSync(OUTPUT_DB)) {
-            console.log(`[build:chinese-dict] Source directory not found (${DATA_DIR}), but output DB already exists — skipping rebuild`)
+            console.log(`[build:chinese-dictionary] Source directory not found (${DATA_DIR}), but output DB already exists — skipping rebuild`)
             return
         }
-        fail(`Source directory not found: ${DATA_DIR}\nSet CHINESE_DICT_DATA_DIR or clone mapull/chinese-dictionary to github_repo/`)
+        fail(`Source directory not found: ${DATA_DIR}\nSet CHINESE_DICTIONARY_DATA_DIR or clone mapull/chinese-dictionary to github_repo/`)
     }
 
     // 2. Validate pinned commit
@@ -236,7 +236,7 @@ function build(): void {
     const idiom_count = import_idioms(db)
 
     // 7. FTS
-    console.log('[build:chinese-dict] Building FTS index...')
+    console.log('[build:chinese-dictionary] Building FTS index...')
     db.exec(`
         CREATE VIRTUAL TABLE words_fts USING fts5(word, explanation, content=words, content_rowid=id, tokenize='unicode61');
         CREATE VIRTUAL TABLE characters_fts USING fts5(char, explanation, content=characters, content_rowid=id, tokenize='unicode61');
@@ -263,11 +263,11 @@ function build(): void {
 
     // 10. Check size
     const size_mb = statSync(OUTPUT_DB).size / (1024 * 1024)
-    console.log(`[build:chinese-dict] Output: ${OUTPUT_DB} (${size_mb.toFixed(1)} MB)`)
+    console.log(`[build:chinese-dictionary] Output: ${OUTPUT_DB} (${size_mb.toFixed(1)} MB)`)
     if (size_mb > FAIL_SIZE_MB) fail(`db size ${size_mb.toFixed(1)} MB exceeds limit of ${FAIL_SIZE_MB} MB`)
     if (size_mb > WARN_SIZE_MB) warn(`db size ${size_mb.toFixed(1)} MB exceeds warning threshold of ${WARN_SIZE_MB} MB`)
 
-    console.log(`[build:chinese-dict] Done: ${word_count} words, ${char_count} chars, ${idiom_count} idioms`)
+    console.log(`[build:chinese-dictionary] Done: ${word_count} words, ${char_count} chars, ${idiom_count} idioms`)
 }
 
 build()

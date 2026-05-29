@@ -24,10 +24,10 @@ import { registerTextHandlers } from './ipc/text_handlers'
 import { registerOcrHandlers } from './ipc/ocr_handlers'
 import { registerHistoryHandlers } from './ipc/history_handlers'
 import { registerBackupHandlers } from './ipc/backup_handlers'
-import { registerChineseDictHandlers } from './ipc/chinese_dict_handlers'
+import { registerChineseDictionaryHandlers } from './ipc/chinese_dictionary_handlers'
 import { registerDictHandlers } from './ipc/dict_handlers'
 import { registerDetectHandlers } from './ipc/detect_handlers'
-import { get_db_path, set_service_state, reload_db, close_chinese_dict } from './chinese_dict'
+import { get_db_path, set_service_state, reload_db, close_chinese_dictionary } from './chinese_dictionary'
 import { close_dict } from './dict'
 import { init_cld3 } from './detect'
 import { existsSync, watch, type FSWatcher } from 'fs'
@@ -106,7 +106,7 @@ if (!gotLock) {
     registerOcrHandlers(manager)
     registerHistoryHandlers()
     registerBackupHandlers()
-    registerChineseDictHandlers()
+    registerChineseDictionaryHandlers()
     registerDictHandlers()
     registerDetectHandlers()
     registerUpdateHandlers()
@@ -139,14 +139,14 @@ if (!gotLock) {
             set_service_state('building')
             try {
                 const npm_cmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-                const build = spawn(npm_cmd, ['run', 'build:chinese-dict'], { cwd: app.getAppPath(), shell: process.platform === 'win32' })
+                const build = spawn(npm_cmd, ['run', 'build:chinese-dictionary'], { cwd: app.getAppPath(), shell: process.platform === 'win32' })
                 let build_failed = false
-                build.stdout.on('data', (data: Buffer) => { log_main.info('build:chinese-dict: %s', data.toString().trimEnd()) })
-                build.stderr.on('data', (data: Buffer) => { log_main.error('build:chinese-dict stderr: %s', data.toString().trimEnd()) })
+                build.stdout.on('data', (data: Buffer) => { log_main.info('build:chinese-dictionary: %s', data.toString().trimEnd()) })
+                build.stderr.on('data', (data: Buffer) => { log_main.error('build:chinese-dictionary stderr: %s', data.toString().trimEnd()) })
                 build.on('error', (err: Error) => {
                     build_failed = true
                     set_service_state('failed')
-                    log_main.error('auto build:chinese-dict failed to start: %s', err)
+                    log_main.error('auto build:chinese-dictionary failed to start: %s', err)
                 })
                 build.on('close', (code) => {
                     if (build_failed) return
@@ -157,12 +157,12 @@ if (!gotLock) {
                         if (new_path) register_db_watch(new_path)
                     } else {
                         set_service_state('failed')
-                        log_main.error('auto build:chinese-dict failed with code %d', code)
+                        log_main.error('auto build:chinese-dictionary failed with code %d', code)
                     }
                 })
             } catch (e) {
                 set_service_state('failed')
-                log_main.error('auto build:chinese-dict failed to start: %s', e)
+                log_main.error('auto build:chinese-dictionary failed to start: %s', e)
             }
         }
     } else {
@@ -245,7 +245,7 @@ if (!gotLock) {
     stopClipboardMonitor()
     stopServer()
     close_history()
-    close_chinese_dict()
+    close_chinese_dictionary()
     close_dict()
     flush_config()
     unregisterAll()

@@ -17,7 +17,6 @@ import { chatglmService } from './chatglm'
 import { geminiproService } from './geminipro'
 import { ollamaService } from './ollama'
 import { mymemoryService } from './mymemory'
-import { freeDictionaryService } from './free_dictionary'
 import { chineseDictionaryService } from './chinese_dictionary'
 import { ecdictService } from './ecdict'
 import { registerAllTtsServices } from './tts'
@@ -42,7 +41,6 @@ export function registerAllServices(): void {
     translateServiceRegistry.register(geminiproService)
     translateServiceRegistry.register(ollamaService)
     translateServiceRegistry.register(mymemoryService)
-    translateServiceRegistry.register(freeDictionaryService)
     translateServiceRegistry.register(chineseDictionaryService)
     translateServiceRegistry.register(ecdictService)
 

@@ -47,7 +47,7 @@ function readBody(req: http.IncomingMessage, maxBytes: number = MAX_BODY_SIZE): 
             }
             chunks.push(chunk)
         })
-        req.on('end', () => resolve(Buffer.concat(chunks)))
+        req.on('end', () => { resolve(Buffer.concat(chunks)); })
         req.on('error', reject)
     })
 }
@@ -131,7 +131,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
                         res.writeHead(200)
                         res.end(JSON.stringify({ success: true, mode }))
                     } catch (err: unknown) {
-                        if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+                        if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
                         res.writeHead(500)
                         res.end(JSON.stringify({ success: false, error: String(err) }))
                     }
@@ -305,7 +305,7 @@ function handleTranslate(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -339,7 +339,7 @@ function handleDictLookup(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -389,7 +389,7 @@ function handleTriggerSelection(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true, method }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -422,7 +422,7 @@ function handleTriggerDict(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -453,7 +453,7 @@ function handleTriggerClipboard(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -486,7 +486,7 @@ function handleTriggerClipboardTranslate(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -570,7 +570,7 @@ function handleOpenWindow(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -607,7 +607,7 @@ function handleSetConfig(req: http.IncomingMessage, res: http.ServerResponse): v
             res.writeHead(200)
             res.end(JSON.stringify({ success: true, results }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -696,7 +696,7 @@ function handle_trigger_screenshot(
             res.writeHead(success ? 200 : 500)
             res.end(JSON.stringify(success ? { success: true, mode } : { success: false, error: 'screenshot capture failed' }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -756,7 +756,7 @@ function handle_trigger_hotkey(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -784,7 +784,7 @@ function handle_hotkey_system_failures(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -813,7 +813,7 @@ function handle_tray_action(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true, action }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }
@@ -870,7 +870,7 @@ function handle_mock_update(
             res.writeHead(200)
             res.end(JSON.stringify({ success: true, release }))
         } catch (err: unknown) {
-            if (err instanceof BodyTooLargeError) return respondBodyTooLarge(res)
+            if (err instanceof BodyTooLargeError) { respondBodyTooLarge(res); return; }
             res.writeHead(500)
             res.end(JSON.stringify({ success: false, error: String(err) }))
         }

@@ -118,8 +118,12 @@ function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleC
                                         const groups = new Map<string, typeof result.definitions>()
                                         for (const def of result.definitions) {
                                             const key = def.partOfSpeech || ''
-                                            if (!groups.has(key)) groups.set(key, [])
-                                            groups.get(key)!.push(def)
+                                            let defs = groups.get(key)
+                                            if (!defs) {
+                                                defs = []
+                                                groups.set(key, defs)
+                                            }
+                                            defs.push(def)
                                         }
                                         return [...groups.entries()].map(([pos, defs], gi) => (
                                             <div key={gi} style={{ marginBottom: gi < groups.size - 1 ? 10 : 0 }}>

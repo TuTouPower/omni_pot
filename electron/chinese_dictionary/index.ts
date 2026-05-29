@@ -5,7 +5,7 @@ import Database from 'better-sqlite3'
 import { log } from '../log'
 import type { ChineseDictServiceState } from '@shared/types/ipc'
 
-const log_dict = log.scope('chinese-dict')
+const log_dict = log.scope('chinese-dictionary')
 
 type DbState = 'idle' | 'ready' | 'failed'
 
@@ -46,16 +46,16 @@ export function get_db_path(): string | null {
 
 function find_db_path(): string | null {
     if (app.isPackaged) {
-        const prod_path = join(process.resourcesPath, 'data', 'dict', 'chinese_dict.db')
+        const prod_path = join(process.resourcesPath, 'data', 'dict', 'chinese_dictionary.db')
         return existsSync(prod_path) ? prod_path : null
     }
 
     const app_path = app.getAppPath()
     const candidates = [
-        join(app_path, 'resources', 'data', 'dict', 'chinese_dict.db'),
-        join(app_path, '..', 'resources', 'data', 'dict', 'chinese_dict.db'),
-        join(app_path, '..', '..', 'resources', 'data', 'dict', 'chinese_dict.db'),
-        join(process.cwd(), 'resources', 'data', 'dict', 'chinese_dict.db'),
+        join(app_path, 'resources', 'data', 'dict', 'chinese_dictionary.db'),
+        join(app_path, '..', 'resources', 'data', 'dict', 'chinese_dictionary.db'),
+        join(app_path, '..', '..', 'resources', 'data', 'dict', 'chinese_dictionary.db'),
+        join(process.cwd(), 'resources', 'data', 'dict', 'chinese_dictionary.db'),
     ]
     return candidates.find((path) => existsSync(path)) ?? null
 }
@@ -125,7 +125,7 @@ export function set_service_state(state: ChineseDictServiceState): void {
     // current state via the `chineseDict:check` IPC on mount.
     for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed()) {
-            win.webContents.send('chineseDict:state-changed', state)
+            win.webContents.send('chinese-dictionary:state-changed', state)
         }
     }
 }
@@ -193,7 +193,7 @@ export function reload_db(): boolean {
     return success
 }
 
-export function close_chinese_dict(): void {
+export function close_chinese_dictionary(): void {
     if (db) {
         db.close()
         db = undefined

@@ -29,8 +29,8 @@ export function registerHistoryHandlers(): void {
     })
 
     ipcMain.handle('history:list', (_event, page: number, page_size: number, filters?: HistoryQueryFilters) => {
-        const safe_page = Math.max(1, Number(page) || 1)
-        const safe_page_size = Math.min(100, Math.max(1, Number(page_size) || 20))
+        const safe_page = Math.max(1, page || 1)
+        const safe_page_size = Math.min(100, Math.max(1, page_size || 20))
         return get_history_page(safe_page, safe_page_size, filters)
     })
 
