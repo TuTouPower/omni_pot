@@ -86,7 +86,7 @@
 ### C. 数据可靠性与状态（high）
 
 - [x] **history.db 备份/恢复前关闭连接**：备份/恢复路径调用 `close_history()` 后再读写 `history.db`；`electron/history/index.ts` 中无效的同步 `db_mutex` 噪音已移除。
-- [ ] **Windows 选区 COM 引用泄漏**：`electron/selection/windows.ts:148-152`、`230-247`。`RPC_E_CHANGED_MODE` 路径未配对 `CoUninitialize`；异常路径未 `SysFreeString` 释放 BSTR / `pRange`。统一 try/finally。
+- [x] **Windows 选区 COM 引用泄漏**：`electron/selection/windows.ts` 已用统一 `try/finally` 释放 UIA COM 对象、range 与 BSTR，并处理 `CoInitializeEx` 的 `S_FALSE` 初始化结果。
 - [x] **dict/recognize close 时 reset pinned**：`electron/windows/manager.ts` 当前仍未正确 reset `dict_pinned` / `recognize_pinned`，并且 e2e 只断言 `alwaysOnTop`；补 reset，并补 e2e 断言 pinned / `aria-pressed` 与 blur 行为。
 - [x] **dict 尺寸记忆使用独立开关**：`electron/windows/dict_options.ts:8-11/25-27` 复用 `translate_remember_window_size`。新增 `dict_remember_window_size`。
 - [x] **`translate_window_position='pre_state'` 实现**：`shared/types/config.ts:27/38-39`、`docs/spec.md:519` 定义"上次位置"，但 `windows/manager.ts:80-85` 永远按鼠标显示器居中。补 save/restore。
@@ -123,7 +123,7 @@
 - [ ] **macOS 划词实现或在 spec 标缺口**：`electron/selection/darwin.ts:3-5` 永远返回 `unsupported-platform`，与跨平台目标不符。
 - [ ] **WebDAV 备份能力对齐 spec**：`electron/backup/index.ts:338-356/383-428` 始终用本地 zip；`shared/types/config.ts:167-170` 默认 `backup_type: 'webdav'`；`docs/spec.md:571-576` 要求 WebDAV。实现或改默认 + 标 spec。
 - [x] **text clipboard IPC 限制大小**：`electron/ipc/text_handlers.ts:9-12` 限制 renderer base64 输入为 20MB（约 15MB raw image），避免无上限创建 `nativeImage`。
-- [ ] **clipboard 多并发互不打断**：`electron/clipboard/index.ts:14-21` 单 `suppressUntil` 全局时间戳，改嵌套引用计数；`electron/selection/clipboard.ts:38-58` `restoreClipboard` 写顺序会覆盖前一步内容。
+- [x] **clipboard 多并发互不打断**：`electron/clipboard/index.ts` 的 clipboard monitor 抑制改为嵌套引用计数；`electron/selection/clipboard.ts` 的备份/恢复路径继续由抑制窗口保护，已补并发抑制单测。
 - [x] **DeepL free / Bing UA 风险标注**：`src/services/deepl.ts:32-45/140-144`、`bing.ts:55` 仿冒官方客户端，封禁即失效；在 spec/limitations 记录。
 - [x] **Cambridge HTML 正则 ReDoS**：`src/services/cambridge_dict.ts:74/112/144` 无界长，必要时换解析器。
 

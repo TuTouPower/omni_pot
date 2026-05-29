@@ -88,6 +88,34 @@ describe('clipboard monitor suppression', () => {
         expect(result).toBe(42)
     })
 
+    it('keeps suppression active until nested mutations finish', async () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(1000)
+        startClipboardMonitor(mockMgr)
+
+        let finish_outer: (() => void) | undefined
+        const outer = withClipboardMutationSuppressed(async () => {
+            await withClipboardMutationSuppressed(() => Promise.resolve())
+            await new Promise<void>((resolve) => { finish_outer = resolve })
+        })
+        await vi.advanceTimersByTimeAsync(0)
+
+        mockClipboardText = 'nested suppressed text'
+        vi.setSystemTime(1300)
+        pollClipboardMonitorOnce(mockMgr)
+        expect(mockFocusOrCreate).not.toHaveBeenCalled()
+
+        finish_outer?.()
+        await outer
+        vi.setSystemTime(1499)
+        pollClipboardMonitorOnce(mockMgr)
+        expect(mockFocusOrCreate).not.toHaveBeenCalled()
+
+        vi.setSystemTime(1500)
+        pollClipboardMonitorOnce(mockMgr)
+        expect(mockFocusOrCreate).toHaveBeenCalled()
+    })
+
     it('suppression leaves cleanup window when inner function throws', async () => {
         vi.useFakeTimers()
         vi.setSystemTime(5000)

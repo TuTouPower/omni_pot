@@ -66,6 +66,7 @@ function sendCtrlC(): Promise<void> {
 }
 
 const S_OK = 0
+const S_FALSE = 1
 const RPC_E_CHANGED_MODE = -2147417850
 const COINIT_APARTMENTTHREADED = 0x2
 const CLSCTX_INPROC_SERVER = 0x1
@@ -150,9 +151,15 @@ function getTextByUIAutomation(): string | null {
     if (hr === RPC_E_CHANGED_MODE) {
         return null
     }
-    if (hr !== S_OK) {
+    if (hr !== S_OK && hr !== S_FALSE) {
         return null
     }
+
+    let pAutomation: NativePointer | null = null
+    let pElement: NativePointer | null = null
+    let pPattern: NativePointer | null = null
+    let pRanges: NativePointer | null = null
+
     try {
         const ppv: Array<NativePointer | null> = [null]
         const hr2 = CoCreateInstance(
@@ -161,17 +168,16 @@ function getTextByUIAutomation(): string | null {
         if (hr2 !== S_OK || !ppv[0]) {
             return null
         }
-        const pAutomation = ppv[0]
+        pAutomation = ppv[0]
 
         const elementOut: Array<NativePointer | null> = [null]
         const hr3 = call_i32(
             readVtableFunc(pAutomation, 8), GetFocusedElementProto, pAutomation, elementOut
         )
         if (hr3 !== S_OK || !elementOut[0]) {
-            release(pAutomation)
             return null
         }
-        const pElement = elementOut[0]
+        pElement = elementOut[0]
 
         const patternOut: Array<NativePointer | null> = [null]
         const hr4 = call_i32(
@@ -179,33 +185,24 @@ function getTextByUIAutomation(): string | null {
             pElement, UIA_TextPatternId, patternOut
         )
         if (hr4 !== S_OK || !patternOut[0]) {
-            release(pElement)
-            release(pAutomation)
             return null
         }
-        const pPattern = patternOut[0]
+        pPattern = patternOut[0]
 
         const rangesOut: Array<NativePointer | null> = [null]
         const hr5 = call_i32(
             readVtableFunc(pPattern, 5), GetSelectionProto, pPattern, rangesOut
         )
         if (hr5 !== S_OK || !rangesOut[0]) {
-            release(pPattern)
-            release(pElement)
-            release(pAutomation)
             return null
         }
-        const pRanges = rangesOut[0]
+        pRanges = rangesOut[0]
 
         const lengthOut = [0]
         const hr6 = call_i32(
             readVtableFunc(pRanges, 3), GetLengthProto, pRanges, lengthOut
         )
         if (hr6 !== S_OK) {
-            release(pRanges)
-            release(pPattern)
-            release(pElement)
-            release(pAutomation)
             return null
         }
 
@@ -220,29 +217,30 @@ function getTextByUIAutomation(): string | null {
             if (hr7 !== S_OK || !rangeOut[0]) {
                 continue
             }
+
             const pRange = rangeOut[0]
-
             const textOut: Array<NativePointer | null> = [null]
-            const hr8 = call_i32(
-                readVtableFunc(pRange, 12), GetTextProto, pRange, -1, textOut
-            )
-            if (hr8 === S_OK && textOut[0]) {
-                const text = koffi.decode(textOut[0], 'str16') as unknown as string
-                texts.push(text)
-                SysFreeString(textOut[0])
+            try {
+                const hr8 = call_i32(
+                    readVtableFunc(pRange, 12), GetTextProto, pRange, -1, textOut
+                )
+                if (hr8 === S_OK && textOut[0]) {
+                    const text = koffi.decode(textOut[0], 'str16') as unknown as string
+                    texts.push(text)
+                }
+            } finally {
+                if (textOut[0]) SysFreeString(textOut[0])
+                release(pRange)
             }
-
-            release(pRange)
         }
-
-        release(pRanges)
-        release(pPattern)
-        release(pElement)
-        release(pAutomation)
 
         const result = texts.join('\n').trim()
         return result.length > 0 ? result : null
     } finally {
+        if (pRanges) release(pRanges)
+        if (pPattern) release(pPattern)
+        if (pElement) release(pElement)
+        if (pAutomation) release(pAutomation)
         CoUninitialize()
     }
 }

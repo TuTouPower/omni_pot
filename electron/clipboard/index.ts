@@ -9,20 +9,24 @@ const log_clipboard = log.scope('clipboard')
 let last_text = ''
 let interval_id: ReturnType<typeof setInterval> | null = null
 let enabled = false
-let suppressUntil = 0
+let active_suppressions = 0
+let cleanup_suppress_until = 0
 
 export async function withClipboardMutationSuppressed<T>(fn: () => Promise<T>): Promise<T> {
-    suppressUntil = Date.now() + 1000
+    active_suppressions++
     try {
         return await fn()
     } finally {
-        suppressUntil = Date.now() + 200
+        active_suppressions--
+        if (active_suppressions === 0) {
+            cleanup_suppress_until = Date.now() + 200
+        }
     }
 }
 
 export function pollClipboardMonitorOnce(mgr: WindowManager): void {
     if (!enabled) return
-    if (Date.now() < suppressUntil) return
+    if (active_suppressions > 0 || Date.now() < cleanup_suppress_until) return
 
     const current = clipboard.readText()
 
