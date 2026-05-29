@@ -49,8 +49,8 @@
 
 | 服务/端点 | 状态 | 备注 |
 |---|---|---|
-| Free Dictionary / dictionaryapi.dev | 当前代码存在，历史实测通过 | 英文词典，无需 key；返回词性、释义、音标、例句、发音等。 |
 | Cambridge Dictionary 网页抓取 | 当前代码存在，历史实测通过 | 无需 key；英文词典/英汉词典 HTML 抓取，页面结构变化会导致失效。 |
+| Free Dictionary / dictionaryapi.dev | 资料中实测通过，当前代码未实现 | 英文词典，无需 key；返回词性、释义、音标、例句、发音等。 |
 | FreeDictionaryAPI.com | 资料中实测通过 | 无需 key，约 1000 请求/小时/IP；当前代码未实现。 |
 | Datamuse | 资料中实测通过 | 无需 key，约 100000 请求/天；更适合同义词/联想词，不是完整词典。 |
 | Wiktionary / MediaWiki API | 资料中可用 | 无需 key；返回 wikitext/页面结构，需要额外解析。 |

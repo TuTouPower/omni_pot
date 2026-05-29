@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { bingService } from '../../../src/services/bing'
 
-const RUN_NET = process.env.OMNI_POT_EXTERNAL_SERVICE_TESTS === '1'
-
 describe('Bing Translate Service', () => {
   it('has correct key and name', () => {
     expect(bingService.key).toBe('bing')
@@ -46,14 +44,4 @@ describe('Bing Translate Service', () => {
       ).rejects.toThrow('Bing translate API 413')
     })
   })
-
-  it.skipIf(!RUN_NET)(
-    'translates text via real Bing API',
-    async () => {
-      const result = await bingService.translate('hello', 'en', 'zh_cn', {})
-      expect(typeof result).toBe('string')
-      expect((result as string).length).toBeGreaterThan(0)
-    },
-    15000
-  )
 })

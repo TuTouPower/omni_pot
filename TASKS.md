@@ -130,7 +130,7 @@
 ### F. 测试与脚本
 
 - [x] **vitest include glob 修复**：`vitest.config.ts:7` 当前 `tests/**/*.test.ts` 漏掉以下文件（均为 `test_*.ts`）：`tests/unit/services/test_google.ts`、`test_deepl.ts`、`tests/unit/windows/test_manager.ts`、`tests/unit/stores/test_translate_store.ts`、`tests/unit/lib/test_crypto.ts`。重命名或调整 glob 后同步修订 `docs/test.md §5.1`。（`test_bing.ts` → `bing.test.ts` 已重命名。）
-- [ ] **外部服务测试策略收口**：所有需要真实公网请求的 provider 健康检查只能放在 `tests/user_e2e/specs/external_services.spec.ts`（`@external`）统一覆盖；其他单元测试、集成测试、E2E（含 `@core` / `@ui`）必须使用本地 stub / fake response / fixture，不允许直连公网。`external_services.spec.ts` 应枚举当前代码注册且无需用户 key 的外部网络 provider，并逐个暴露失败服务名；网络不可达或上游 429/封禁等失败不得 silent skip。完成时同步清理分散在 unit 测试里的真实网络用例，并同步 `docs/test.md`、`docs/test_user_e2e.md` 的测试边界说明。
+- [x] **外部服务测试策略收口**：所有需要真实公网请求的 provider 健康检查只能放在 `tests/user_e2e/specs/external_services.spec.ts`（`@external`）统一覆盖；其他单元测试、集成测试、E2E（含 `@core` / `@ui`）必须使用本地 stub / fake response / fixture，不允许直连公网。`external_services.spec.ts` 应枚举当前代码注册且无需用户 key 的外部网络 provider，并逐个暴露失败服务名；网络不可达或上游 429/封禁等失败不得 silent skip。完成时同步清理分散在 unit 测试里的真实网络用例，并同步 `docs/test.md`、`docs/test_user_e2e.md` 的测试边界说明。
 - [x] **网络门变量统一为 `OMNI_POT_EXTERNAL_SERVICE_TESTS`**：所有 opt-in 真实公网测试统一只认 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1`；`tests/unit/services/test_google.ts:4` 当前仍用 `RUN_NETWORK_TESTS`，若保留该用例也必须改名/迁移到 `external_services.spec.ts`。
 - [x] **`external_services.spec.ts` 不再 silent skip**：`tests/user_e2e/specs/external_services.spec.ts:118-120/146` 与上面的统一策略冲突；删除 Google 网络不可达 skip，让具体服务失败暴露。
 - [ ] **`i18n.spec.ts` 文案来源审计**：复核所有断言文案是否从 `src/locales/*.json` 单一来源推导，避免硬编码字符串与 locale 文件漂移。

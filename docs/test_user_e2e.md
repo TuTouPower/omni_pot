@@ -471,7 +471,7 @@ class TranslatePage {
 
 - 仓库中唯一直接调用真实公共服务的 spec；所有服务可用性回归都归这里，不在 `@core` / `@ui` 重复真实公网检查
 - 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查
-- 覆盖无密钥外部服务：Bing、Google、DeepL 免费模式（含长文本 / 葡语变体）、MyMemory、Cambridge、Free Dictionary
+- 覆盖当前代码存在的无密钥外部服务：Bing、Google、DeepL 免费模式（含长文本 / 葡语变体）、MyMemory、Cambridge
 - 不使用 route/mock；公共服务不可达时测试应失败并暴露具体服务
 - 默认免费翻译服务真实连通性（覆盖 issue #3）：直接调用 bing / deepl(free) / mymemory 等 service adapter，验证公共 provider 当前可用；UI roundtrip 由本地 stub 的 `@core` / `@ui` 用例覆盖
 

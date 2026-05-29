@@ -103,7 +103,7 @@
 | `@ui` 渲染与交互 | 本地 HTTP stub 或 init script `fetch` override | 只验证 UI 状态、卡片文案、语言切换、错误态 |
 | 单页网络边界 UI | Playwright `page.route().fulfill()` | 临时拦截单个页面请求；应标注 `@stubbed`，避免替代 service adapter 覆盖 |
 | 本地能力测试 | 真实本地服务 | `chinese_dictionary`、Tesseract、System TTS |
-| `@external` / `external_services.spec.ts` | 真实外部服务 | Bing、Google、DeepL 免费、MyMemory、Cambridge、Free Dictionary、Edge TTS 等公网连通性 |
+| `@external` / `external_services.spec.ts` | 真实外部服务 | Bing、Google、DeepL 免费、MyMemory、Cambridge 等当前代码存在的公网连通性 |
 
 ---
 
