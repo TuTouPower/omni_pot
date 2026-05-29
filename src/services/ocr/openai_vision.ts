@@ -60,7 +60,7 @@ export const openaiVisionOcrService: OcrService = {
             method: 'POST',
             headers,
             body: JSON.stringify(payload)
-        })
+        }, 60_000)
 
         if (!resp.ok) {
             throw new Error(`OpenAI Vision API error: ${String(resp.status)}`)

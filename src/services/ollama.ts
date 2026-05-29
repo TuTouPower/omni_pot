@@ -44,7 +44,7 @@ export const ollamaService: TranslateService = {
                 ],
                 stream: true
             })
-        })
+        }, 120_000)
 
         if (!resp.ok) throw new Error(`Ollama API error: ${String(resp.status)}`)
 
