@@ -153,6 +153,14 @@ export function setConfig(key: ConfigKey, value: unknown): void {
     broadcastChange(key, value)
 }
 
+export function resetConfigToDefaults(): void {
+    for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
+        ;(data as Record<string, unknown>)[key] = value
+    }
+    saveToDisk()
+    broadcastAllConfig()
+}
+
 export function getAllConfig(): AppConfig {
     return { ...DEFAULT_CONFIG, ...data }
 }
@@ -209,5 +217,12 @@ function broadcastChange(key: ConfigKey, value: unknown): void {
     }
     for (const listener of config_change_listeners) {
         listener(key, value)
+    }
+}
+
+export function broadcastAllConfig(): void {
+    const all = { ...DEFAULT_CONFIG, ...data }
+    for (const [key, value] of Object.entries(all)) {
+        broadcastChange(key as ConfigKey, value)
     }
 }

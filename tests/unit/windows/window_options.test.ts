@@ -16,6 +16,7 @@ import { get_translate_window_options } from '../../../electron/windows/translat
 function reset_config(): void {
     config_values.clear()
     config_values.set('translate_remember_window_size', true)
+    config_values.set('dict_remember_window_size', true)
     config_values.set('translate_window_width', 240)
     config_values.set('translate_window_height', 720)
     config_values.set('dict_window_width', 430)

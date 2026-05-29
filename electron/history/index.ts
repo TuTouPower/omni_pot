@@ -13,29 +13,50 @@ export interface HistoryRecord {
 }
 
 let db: Database.Database | undefined
+let db_mutex = false
 
 function get_db(): Database.Database {
     if (db) return db
 
-    const dir = getUserDataDir()
-    const db_path = join(dir, 'history.db')
+    // Simple mutex to prevent concurrent initialization
+    if (db_mutex) {
+        throw new Error('Database is being reinitialized')
+    }
+    db_mutex = true
 
-    db = new Database(db_path)
-    db.pragma('journal_mode = WAL')
+    try {
+        const dir = getUserDataDir()
+        const db_path = join(dir, 'history.db')
 
-    db.exec(`
-        CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            service_key TEXT NOT NULL,
-            source_text TEXT NOT NULL,
-            source_lang TEXT NOT NULL DEFAULT '',
-            target_text TEXT NOT NULL DEFAULT '',
-            target_lang TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
-        )
-    `)
+        db = new Database(db_path)
+        db.pragma('journal_mode = WAL')
 
-    return db
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                service_key TEXT NOT NULL,
+                source_text TEXT NOT NULL,
+                source_lang TEXT NOT NULL DEFAULT '',
+                target_text TEXT NOT NULL DEFAULT '',
+                target_lang TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+            )
+        `)
+
+        return db
+    } finally {
+        db_mutex = false
+    }
+}
+
+/**
+ * Reset database connection (used by backup restore)
+ */
+export function reset_db(): void {
+    if (db) {
+        db.close()
+        db = undefined
+    }
 }
 
 export function add_history(record: Omit<HistoryRecord, 'id' | 'created_at'>): void {

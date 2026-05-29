@@ -3,7 +3,7 @@ import { ipcMain } from 'electron'
 import { execFile } from 'child_process'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { writeFile, unlink } from 'fs/promises'
+import { writeFile, mkdir, rm, chmod } from 'fs/promises'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
 import { start_screenshot_capture } from '../screenshot'
@@ -125,8 +125,11 @@ export function registerOcrHandlers(manager: WindowManager): void {
     ipcMain.handle('ocr:system-recognize', async (_event, base64Image: string, lang: string): Promise<string> => {
         const platform = process.platform
 
-        // Write image to temp file with unpredictable path
-        const tmp_path = join(tmpdir(), `omni_ocr_${randomUUID()}.png`)
+        // Write image to private temp directory
+        const tmp_dir = await mkdir(join(tmpdir(), `omni_ocr_${randomUUID()}`), { recursive: true })
+        if (!tmp_dir) throw new Error('Failed to create temp directory')
+        await chmod(tmp_dir, 0o700)
+        const tmp_path = join(tmp_dir, 'image.png')
         const buffer = Buffer.from(base64Image, 'base64')
         await writeFile(tmp_path, buffer)
 
@@ -139,7 +142,7 @@ export function registerOcrHandlers(manager: WindowManager): void {
                 throw new Error('System OCR not supported on this platform')
             }
         } finally {
-            await unlink(tmp_path).catch(() => {})
+            await rm(tmp_dir, { recursive: true, force: true }).catch(() => {})
         }
     })
 }

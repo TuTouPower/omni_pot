@@ -6,7 +6,7 @@ const DICT_MIN_WIDTH = 280
 const DICT_MIN_HEIGHT = 320
 
 export function get_dict_window_options(): WindowOptions {
-    const remember_size = getConfig('translate_remember_window_size') as boolean
+    const remember_size = getConfig('dict_remember_window_size') as boolean
     const width = remember_size ? (getConfig('dict_window_width') as number) : 350
     const height = remember_size ? (getConfig('dict_window_height') as number) : 420
     return {
@@ -23,7 +23,7 @@ export function get_dict_window_options(): WindowOptions {
 let resizeTimer: ReturnType<typeof setTimeout> | null = null
 
 export function attach_dict_resize_persistence(win: BrowserWindow): void {
-    if (!getConfig('translate_remember_window_size') || win.listenerCount('resize')) return
+    if (!getConfig('dict_remember_window_size') || win.listenerCount('resize')) return
     win.on('resize', () => {
         if (resizeTimer) clearTimeout(resizeTimer)
         resizeTimer = setTimeout(() => {

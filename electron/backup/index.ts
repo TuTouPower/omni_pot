@@ -1,7 +1,8 @@
 import { basename, join, resolve, sep } from 'path'
 import { randomUUID } from 'crypto'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, lstatSync, renameSync, mkdtempSync, rmSync } from 'fs'
-import { cancel_pending_config_save, flush_config, getUserDataDir, reload_config_from_disk } from '../config/store'
+import { cancel_pending_config_save, flush_config, getUserDataDir, reload_config_from_disk, broadcastAllConfig } from '../config/store'
+import { DEFAULT_CONFIG } from '@shared/types/config'
 import { close_history } from '../history'
 
 interface BackupFile {
@@ -245,8 +246,17 @@ function is_plain_config(value: unknown): value is Record<string, unknown> {
 }
 
 function validate_backup_config(data: Buffer): void {
-    if (!is_plain_config(read_json_entry('config.json', data))) {
+    const parsed = read_json_entry('config.json', data)
+    if (!is_plain_config(parsed)) {
         throw new Error('Invalid backup config')
+    }
+    const config = parsed as Record<string, unknown>
+    const known_keys = new Set<string>(Object.keys(DEFAULT_CONFIG))
+    known_keys.add('__initialized')
+    for (const key of Object.keys(config)) {
+        if (!known_keys.has(key)) {
+            throw new Error(`Backup config contains unknown key: ${key}`)
+        }
     }
 }
 
@@ -307,6 +317,7 @@ function replace_from_staging(staging_dir: string, entry_by_name: Map<string, Bu
         }
         renameSync(join(staging_dir, 'config.json'), get_config_path())
         reload_config_from_disk()
+        broadcastAllConfig()
 
         for (const rollback_path of rollback_paths.values()) remove_file_if_exists(rollback_path)
     } catch (error) {

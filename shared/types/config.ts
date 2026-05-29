@@ -40,6 +40,7 @@ export interface AppConfig {
 
   dict_always_on_top: boolean
   dict_pinned: boolean
+  dict_remember_window_size: boolean
   dict_window_width: number
   dict_window_height: number
 
@@ -138,6 +139,7 @@ export const DEFAULT_CONFIG: AppConfig = {
 
   dict_always_on_top: false,
   dict_pinned: false,
+  dict_remember_window_size: true,
   dict_window_width: 350,
   dict_window_height: 420,
 
