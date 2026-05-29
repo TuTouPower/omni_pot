@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test'
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
 function is_target_closed_error(error: unknown): boolean {
     return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
@@ -32,7 +33,7 @@ export class DictPage {
     }
 
     searchInputs(): Locator {
-        return this.page.locator('input, textarea')
+        return this.page.locator('input:not([data-testid="dict-word"]), textarea')
     }
 
     newlineButtons(): Locator {
@@ -134,7 +135,7 @@ export class DictPage {
         return this.dictCards().count()
     }
 
-    async waitForCards(minCount = 1, timeout = 30_000): Promise<void> {
+    async waitForCards(minCount = 1, timeout = local_operation_timeout_ms): Promise<void> {
         await this.page.waitForFunction(
             (min) => document.querySelectorAll('[data-testid="dict-card"]').length >= min,
             minCount,

@@ -80,7 +80,7 @@ export const cambridgeDictService: TranslateService = {
 
             if (first_entry) {
                 first_entry = false
-                const pron_pattern = /class="[^"]*dpron-i[^>]*>([^<]*(?:<(?!\/span\b)[^<]*)*)<\/span>\s*<\/span>/g
+                const pron_pattern = /class="[^"]*dpron-i[^"]*"[^>]*>([\s\S]*?)<\/span>\s*<\/span>/g
                 let pron_match: RegExpExecArray | null
                 while ((pron_match = pron_pattern.exec(entry_html)) !== null) {
                     const block = regex_capture(pron_match, 1)

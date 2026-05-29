@@ -2,7 +2,9 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import { build_cambridge_dict_init_script, cambridge_dict_hello_payload, cambridge_dict_reconcile_payload } from '../fixtures/stub_payloads'
+import { ocr_timeout_ms } from '../fixtures/timeout_constants'
 const cambridge_dict_config = {
+    welcome_dismissed: true,
     dictionary_service_list: [],
     english_dictionary_service_list: ['cambridge_dict@default'],
     service_instances: {
@@ -11,7 +13,7 @@ const cambridge_dict_config = {
 }
 
 async function wait_for_chinese_dict_ready(page: Page): Promise<void> {
-    await expect.poll(async () => page.evaluate(() => window.electronAPI.chineseDict.check().then((result) => result.ready)), { timeout: 60_000 }).toBe(true)
+    await expect.poll(async () => page.evaluate(() => window.electronAPI.chinese_dict.check().then((result) => result.ready)), { timeout: ocr_timeout_ms }).toBe(true)
 }
 
 test.describe('@ui dict window', () => {
@@ -22,6 +24,7 @@ test.describe('@ui dict window', () => {
             init_script: build_cambridge_dict_init_script(),
             config: {
                 app_language: 'zh_cn',
+                welcome_dismissed: true,
                 dictionary_service_list: [],
                 english_dictionary_service_list: ['cambridge_dict@default'],
                 service_instances: {
@@ -38,13 +41,13 @@ test.describe('@ui dict window', () => {
             await expect(dict.wordmark()).toContainText('Omni Pot')
             await expect(dict.modeLabel()).toContainText('词典')
             expect(await dict.titlebarOrder()).toEqual(['topmost', 'pin', 'wordmark', 'mode', 'close'])
-            await expect(dict.word()).toContainText('hello')
+            await expect(dict.word()).toHaveValue('hello')
             await expect(dict.searchInputs()).toHaveCount(0)
             await expect(dict.newlineButtons()).toHaveCount(0)
             await expect(dict.removedDictionaryPrompts()).toHaveCount(0)
 
             // Wait for at least 2 cards: source card + result card (pronunciation card may also appear)
-            await dict.waitForCards(2, 60_000)
+            await dict.waitForCards(2, ocr_timeout_ms)
             await expect(dict.definitions().first()).toBeVisible()
             await expect(dict.pronunciations().first()).toBeVisible()
             await dict.clickFirstCopy()
@@ -77,12 +80,13 @@ test.describe('@ui dict window', () => {
             expect(result.success).toBe(true)
             const dict = await omni.dict()
 
-            await expect(dict.word()).toHaveText('')
+            await expect(dict.word()).toHaveValue('')
             await expect(dict.detectedLang()).toHaveText('')
             await expect.poll(async () => dict.isWordFocused()).toBe(true)
+            await expect(dict.word()).toHaveAttribute('aria-label', '输入单词...')
 
             await dict.editWordAndSubmit('hello')
-            await expect(dict.word()).toHaveText('hello')
+            await expect(dict.word()).toHaveValue('hello')
         } finally {
             await omni.stop()
         }
@@ -95,6 +99,7 @@ test.describe('@ui dict window', () => {
                 reconcile: cambridge_dict_reconcile_payload,
             }),
             config: {
+                welcome_dismissed: true,
                 dictionary_service_list: ['chinese_dictionary@default'],
                 english_dictionary_service_list: ['cambridge_dict@default'],
                 service_instances: {
@@ -111,28 +116,28 @@ test.describe('@ui dict window', () => {
             const english_result = await omni.api.triggerDict('hello')
             expect(english_result.success).toBe(true)
             const dict = await omni.dict()
-            await expect(dict.word()).toContainText('hello')
-            await dict.waitForCards(2, 60_000)
+            await expect(dict.word()).toHaveValue('hello')
+            await dict.waitForCards(2, ocr_timeout_ms)
             await expect(dict.definitions().first()).not.toBeEmpty()
             const english_definition = await dict.definitions().first().textContent()
 
             await dict.editWordAndSubmit('reconcile')
 
-            await expect(dict.word()).toContainText('reconcile')
-            await expect.poll(async () => await dict.definitions().first().textContent(), { timeout: 60_000 }).not.toBe(english_definition)
+            await expect(dict.word()).toHaveValue('reconcile')
+            await expect.poll(async () => await dict.definitions().first().textContent(), { timeout: ocr_timeout_ms }).not.toBe(english_definition)
             await expect(dict.definitions().first()).not.toBeEmpty()
 
             const chinese_result = await omni.api.triggerDict('谢谢')
             expect(chinese_result.success).toBe(true)
-            await expect(dict.word()).toContainText('谢谢')
-            await dict.waitForCards(2, 60_000)
+            await expect(dict.word()).toHaveValue('谢谢')
+            await dict.waitForCards(2, ocr_timeout_ms)
             await expect(dict.definitions().first()).not.toBeEmpty()
             const chinese_definition = await dict.definitions().first().textContent()
 
             await dict.editWordAndSubmit('学习')
 
-            await expect(dict.word()).toContainText('学习')
-            await expect.poll(async () => await dict.definitions().first().textContent(), { timeout: 60_000 }).not.toBe(chinese_definition)
+            await expect(dict.word()).toHaveValue('学习')
+            await expect.poll(async () => await dict.definitions().first().textContent(), { timeout: ocr_timeout_ms }).not.toBe(chinese_definition)
             await expect(dict.definitions().first()).not.toBeEmpty()
         } finally {
             await omni.stop()
@@ -143,6 +148,7 @@ test.describe('@ui dict window', () => {
         const omni = await AppFixture.start({
             init_script: build_cambridge_dict_init_script(),
             config: {
+                welcome_dismissed: true,
                 dictionary_service_list: ['chinese_dictionary@default'],
                 english_dictionary_service_list: ['cambridge_dict@default'],
                 service_instances: {
@@ -161,9 +167,9 @@ test.describe('@ui dict window', () => {
             const dict = await omni.dict()
 
             // Wait for source + pronunciation + at least 1 result card
-            await dict.waitForCards(2, 60_000)
+            await dict.waitForCards(2, ocr_timeout_ms)
             await expect(dict.sourceTags().first()).toBeVisible()
-            await expect.poll(async () => await dict.definitions().count(), { timeout: 60_000 }).toBeGreaterThanOrEqual(1)
+            await expect.poll(async () => await dict.definitions().count(), { timeout: ocr_timeout_ms }).toBeGreaterThanOrEqual(1)
 
             // Service routing: English query hits English dictionary services.
             const en_keys = await dict.resultKeysWithContent()
@@ -175,8 +181,8 @@ test.describe('@ui dict window', () => {
             // Chinese word "谢谢" routes to Chinese dictionaries only.
             const chinese_result = await omni.api.triggerDict('谢谢')
             expect(chinese_result.success).toBe(true)
-            await expect(dict.word()).toContainText('谢谢')
-            await dict.waitForCards(2, 30_000)
+            await expect(dict.word()).toHaveValue('谢谢')
+            await dict.waitForCards(2, ocr_timeout_ms)
             await expect(dict.sourceTags().first()).toBeVisible()
             const source_text = (await dict.sourceTags().allTextContents()).join(' ')
             expect(source_text).toContain('Chinese Dictionary')
@@ -193,8 +199,8 @@ test.describe('@ui dict window', () => {
             for (const word of ['经济', '自我', '佛', '我']) {
                 const result = await omni.api.triggerDict(word)
                 expect(result.success).toBe(true)
-                await expect(dict.word()).toContainText(word)
-                await dict.waitForCards(2, 30_000)
+                await expect(dict.word()).toHaveValue(word)
+                await dict.waitForCards(2, ocr_timeout_ms)
                 await expect(dict.definitions().first(), `常用词「${word}」应有释义`).not.toBeEmpty()
                 const word_keys = await dict.resultKeysWithContent()
                 for (const key of word_keys) {
@@ -218,10 +224,10 @@ test.describe('@ui dict window', () => {
         try {
             await omni.api.triggerDict('reconcile')
             const dict = await omni.dict()
-            await expect(dict.word()).toHaveText('reconcile', { timeout: 10_000 })
+            await expect(dict.word()).toHaveValue('reconcile', { timeout: ocr_timeout_ms })
 
             const meta_elements = dict['page'].locator('[data-testid="dict-pronunciation"], [data-testid="dict-pos-tag"]')
-            await expect(meta_elements.first(), '词典卡片应展示读音/词性 chip').toBeVisible({ timeout: 10_000 })
+            await expect(meta_elements.first(), '词典卡片应展示读音/词性 chip').toBeVisible({ timeout: ocr_timeout_ms })
 
             const count = await meta_elements.count()
             for (let i = 0; i < count; i += 1) {
