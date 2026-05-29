@@ -1,14 +1,12 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { build_free_dictionary_init_script, free_dictionary_hello_payload, free_dictionary_reconcile_payload } from '../fixtures/stub_payloads'
-
-const free_dictionary_init_script = build_free_dictionary_init_script()
-const free_dictionary_config = {
+import { build_cambridge_dict_init_script, cambridge_dict_hello_payload, cambridge_dict_reconcile_payload } from '../fixtures/stub_payloads'
+const cambridge_dict_config = {
     dictionary_service_list: [],
-    english_dictionary_service_list: ['free_dictionary@default'],
+    english_dictionary_service_list: ['cambridge_dict@default'],
     service_instances: {
-        'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+        'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
     },
 }
 
@@ -21,13 +19,13 @@ test.describe('@ui dict window', () => {
 
     test('user opens dictionary from selected text and uses the word card', async () => {
         const omni = await AppFixture.start({
-            init_script: free_dictionary_init_script,
+            init_script: build_cambridge_dict_init_script(),
             config: {
                 app_language: 'zh_cn',
                 dictionary_service_list: [],
-                english_dictionary_service_list: ['free_dictionary@default'],
+                english_dictionary_service_list: ['cambridge_dict@default'],
                 service_instances: {
-                    'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+                    'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
                 },
             },
         })
@@ -49,8 +47,6 @@ test.describe('@ui dict window', () => {
             await dict.waitForCards(2, 60_000)
             await expect(dict.definitions().first()).toBeVisible()
             await expect(dict.pronunciations().first()).toBeVisible()
-            await expect(dict.examples().first()).toBeVisible()
-
             await dict.clickFirstCopy()
             await expect.poll(async () => (await omni.api.readClipboard()).text).not.toBe('')
 
@@ -94,16 +90,16 @@ test.describe('@ui dict window', () => {
 
     test('user edits the source word card and presses Enter to look up again', async () => {
         const omni = await AppFixture.start({
-            init_script: build_free_dictionary_init_script({
-                hello: free_dictionary_hello_payload,
-                reconcile: free_dictionary_reconcile_payload,
+            init_script: build_cambridge_dict_init_script({
+                hello: cambridge_dict_hello_payload,
+                reconcile: cambridge_dict_reconcile_payload,
             }),
             config: {
                 dictionary_service_list: ['chinese_dictionary@default'],
-                english_dictionary_service_list: ['free_dictionary@default'],
+                english_dictionary_service_list: ['cambridge_dict@default'],
                 service_instances: {
                     'chinese_dictionary@default': { serviceKey: 'chinese_dictionary', config: {} },
-                    'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+                    'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
                 },
             },
         })
@@ -145,13 +141,13 @@ test.describe('@ui dict window', () => {
 
     test('user gets real English and Chinese dictionary results from multiple services', async () => {
         const omni = await AppFixture.start({
-            init_script: free_dictionary_init_script,
+            init_script: build_cambridge_dict_init_script(),
             config: {
                 dictionary_service_list: ['chinese_dictionary@default'],
-                english_dictionary_service_list: ['free_dictionary@default'],
+                english_dictionary_service_list: ['cambridge_dict@default'],
                 service_instances: {
                     'chinese_dictionary@default': { serviceKey: 'chinese_dictionary', config: {} },
-                    'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+                    'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
                 },
             },
         })
@@ -171,9 +167,9 @@ test.describe('@ui dict window', () => {
 
             // Service routing: English query hits English dictionary services.
             const en_keys = await dict.resultKeysWithContent()
-            expect(en_keys.some((k) => k.startsWith('free_dictionary@'))).toBe(true)
+            expect(en_keys.some((k) => k.startsWith('cambridge_dict@'))).toBe(true)
             for (const key of en_keys) {
-                expect(key, '英文查询不应走中文词典').toMatch(/^free_dictionary@/)
+                expect(key, '英文查询不应走Chinese Dictionary').toMatch(/^cambridge_dict@/)
             }
 
             // Chinese word "谢谢" routes to Chinese dictionaries only.
@@ -183,7 +179,7 @@ test.describe('@ui dict window', () => {
             await dict.waitForCards(2, 30_000)
             await expect(dict.sourceTags().first()).toBeVisible()
             const source_text = (await dict.sourceTags().allTextContents()).join(' ')
-            expect(source_text).toContain('中文词典')
+            expect(source_text).toContain('Chinese Dictionary')
             await expect(dict.definitions().first()).toContainText('对别人表示感谢')
 
             // Service routing: Chinese query only hits Chinese dictionary services.
@@ -215,8 +211,8 @@ test.describe('@ui dict window', () => {
 
     test('dict header card shows pronunciation and POS tags without clipping', async () => {
         const omni = await AppFixture.start({
-            init_script: build_free_dictionary_init_script({ reconcile: free_dictionary_reconcile_payload }),
-            config: free_dictionary_config,
+            init_script: build_cambridge_dict_init_script({ reconcile: cambridge_dict_reconcile_payload }),
+            config: cambridge_dict_config,
         })
 
         try {

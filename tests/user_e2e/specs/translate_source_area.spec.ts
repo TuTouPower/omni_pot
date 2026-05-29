@@ -226,6 +226,30 @@ test.describe('@ui translate source area', () => {
 
             try {
                 const translate = await omni.translate()
+                await translate.sourceInput().page().evaluate(() => {
+                    const voices = [
+                        { lang: 'en-US', name: 'Fake-en', default: false, localService: true, voiceURI: 'fake_en' },
+                        { lang: 'zh-CN', name: 'Fake-zh', default: false, localService: true, voiceURI: 'fake_zh' },
+                    ]
+                    const spoken_langs: string[] = []
+                    ;(window as unknown as { __spoken_langs: string[] }).__spoken_langs = spoken_langs
+                    Object.defineProperty(window, 'speechSynthesis', {
+                        configurable: true,
+                        value: {
+                            speaking: false, paused: false, pending: false,
+                            getVoices: () => voices,
+                            speak: (utterance: SpeechSynthesisUtterance) => {
+                                spoken_langs.push(utterance.lang)
+                                setTimeout(() => {
+                                    utterance.onend?.(new Event('end') as SpeechSynthesisEvent)
+                                }, 30)
+                            },
+                            cancel: () => {},
+                            addEventListener: () => {},
+                            removeEventListener: () => {},
+                        },
+                    })
+                })
 
                 await translate.typeSource('hello world')
                 await translate.clickTranslate()
@@ -236,7 +260,7 @@ test.describe('@ui translate source area', () => {
 
                 await expect.poll(
                     async () => translate.sourceInput().page().evaluate(
-                        () => (window as unknown as { __spoken_langs: string[] }).__spoken_langs.at(-1),
+                        () => (window as unknown as { __spoken_langs?: string[] }).__spoken_langs?.at(-1),
                     ),
                     { timeout: 10_000 },
                 ).toBe('zh-CN')

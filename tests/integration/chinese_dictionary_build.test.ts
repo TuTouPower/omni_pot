@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import { existsSync, statSync } from 'fs'
 import { join } from 'path'
 
-const DB_PATH = join(__dirname, '..', '..', 'resources', 'data', 'dict', 'chinese_dict.db')
+const DB_PATH = join(__dirname, '..', '..', 'resources', 'data', 'dict', 'chinese_dictionary.db')
 const LICENSE_PATH = join(__dirname, '..', '..', 'resources', 'data', 'dict', 'chinese-dictionary-LICENSE')
 
 describe('chinese_dict build', () => {
@@ -12,8 +12,8 @@ describe('chinese_dict build', () => {
     beforeAll(() => {
         if (!existsSync(DB_PATH)) {
             throw new Error(
-                `chinese_dict.db not found at ${DB_PATH}.\n` +
-                'Run `npm run build:chinese-dict` first, then re-run this test.'
+                `chinese_dictionary.db not found at ${DB_PATH}.\n` +
+                'Run `npm run build:chinese-dictionary` first, then re-run this test.'
             )
         }
         db = new Database(DB_PATH, { readonly: true })

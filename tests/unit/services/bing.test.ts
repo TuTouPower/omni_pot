@@ -19,7 +19,7 @@ describe('Bing Translate Service', () => {
     beforeEach(() => {
       // Stub fetch: first call returns Bing page config HTML, second call returns an HTTP error
       let callCount = 0
-      vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      vi.spyOn(global, 'fetch').mockImplementation((input) => {
         callCount++
         const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
         if (callCount === 1 || url.includes('bing.com/translator')) {
@@ -29,10 +29,10 @@ describe('Bing Translate Service', () => {
             { status: 200 }
           )
           Object.defineProperty(resp, 'url', { value: 'https://www.bing.com/translator' })
-          return resp
+          return Promise.resolve(resp)
         }
         // translate response — HTTP error
-        return new Response('payload too large', { status: 413 })
+        return Promise.resolve(new Response('payload too large', { status: 413 }))
       })
     })
 

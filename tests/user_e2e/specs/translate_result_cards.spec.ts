@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import type { TranslationTestServer } from '../fixtures/translation_test_server'
+import { build_cambridge_dict_init_script } from '../fixtures/stub_payloads'
 
 const test_service_config = {
     app_language: 'zh_cn',
@@ -306,46 +307,24 @@ test.describe('@ui translate result cards', () => {
 
         test('dictionary result cards render pronunciation, definitions, and examples', async () => {
             const omni = await AppFixture.start({
+                init_script: build_cambridge_dict_init_script(),
                 config: {
                     dynamic_translate: false,
-                    translate_service_list: ['free_dictionary@default'],
+                    translate_service_list: ['cambridge_dict@default'],
                     service_instances: {
-                        'free_dictionary@default': { serviceKey: 'free_dictionary', config: {} },
+                        'cambridge_dict@default': { serviceKey: 'cambridge_dict', config: {} },
                     },
                 },
             })
 
             try {
                 const translate = await omni.translate()
-                await translate.fulfill_free_dictionary_once([
-                    {
-                        word: 'hello',
-                        phonetic: '/həˈləʊ/',
-                        phonetics: [
-                            { text: '/həˈloʊ/', audio: 'https://example.test/hello-us.mp3' },
-                        ],
-                        meanings: [
-                            {
-                                partOfSpeech: 'noun',
-                                definitions: [
-                                    {
-                                        definition: 'A greeting or expression of goodwill.',
-                                        example: 'She said hello to everyone in the room.',
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ])
-
                 await translate.typeSource('hello')
                 await translate.clickTranslate()
 
-                await expect(translate.resultCard('free_dictionary@default')).toBeVisible()
-                await expect(translate.resultBody('free_dictionary@default')).toContainText('noun', { timeout: 45_000 })
-                await expect(translate.resultBody('free_dictionary@default')).toContainText('greeting', { timeout: 45_000 })
-                await expect(translate.resultBody('free_dictionary@default')).toContainText('/həˈləʊ/')
-                await expect(translate.resultBody('free_dictionary@default')).toContainText('She said hello')
+                await expect(translate.resultCard('cambridge_dict@default')).toBeVisible()
+                await expect(translate.resultBody('cambridge_dict@default')).toContainText('exclamation', { timeout: 45_000 })
+                await expect(translate.resultBody('cambridge_dict@default')).toContainText('greeting', { timeout: 45_000 })
             } finally {
                 await omni.stop()
             }

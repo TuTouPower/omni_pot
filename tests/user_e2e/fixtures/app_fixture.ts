@@ -8,7 +8,6 @@ import { ScreenshotPage } from '../pages/screenshot_page'
 import { ConfigPage } from '../pages/config_page'
 import { UpdaterPage } from '../pages/updater_page'
 import { TranslationTestServer } from './translation_test_server'
-import { build_free_dictionary_init_script, free_dictionary_hello_payload, type FreeDictionaryEntryPayload } from './stub_payloads'
 
 export class AppFixture {
     app: ElectronApplication
@@ -192,12 +191,6 @@ export class AppFixture {
         })
 
         return server
-    }
-
-    async startDictTestServer(payload_by_word: Partial<Record<string, FreeDictionaryEntryPayload[]>> = { hello: free_dictionary_hello_payload }): Promise<void> {
-        const init_script = build_free_dictionary_init_script(payload_by_word)
-        await this.app.context().addInitScript({ content: init_script })
-        this.init_script = this.init_script ? `${this.init_script}\n${init_script}` : init_script
     }
 
     async resetConfig(): Promise<void> {

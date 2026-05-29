@@ -5,10 +5,9 @@ import { googleService } from '../../../src/services/google'
 import { deeplService } from '../../../src/services/deepl'
 import { mymemoryService } from '../../../src/services/mymemory'
 import { cambridgeDictService } from '../../../src/services/cambridge_dict'
-import { freeDictionaryService } from '../../../src/services/free_dictionary'
 
 const deepl_long_multi_paragraph_text = 'Hello,\n\nI would like to request a manual review of this fictional service case.\n\nThis is not a standard cancellation request. The workspace in this synthetic example is unavailable, which means the customer cannot access or use the service described in this test text. The customer is requesting a refund or prorated refund for the period during which the fictional workspace is unavailable.\n\nPlease clarify the exact reason why the purchase is considered not eligible under the sample refund policy, and please escalate this synthetic case to the appropriate billing review team.\n\nReference number: 00000000\nPlan: Example Business\nIssue: Example workspace unavailable\nRequest: Refund or prorated refund for the unusable subscription period\n\nIf the suspension in this fictional scenario was applied in error, please also provide the steps to appeal or restore the workspace. If the workspace cannot be restored, please confirm that no further charges will occur and reconsider the refund request based on inability to access the paid example service.\n\nThank you.'
-const deepl_long_single_paragraph_text = 'This synthetic customer support paragraph describes an unavailable example workspace, a manual review request, and a prorated refund request for a fictional subscription period. '.repeat(6)
+const deepl_long_single_paragraph_text = 'This synthetic customer support paragraph describes an unavailable example workspace, a manual review request, and a prorated refund request for a fictional subscription period. The customer cannot open the dashboard, export saved files, or invite team members while the workspace is suspended. Please explain the policy reason, escalate the case to billing review, and confirm whether future charges will stop if access cannot be restored.'
 const deepl_portuguese_variant_text = 'The bus arrives at the station.'
 const proxy_url = process.env['HTTPS_PROXY'] ?? process.env['https_proxy']
     ?? process.env['HTTP_PROXY'] ?? process.env['http_proxy']
@@ -59,7 +58,6 @@ const external_service_cases = [
     },
     { catalog_section: '1.2', name: 'MyMemory', run: () => mymemoryService.translate('hello world', 'en', 'zh_cn', {}) },
     { catalog_section: '1.3', name: 'Cambridge Dictionary', run: () => cambridgeDictService.translate('hello', 'en', 'zh_cn', {}) },
-    { catalog_section: '1.3', name: 'Free Dictionary', run: () => freeDictionaryService.translate('hello', 'en', 'zh_cn', {}) },
 ] as const
 
 function sleep(ms: number): Promise<void> {
@@ -143,15 +141,6 @@ test.describe('@external external service health', () => {
         const dict_result = result as { type: 'dict'; pronunciations: Array<{ audioUrl?: string }> }
         expect(dict_result.pronunciations.length).toBeGreaterThan(0)
         expect(dict_result.pronunciations[0].audioUrl).toBeTruthy()
-    })
-
-    test('Free Dictionary returns pronunciations with audioUrl', async () => {
-        test.setTimeout(120_000)
-        const result = await freeDictionaryService.translate('hello', 'en', 'zh_cn', {})
-        expect(result).toEqual(expect.objectContaining({ type: 'dict' }))
-        const dict_result = result as { type: 'dict'; pronunciations: Array<{ audioUrl?: string }> }
-        expect(dict_result.pronunciations.length).toBeGreaterThan(0)
-        expect(dict_result.pronunciations.some((p) => p.audioUrl)).toBe(true)
     })
 
     test.skip('OCR, TTS, and detection external service placeholders stay here when public providers are added', () => {})

@@ -6,7 +6,7 @@ import { join } from 'path'
 const DB_PATH = join(__dirname, '..', '..', 'resources', 'data', 'dict', 'cc_cedict.db')
 
 describe('ecdict (CC-CEDICT)', () => {
-    let db: Database.Database
+    let db: Database.Database | undefined
 
     beforeAll(() => {
         if (!existsSync(DB_PATH)) {
@@ -19,7 +19,7 @@ describe('ecdict (CC-CEDICT)', () => {
     })
 
     afterAll(() => {
-        db?.close()
+        if (db) db.close()
     })
 
     it('db file exists', () => {
@@ -27,11 +27,12 @@ describe('ecdict (CC-CEDICT)', () => {
     })
 
     it('is included in electron-builder extraResources filter', () => {
-        const pkg = JSON.parse(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf-8'))
-        const extra_resources = pkg.build?.extraResources as Array<{ from: string; to: string; filter?: string[] }> | undefined
+        const pkg = JSON.parse(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf-8')) as {
+            build?: { extraResources?: Array<{ from: string; to: string; filter?: string[] }> }
+        }
+        const extra_resources = pkg.build?.extraResources
         const dict_entry = extra_resources?.find((e) => e.from === 'resources/data/dict/')
-        expect(dict_entry).toBeDefined()
-        expect(dict_entry!.filter).toContain('cc_cedict.db')
+        expect(dict_entry?.filter).toContain('cc_cedict.db')
     })
 
     it('has entries table with expected columns', () => {
@@ -47,8 +48,7 @@ describe('ecdict (CC-CEDICT)', () => {
         const row = db.prepare(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'"
         ).get() as { name: string } | undefined
-        expect(row).toBeDefined()
-        expect(row!.name).toBe('entries_fts')
+        expect(row?.name).toBe('entries_fts')
     })
 
     it('has entries', () => {

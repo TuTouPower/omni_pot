@@ -1,71 +1,31 @@
-export interface FreeDictionaryDefinitionPayload {
+export interface CambridgeDefinitionPayload {
+    partOfSpeech: string
     definition: string
     example?: string
-}
-
-export interface FreeDictionaryMeaningPayload {
-    partOfSpeech: string
-    definitions: FreeDictionaryDefinitionPayload[]
-}
-
-export interface FreeDictionaryEntryPayload {
-    word: string
     phonetic?: string
-    phonetics?: Array<{ text?: string; audio?: string }>
-    meanings: FreeDictionaryMeaningPayload[]
+    audio?: string
 }
 
-export const free_dictionary_hello_payload: FreeDictionaryEntryPayload[] = [{
-    word: 'hello',
-    phonetic: '/həˈləʊ/',
-    phonetics: [{ text: '/həˈloʊ/', audio: 'https://example.test/hello-us.mp3' }],
-    meanings: [{
-        partOfSpeech: 'noun',
-        definitions: [{
-            definition: 'A greeting or expression of goodwill.',
-            example: 'She said hello to everyone in the room.',
-        }],
-    }],
+export type CambridgePayloadByWord = Partial<Record<string, CambridgeDefinitionPayload[]>>
+
+export const cambridge_dict_hello_payload: CambridgeDefinitionPayload[] = [{
+    partOfSpeech: 'noun',
+    definition: 'A greeting or expression of goodwill.',
+    example: 'She said hello to everyone in the room.',
+    phonetic: 'həˈləʊ',
+    audio: '/media/english/uk_pron/u/ukh/ukhel/ukhello.mp3',
 }]
 
-export const free_dictionary_run_payload: FreeDictionaryEntryPayload[] = [{
-    word: 'run',
-    phonetic: '/rʌn/',
-    phonetics: [{ text: '/rʌn/' }],
-    meanings: [
-        {
-            partOfSpeech: 'verb',
-            definitions: [
-                { definition: 'Move at a speed faster than a walk.' },
-                { definition: 'Manage or operate something.' },
-            ],
-        },
-        {
-            partOfSpeech: 'noun',
-            definitions: [
-                { definition: 'An act or spell of running.' },
-                { definition: 'A continuous stretch or sequence.' },
-            ],
-        },
-        {
-            partOfSpeech: 'adjective',
-            definitions: [
-                { definition: 'Flowing or current.' },
-            ],
-        },
-    ],
-}]
+export const cambridge_dict_run_payload: CambridgeDefinitionPayload[] = [
+    { partOfSpeech: 'verb', definition: 'Move at a speed faster than a walk.', phonetic: 'rʌn' },
+    { partOfSpeech: 'verb', definition: 'Manage or operate something.' },
+    { partOfSpeech: 'noun', definition: 'An act or spell of running.' },
+]
 
-export const free_dictionary_reconcile_payload: FreeDictionaryEntryPayload[] = [{
-    word: 'reconcile',
-    phonetic: '/ˈrekənsaɪl/',
-    phonetics: [{ text: '/ˈrekənsaɪl/' }],
-    meanings: [{
-        partOfSpeech: 'verb',
-        definitions: [{
-            definition: 'Restore friendly relations between people or groups.',
-        }],
-    }],
+export const cambridge_dict_reconcile_payload: CambridgeDefinitionPayload[] = [{
+    partOfSpeech: 'verb',
+    definition: 'Restore friendly relations between people or groups.',
+    phonetic: 'ˈrekənsaɪl',
 }]
 
 export function baidu_ocr_token_payload(): { access_token: string; expires_in: number } {
@@ -76,12 +36,6 @@ export function baidu_ocr_words_payload(words: string): { words_result: Array<{ 
     return { words_result: [{ words }] }
 }
 
-function input_url(input: RequestInfo | URL): string {
-    if (typeof input === 'string') return input
-    if (input instanceof URL) return input.toString()
-    return input.url
-}
-
 function safe_json(value: unknown): string {
     return JSON.stringify(value)
         .replace(/</g, '\\u003c')
@@ -89,45 +43,40 @@ function safe_json(value: unknown): string {
         .replaceAll(String.fromCharCode(0x2029), '\\u2029')
 }
 
-export function create_free_dictionary_fetch(
-    original_fetch: typeof fetch,
-    payload_by_word: Partial<Record<string, FreeDictionaryEntryPayload[]>> = { hello: free_dictionary_hello_payload },
-): typeof fetch {
-    return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-        const url = input_url(input)
-        const prefix = 'https://api.dictionaryapi.dev/api/v2/entries/en/'
-        if (url.startsWith(prefix)) {
-            const word = decodeURIComponent(url.slice(prefix.length).split(/[?#]/)[0] ?? '').toLowerCase()
-            const payload = payload_by_word[word]
-            return new Response(JSON.stringify(payload ?? []), {
-                status: payload ? 200 : 404,
-                headers: { 'content-type': 'application/json' },
-            })
-        }
-        return original_fetch(input, init)
-    }
-}
-
-export function build_free_dictionary_init_script(payload_by_word: Partial<Record<string, FreeDictionaryEntryPayload[]>> = { hello: free_dictionary_hello_payload }): string {
+export function build_cambridge_dict_init_script(payload_by_word: CambridgePayloadByWord = { hello: cambridge_dict_hello_payload }): string {
     const payload_json = safe_json(payload_by_word)
     return `
 (() => {
     const payload_by_word = ${payload_json}
-    const input_url = (input) => {
-        if (typeof input === 'string') return input
-        if (input instanceof URL) return input.toString()
-        return input.url
+    const escape_html = (text) => String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    const render_entry = (entry) => {
+        const audio = entry.audio ? '<source type="audio/mpeg" src="' + escape_html(entry.audio) + '">' : ''
+        const pron = entry.phonetic ? '<span class="dpron-i"><span><span class="region">UK</span><span class="ipa">' + escape_html(entry.phonetic) + '</span>' + audio + '</span></span>' : ''
+        const example = entry.example ? '<div class="examp"><span class="eg">' + escape_html(entry.example) + '</span></div>' : ''
+        return '<div class="pr entry-body__el">'
+            + pron
+            + '<span class="posgram">' + escape_html(entry.partOfSpeech) + '</span>'
+            + '<div><div><div class="def-block ddef_block ">'
+            + '<span class="def ddef_d db">' + escape_html(entry.definition) + '</span>'
+            + example
+            + '</div></div></div>'
+            + '</div>'
     }
     const original_fetch = window.fetch.bind(window)
     window.fetch = async (input, init) => {
-        const url = input_url(input)
-        const prefix = 'https://api.dictionaryapi.dev/api/v2/entries/en/'
-        if (url.startsWith(prefix)) {
-            const word = decodeURIComponent(url.slice(prefix.length).split(/[?#]/)[0] ?? '').toLowerCase()
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+        if (url.startsWith('https://dictionary.cambridge.org/search/direct/')) {
+            const query = new URL(url).searchParams.get('q') || ''
+            const word = decodeURIComponent(query).toLowerCase()
             const payload = payload_by_word[word]
-            return new Response(JSON.stringify(payload ?? []), {
-                status: payload ? 200 : 404,
-                headers: { 'content-type': 'application/json' },
+            if (!payload) return new Response('', { status: 404, headers: { 'content-type': 'text/html' } })
+            return new Response(payload.map(render_entry).join(''), {
+                status: 200,
+                headers: { 'content-type': 'text/html' },
             })
         }
         return original_fetch(input, init)
