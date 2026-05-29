@@ -1,7 +1,8 @@
 import { basename, join, resolve, sep } from 'path'
 import { randomUUID } from 'crypto'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, lstatSync, renameSync, mkdtempSync, rmSync } from 'fs'
-import { cancel_pending_config_save, flush_config, getUserDataDir, reload_config_from_disk, broadcastAllConfig } from '../config/store'
+import { cancel_pending_config_save, flush_config, getAllConfig, getUserDataDir, reload_config_from_disk, broadcastAllConfig } from '../config/store'
+import { sanitize_config_secrets } from '../config/secrets'
 import { DEFAULT_CONFIG } from '@shared/types/config'
 import { close_history } from '../history'
 
@@ -57,6 +58,11 @@ function add_file_if_exists(files: BackupFile[], name: string, path: string): vo
     if (existsSync(path)) {
         files.push({ name, data: readFileSync(path) })
     }
+}
+
+function add_sanitized_config(files: BackupFile[]): void {
+    const sanitized_config = sanitize_config_secrets(getAllConfig())
+    files.push({ name: 'config.json', data: Buffer.from(JSON.stringify(sanitized_config, null, 2), 'utf-8') })
 }
 
 const CRC32_TABLE = new Uint32Array(256)
@@ -358,7 +364,7 @@ export function create_local_backup(): string {
         name: BACKUP_MANIFEST_NAME,
         data: Buffer.from(JSON.stringify(BACKUP_MANIFEST), 'utf-8'),
     }]
-    add_file_if_exists(files, 'config.json', get_config_path())
+    add_sanitized_config(files)
     for (const name of BACKUP_DATA_FILES) {
         add_file_if_exists(files, name, get_user_data_file_path(name))
     }

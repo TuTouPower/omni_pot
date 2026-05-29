@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from '
 import { join } from 'path'
 import { DEFAULT_CONFIG, DEFAULT_SERVICE_INSTANCES, APP_PRIMARY_COLORS } from '@shared/types/config'
 import { log } from '../log'
+import { protect_config_secrets, unprotect_config_secrets, has_plain_config_secrets } from './secrets'
 import type { AppConfig, ConfigKey } from '@shared/types/config'
 
 const log_config = log.scope('config')
@@ -15,6 +16,7 @@ interface PersistedShape extends Partial<AppConfig> {
 
 let config_path: string
 let data: PersistedShape = {}
+let needs_secret_migration = false
 
 function to_persisted_shape(value: unknown): PersistedShape {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
@@ -26,9 +28,12 @@ function to_persisted_shape(value: unknown): PersistedShape {
 }
 
 function read_config_from_disk(): PersistedShape {
+    needs_secret_migration = false
     if (!existsSync(config_path)) return {}
     try {
-        return to_persisted_shape(JSON.parse(readFileSync(config_path, 'utf-8')) as unknown)
+        const persisted = to_persisted_shape(JSON.parse(readFileSync(config_path, 'utf-8')) as unknown)
+        needs_secret_migration = has_plain_config_secrets(persisted)
+        return to_persisted_shape(unprotect_config_secrets(persisted))
     } catch {
         return {}
     }
@@ -49,6 +54,12 @@ function resolveSystemLanguage(): string {
 
 function create_server_api_token(): string {
     return randomBytes(32).toString('base64url')
+}
+
+function ensure_server_api_token(): boolean {
+    if (typeof data.server_api_token === 'string' && data.server_api_token) return false
+    data.server_api_token = create_server_api_token()
+    return true
 }
 
 export function initConfigStore(): void {
@@ -87,8 +98,7 @@ export function initConfigStore(): void {
         saveToDisk()
     }
 
-    if (typeof data.server_api_token !== 'string' || !data.server_api_token) {
-        data.server_api_token = create_server_api_token()
+    if (ensure_server_api_token()) {
         saveToDisk()
     }
 
@@ -132,6 +142,11 @@ export function initConfigStore(): void {
     if (typeof legacy_auto_copy === 'string') {
         data.translate_auto_copy = legacy_auto_copy !== 'disable'
         saveToDisk()
+    }
+
+    if (needs_secret_migration) {
+        write_config_to_disk()
+        needs_secret_migration = false
     }
 }
 
@@ -184,7 +199,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null
 
 function write_config_to_disk(): void {
     const tmp_path = config_path + '.tmp'
-    writeFileSync(tmp_path, JSON.stringify(data, null, 2), 'utf-8')
+    writeFileSync(tmp_path, JSON.stringify(protect_config_secrets(data), null, 2), 'utf-8')
     renameSync(tmp_path, config_path)
 }
 
@@ -207,6 +222,11 @@ export function cancel_pending_config_save(): void {
 export function reload_config_from_disk(): void {
     cancel_pending_save()
     data = read_config_from_disk()
+    const changed = ensure_server_api_token() || needs_secret_migration
+    if (changed) {
+        write_config_to_disk()
+        needs_secret_migration = false
+    }
 }
 
 function saveToDisk(): void {

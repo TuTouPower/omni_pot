@@ -21,6 +21,11 @@ vi.mock('electron', () => ({
     BrowserWindow: {
         getAllWindows: vi.fn(() => []),
     },
+    safeStorage: {
+        isEncryptionAvailable: vi.fn(() => true),
+        encryptString: vi.fn((value: string) => Buffer.from(`encrypted:${value}`, 'utf-8')),
+        decryptString: vi.fn((value: Buffer) => value.toString('utf-8').replace(/^encrypted:/, '')),
+    },
 }))
 
 describe('Config Store integration', () => {
@@ -143,7 +148,61 @@ describe('Config Store integration', () => {
         expect(typeof token).toBe('string')
         expect((token as string).length).toBeGreaterThan(20)
         const persisted = JSON.parse(readFileSync(join(test_dir, 'config.json'), 'utf-8')) as Record<string, unknown>
-        expect(persisted.server_api_token).toBe(token)
+        expect(typeof token).toBe('string')
+        expect(JSON.stringify(persisted)).not.toContain(token as string)
+        expect(persisted.server_api_token).toMatchObject({ __omni_pot_secret: 1 })
+    })
+
+    it('loads legacy plain secrets and migrates them to encrypted disk values', async () => {
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+            server_api_token: 'plain-token',
+            webdav_password: 'plain-webdav-password',
+            service_instances: {
+                'custom@default': {
+                    serviceKey: 'custom',
+                    config: {
+                        api_key: 'plain-provider-key',
+                        endpoint: 'https://example.test',
+                    },
+                },
+            },
+        }))
+        const store = await import('../../electron/config/store')
+
+        store.initConfigStore()
+
+        expect(store.getConfig('server_api_token')).toBe('plain-token')
+        expect(store.getConfig('webdav_password')).toBe('plain-webdav-password')
+        const service_instances = store.getConfig('service_instances') as Record<string, { config: Record<string, unknown> }>
+        expect(service_instances['custom@default']?.config.api_key).toBe('plain-provider-key')
+        expect(service_instances['custom@default']?.config.endpoint).toBe('https://example.test')
+
+        const persisted_text = readFileSync(join(test_dir, 'config.json'), 'utf-8')
+        expect(persisted_text).not.toContain('plain-token')
+        expect(persisted_text).not.toContain('plain-webdav-password')
+        expect(persisted_text).not.toContain('plain-provider-key')
+        const persisted = JSON.parse(persisted_text) as Record<string, unknown>
+        expect(persisted.server_api_token).toMatchObject({ __omni_pot_secret: 1 })
+    })
+
+    it('regenerates server API token after loading sanitized backup config', async () => {
+        const store = await import('../../electron/config/store')
+        store.initConfigStore()
+        store.cancel_pending_config_save()
+        writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
+            __initialized: true,
+            app_language: 'zh_cn',
+        }))
+
+        store.reload_config_from_disk()
+
+        const token = store.getConfig('server_api_token')
+        expect(typeof token).toBe('string')
+        expect((token as string).length).toBeGreaterThan(20)
+        const persisted_text = readFileSync(join(test_dir, 'config.json'), 'utf-8')
+        expect(persisted_text).not.toContain(token as string)
+        expect(JSON.parse(persisted_text).server_api_token).toMatchObject({ __omni_pot_secret: 1 })
     })
 
     it('preserves server API token when resetting config', async () => {
