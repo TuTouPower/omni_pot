@@ -75,6 +75,12 @@ function SvcTile({ name, size = 22 }: { name: string; size?: number }): React.Re
 }
 
 // Compact pill-style select used in the OCR action bar
+function require_pill_option<T>(options: T[], index: number): T {
+    const option = options[index] ?? options[0]
+    if (option === undefined) throw new Error('select requires options')
+    return option
+}
+
 function PillSelect({
     value,
     options,
@@ -89,10 +95,19 @@ function PillSelect({
     testId?: string
 }): React.ReactElement {
     const [open, setOpen] = useState(false)
+    const [active_index, setActiveIndex] = useState(0)
     const [coords, setCoords] = useState({ left: 0, top: 0, minWidth: 0, maxHeight: 240 })
     const triggerRef = useRef<HTMLButtonElement>(null)
     const popRef = useRef<HTMLDivElement>(null)
+    const open_ref = useRef(open)
+    const active_index_ref = useRef(active_index)
+    open_ref.current = open
+    active_index_ref.current = active_index
     const cur = options.find((o) => o.value === value)
+    const selected_index = Math.max(0, options.findIndex((o) => o.value === value))
+    const listbox_id = `${testId ?? 'pill-select'}-listbox`
+    const active_option = require_pill_option(options, active_index)
+    const active_id = `${listbox_id}-option-${active_option.value}`
 
     const measure = useCallback(() => {
         const trigger = triggerRef.current
@@ -102,6 +117,42 @@ function PillSelect({
         const top = rect.top > pop_height + 12 ? rect.top - pop_height - 4 : rect.bottom + 4
         setCoords({ left: rect.left, top, minWidth: rect.width, maxHeight: pop_height })
     }, [options.length])
+
+    const open_menu = useCallback((index = selected_index) => {
+        setActiveIndex(index)
+        setOpen(true)
+        triggerRef.current?.focus()
+    }, [selected_index])
+
+    const select_option = useCallback((option_value: string) => {
+        onChange?.(option_value)
+        setOpen(false)
+        triggerRef.current?.focus()
+    }, [onChange])
+
+    const move_active = useCallback((delta: number) => {
+        setActiveIndex((index) => (index + delta + options.length) % options.length)
+    }, [options.length])
+
+    const handle_key_down = useCallback((event: React.KeyboardEvent) => {
+        const is_open = open_ref.current
+        if (event.key === 'ArrowDown' || event.key === 'Down') {
+            event.preventDefault()
+            if (!is_open) open_menu()
+            else move_active(1)
+        } else if (event.key === 'ArrowUp' || event.key === 'Up') {
+            event.preventDefault()
+            if (!is_open) open_menu()
+            else move_active(-1)
+        } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            if (!is_open) open_menu()
+            else select_option(require_pill_option(options, active_index_ref.current).value)
+        } else if (event.key === 'Escape') {
+            event.preventDefault()
+            setOpen(false)
+        }
+    }, [move_active, open_menu, options, select_option])
 
     useEffect(() => {
         if (!open) return
@@ -122,15 +173,27 @@ function PillSelect({
         }
     }, [open, measure])
 
+    useEffect(() => {
+        if (!open) return
+        document.getElementById(active_id)?.scrollIntoView({ block: 'nearest' })
+    }, [active_id, open])
+
     return (
         <>
             <button
                 ref={triggerRef}
                 data-testid={testId}
+                role="combobox"
+                aria-expanded={open}
+                aria-haspopup="listbox"
+                aria-controls={open ? listbox_id : undefined}
+                aria-activedescendant={open ? active_id : undefined}
                 onClick={(e) => {
                     e.stopPropagation()
-                    setOpen((o) => !o)
+                    if (open) setOpen(false)
+                    else open_menu()
                 }}
+                onKeyDownCapture={handle_key_down}
                 style={{
                     height: 30,
                     padding: '0 10px',
@@ -153,7 +216,9 @@ function PillSelect({
             </button>
             {open && createPortal(
                 <div
+                    id={listbox_id}
                     ref={popRef}
+                    role="listbox"
                     style={{
                         position: 'fixed',
                         top: coords.top,
@@ -170,31 +235,36 @@ function PillSelect({
                     }}
                     onClick={(e) => { e.stopPropagation(); }}
                 >
-                    {options.map((o) => (
-                        <div
-                            key={o.value}
-                            data-testid={testId ? `${testId}-option-${o.value}` : undefined}
-                            onClick={() => {
-                                onChange?.(o.value)
-                                setOpen(false)
-                            }}
-                            style={{
-                                padding: '6px 10px',
-                                borderRadius: 6,
-                                fontSize: 12.5,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                whiteSpace: 'nowrap',
-                                background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent',
-                                color: o.value === value ? 'var(--brand-primary)' : 'var(--text)',
-                            }}
-                        >
-                            {o.mono && <SvcTile name={o.mono} size={18} />}
-                            <span>{o.label}</span>
-                        </div>
-                    ))}
+                    {options.map((o, index) => {
+                        const selected = o.value === value
+                        const active = index === active_index
+                        return (
+                            <div
+                                key={o.value}
+                                id={`${listbox_id}-option-${o.value}`}
+                                role="option"
+                                aria-selected={selected}
+                                data-testid={testId ? `${testId}-option-${o.value}` : undefined}
+                                onClick={() => { select_option(o.value) }}
+                                style={{
+                                    padding: '6px 10px',
+                                    borderRadius: 6,
+                                    fontSize: 12.5,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    whiteSpace: 'nowrap',
+                                    background: selected ? 'var(--brand-primary-soft)' : active ? 'var(--bg-sunk)' : 'transparent',
+                                    color: selected ? 'var(--brand-primary)' : 'var(--text)',
+                                }}
+                                onMouseMove={() => { setActiveIndex(index) }}
+                            >
+                                {o.mono && <SvcTile name={o.mono} size={18} />}
+                                <span>{o.label}</span>
+                            </div>
+                        )
+                    })}
                 </div>,
                 document.body
             )}
@@ -595,7 +665,7 @@ export default function RecognizeWindow(): React.ReactElement {
 
     const handleCopyImage = useCallback(async () => {
         if (!imageBase64) return
-        await window.electronAPI.text.writeClipboardImage(imageBase64)
+        await window.electronAPI.text.write_clipboard_image(imageBase64)
     }, [imageBase64])
 
     const handleSwap = useCallback(() => {

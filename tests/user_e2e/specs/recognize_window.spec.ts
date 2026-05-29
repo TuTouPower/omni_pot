@@ -2,10 +2,13 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import type { RecognizePage } from '../pages/recognize_page'
+import { local_translation_timeout_ms, ocr_test_timeout_ms, ocr_timeout_ms } from '../fixtures/timeout_constants'
 
 const recognize_config = {
     app_language: 'zh_cn',
+    welcome_dismissed: true,
     recognize_delete_newline: false,
+    recognize_engine: 'system@default',
     recognize_service_list: ['system@default', 'tesseract@default'],
     service_instances: {
         'system@default': { serviceKey: 'system', config: {} },
@@ -15,6 +18,7 @@ const recognize_config = {
 
 const recognize_disable_config = {
     app_language: 'zh_cn',
+    welcome_dismissed: true,
     recognize_service_list: ['baidu_ocr@disabled', 'baidu_accurate_ocr@enabled'],
     service_instances: {
         'baidu_ocr@disabled': {
@@ -30,6 +34,7 @@ const recognize_disable_config = {
 
 const qrcode_config = {
     app_language: 'zh_cn',
+    welcome_dismissed: true,
     recognize_service_list: ['qrcode@default'],
     service_instances: {
         'qrcode@default': { serviceKey: 'qrcode', config: {} },
@@ -38,6 +43,7 @@ const qrcode_config = {
 
 const qrcode_auto_detect_config = {
     app_language: 'zh_cn',
+    welcome_dismissed: true,
     recognize_engine: 'baidu_ocr@default',
     recognize_service_list: ['baidu_ocr@default', 'qrcode@default'],
     service_instances: {
@@ -69,7 +75,7 @@ async function sample_ocr_image(page: Page): Promise<string> {
 
 async function open_recognize_with_image(omni: AppFixture, image: string, text: string, mode: 'recognize' | 'translate' = 'recognize'): Promise<RecognizePage> {
     const page = await omni.firstWindow()
-    await page.evaluate(({ image, text, mode }) => window.electronAPI.ocr.openRecognize(image, text, mode), { image, text, mode })
+    await page.evaluate(({ image, text, mode }) => window.electronAPI.ocr.open_recognize(image, text, mode), { image, text, mode })
     return omni.recognize()
 }
 
@@ -100,10 +106,16 @@ test.describe('@ui recognize window', () => {
             await expect(recognize.image().locator('img')).toBeVisible()
             await expect(recognize.text()).toHaveValue('Line one\nLine two with spaces')
 
-            await recognize.clickEngineSelect()
+            await expect(recognize.engineSelect()).toHaveAttribute('role', 'combobox')
+            await expect(recognize.engineSelect()).toHaveAttribute('aria-expanded', 'false')
+            await recognize.engineSelect().focus()
+            await recognize.page.keyboard.press('Space')
+            await expect(recognize.engineSelect()).toHaveAttribute('aria-expanded', 'true')
+            await expect(recognize.engineOption('system@default')).toHaveAttribute('role', 'option')
             await expect(recognize.engineOption('system@default')).toContainText('系统文字识别')
             await expect(recognize.engineOption('tesseract@default')).toContainText('Tesseract')
-            await recognize.engineOption('tesseract@default').click()
+            await recognize.page.keyboard.press('ArrowUp')
+            await recognize.page.keyboard.press('Enter')
             await expect(recognize.engineSelect()).toContainText('Tesseract')
 
             await recognize.clickLanguageSelect()
@@ -114,7 +126,7 @@ test.describe('@ui recognize window', () => {
             // Spec §8.5: switching recognize language auto re-recognizes.
             // The text area should be refreshed with a new OCR result.
             await expect.poll(async () => (await recognize.getText()).length > 0,
-                { timeout: 30_000 }).toBe(true)
+                { timeout: ocr_timeout_ms }).toBe(true)
 
             await recognize.setText('Line one\nLine two with spaces')
             await recognize.clickDeleteNewline()
@@ -199,7 +211,7 @@ test.describe('@ui recognize window', () => {
             await expect(recognize.engineSelect()).toContainText('百度高精度')
             // Disabling the selected service triggers auto re-recognize with the fallback.
             await expect.poll(async () => (await recognize.getText()).length > 0,
-                { timeout: 30_000 }).toBe(true)
+                { timeout: ocr_timeout_ms }).toBe(true)
             await expect(recognize.text()).toHaveValue('启用服务结果')
         } finally {
             await omni.stop()
@@ -215,7 +227,7 @@ test.describe('@ui recognize window', () => {
 
             // QR code recognition happens automatically on open.
             await expect.poll(async () => (await recognize.getText()).length > 0,
-                { timeout: 30_000 }).toBe(true)
+                { timeout: ocr_timeout_ms }).toBe(true)
             await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
         } finally {
             await omni.stop()
@@ -252,15 +264,15 @@ test.describe('@ui recognize window', () => {
 
             await expect(recognize.engineSelect()).toContainText('二维码')
             await expect.poll(async () => (await recognize.getText()).length > 0,
-                { timeout: 30_000 }).toBe(true)
+                { timeout: ocr_timeout_ms }).toBe(true)
             await expect(recognize.text()).toHaveValue('OMNI_POT_QR_TEST')
             await expect.poll(async () => recognize.page.evaluate(() => (window as unknown as { __baidu_ocr_request_count?: number }).__baidu_ocr_request_count ?? 0)).toBe(0)
 
             const non_qr_image = await sample_ocr_image(recognize.page)
-            await recognize.page.evaluate(({ image }) => window.electronAPI.ocr.openRecognize(image, '', 'recognize'), { image: non_qr_image })
+            await recognize.page.evaluate(({ image }) => window.electronAPI.ocr.open_recognize(image, '', 'recognize'), { image: non_qr_image })
             await expect(recognize.engineSelect()).toContainText('百度文字识别')
             await expect.poll(async () => (await recognize.getText()).length > 0,
-                { timeout: 30_000 }).toBe(true)
+                { timeout: ocr_timeout_ms }).toBe(true)
             await expect(recognize.text()).toHaveValue('普通 OCR 结果不应显示')
         } finally {
             await omni.stop()
@@ -268,7 +280,7 @@ test.describe('@ui recognize window', () => {
     })
 
     test('user reruns OCR with system engine after switching engines', async () => {
-        test.setTimeout(120_000)
+        test.setTimeout(ocr_test_timeout_ms)
         const omni = await AppFixture.start({ config: recognize_config })
 
         try {
@@ -285,7 +297,7 @@ test.describe('@ui recognize window', () => {
             await recognize.clickEngineSelect()
             await recognize.engineOption('system@default').click()
             // Switching engine triggers auto re-recognize.
-            await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: 90_000 }).toContain('OCR')
+            await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: ocr_timeout_ms }).toContain('OCR')
         } finally {
             await omni.stop()
         }
@@ -315,7 +327,7 @@ test.describe('@ui recognize window', () => {
             await expect(target_select).toContainText('English')
 
             // Spec §8.5: 切换翻译目标语言后必须自动重新翻译。
-            await expect(recognize.page.getByTestId('ocr-translation')).toContainText('TARGET_LANG_CHANGED', { timeout: 15_000 })
+            await expect(recognize.page.getByTestId('ocr-translation')).toContainText('TARGET_LANG_CHANGED', { timeout: local_translation_timeout_ms })
 
             // Source language dropdown still has 'auto'
             await recognize.clickLanguageSelect()
@@ -327,7 +339,7 @@ test.describe('@ui recognize window', () => {
     })
 
     test('user reruns OCR with tesseract after switching engines', async () => {
-        test.setTimeout(120_000)
+        test.setTimeout(ocr_test_timeout_ms)
         const omni = await AppFixture.start({ config: recognize_config })
 
         try {
@@ -344,7 +356,7 @@ test.describe('@ui recognize window', () => {
             await recognize.clickEngineSelect()
             await recognize.engineOption('tesseract@default').click()
             // Switching engine triggers auto re-recognize.
-            await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: 90_000 }).toContain('OCR')
+            await expect.poll(async () => (await recognize.getText()).toUpperCase(), { timeout: ocr_timeout_ms }).toContain('OCR')
         } finally {
             await omni.stop()
         }

@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
+import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
 const CONFIG_SECTIONS = [
     ['general', '通用'],
@@ -51,7 +52,7 @@ test.describe('@ui config settings window', () => {
     })
 
     test('user changes general settings and the theme broadcasts to open windows', async () => {
-        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', app_primary_color: '#bad', transparent: true, dev_mode: true, translate_always_on_top: true } })
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn', app_theme: 'light', app_primary_color: '#bad', transparent: true, dev_mode: true, translate_always_on_top: true, welcome_dismissed: true } })
 
         try {
             let translate = await omni.translate()
@@ -66,7 +67,7 @@ test.describe('@ui config settings window', () => {
             await config.setting('cfg-app_theme-dark').click()
             await expect.poll(async () => await config.documentTheme()).toBe('dark')
             await expect.poll(async () => await config.documentHasDarkClass()).toBe(true)
-            translate = await omni.translate(20_000)
+            translate = await omni.translate(local_operation_timeout_ms)
             await expect.poll(async () => await translate.documentTheme()).toBe('dark')
             await expect.poll(async () => await translate.documentHasDarkClass()).toBe(true)
             await expect_config(omni, 'app_theme', 'dark')
@@ -97,7 +98,7 @@ test.describe('@ui config settings window', () => {
             await config.toggle('cfg-transparent')
             await expect.poll(async () => await config.documentTransparent()).toBe('false')
             await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(false)
-            translate = await omni.translate(20_000)
+            translate = await omni.translate(local_operation_timeout_ms)
             await expect.poll(async () => await translate.documentTransparent()).toBe('false')
             await expect_config(omni, 'transparent', false)
 
@@ -129,7 +130,11 @@ test.describe('@ui config settings window', () => {
             await config.openSection('translate')
             await expect(config.setting('cfg-translate_detect_engine')).toHaveCount(0)
             await expect(config.setting('cfg-translate_remember_language')).toHaveCount(0)
+            await expect(config.setting('cfg-translate_source_language')).toHaveAttribute('role', 'combobox')
+            await expect(config.setting('cfg-translate_source_language')).toHaveAttribute('aria-expanded', 'false')
             await config.setting('cfg-translate_source_language').click()
+            await expect(config.setting('cfg-translate_source_language')).toHaveAttribute('aria-expanded', 'true')
+            await expect(config.selectOption('cfg-translate_source_language', 'en')).toHaveAttribute('role', 'option')
             await expect(config.selectOption('cfg-translate_source_language', 'en')).toContainText('English')
             await expect(config.selectOption('cfg-translate_source_language', 'ja')).toContainText('日本語')
             await expect.poll(async () => await config.optionReceivesPointer('cfg-translate_source_language', 'ja')).toBe(true)
@@ -143,7 +148,11 @@ test.describe('@ui config settings window', () => {
             await config.toggle('cfg-dynamic_translate')
             await config.toggle('cfg-translate_delete_newline')
             await config.toggle('cfg-history_disable')
-            await config.select('cfg-translate_window_position', 'pre_state')
+            await config.setting('cfg-translate_window_position').focus()
+            await config.setting('cfg-translate_window_position').press('ArrowDown')
+            await expect(config.setting('cfg-translate_window_position')).toHaveAttribute('aria-expanded', 'true')
+            await config.setting('cfg-translate_window_position').press('ArrowDown')
+            await config.setting('cfg-translate_window_position').press('Enter')
             await config.toggle('cfg-translate_always_on_top')
             await config.toggle('cfg-hide_source')
             await config.toggle('cfg-hide_language')

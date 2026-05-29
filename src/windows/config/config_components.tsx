@@ -73,6 +73,12 @@ export function ConfigSwitch({ on, onChange, testId }: {
     )
 }
 
+function require_select_option<T>(options: T[], index: number): T {
+    const option = options[index] ?? options[0]
+    if (option === undefined) throw new Error('select requires options')
+    return option
+}
+
 export function ConfigSelect<T extends string>({ value, onChange, options, style, testId }: {
     value: T
     onChange?: (v: T) => void
@@ -81,10 +87,15 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     testId?: string
 }): React.ReactElement {
     const [open, setOpen] = React.useState(false)
+    const [active_index, setActiveIndex] = React.useState(0)
     const [menuStyle, setMenuStyle] = React.useState<React.CSSProperties>({})
     const ref = React.useRef<HTMLDivElement>(null)
     const menuRef = React.useRef<HTMLDivElement>(null)
     const cur = options.find((o) => o.value === value)
+    const selected_index = Math.max(0, options.findIndex((o) => o.value === value))
+    const listbox_id = `${testId ?? 'config-select'}-listbox`
+    const active_option = require_select_option(options, active_index)
+    const active_id = `${listbox_id}-option-${active_option.value}`
 
     const updateMenuPosition = React.useCallback(() => {
         const rect = ref.current?.getBoundingClientRect()
@@ -106,6 +117,40 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
             overflowY: 'auto',
         })
     }, [options.length])
+
+    const open_menu = React.useCallback((index = selected_index) => {
+        setActiveIndex(index)
+        setOpen(true)
+    }, [selected_index])
+
+    const select_option = React.useCallback((option_value: T) => {
+        onChange?.(option_value)
+        setOpen(false)
+        ref.current?.focus()
+    }, [onChange])
+
+    const move_active = React.useCallback((delta: number) => {
+        setActiveIndex((index) => (index + delta + options.length) % options.length)
+    }, [options.length])
+
+    const handle_key_down = React.useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            if (!open) open_menu()
+            else move_active(1)
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            if (!open) open_menu()
+            else move_active(-1)
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            if (!open) open_menu()
+            else select_option(active_option.value)
+        } else if (e.key === 'Escape') {
+            e.preventDefault()
+            setOpen(false)
+        }
+    }, [active_option, move_active, open, open_menu, select_option])
 
     React.useLayoutEffect(() => {
         if (open) updateMenuPosition()
@@ -132,44 +177,66 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
         }
     }, [open, updateMenuPosition])
 
+    React.useEffect(() => {
+        if (!open) return
+        document.getElementById(active_id)?.scrollIntoView({ block: 'nearest' })
+    }, [active_id, open])
+
     const menu = open ? createPortal(
-        <div ref={menuRef} style={menuStyle}>
-            {options.map((o) => (
-                <div
-                    key={o.value}
-                    data-testid={testId ? `${testId}-option-${o.value}` : undefined}
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        onChange?.(o.value)
-                        setOpen(false)
-                    }}
-                    style={{
-                        padding: '6px 10px',
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        background: o.value === value ? 'var(--brand-primary-soft)' : 'transparent',
-                        color: o.value === value ? 'var(--brand-primary)' : 'var(--text)',
-                        fontSize: 13,
-                    }}
-                    onMouseEnter={(e) => {
-                        if (o.value !== value) e.currentTarget.style.background = 'var(--bg-sunk)'
-                    }}
-                    onMouseLeave={(e) => {
-                        if (o.value !== value) e.currentTarget.style.background = 'transparent'
-                    }}
-                >
-                    {o.label}
-                </div>
-            ))}
+        <div id={listbox_id} ref={menuRef} role="listbox" style={menuStyle}>
+            {options.map((o, index) => {
+                const selected = o.value === value
+                const active = index === active_index
+                return (
+                    <div
+                        key={o.value}
+                        id={`${listbox_id}-option-${o.value}`}
+                        role="option"
+                        aria-selected={selected}
+                        data-testid={testId ? `${testId}-option-${o.value}` : undefined}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            select_option(o.value)
+                        }}
+                        style={{
+                            padding: '6px 10px',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            background: selected ? 'var(--brand-primary-soft)' : active ? 'var(--bg-sunk)' : 'transparent',
+                            color: selected ? 'var(--brand-primary)' : 'var(--text)',
+                            fontSize: 13,
+                        }}
+                        onMouseEnter={() => { setActiveIndex(index) }}
+                    >
+                        {o.label}
+                    </div>
+                )
+            })}
         </div>,
         document.body
     ) : null
 
     return (
-        <div ref={ref} className="select" data-testid={testId} style={style} onClick={() => { setOpen((o) => !o); }}>
+        <div
+            ref={ref}
+            className="select"
+            data-testid={testId}
+            role="combobox"
+            aria-expanded={open}
+            aria-haspopup="listbox"
+            aria-controls={open ? listbox_id : undefined}
+            aria-activedescendant={open ? active_id : undefined}
+            tabIndex={0}
+            style={style}
+            onClick={() => {
+                if (open) setOpen(false)
+                else open_menu()
+            }}
+            onKeyDown={handle_key_down}
+        >
             <span>{cur?.label || value}</span>
             <svg
                 className="chev"

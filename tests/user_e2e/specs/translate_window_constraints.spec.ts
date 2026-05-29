@@ -1,11 +1,17 @@
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
 import type { TranslationTestServer } from '../fixtures/translation_test_server'
+import { local_translation_timeout_ms, ui_timeout_ms } from '../fixtures/timeout_constants'
 
 const RESIZE_TOLERANCE_PX = 4
 const HEIGHT_TOLERANCE_PX = 12
 
+const welcome_dismissed_config = {
+    welcome_dismissed: true,
+}
+
 const single_service_config = {
+    ...welcome_dismissed_config,
     translate_service_list: ['mymemory@default'],
     service_instances: {
         'mymemory@default': { serviceKey: 'mymemory', config: {} },
@@ -18,7 +24,7 @@ function long_translation(line_count: number): string {
 }
 
 async function max_translate_height(omni: AppFixture): Promise<number> {
-    const display = await omni.api.primaryDisplay()
+    const display = await omni.api.windowDisplay('translate')
     return Math.floor(display.workArea.height * 0.75)
 }
 
@@ -34,7 +40,7 @@ test.describe('@ui translate window constraints', () => {
     })
 
     test('window cannot stretch taller than translated content or 75vh cap', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: welcome_dismissed_config })
         let server: TranslationTestServer | null = null
         try {
             server = await omni.startTranslationTestServer()
@@ -43,7 +49,7 @@ test.describe('@ui translate window constraints', () => {
             server.set_mymemory_response({ translated_text: 'constraint height body', status: 200 })
             await translate.typeSource('hello height')
             await translate.clickTranslate()
-            await translate.waitAllResults(30_000)
+            await translate.waitAllResults(local_translation_timeout_ms)
 
             const content_height = await translate.page.evaluate(() => document.body.scrollHeight)
             await translate.resizeWindowTo(430, 2000)
@@ -60,7 +66,7 @@ test.describe('@ui translate window constraints', () => {
     })
 
     test('long results clamp to 75vh and scroll only the results area', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: welcome_dismissed_config })
         let server: TranslationTestServer | null = null
         try {
             server = await omni.startTranslationTestServer()
@@ -69,12 +75,12 @@ test.describe('@ui translate window constraints', () => {
             server.set_mymemory_response({ translated_text: long_translation(120), status: 200 })
             await translate.typeSource('hello long height')
             await translate.clickTranslate()
-            await translate.waitAllResults(30_000)
+            await translate.waitAllResults(local_translation_timeout_ms)
 
             const max_height = await max_translate_height(omni)
-            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: 5_000 })
+            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: ui_timeout_ms })
                 .toBeLessThanOrEqual(max_height + RESIZE_TOLERANCE_PX)
-            await expect.poll(async () => translate.resultsScroll().evaluate((el) => el.scrollHeight > el.clientHeight), { timeout: 5_000 })
+            await expect.poll(async () => translate.resultsScroll().evaluate((el) => el.scrollHeight > el.clientHeight), { timeout: ui_timeout_ms })
                 .toBe(true)
             await expect(translate.sourceInput()).toBeVisible()
         } finally {
@@ -84,7 +90,7 @@ test.describe('@ui translate window constraints', () => {
     })
 
     test('window cannot shrink below first-result-card height', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: welcome_dismissed_config })
         let server: TranslationTestServer | null = null
         try {
             server = await omni.startTranslationTestServer()
@@ -93,11 +99,11 @@ test.describe('@ui translate window constraints', () => {
             server.set_mymemory_response({ translated_text: 'min height body', status: 200 })
             await translate.typeSource('hi')
             await translate.clickTranslate()
-            await translate.waitAllResults(30_000)
+            await translate.waitAllResults(local_translation_timeout_ms)
 
             await translate.resizeWindowTo(430, 50)
             await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
-                { timeout: 5_000 }).toBeGreaterThan(100)
+                { timeout: ui_timeout_ms }).toBeGreaterThan(100)
 
             const first_card_visible = await translate.resultCard('mymemory@e2e').isVisible()
             expect(first_card_visible).toBe(true)
@@ -113,7 +119,7 @@ test.describe('@ui translate window constraints', () => {
     })
 
     test('clearing source clears results and shrinks back to initial height', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: welcome_dismissed_config })
         let server: TranslationTestServer | null = null
         try {
             server = await omni.startTranslationTestServer()
@@ -123,13 +129,13 @@ test.describe('@ui translate window constraints', () => {
             server.set_mymemory_response({ translated_text: long_translation(20), status: 200 })
             await translate.typeSource('hello clear height')
             await translate.clickTranslate()
-            await translate.waitAllResults(30_000)
-            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: 5_000 })
+            await translate.waitAllResults(local_translation_timeout_ms)
+            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: ui_timeout_ms })
                 .toBeGreaterThan(initial_height + HEIGHT_TOLERANCE_PX)
 
             await translate.clickClearSource()
             await expect(translate.resultCards()).toHaveCount(0)
-            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: 5_000 })
+            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: ui_timeout_ms })
                 .toBeLessThanOrEqual(220)
         } finally {
             await server?.stop()
@@ -138,7 +144,7 @@ test.describe('@ui translate window constraints', () => {
     })
 
     test('manual source deletion clears results and shrinks window', async () => {
-        const omni = await AppFixture.start()
+        const omni = await AppFixture.start({ config: welcome_dismissed_config })
         let server: TranslationTestServer | null = null
         try {
             server = await omni.startTranslationTestServer()
@@ -148,16 +154,35 @@ test.describe('@ui translate window constraints', () => {
             server.set_mymemory_response({ translated_text: long_translation(20), status: 200 })
             await translate.typeSource('hello manual clear height')
             await translate.clickTranslate()
-            await translate.waitAllResults(30_000)
-            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: 5_000 })
+            await translate.waitAllResults(local_translation_timeout_ms)
+            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: ui_timeout_ms })
                 .toBeGreaterThan(initial_height + HEIGHT_TOLERANCE_PX)
 
             await translate.sourceInput().fill('')
             await expect(translate.resultCards()).toHaveCount(0)
-            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: 5_000 })
+            await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.height ?? 0, { timeout: ui_timeout_ms })
                 .toBeLessThanOrEqual(220)
         } finally {
             await server?.stop()
+            await omni.stop()
+        }
+    })
+
+    test('language dropdown exposes ARIA roles and keyboard selection', async () => {
+        const omni = await AppFixture.start({ config: single_service_config })
+        try {
+            const translate = await omni.translate()
+            await expect(translate.sourceLanguageButton()).toHaveAttribute('role', 'combobox')
+            await expect(translate.sourceLanguageButton()).toHaveAttribute('aria-expanded', 'false')
+
+            await translate.sourceLanguageButton().focus()
+            await translate.sourceLanguageButton().press('ArrowDown')
+            await expect(translate.sourceLanguageButton()).toHaveAttribute('aria-expanded', 'true')
+            await expect(translate.page.getByTestId('lang-source-option-auto')).toHaveAttribute('role', 'option')
+            await translate.sourceLanguageButton().press('ArrowDown')
+            await translate.sourceLanguageButton().press('Enter')
+            await expect(translate.sourceLanguageButton()).toContainText('简体中文')
+        } finally {
             await omni.stop()
         }
     })
@@ -179,7 +204,7 @@ test.describe('@ui translate window constraints', () => {
 
             await translate.resizeWindowTo(120, 400)
             await expect.poll(async () => (await omni.api.windowState('translate')).bounds?.width ?? 0,
-                { timeout: 5_000 }).toBeGreaterThanOrEqual(lang_row_width - RESIZE_TOLERANCE_PX)
+                { timeout: ui_timeout_ms }).toBeGreaterThanOrEqual(lang_row_width - RESIZE_TOLERANCE_PX)
 
             await expect(translate.sourceLanguageButton()).toBeVisible()
             await expect(translate.targetLanguageButton()).toBeVisible()

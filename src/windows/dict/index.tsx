@@ -421,6 +421,7 @@ export default function DictWindow(): React.ReactElement {
                         <input
                             ref={inputRef}
                             data-testid="dict-word"
+                            aria-label={t('dict.placeholder', { defaultValue: '输入单词...' })}
                             value={word}
                             onChange={(e) => { setWord(e.target.value) }}
                             onKeyDown={handleInputKeyDown}
