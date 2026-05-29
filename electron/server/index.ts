@@ -1,10 +1,9 @@
 import http from 'http'
 import { app, clipboard, desktopCapturer, screen } from 'electron'
 import { getConfig, getAllConfig, setConfig, resetConfigToDefaults } from '../config/store'
-import type { DEFAULT_CONFIG } from '@shared/types/config'
-import type { AppConfig } from '@shared/types/config'
+import { DEFAULT_CONFIG, type AppConfig, type ConfigKey } from '@shared/types/config'
 
-type PublicConfig = Omit<AppConfig, 'service_instances'> & {
+export type PublicConfig = Omit<AppConfig, 'service_instances'> & {
     service_instances: Record<string, { serviceKey: string; config: Record<string, unknown> }>
 }
 import type { WindowManager } from '../windows/manager'
@@ -28,12 +27,27 @@ const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
 const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
 
-const ALLOWED_ORIGINS = new Set([
-    'http://localhost',
-    'http://127.0.0.1',
-    'https://localhost',
-    'https://127.0.0.1',
-])
+export function is_host_allowed(host: string): boolean {
+    const normalized_host = host.toLowerCase()
+    if (normalized_host === 'localhost' || normalized_host === '127.0.0.1') return true
+
+    const match = /^(localhost|127\.0\.0\.1):(\d{1,5})$/i.exec(host)
+    if (!match) return false
+    const port_number = Number(match[2])
+    return Number.isInteger(port_number) && port_number >= 1 && port_number <= 65535
+}
+
+export function is_origin_allowed(origin: string): boolean {
+    if (!origin) return false
+    try {
+        const url = new URL(origin)
+        if (url.origin !== origin) return false
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
+        return url.hostname === 'localhost' || url.hostname === '127.0.0.1'
+    } catch {
+        return false
+    }
+}
 
 class BodyTooLargeError extends Error {
     constructor() {
@@ -86,8 +100,7 @@ function redact_service_config(config: Record<string, unknown>): Record<string, 
     ]))
 }
 
-function get_public_config(): PublicConfig {
-    const config = getAllConfig()
+export function get_public_config_from_config(config: AppConfig): PublicConfig {
     // Redact all sensitive top-level keys
     const redacted: Record<string, unknown> = Object.fromEntries(
         Object.entries(config).map(([key, value]) => [
@@ -107,6 +120,10 @@ function get_public_config(): PublicConfig {
     }
 }
 
+function get_public_config(): PublicConfig {
+    return get_public_config_from_config(getAllConfig())
+}
+
 let server: http.Server | null = null
 
 export function startServer(mgr: WindowManager): Promise<void> {
@@ -120,7 +137,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             // Validate Host header to prevent DNS rebinding
             const host = req.headers.host ?? ''
-            if (!host.startsWith('127.0.0.1') && !host.startsWith('localhost')) {
+            if (!is_host_allowed(host)) {
                 res.writeHead(403)
                 res.end(JSON.stringify({ success: false, error: 'forbidden' }))
                 return
@@ -128,7 +145,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             // CORS: allow only localhost origins
             const origin = req.headers.origin ?? ''
-            if (origin && ALLOWED_ORIGINS.has(origin)) {
+            if (is_origin_allowed(origin)) {
                 res.setHeader('Access-Control-Allow-Origin', origin)
             }
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
@@ -638,7 +655,11 @@ function handleSetConfig(req: http.IncomingMessage, res: http.ServerResponse): v
             const results: Record<string, boolean> = {}
             for (const [key, value] of Object.entries(body)) {
                 try {
-                    setConfig(key as keyof typeof DEFAULT_CONFIG, value)
+                    if (!(key in DEFAULT_CONFIG)) {
+                        results[key] = false
+                        continue
+                    }
+                    setConfig(key as ConfigKey, value)
                     results[key] = true
                 } catch {
                     results[key] = false

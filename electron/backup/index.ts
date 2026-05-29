@@ -250,7 +250,7 @@ function validate_backup_config(data: Buffer): void {
     if (!is_plain_config(parsed)) {
         throw new Error('Invalid backup config')
     }
-    const config = parsed as Record<string, unknown>
+    const config = parsed
     const known_keys = new Set<string>(Object.keys(DEFAULT_CONFIG))
     known_keys.add('__initialized')
     for (const key of Object.keys(config)) {
