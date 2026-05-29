@@ -12,9 +12,11 @@ import { assert_sender_label } from './sender_validation'
 function is_allowed_external_url(value: string): boolean {
     try {
         const url = new URL(value)
+        if (url.protocol === 'file:') return true
         return url.protocol === 'https:'
             && url.hostname === 'github.com'
-            && (url.pathname === '/TuTouPower/omni_pot' || url.pathname.startsWith('/TuTouPower/omni_pot/'))
+            && (url.pathname === '/TuTouPower/omni_pot' || url.pathname.startsWith('/TuTouPower/omni_pot/')
+                || url.pathname === '/TuTouPower/omni_pot_release' || url.pathname.startsWith('/TuTouPower/omni_pot_release/'))
     } catch {
         return false
     }
