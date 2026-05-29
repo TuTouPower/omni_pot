@@ -72,7 +72,7 @@ export const cambridgeDictService: TranslateService = {
         const definitions: DictResult['definitions'] = []
         const examples: DictResult['examples'] = []
 
-        const entry_pattern = /class="pr entry-body__el[\s"'][^>]*>([^<]*(?:<(?!class="pr entry-body__el)[^<]*)*)(?:class="pr entry-body__el|$)/g
+        const entry_pattern = /class="pr entry-body__el[\s"'][^>]*>([\s\S]*?)(?=class="pr entry-body__el|$)/g
         let entry_match: RegExpExecArray | null
         let first_entry = true
         while ((entry_match = entry_pattern.exec(html)) !== null) {
@@ -110,7 +110,7 @@ export const cambridgeDictService: TranslateService = {
                 ? extract_text(regex_capture(pos_match, 1), 0).replace(/\s+/g, ' ').trim()
                 : ''
 
-            const def_pattern = /class="def-block ddef_block\s*"[^>]*>([^<]*(?:<(?!\/div\b)[^<]*)*)<\/div>\s*<\/div>\s*<\/div>/g
+            const def_pattern = /class="def-block ddef_block\s*"[^>]*>([\s\S]*?)(?=<div[^>]*class="def-block ddef_block|<\/div>\s*<\/div>\s*<\/div>\s*(?:<div[^>]*class="pr entry|$))/g
             let def_match: RegExpExecArray | null
             while ((def_match = def_pattern.exec(entry_html)) !== null) {
                 const def_html = regex_capture(def_match, 1)
