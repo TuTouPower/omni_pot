@@ -1,7 +1,7 @@
 import http from 'http'
 import { app, clipboard, desktopCapturer, screen } from 'electron'
-import { getConfig, getAllConfig, setConfig } from '../config/store'
-import { DEFAULT_CONFIG } from '@shared/types/config'
+import { getConfig, getAllConfig, setConfig, resetConfigToDefaults } from '../config/store'
+import type { DEFAULT_CONFIG } from '@shared/types/config'
 import type { AppConfig } from '@shared/types/config'
 
 type PublicConfig = Omit<AppConfig, 'service_instances'> & {
@@ -26,6 +26,13 @@ const E2E_TOKEN = process.env.OMNI_POT_E2E_TOKEN ?? ''
 
 const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
+
+const ALLOWED_ORIGINS = new Set([
+    'http://localhost',
+    'http://127.0.0.1',
+    'https://localhost',
+    'https://127.0.0.1',
+])
 
 class BodyTooLargeError extends Error {
     constructor() {
@@ -64,6 +71,13 @@ function is_e2e_request(req: http.IncomingMessage): boolean {
 const PUBLIC_SERVICE_CONFIG_KEYS = new Set(['enable', 'instanceName'])
 const REDACTED_CONFIG_VALUE = '[redacted]'
 
+// Keys that should never be exposed via /config endpoint
+const SENSITIVE_CONFIG_KEYS = new Set([
+    'webdav_password',
+    'webdav_url',
+    'webdav_username',
+])
+
 function redact_service_config(config: Record<string, unknown>): Record<string, unknown> {
     return Object.fromEntries(Object.entries(config).map(([key, value]) => [
         key,
@@ -73,9 +87,15 @@ function redact_service_config(config: Record<string, unknown>): Record<string, 
 
 function get_public_config(): PublicConfig {
     const config = getAllConfig()
+    // Redact all sensitive top-level keys
+    const redacted: Record<string, unknown> = Object.fromEntries(
+        Object.entries(config).map(([key, value]) => [
+            key,
+            SENSITIVE_CONFIG_KEYS.has(key) ? REDACTED_CONFIG_VALUE : value,
+        ])
+    )
     return {
-        ...config,
-        ...Object.fromEntries(['webdav_password'].map((key) => [key, REDACTED_CONFIG_VALUE])),
+        ...(redacted as Omit<AppConfig, 'service_instances'>),
         service_instances: Object.fromEntries(Object.entries(config.service_instances).map(([instance_key, instance]) => [
             instance_key,
             {
@@ -96,7 +116,20 @@ export function startServer(mgr: WindowManager): Promise<void> {
     return new Promise((resolve, reject) => {
         server = http.createServer((req, res) => {
             res.setHeader('Content-Type', 'application/json')
-            res.setHeader('Access-Control-Allow-Origin', '*')
+
+            // Validate Host header to prevent DNS rebinding
+            const host = req.headers.host ?? ''
+            if (!host.startsWith('127.0.0.1') && !host.startsWith('localhost')) {
+                res.writeHead(403)
+                res.end(JSON.stringify({ success: false, error: 'forbidden' }))
+                return
+            }
+
+            // CORS: allow only localhost origins
+            const origin = req.headers.origin ?? ''
+            if (origin && ALLOWED_ORIGINS.has(origin)) {
+                res.setHeader('Access-Control-Allow-Origin', origin)
+            }
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Omni-Pot-E2E-Token')
 
@@ -155,10 +188,17 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 const page_size = Number(url.searchParams.get('page_size') ?? '20')
                 const safe_page = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
                 const safe_size = Number.isFinite(page_size) && page_size > 0 ? Math.min(Math.floor(page_size), 200) : 20
+                const full_text = url.searchParams.get('full_text') === 'true'
                 const data = get_history_page(safe_page, safe_size)
+                // Privacy: truncate source/target text unless full_text is requested
+                const processed_data = full_text ? data : data.map((record) => ({
+                    ...record,
+                    source_text: record.source_text.length > 50 ? record.source_text.slice(0, 50) + '...' : record.source_text,
+                    target_text: record.target_text.length > 50 ? record.target_text.slice(0, 50) + '...' : record.target_text,
+                }))
                 const total = get_history_count()
                 res.writeHead(200)
-                res.end(JSON.stringify({ success: true, data, page: safe_page, page_size: safe_size, total }))
+                res.end(JSON.stringify({ success: true, data: processed_data, page: safe_page, page_size: safe_size, total }))
                 return
             }
 
@@ -579,9 +619,7 @@ function handleOpenWindow(
 
 function handleResetConfig(res: http.ServerResponse): void {
     try {
-        for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
-            setConfig(key as keyof typeof DEFAULT_CONFIG, value)
-        }
+        resetConfigToDefaults()
         res.writeHead(200)
         res.end(JSON.stringify({ success: true }))
     } catch (error: unknown) {

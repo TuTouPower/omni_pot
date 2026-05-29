@@ -157,6 +157,7 @@ export default function BackupSettings(): React.ReactElement {
                             value={webdavPassword}
                             onChange={setWebdavPassword}
                             testId="cfg-webdav_password"
+                            type="password"
                             style={{ minWidth: 280 }}
                         />
                     </ConfigRow>

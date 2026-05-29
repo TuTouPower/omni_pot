@@ -76,7 +76,7 @@ export const systemTtsService: TtsService = {
     languages: SYSTEM_TTS_LANGUAGES,
 
     play(text: string, language: LanguageCode): TtsPlaybackHandle {
-        log.info('play: lang=%s, text=%s', language, text.slice(0, 50))
+        log.info('play: lang=%s, len=%d', language, text.length)
         const utterance = new SpeechSynthesisUtterance(text)
         utterance.lang = to_bcp47(language)
         const initial_voice = pick_voice(utterance.lang)

@@ -189,7 +189,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     )
 }
 
-export function ConfigField({ defaultValue, value, onChange, placeholder, mono, style, testId }: {
+export function ConfigField({ defaultValue, value, onChange, placeholder, mono, style, testId, type }: {
     defaultValue?: string
     value?: string
     onChange?: (v: string) => void
@@ -197,6 +197,7 @@ export function ConfigField({ defaultValue, value, onChange, placeholder, mono, 
     mono?: boolean
     style?: React.CSSProperties
     testId?: string
+    type?: string
 }): React.ReactElement {
     return (
         <div className="field" data-testid={testId} style={style}>
@@ -206,6 +207,7 @@ export function ConfigField({ defaultValue, value, onChange, placeholder, mono, 
                 value={value}
                 onChange={onChange ? (e) => { onChange(e.target.value); } : undefined}
                 placeholder={placeholder}
+                type={type}
             />
         </div>
     )
