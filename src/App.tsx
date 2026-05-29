@@ -1,5 +1,6 @@
 import React from 'react'
 import TranslateWindow from './windows/translate'
+import WelcomeWindow from './windows/welcome'
 import ConfigWindow from './windows/config'
 import ScreenshotWindow from './windows/screenshot'
 import RecognizeWindow from './windows/recognize'
@@ -17,6 +18,8 @@ export default function App(): React.ReactElement {
   switch (label) {
     case 'translate':
       return <TranslateWindow />
+    case 'welcome':
+      return <WelcomeWindow />
     case 'daemon':
       return <></>
     case 'config':

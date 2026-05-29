@@ -12,6 +12,7 @@ import { WindowLabel } from '../windows/types'
 import { get_translate_window_options } from '../windows/translate_options'
 import { get_dict_window_options } from '../windows/dict_options'
 import { get_recognize_window_options } from '../windows/recognize_options'
+import { get_welcome_window_options } from '../windows/welcome_options'
 import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
 import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures, triggerTranslateEntry } from '../hotkey'
@@ -593,6 +594,7 @@ function handleOpenWindow(
             }
 
             const windowOpts: Partial<Record<string, ReturnType<typeof get_translate_window_options>>> = {
+                welcome: get_welcome_window_options(),
                 dict: { label: WindowLabel.DICT, width: 350, height: 420 },
                 config: { label: WindowLabel.CONFIG, width: 880, height: 600 },
                 recognize: get_recognize_window_options(),

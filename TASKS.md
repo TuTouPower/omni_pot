@@ -46,7 +46,7 @@
 
 ## 待做 UI / 功能调整
 
-- [ ] **欢迎窗口独立化：welcome 不能再嵌在翻译窗口里**：当前欢迎页作为 `TranslateWindow` 空状态渲染，导致欢迎态仍复用翻译窗口标题栏并显示“翻译”模式标签；这在产品模型上是错的。欢迎页应拆成独立窗口，翻译窗口只负责翻译。
+- [x] **欢迎窗口独立化：welcome 不能再嵌在翻译窗口里**：欢迎页已拆为独立 `welcome` 窗口，翻译窗口空状态只显示正常输入区和语言区。
   - 新增独立窗口：在 `WindowLabel` 中新增 `WELCOME = 'welcome'`，新增 `electron/windows/welcome_options.ts`，创建独立 BrowserWindow 配置；路由支持 `#welcome`；渲染层新增独立 welcome page / entry，复用现有欢迎卡片内容但不复用翻译窗口标题栏的“翻译”模式语义。
   - 翻译窗口去欢迎化：删除 `src/windows/translate/index.tsx` 内的 `WelcomeEmpty` 逻辑、`show_welcome_empty` 分支、欢迎态高度计算和欢迎态 padding 特例；翻译窗口源文本为空时仍显示正常输入区和语言区，不再展示欢迎内容。
   - 启动逻辑：首次启动打开 `WELCOME` 窗口，而不是把欢迎页塞进 `TRANSLATE`；`welcome_dismissed` 只表示独立欢迎窗口是否已跳过/完成，不参与翻译窗口空状态判断。

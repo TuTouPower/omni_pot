@@ -3,6 +3,7 @@ import { basename, dirname } from 'path'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { get_translate_window_options } from './windows/translate_options'
+import { get_welcome_window_options } from './windows/welcome_options'
 import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config, getUserDataDir, onConfigChanged } from './config/store'
 import { initLog, log } from './log'
 
@@ -216,15 +217,13 @@ if (!gotLock) {
       frame: false
     })
 
-    // Always open translate window for development
-    manager.createWindow(get_translate_window_options())
+    if (getConfig('welcome_dismissed')) {
+      manager.createWindow(get_translate_window_options())
+    } else {
+      manager.createWindow(get_welcome_window_options())
+    }
 
     if (isFirstRun()) {
-      manager.createWindow({
-        label: WindowLabel.CONFIG,
-        width: 720,
-        height: 740
-      })
       commitFirstRun()
     }
 

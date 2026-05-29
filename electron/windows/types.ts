@@ -1,6 +1,7 @@
 export enum WindowLabel {
   DAEMON = 'daemon',
   TRANSLATE = 'translate',
+  WELCOME = 'welcome',
   SCREENSHOT = 'screenshot',
   RECOGNIZE = 'recognize',
   DICT = 'dict',

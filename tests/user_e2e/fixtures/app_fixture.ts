@@ -102,6 +102,10 @@ export class AppFixture {
         throw new Error(`No window matching ${String(urlPattern)} after ${String(timeout)}ms`)
     }
 
+    async welcome(timeout = 10_000): Promise<Page> {
+        return this.waitForWindow(/#welcome/, timeout)
+    }
+
     async translate(timeout = 10_000): Promise<TranslatePage> {
         const page = await this.firstWindow(timeout)
         return new TranslatePage(page, this.api)

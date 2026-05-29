@@ -39,6 +39,10 @@ function resolveIconPath(): string {
   return candidates.find((p) => existsSync(p)) ?? join(__dirname, '../../public/logos/logo.ico')
 }
 
+function supports_pin_topmost(label: WindowLabel): boolean {
+  return label === WindowLabel.TRANSLATE || label === WindowLabel.DICT || label === WindowLabel.RECOGNIZE
+}
+
 export class WindowManager {
   private byLabel = new Map<WindowLabel, BrowserWindow>()
   private labelById = new Map<number, WindowLabel>()
@@ -154,10 +158,12 @@ export class WindowManager {
       // Settings window never auto-closes on blur
       if (opts.label === WindowLabel.CONFIG) return
       // Other windows auto-close unless pinned / always-on-top
-      const pinned = win.isAlwaysOnTop()
+      const pinned = supports_pin_topmost(opts.label) && (
+        win.isAlwaysOnTop()
         || (opts.label === WindowLabel.TRANSLATE && getConfig('translate_pinned'))
         || (opts.label === WindowLabel.DICT && getConfig('dict_pinned'))
         || (opts.label === WindowLabel.RECOGNIZE && getConfig('recognize_pinned'))
+      )
       if (!pinned) {
         win.close()
       }
@@ -181,14 +187,16 @@ export class WindowManager {
       log_wm.warn('window unresponsive:', opts.label)
     })
 
+    const route_hash = opts.label === WindowLabel.WELCOME ? 'welcome' : opts.label
+
     if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
-      const url = `${process.env['ELECTRON_RENDERER_URL']}#${opts.label}`
+      const url = `${process.env['ELECTRON_RENDERER_URL']}#${route_hash}`
       log_wm.info('loading URL:', url)
       win.loadURL(url).catch((err: unknown) => { log_wm.error(err) })
       // win.webContents.openDevTools({ mode: 'detach' })
     } else {
       win.loadFile(join(__dirname, '../renderer/index.html'), {
-        hash: opts.label
+        hash: route_hash
       }).catch((err: unknown) => { log_wm.error(err) })
     }
 

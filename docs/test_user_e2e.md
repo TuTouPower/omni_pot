@@ -99,10 +99,10 @@ export async function closeApp(launched: LaunchedApp): Promise<void>
 
 omni_pot 是多窗口应用，每个 BrowserWindow 是一个 Playwright `Page`：
 
-- `app.firstWindow()` —— 首个窗口（通常翻译窗口）
+- `app.firstWindow()` —— 首个窗口（通常为翻译窗口；未跳过欢迎页时为欢迎窗口）
 - `app.windows()` —— 当前全部窗口
 - `app.waitForEvent('window')` —— 等待新窗口出现（打开配置/词典/识别时）
-- 按 URL hash 区分窗口：`page.url()` 含 `#translate` / `#dict` / `#config` 等
+- 按 URL hash 区分窗口：`page.url()` 含 `#welcome` / `#translate` / `#dict` / `#config` 等
 
 `app_fixture` 负责把“某 label 的窗口”解析为对应 `Page` 并包进 Page Object。
 
@@ -115,6 +115,7 @@ class AppFixture {
   readonly app: ElectronApplication
 
   // 窗口 Page Object（按 label 解析 Page，按需等待窗口出现）
+  welcome(): Promise<Page>
   translate(): Promise<TranslatePage>
   dict(): Promise<DictPage>
   recognize(): Promise<RecognizePage>
@@ -269,8 +270,8 @@ class TranslatePage {
 
 ### 5.1 app_lifecycle.spec.ts — 应用生命周期与窗口管理
 
-- 启动后创建 daemon（隐藏）+ 翻译窗口
-- `firstRun` 模式额外自动打开设置窗口；非首次运行不打开
+- 启动后创建 daemon（隐藏）+ 欢迎窗口或翻译窗口：`welcome_dismissed=false` 时打开 `#welcome`，为 true 时打开 `#translate`
+- `firstRun` 模式只标记首次运行完成，不额外自动打开设置窗口
 - 窗口复用：重复触发同一窗口 → focus 而非新建（窗口数不增）
 - 关闭所有可见窗口后应用进程仍存活（托盘常驻）
 - 多窗口并存：翻译 + 词典 + 识别同时打开，互不干扰
@@ -358,7 +359,17 @@ class TranslatePage {
 - `translate_remember_window_size`：resize 后尺寸写入配置；翻译窗口和词典窗口宽度分别写入 `translate_window_width` / `dict_window_width`，互不影响
 - 第二语言回退：检测语言 == 目标语言时改用 `translate_second_language`
 
-### 5.8 dict_window.spec.ts — 词典窗口
+### 5.8 translate_welcome.spec.ts — 独立欢迎窗口
+
+- `welcome_dismissed=false` 启动后打开 `#welcome`，不是 `#translate` 空状态
+- 欢迎窗口显示快捷键提示；未设置快捷键显示“未设置”；平台化显示 `Ctrl` / `Cmd`，不显示 `CommandOrControl`
+- 欢迎窗口标题栏不得显示 `titlebar-mode=翻译`，不得显示置顶 / 固定按钮
+- 点击“翻译 / 词典 / 文字识别 / 截图翻译 / 设置快捷键”会关闭欢迎窗口并打开对应窗口或截图动作
+- 空翻译窗口显示正常源文本区和语言区，不显示欢迎内容
+- 翻译热键无选区时只打开翻译输入区，不打开或闪现欢迎窗口
+- 点击“跳过”持久化 `welcome_dismissed=true`；已跳过启动不再打开欢迎窗口
+
+### 5.9 dict_window.spec.ts — 词典窗口
 
 - `/trigger-dict` 打开词典窗口
 - 标题栏：置顶 → wordmark → 模式标签 `词典` → 固定按钮，右上角关闭按钮
@@ -375,7 +386,7 @@ class TranslatePage {
 - 窗口高度自适应内容，不留多余空白
 - 置顶/关闭按钮可用
 
-### 5.9 recognize_window.spec.ts — 文字识别 / 截图翻译窗口
+### 5.10 recognize_window.spec.ts — 文字识别 / 截图翻译窗口
 
 - 通过截图或 `open-window` 打开窗口；分别覆盖 `recognize` 与 `translate` 两种模式
 - 第一排：标题栏模式标签分别为 `文字识别` / `截图翻译`，置顶/关闭可用；**断言整页不出现 "OCR" 字面量**
@@ -395,7 +406,7 @@ class TranslatePage {
 - 本地识别覆盖：用户切换 system / tesseract 引擎；切换到 Tesseract 后自动重新识别并得到真实识别文本；外部 OCR 服务由本地 stub 模拟响应
 - `recognize_engine` / `recognize_language` / `recognize_delete_newline`（默认 false）/ `recognize_auto_copy` 配置联动
 
-### 5.10 screenshot_window.spec.ts — 截图窗口
+### 5.11 screenshot_window.spec.ts — 截图窗口
 
 - 触发截图后会先抓取桌面图再显示 SCREENSHOT 窗口，窗口应在 3000ms 内可见，用于守护截图 OCR 唤起卡顿回归且避免把截图遮罩截入背景
 - 触发截图 → 创建全屏 SCREENSHOT 窗口，全屏且置顶
@@ -407,7 +418,7 @@ class TranslatePage {
 - 截图完成后衔接识别（mode=recognize）/ 翻译（mode=translate）流程
 - CI 无显示器时：跳过真实截屏断言，保留窗口创建与 Esc 取消路径
 
-### 5.11 config_settings.spec.ts — 设置：通用/翻译/文字识别/快捷键/关于
+### 5.12 config_settings.spec.ts — 设置：通用/翻译/文字识别/快捷键/关于
 
 - 侧栏：logo + 8 个导航项 + 版本号；**侧栏不含置顶 / 固定按钮**
 - 顶栏：软件名 + 当前页面名 + 最小化/最大化/关闭三件套，**无置顶 / 固定按钮**
@@ -420,7 +431,7 @@ class TranslatePage {
 - **关于页**：版本号、官网/文档/反馈/检查更新链接、诊断信息（日志/设置目录、API 地址）；日志系统的文件路径、5MB 轮转、打包/开发级别、renderer console 转发和敏感字段脱敏由 `tests/unit/log.test.ts`、`tests/unit/windows/manager_log.test.ts` 覆盖
 - **config:changed 广播**：设置窗口改 `app_theme` → 翻译窗口主题同步变化
 
-### 5.12 config_service_mgmt.spec.ts — 服务管理页
+### 5.13 config_service_mgmt.spec.ts — 服务管理页
 
 - Tabs 切换**翻译 / Chinese Dictionary / 英文词典 / 文字识别 / 语音朗读** 五类
 - 服务实例列表项渲染：拖拽手柄、图标、实例名、key、启停、编辑、上移/下移、删除
@@ -430,7 +441,7 @@ class TranslatePage {
 - **编辑/测试保存实例** → 输入实例名与 JSON 设置，点击测试显示成功/失败，保存后设置持久化并更新列表名称
 - **拖拽排序** → `*_service_list` 顺序更新，翻译窗口结果卡片顺序随之变化
 
-### 5.13 config_history_backup.spec.ts — 历史页 + 备份页
+### 5.14 config_history_backup.spec.ts — 历史页 + 备份页
 
 历史页：
 
@@ -449,14 +460,14 @@ class TranslatePage {
 - 恢复 → 配置与历史记录被覆盖
 - 备份内容含设置与历史记录数据库
 
-### 5.14 app_http_api.spec.ts — 应用 HTTP API 集成边界
+### 5.15 app_http_api.spec.ts — 应用 HTTP API 集成边界
 
 - 覆盖 spec §20 的公开 HTTP API：`POST /translate`、`GET /config`、`POST /recognize`、`POST /dict`、`GET /history`
 - 文件名使用 `app_http_api`，避免与真实外部服务连通性 spec 混淆
 - 不带 `OMNI_POT_E2E_TOKEN` 调用公开端点，验证它们不依赖 E2E-only `/trigger-*` 路径
 - `POST /translate` 断言请求体文本进入翻译窗口源文本区；`GET /config` 返回公开配置且敏感字段脱敏；`POST /recognize` 返回当前 stub JSON（`success: true` + mode）
 
-### 5.15 external_services.spec.ts — 外部服务真实连通性
+### 5.16 external_services.spec.ts — 外部服务真实连通性
 
 - 仓库中唯一直接调用真实公共服务的 spec；所有服务可用性回归都归这里，不在 `@core` / `@ui` 重复真实公网检查
 - 默认跳过；设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查
@@ -464,7 +475,7 @@ class TranslatePage {
 - 不使用 route/mock；公共服务不可达时测试应失败并暴露具体服务
 - 默认免费翻译服务真实连通性（覆盖 issue #3）：直接调用 bing / deepl(free) / mymemory 等 service adapter，验证公共 provider 当前可用；UI roundtrip 由本地 stub 的 `@core` / `@ui` 用例覆盖
 
-### 5.16 updater_and_tray.spec.ts — 更新器 + 托盘
+### 5.17 updater_and_tray.spec.ts — 更新器 + 托盘
 
 更新器（用 `/e2e/mock-update` 注入假版本）：
 
@@ -480,19 +491,19 @@ class TranslatePage {
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 - 托盘弹窗渲染完整菜单项、分组分隔线、平台化快捷键文案，且底部菜单项不被裁剪
 
-### 5.17 i18n.spec.ts — 国际化
+### 5.18 i18n.spec.ts — 国际化
 
 - 切换 `app_language`（en ↔ zh_cn）→ 所有已打开窗口 UI 文案即时切换，无需重启
 - 中文下关键文案正确：自动检测、简体中文、检测为英文、各设置页标签、托盘项
 - 英文下对应英文文案
 - 回退链：未翻译的 key 回退到默认语言
 
-### 5.18 window_rounded_corner.spec.ts — 窗口圆角背景
+### 5.19 window_rounded_corner.spec.ts — 窗口圆角背景
 
 - 翻译窗口与设置窗口根节点圆角为 10px
 - `<html>` / `<body>` 背景在圆角处保持透明，不露出白色直角背景
 
-### 5.19 terminology_settings.spec.ts — 设置术语一致性
+### 5.20 terminology_settings.spec.ts — 设置术语一致性
 
 - 设置窗口、托盘菜单、翻译窗口不出现旧术语“配置”
 - 托盘菜单仍显示“Settings”或“设置”入口
