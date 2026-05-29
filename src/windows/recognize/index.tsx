@@ -18,6 +18,10 @@ import type { ServiceInstancesMap } from '@shared/types/config'
 const log = create_logger('recognize')
 const QRCODE_INSTANCE_KEY = 'qrcode@default'
 
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
+
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
 }
@@ -346,7 +350,7 @@ function ExportButton({ text }: { text: string }): React.ReactElement {
                         <div
                             key={f.value}
                             data-testid={`ocr-export-option-${f.value}`}
-                            onClick={() => { handle_export(f.value).catch(console.error); }}
+                            onClick={() => { handle_export(f.value).catch((err: unknown) => { log_error('export recognized text', err) }); }}
                             style={{
                                 padding: '6px 10px',
                                 borderRadius: 6,
@@ -426,7 +430,7 @@ export default function RecognizeWindow(): React.ReactElement {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') window.electronAPI.window.close().catch(console.error)
+            if (e.key === 'Escape') window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) })
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => { window.removeEventListener('keydown', handleKeyDown); }
@@ -478,7 +482,7 @@ export default function RecognizeWindow(): React.ReactElement {
         const ocr_key = `${imageBase64.slice(0, 64)}:${selectedLanguage}:${effectiveService}`
         if (lastOcrKeyRef.current === ocr_key) return
         lastOcrKeyRef.current = ocr_key
-        handleRecognize().catch(console.error)
+        handleRecognize().catch((err: unknown) => { log_error('recognize', err) })
     }, [selectedLanguage, effectiveService]) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
@@ -487,7 +491,7 @@ export default function RecognizeWindow(): React.ReactElement {
         const auto_ocr_key = `${String(recognizeShowId)}:${imageBase64}`
         if (autoOcrImageRef.current === auto_ocr_key) return
         autoOcrImageRef.current = auto_ocr_key
-        handleRecognize().catch(console.error)
+        handleRecognize().catch((err: unknown) => { log_error('recognize', err) })
     }, [mode, imageBase64, recognizedText, recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Auto-translate when screenshot translate opens with pre-recognized text
@@ -499,7 +503,7 @@ export default function RecognizeWindow(): React.ReactElement {
         setIsTranslating(true)
         doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
             .finally(() => { if (ocrRequestIdRef.current === requestId) setIsTranslating(false) })
-            .catch(console.error)
+            .catch((err: unknown) => { log_error('translate recognized text', err) })
     }, [recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // ---- Translate (used in translate mode) ----
@@ -619,7 +623,7 @@ export default function RecognizeWindow(): React.ReactElement {
         setIsTranslating(true)
         doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
             .finally(() => { if (ocrRequestIdRef.current === requestId) setIsTranslating(false) })
-            .catch(console.error)
+            .catch((err: unknown) => { log_error('translate recognized text', err) })
     }, [targetLanguage, effectiveTarget]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // ---- Handlers ----
@@ -648,7 +652,7 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [recognizedText])
 
     const handleClose = useCallback(() => {
-        window.electronAPI.window.close().catch(console.error)
+        window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) })
     }, [])
 
     const handleTogglePin = useCallback(() => {
@@ -660,7 +664,7 @@ export default function RecognizeWindow(): React.ReactElement {
         setAlwaysOnTop(next)
         window.electronAPI.window.setAlwaysOnTop(next)
             .then(() => { useConfigStore.getState().set('recognize_always_on_top', next) })
-            .catch(console.error)
+            .catch((err: unknown) => { log_error('set always on top', err) })
     }, [alwaysOnTop])
 
     const handleCopyImage = useCallback(async () => {
@@ -817,7 +821,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 borderTop: '1px solid var(--line)',
             }}>
                 {/* Left: Copy Image */}
-                <button className="ic-btn" title={t('recognize.copy_image', { defaultValue: '复制图片' })} data-testid="ocr-copy-image-btn" onClick={() => { handleCopyImage().catch(console.error); }} disabled={!imageBase64}>
+                <button className="ic-btn" title={t('recognize.copy_image', { defaultValue: '复制图片' })} data-testid="ocr-copy-image-btn" onClick={() => { handleCopyImage().catch((err: unknown) => { log_error('copy image', err) }); }} disabled={!imageBase64}>
                     <Icons.Image size={16} />
                 </button>
                 {/* OCR Engine Select */}
@@ -862,7 +866,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         data-testid="ocr-translate-btn"
                         title={t('recognize.translate')}
                         style={{ color: recognizedText ? 'var(--brand-primary)' : 'var(--text-mute)' }}
-                        onClick={() => { handleTranslate().catch(console.error); }}
+                        onClick={() => { handleTranslate().catch((err: unknown) => { log_error('translate recognized text', err) }); }}
                         disabled={!recognizedText}
                     >
                         <Icons.Translate size={18} />
@@ -874,7 +878,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 <button className="ic-btn" title={t('delete_spaces')} data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
                     <Icons.Space size={16} />
                 </button>
-                <button className="ic-btn" title={t('copy')} data-testid="ocr-copy-btn" onClick={() => { handleCopy().catch(console.error); }} disabled={!recognizedText}>
+                <button className="ic-btn" title={t('copy')} data-testid="ocr-copy-btn" onClick={() => { handleCopy().catch((err: unknown) => { log_error('copy recognized text', err) }); }} disabled={!recognizedText}>
                     <Icons.Copy size={16} />
                 </button>
                 <ExportButton text={is_translate_mode ? translatedText : recognizedText} />

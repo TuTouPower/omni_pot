@@ -149,7 +149,7 @@
 
 ### G. 文档与项目约定
 
-- [ ] **命名 / 缩进 / 日志规范**：`CLAUDE.md` 要求 `snake_case` + 4 空格 + logger，扫描出约 1001 处非 snake_case、约 1183 行缩进异常、renderer 大量 `console.*`。决定 React/TS 例外范围并写入 CLAUDE.md，否则批量改名 + lint enforcement。
+- [x] **命名 / 缩进 / 日志规范**：已明确 TS/React 命名边界：文件/目录、IPC payload、DB columns、持久化 config key、项目内部纯数据字段用 snake_case；React props/hooks/setter、DOM/Electron/第三方 API 保留 ecosystem 惯例；不做全仓批量 rename / reindent。renderer `.catch(console.error)` 已替换为 `src/utils/logger.ts` scoped logger，scripts 用户可见 console 输出仍允许。
 - [x] **spec 与代码差异修订**：(1) `docs/spec.md:409` 截图先 overlay 后 capture，但当前实现先 capture 后 show；(2) `docs/spec.md:101` 标 Electron 35+，实际 ^39.8.10；(3) `docs/spec.md:147` updater 600×400，实际 `electron/updater/index.ts:221-225` 是 480×520；(4) `docs/spec.md:699-701` 默认 `service_instances` 缺 `system@default`、`qrcode@default`（实际见 `shared/types/config.ts:88-99`）；(5) `docs/spec.md:479` 与 `:1110` 对 Linux System OCR 自相矛盾。
 - [x] **test 文档同步**：(1) `docs/test_user_e2e.md:413` 仍提"文字（字体+字号）"；(2) `:363` 词典 titlebar 漏 pin；(3) `:450-455` HTTP API 漏 `/dict`、`/history`；(4) `:234-238` endpoint 列表漏 `/e2e/set-config` 等 fixture；(5) `docs/test.md:24-27` 写 15 个 spec，`docs/test_user_e2e.md:54` 写 26 个，实际 27 个；(6) `docs/test.md:279` 表行漏 Google。
 - [x] **About / updater UI 链接同步**：仓库地址改公开 release 仓库。

@@ -11,6 +11,10 @@ import { create_logger } from '../../utils/logger'
 
 const log = create_logger('screenshot')
 
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
+
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
 }
@@ -95,7 +99,7 @@ export default function ScreenshotWindow(): React.ReactElement {
 
     const cancel_selection = useCallback(() => {
         reset_selection()
-        close_window().catch(console.error)
+        close_window().catch((err: unknown) => { log_error('close window', err) })
     }, [reset_selection, close_window])
 
     const confirm_selection = useCallback(async () => {
@@ -185,7 +189,7 @@ export default function ScreenshotWindow(): React.ReactElement {
 
     const handleMouseUp = useCallback(() => {
         if (!selecting) return
-        confirm_selection().catch(console.error)
+        confirm_selection().catch((err: unknown) => { log_error('confirm selection', err) })
     }, [selecting, confirm_selection])
 
     useEffect(() => {
@@ -197,7 +201,7 @@ export default function ScreenshotWindow(): React.ReactElement {
             }
             if (event.key === 'Enter' && selecting) {
                 event.preventDefault()
-                confirm_selection().catch(console.error)
+                confirm_selection().catch((err: unknown) => { log_error('confirm selection', err) })
             }
         }
         window.addEventListener('keydown', handle_key_down)

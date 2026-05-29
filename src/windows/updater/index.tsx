@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('updater')
+
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
 
 interface ReleaseAsset {
     name: string
@@ -76,7 +83,7 @@ export default function UpdaterWindow(): React.ReactElement {
         return () => { cancelled = true }
     }, [])
 
-    const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
+    const handleClose = useCallback(() => { window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) }) }, [])
     const handleDownloadAndInstall = useCallback(() => {
         const asset = release?.assets[0]
         if (!asset || downloading) return

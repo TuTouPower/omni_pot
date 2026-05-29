@@ -110,7 +110,9 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 
 ## 编码约定
 
-- `scripts/` 下的命令行构建脚本可以使用 `console.log` / `console.warn` / `console.error` 输出用户可见进度与错误；应用代码仍使用日志模块。
+- TypeScript/React 命名边界：文件名、目录名、IPC payload、数据库字段、持久化 config key 与项目内部纯数据字段使用 `snake_case`；React 组件、类型、class 使用 `PascalCase`；React props/hooks/setter、DOM/Electron/第三方 API 相关命名保持 ecosystem 惯例（通常为 `camelCase`），不为命名规范做全仓批量重命名。
+- 缩进目标为 4 空格，不为格式规范单独做全仓重缩进；新改代码保持 4 空格。
+- `scripts/` 下的命令行构建脚本可以使用 `console.log` / `console.warn` / `console.error` 输出用户可见进度与错误；应用代码仍使用日志模块，renderer 使用 `src/utils/logger.ts`。
 
 - `scripts/build_chinese_dictionary.ts` 默认优先使用项目内 `github_repo/chinese-dictionary`；不存在时自动回退到 WSL 上游仓库 `\\wsl.localhost\Ubuntu-22.04\home\karon\karson_ubuntu\github_repo\chinese-dictionary`。
 

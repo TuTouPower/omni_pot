@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow, ConfigField } from './config_components'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('config-backup')
 
 interface BackupEntry {
     name: string
@@ -11,6 +14,10 @@ interface BackupEntry {
 
 function error_message(error: unknown): string {
     return error instanceof Error ? error.message : String(error)
+}
+
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, error_message(err))
 }
 
 function format_size(bytes: number): string {
@@ -51,7 +58,7 @@ export default function BackupSettings(): React.ReactElement {
         }
     }, [])
 
-    useEffect(() => { load_backups().catch(console.error) }, [load_backups])
+    useEffect(() => { load_backups().catch((err: unknown) => { log_error('load backups', err) }) }, [load_backups])
 
     const handle_backup = async (): Promise<void> => {
         setStatus('Creating backup...')
@@ -59,7 +66,7 @@ export default function BackupSettings(): React.ReactElement {
             const result = await window.electronAPI.backup.create()
             if (result.success) {
                 setStatus(`Backup created: ${result.path ?? ''}`)
-                load_backups().catch(console.error)
+                load_backups().catch((err: unknown) => { log_error('load backups', err) })
             } else {
                 setStatus(`Error: ${result.error ?? ''}`)
             }
@@ -87,7 +94,7 @@ export default function BackupSettings(): React.ReactElement {
         try {
             const result = await window.electronAPI.backup.delete(name)
             if (result.success) {
-                load_backups().catch(console.error)
+                load_backups().catch((err: unknown) => { log_error('load backups', err) })
             } else {
                 setStatus(`删除失败: ${result.error ?? ''}`)
             }
@@ -180,11 +187,11 @@ export default function BackupSettings(): React.ReactElement {
 
             <ConfigCard title="操作">
                 <div style={{ display: 'flex', gap: 8 }}>
-                    <button data-testid="backup-create" className="btn primary" onClick={() => { handle_backup().catch(console.error); }}>
+                    <button data-testid="backup-create" className="btn primary" onClick={() => { handle_backup().catch((err: unknown) => { log_error('create backup', err) }); }}>
                         <Icons.Cloud size={14} />
                         {t('backup.create', { defaultValue: '立即备份' })}
                     </button>
-                    <button data-testid="backup-restore-open" className="btn" onClick={() => { load_backups().catch(console.error); setRestoreModal(true) }}>
+                    <button data-testid="backup-restore-open" className="btn" onClick={() => { load_backups().catch((err: unknown) => { log_error('load backups', err) }); setRestoreModal(true) }}>
                         <Icons.Cycle size={14} />
                         {t('backup.restore', { defaultValue: '从备份恢复' })}
                     </button>
@@ -206,10 +213,10 @@ export default function BackupSettings(): React.ReactElement {
                                 {extract_timestamp(entry.name)}{extract_timestamp(entry.name) ? ' · ' : ''}{format_size(entry.size)}
                             </div>
                         </div>
-                        <button data-testid="backup-copy-path" className="btn ghost icon sm" title="复制路径" onClick={() => { handle_copy_path(entry.name).catch(console.error); }}>
+                        <button data-testid="backup-copy-path" className="btn ghost icon sm" title="复制路径" onClick={() => { handle_copy_path(entry.name).catch((err: unknown) => { log_error('copy backup path', err) }); }}>
                             <Icons.Copy size={12} />
                         </button>
-                        <button data-testid="backup-delete" className="btn ghost icon sm" style={{ color: 'var(--danger)' }} title="删除" onClick={() => { handle_delete(entry.name).catch(console.error); }}>
+                        <button data-testid="backup-delete" className="btn ghost icon sm" style={{ color: 'var(--danger)' }} title="删除" onClick={() => { handle_delete(entry.name).catch((err: unknown) => { log_error('delete backup', err) }); }}>
                             <Icons.Trash size={12} />
                         </button>
                     </div>
@@ -265,7 +272,7 @@ export default function BackupSettings(): React.ReactElement {
                                         <span style={{ fontSize: 13 }}>{entry.name}</span>
                                         <div className="hint" style={{ marginTop: 2 }}>{extract_timestamp(entry.name)}{extract_timestamp(entry.name) ? ' · ' : ''}{format_size(entry.size)}</div>
                                     </div>
-                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => { handle_restore(entry.name).catch(console.error); }}>恢复</button>
+                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => { handle_restore(entry.name).catch((err: unknown) => { log_error('restore backup', err) }); }}>恢复</button>
                                 </div>
                             ))}
                         </div>

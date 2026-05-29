@@ -3,6 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow } from './config_components'
 import { format_hotkey } from '../../utils/format_hotkey'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('config-hotkey')
+
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
 
 interface HotkeyFieldProps {
     label: string
@@ -136,7 +143,7 @@ function HotkeyField({ label, sub, configKey, activeField, onStartCapture }: Hot
                     </button>
                 ) : (
                     <>
-                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={() => { handleConfirm().catch(console.error); }}>{t('ui.ok', { defaultValue: '确认' })}</button>
+                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={() => { handleConfirm().catch((err: unknown) => { log_error('confirm hotkey', err) }); }}>{t('ui.ok', { defaultValue: '确认' })}</button>
                         <button className="btn sm ghost" data-testid={`cfg-${configKey}-cancel`} onClick={handleCancel}>{t('ui.cancel', { defaultValue: '取消' })}</button>
                     </>
                 )}

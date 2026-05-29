@@ -107,6 +107,13 @@ useTabs = false
 
 原因：项目 CLAUDE.md 要求 4 空格缩进，默认 2 空格会制造大规模无意义 diff。
 
+命名与日志边界：
+
+- `snake_case` 强制用于文件名、目录名、IPC payload、数据库字段、持久化 config key 与项目内部纯数据字段。
+- React 组件、类型、class 使用 `PascalCase`；React props/hooks/setter、DOM/Electron/第三方 API 相关命名保留 ecosystem 惯例（通常为 `camelCase`）。
+- 不为命名或缩进规范做全仓批量 rename / reformat；只约束新增与触达代码。
+- 应用代码禁止 `console.*` 调试输出，renderer 统一走 `src/utils/logger.ts`；`scripts/` 下命令行脚本可保留用户可见的 `console.log` / `console.warn` / `console.error`。
+
 #### 3.2 Knip
 
 用于检查未使用文件、导出、依赖和 devDependencies。

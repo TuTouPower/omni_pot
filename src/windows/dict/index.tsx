@@ -19,6 +19,10 @@ import type { LanguageCode } from '@shared/types/language'
 
 const log = create_logger('dict')
 
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
+
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
 }
@@ -303,7 +307,7 @@ export default function DictWindow(): React.ReactElement {
     useEffect(() => {
         const unsub = window.electronAPI.text.onDictLookup((text: string) => {
             if (!text.trim()) return
-            handleLookup(text).catch(console.error)
+            handleLookup(text).catch((err: unknown) => { log_error('dict lookup', err) })
         })
         return unsub
     }, [handleLookup])
@@ -326,13 +330,13 @@ export default function DictWindow(): React.ReactElement {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') window.electronAPI.window.close().catch(console.error)
+            if (e.key === 'Escape') window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) })
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => { window.removeEventListener('keydown', handleKeyDown); }
     }, [])
 
-    const handleClose = useCallback(() => { window.electronAPI.window.close().catch(console.error) }, [])
+    const handleClose = useCallback(() => { window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) }) }, [])
     const handleTogglePin = useCallback(() => {
         setConfig('dict_pinned', !configPinned)
     }, [configPinned, setConfig])
@@ -340,7 +344,7 @@ export default function DictWindow(): React.ReactElement {
         const next = !alwaysOnTop
         window.electronAPI.window.setAlwaysOnTop(next)
             .then(() => { setConfig('dict_always_on_top', next) })
-            .catch(console.error)
+            .catch((err: unknown) => { log_error('set always on top', err) })
     }, [alwaysOnTop, setConfig])
 
     const toggleCollapse = useCallback((key: string) => {
@@ -364,13 +368,13 @@ export default function DictWindow(): React.ReactElement {
         if (e.key === 'Enter') {
             e.preventDefault()
             const text = word.trim()
-            if (text) handleLookup(text).catch(console.error)
+            if (text) handleLookup(text).catch((err: unknown) => { log_error('dict lookup', err) })
         }
     }, [word, handleLookup])
 
     const handleLookupClick = useCallback(() => {
         const text = word.trim()
-        if (text) handleLookup(text).catch(console.error)
+        if (text) handleLookup(text).catch((err: unknown) => { log_error('dict lookup', err) })
     }, [word, handleLookup])
 
     const sensors = useMemo<SensorDescriptor<SensorOptions>[]>(() => [{

@@ -4,6 +4,13 @@ import { Icons } from '../../components/icons'
 import { useTranslateStore } from '../../stores/translate_store'
 import { useConfig } from '../../hooks/use_config'
 import { native_language_name } from '../../i18n/language_names'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('translate-source')
+
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
 
 interface SourceAreaProps {
     onTranslate: () => void
@@ -135,7 +142,7 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
     )
 
     const handleCopy = useCallback(() => {
-        window.electronAPI.text.writeClipboard(sourceText).catch(console.error)
+        window.electronAPI.text.writeClipboard(sourceText).catch((err: unknown) => { log_error('copy source text', err) })
     }, [sourceText])
 
     const handleDeleteNewline = useCallback(() => {

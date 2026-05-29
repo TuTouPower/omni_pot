@@ -4,6 +4,13 @@ import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
 import type { HistoryRecord } from '@shared/types/ipc'
 import { ConfigSwitch } from './config_components'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('config-history')
+
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
 
 const PAGE_SIZE = 20
 
@@ -56,14 +63,14 @@ export default function HistorySettings(): React.ReactElement {
         let cancelled = false
         load_page(page).then(() => {
             if (cancelled) return
-        }).catch(console.error)
+        }).catch((err: unknown) => { log_error('load history', err) })
         return () => { cancelled = true }
     }, [page, load_page])
 
     useEffect(() => {
         window.electronAPI.history.service_keys()
             .then(setServiceOptions)
-            .catch(console.error)
+            .catch((err: unknown) => { log_error('load history service keys', err) })
     }, [records])
 
     const total_pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -74,7 +81,7 @@ export default function HistorySettings(): React.ReactElement {
         setSearch('')
         setServiceFilter('')
         setTimeFilter(0)
-        load_page(1).catch(console.error)
+        load_page(1).catch((err: unknown) => { log_error('load history', err) })
     }
 
     const handle_select = (record: HistoryRecord): void => {
@@ -87,7 +94,7 @@ export default function HistorySettings(): React.ReactElement {
         if (!selected) return
         await window.electronAPI.history.update(selected.id, editSource, editTarget)
         setSelected(null)
-        load_page(page).catch(console.error)
+        load_page(page).catch((err: unknown) => { log_error('load history', err) })
     }
 
     const disabled = historyDisable
@@ -155,7 +162,7 @@ export default function HistorySettings(): React.ReactElement {
                     ))}
                 </select>
                 <div style={{ flex: 1 }} />
-                <button data-testid="history-clear" className="btn sm danger" onClick={() => { handle_clear().catch(console.error); }} disabled={disabled} style={{ opacity: disabled ? 0.5 : 1, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                <button data-testid="history-clear" className="btn sm danger" onClick={() => { handle_clear().catch((err: unknown) => { log_error('clear history', err) }); }} disabled={disabled} style={{ opacity: disabled ? 0.5 : 1, flexShrink: 0, whiteSpace: 'nowrap' }}>
                     <Icons.Trash size={12} />
                     {t('history.clear', { defaultValue: '清空' })}
                 </button>
@@ -301,7 +308,7 @@ export default function HistorySettings(): React.ReactElement {
                             </div>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                                 <button data-testid="history-edit-cancel" className="btn ghost" onClick={() => { setSelected(null); }}>{t('ui.cancel', { defaultValue: '取消' })}</button>
-                                <button data-testid="history-edit-save" className="btn primary" onClick={() => { handle_save().catch(console.error); }}>{t('ui.save', { defaultValue: '保存' })}</button>
+                                <button data-testid="history-edit-save" className="btn primary" onClick={() => { handle_save().catch((err: unknown) => { log_error('save history record', err) }); }}>{t('ui.save', { defaultValue: '保存' })}</button>
                             </div>
                         </div>
                     </div>

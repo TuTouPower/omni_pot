@@ -9,6 +9,13 @@ import ServicePage from './service_settings'
 import HistoryPage from './history_settings'
 import BackupPage from './backup_settings'
 import AboutPage from './about'
+import { create_logger } from '../../utils/logger'
+
+const log = create_logger('config')
+
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
 
 type ConfigPage = 'general' | 'translate' | 'recognize' | 'hotkey' | 'service' | 'history' | 'backup' | 'about'
 
@@ -75,13 +82,13 @@ export default function ConfigWindow(): React.ReactElement {
                 <span className="op-mode" data-testid="config-title">{t('config.title', { defaultValue: '设置' })} · {cur?.label}</span>
                 <div style={{ flex: 1 }} />
                 <div className="op-wmctl" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                    <button title={t('minimize')} data-testid="config-minimize" onClick={() => { window.electronAPI.window.minimize().catch(console.error); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    <button title={t('minimize')} data-testid="config-minimize" onClick={() => { window.electronAPI.window.minimize().catch((err: unknown) => { log_error('minimize window', err) }); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                         <Icons.Min size={15} />
                     </button>
-                    <button title={t('maximize')} data-testid="config-maximize" onClick={() => { window.electronAPI.window.maximize().catch(console.error); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    <button title={t('maximize')} data-testid="config-maximize" onClick={() => { window.electronAPI.window.maximize().catch((err: unknown) => { log_error('maximize window', err) }); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                         <Icons.Max size={13} />
                     </button>
-                    <button className="close" title={t('close')} data-testid="config-close" onClick={() => { handleClose().catch(console.error); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    <button className="close" title={t('close')} data-testid="config-close" onClick={() => { handleClose().catch((err: unknown) => { log_error('close window', err) }); }} style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                         <Icons.Close size={15} />
                     </button>
                 </div>

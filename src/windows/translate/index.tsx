@@ -17,6 +17,10 @@ import type { LanguageCode } from '@shared/types/language'
 
 const log = create_logger('translate')
 
+function log_error(action: string, err: unknown): void {
+    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
+}
+
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
 }
@@ -242,7 +246,7 @@ export default function TranslateWindow(): React.ReactElement {
         previousLanguagesRef.current = { sourceLanguage, targetLanguage }
         if (!languageConfigReadyRef.current || !sourceText.trim()) return
         if (previous.sourceLanguage === sourceLanguage && previous.targetLanguage === targetLanguage) return
-        handleTranslate().catch(console.error)
+        handleTranslate().catch((err: unknown) => { log_error('translate', err) })
     }, [sourceLanguage, targetLanguage, sourceText, handleTranslate])
 
     const cancel_scheduled_translate = useCallback(() => {
@@ -255,7 +259,7 @@ export default function TranslateWindow(): React.ReactElement {
         cancel_scheduled_translate()
         translate_timer_ref.current = window.setTimeout(() => {
             translate_timer_ref.current = null
-            handleTranslate(text).catch(console.error)
+            handleTranslate(text).catch((err: unknown) => { log_error('translate', err) })
         }, 0)
     }, [cancel_scheduled_translate, handleTranslate])
 
@@ -331,7 +335,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') window.electronAPI.window.close().catch(console.error)
+            if (e.key === 'Escape') window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) })
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => { window.removeEventListener('keydown', handleKeyDown); }
@@ -349,7 +353,7 @@ export default function TranslateWindow(): React.ReactElement {
             .then(() => {
                 setConfig('translate_always_on_top', next)
             })
-            .catch(console.error)
+            .catch((err: unknown) => { log_error('set always on top', err) })
     }, [alwaysOnTop, setConfig])
 
     const handleSwapLanguages = useCallback(() => {
@@ -598,7 +602,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
-    const handle_source_translate = useCallback(() => { handleTranslate().catch(console.error); }, [handleTranslate])
+    const handle_source_translate = useCallback(() => { handleTranslate().catch((err: unknown) => { log_error('translate', err) }); }, [handleTranslate])
 
     return (
         <div
@@ -619,7 +623,7 @@ export default function TranslateWindow(): React.ReactElement {
                 onToggleTopmost={handleToggleAlwaysOnTop}
                 onTogglePin={handleTogglePin}
                 modeLabel={t('translate')}
-                onClose={() => { handleClose().catch(console.error); }}
+                onClose={() => { handleClose().catch((err: unknown) => { log_error('close window', err) }); }}
                 containerRef={titlebar_ref}
             />
 
@@ -630,7 +634,7 @@ export default function TranslateWindow(): React.ReactElement {
                 {showSource && (
                     <SourceArea
                         onTranslate={handle_source_translate}
-                        onTts={() => { handleSourceTts().catch(console.error); }}
+                        onTts={() => { handleSourceTts().catch((err: unknown) => { log_error('source tts', err) }); }}
                         ttsAvailable={sourceTtsAvailable}
                         ttsBusy={sourceTtsBusy}
                         ttsPlaying={sourceTtsPlaying}
@@ -658,7 +662,7 @@ export default function TranslateWindow(): React.ReactElement {
                         serviceList={enabledServiceList}
                         ttsServiceList={enabledTtsServiceList}
                         hasAnyRequest={isTranslating || Object.keys(results).length > 0}
-                        onRetry={(instanceKey) => { handleRetry(instanceKey).catch(console.error); }}
+                        onRetry={(instanceKey) => { handleRetry(instanceKey).catch((err: unknown) => { log_error('retry translate service', err) }); }}
                     />
                 </div>
             </div>
