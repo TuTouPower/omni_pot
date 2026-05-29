@@ -38,12 +38,14 @@ vi.mock('child_process', () => ({
 }))
 
 afterEach(() => {
+    vi.restoreAllMocks()
     mocks.handlers.clear()
     vi.clearAllMocks()
 })
 
 describe('registerOcrHandlers', () => {
     it('accepts existing recursive temp directory when mkdir returns undefined', async () => {
+        vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
         mocks.mkdir.mockResolvedValue(undefined)
         mocks.chmod.mockResolvedValue(undefined)
         mocks.writeFile.mockResolvedValue(undefined)
