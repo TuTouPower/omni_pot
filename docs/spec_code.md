@@ -36,14 +36,14 @@
 
 ## 3. 翻译服务清单（§13）
 
-spec 列 20 个，代码注册 21 个。
+spec 列 20 个，代码注册 20 个。
 
 | 差异 | 详情 |
 |---|---|
 | **代码多了 `ecdict`（CC-CEDICT）** | `src/services/ecdict.ts`，key=`ecdict`，中英词典服务。spec 完全未提及 |
 
 代码注册顺序（`src/services/index.ts`）:
-bing, google, deepl, cambridge_dict, alibaba, baidu, baidu_field, caiyun, niutrans, youdao, volcengine, transmart, tencent, openai, chatglm, geminipro, ollama, mymemory, free_dictionary, chinese_dictionary, **ecdict**
+bing, google, deepl, cambridge_dict, alibaba, baidu, baidu_field, caiyun, niutrans, youdao, volcengine, transmart, tencent, openai, chatglm, geminipro, ollama, mymemory, chinese_dictionary, **ecdict**
 
 ---
 
@@ -70,7 +70,6 @@ spec 1 个（system_tts），代码 1 个。**完全一致。**
 | deepl@default | ✓ | ✓ | — |
 | mymemory@default | ✓ | ✓ | — |
 | tesseract@default | ✓ | ✓ | — |
-| free_dictionary@default | ✓ | ✓ | — |
 | chinese_dictionary@default | ✓ | ✓ | — |
 | cambridge_dict@default | ✓ | ✓ | — |
 | system_tts@default | ✓ | ✓ | — |

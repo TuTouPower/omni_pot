@@ -98,11 +98,11 @@
 
 | 服务/数据源 | 状态 | 本地依赖 | 备注 |
 |---|---|---|---|
-| Chinese Dictionary | 当前代码存在 | `resources/data/dict/chinese_dict.db` | 本地中文单字/词语/成语释义数据库，约 86 MB。 |
+| Chinese Dictionary | 当前代码存在 | `resources/data/dict/chinese_dictionary.db` | 本地中文单字/词语/成语释义数据库，约 86 MB。 |
 | CC-CEDICT | 已移除当前注册服务 | 无 | 历史本地中英双向词典数据源；当前词典窗口不再注册、构建、打包或提示下载该服务。 |
 | ECDICT / GCIDE | 资料中离线候选 | 本地词典数据库 | pot-app 插件资料中提及，未作为当前已注册实现列入。 |
-| mapull/chinese-dictionary | 资料中推荐数据源 | JSON 数据导入 SQLite | 中文词典数据源，不是在线服务。 |
-| pwxcoo/chinese-xinhua | 资料中候选数据源 | JSON 数据导入 SQLite | 中文词典/成语/歇后语数据源。 |
+| mapull/chinese-dictionary | 资料中推荐数据源 | JSON 数据导入 SQLite | Chinese Dictionary数据源，不是在线服务。 |
+| pwxcoo/chinese-xinhua | 资料中候选数据源 | JSON 数据导入 SQLite | Chinese Dictionary/成语/歇后语数据源。 |
 
 ### 2.4 文字识别
 
@@ -149,7 +149,7 @@
 | apihz.cn 查词语 | 资料中候选 | id + key | 注册后免费，资料记录 10 次/分钟。 |
 | mxnzp.com 汉语字典 | 资料中候选 | app_id + app_secret | 资料记录 1000 次/天。 |
 | itapi.cn 新华字典 | 资料中候选 | key | 资料记录 100 次/天。 |
-| tianapi.com 中文词典 | 资料中候选 | apiKey | 资料记录普通会员 100 次/天。 |
+| tianapi.com Chinese Dictionary | 资料中候选 | apiKey | 资料记录普通会员 100 次/天。 |
 | 6api.net 新华字典 | 资料中候选 | appkey | 资料记录 100 次/天。 |
 | Merriam-Webster | 资料中候选 | API key | 字典/同义词 API；是否满足免费额度需以当前官网为准。 |
 | Wordnik | 资料中候选 | API key | 字典数据 API；是否满足免费额度需以当前官网为准。 |
@@ -212,8 +212,8 @@
 | 翻译 | Apertium APy 公共端点 | 当前资料中连接被拒，且不适合中文主路径。 |
 | 翻译 | FunTranslations | 当前资料中 403，且用途偏趣味翻译。 |
 | 翻译/TTS | Lingva Translate 公共实例 | 2026-05-21 实测：官方 `lingva.ml` 被 Cloudflare 拦截（HTTP 403，需浏览器 JS 验证），其余社区实例（`translate.igna.wtf`、`lingva.thedaviddelta.com`、`lingva.garudalinux.org`、`lingva.pawan857.me`、`lingva.darkness.services`、`lingva.lunar.icu` 等）均超时或已暂停部署；历史代码已在 `3149728` 中移除。免费无需 key，但当前无可用公共端点；若需使用需自行部署。 |
-| 中文词典 | 百度汉语网页接口 | 无官方 API，验证码/反爬，不适合作为直接依赖。 |
-| 中文词典 | CNMan/XDHYCD7th、Dictionaryphile/All_Dictionaries | 版权风险高，不适合纳入。 |
+| Chinese Dictionary | 百度汉语网页接口 | 无官方 API，验证码/反爬，不适合作为直接依赖。 |
+| Chinese Dictionary | CNMan/XDHYCD7th、Dictionaryphile/All_Dictionaries | 版权风险高，不适合纳入。 |
 
 ## 6. 资料来源
 

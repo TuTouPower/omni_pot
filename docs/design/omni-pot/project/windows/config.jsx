@@ -263,7 +263,7 @@ const PageService = () => {
   const [tab, setTab] = useStateC('translate');
   const tabs = [
     { id:'translate', label:'翻译', count: 5 },
-    { id:'dict_zh', label:'中文词典', count: 2 },
+    { id:'dict_zh', label:'Chinese Dictionary', count: 2 },
     { id:'dict_en', label:'英文词典', count: 3 },
     { id:'recognize', label:'文字识别', count: 2 },
     { id:'tts', label:'语音朗读', count: 1 },
@@ -284,7 +284,6 @@ const PageService = () => {
     dict_en: [
       { key:'cambridge_dict', enabled: true },
       { key:'ecdict', enabled: true, tag:'OFFLINE' },
-      { key:'free_dictionary', enabled: false },
     ],
     recognize: [
       { key:'system', enabled: true, tag:'PLATFORM' },
@@ -351,7 +350,7 @@ const PageHistory = () => {
     { svc:'deepl', src:'reconcile', from:'en', to:'zh_cn', dst:'调和；使一致', t:'2 分钟前' },
     { svc:'openai', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
     { svc:'google', src:'eventual consistency', from:'en', to:'zh_cn', dst:'最终一致性', t:'8 分钟前' },
-    { svc:'free_dictionary', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
+    { svc:'cambridge_dict', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
     { svc:'mymemory', src:'走り抜ける', from:'ja', to:'zh_cn', dst:'跑着穿过', t:'今天 11:08' },
     { svc:'geminipro', src:'お腹が空いた', from:'ja', to:'en', dst:"I'm hungry", t:'昨天 22:11' },
     { svc:'lingva', src:'machen', from:'de', to:'zh_cn', dst:'制作；做', t:'昨天 16:45' },

@@ -61,7 +61,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 - [x] **删除收藏功能**：收藏功能未实现完整（默认无服务实例，按钮永远禁用），从代码、文档、测试中彻底移除。涉及文件：`shared/types/config.ts`、`shared/types/collection_service.ts`、`src/services/collection/`（三个文件）、`src/services/index.ts`、`src/windows/dict/index.tsx`、`src/windows/translate/target_area.tsx`、`src/windows/config/service_settings.tsx`、`src/i18n/locales/zh_cn.json`、`src/i18n/locales/zh_tw.json`、`tests/user_e2e/pages/dict_page.ts`、`tests/user_e2e/pages/translate_page.ts`、`tests/user_e2e/specs/config_service_mgmt.spec.ts`、`tests/user_e2e/specs/dict_window.spec.ts`、`tests/user_e2e/specs/translate_result_cards.spec.ts`、`tests/unit/config_defaults.test.ts`、`docs/spec.md`、`docs/test.md`、`docs/test_user_e2e.md`、`docs/external_service_catalog.md`。
 - [x] **关闭 ECDICT**：暂时不要启用 ECDICT 词典源。
-- [x] **中文词典不显示朗读按钮**：中文词典卡片隐藏 TTS/朗读按钮。
+- [x] **Chinese Dictionary不显示朗读按钮**：Chinese Dictionary卡片隐藏 TTS/朗读按钮。
 - [x] **英文词典保留已有 audio**：英文词典结果中的发音链接不要丢掉。
 - [x] **中英文词典 DictResult 规范化**：重新整理 `DictResult` 类型和转换方法，确保中文/英文词典结果结构清晰统一，英文词典不丢失 audio 字段。
 - [x] **设置页服务项精简**：服务列表既不要显示小字（如 `google@default`、`cambridge_dict@default`），也不要显示标签 chip（如 `PLATFORM`、`OFFLINE`）。
@@ -80,8 +80,8 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 - [x] **文字识别 / 截图翻译截屏显示器选择错误**：已改为按鼠标当前所在显示器选择截图源和截图遮罩 bounds；文字识别、截图翻译共用同一 `start_screenshot_capture` 路径，并补充显示器选择单测。
 - [x] **词典无选中文本时输入框未自动聚焦**：用户没有选中词汇却打开词典窗口时，自动清空旧词条/结果并聚焦词典输入框，等待用户直接输入查询内容；已补 e2e 回归。
-- [x] **词典去掉 ECDICT**：~~已从服务注册、默认实例、UI tile、词典 e2e 依赖、CC-CEDICT IPC/自动导入/构建/备份路径和当前文档中移除；配置迁移会清理旧用户配置里的 `ecdict@default`。~~ **已重新启用**：ECDict (CC-CEDICT) 已加回，默认在中文词典和英文词典服务列表中启用，使用预构建的 `resources/data/dict/cc_cedict.db`（只读模式）。
-- [x] **中文词典查找失败**：已验证 `resources/data/dict/chinese_dict.db` 样例词查询正常，并增加旧 ECDICT 配置迁移，确保旧配置恢复为 `chinese_dictionary@default`；词典 e2e 覆盖中文真实查询。
+- [x] **词典去掉 ECDICT**：~~已从服务注册、默认实例、UI tile、词典 e2e 依赖、CC-CEDICT IPC/自动导入/构建/备份路径和当前文档中移除；配置迁移会清理旧用户配置里的 `ecdict@default`。~~ **已重新启用**：ECDict (CC-CEDICT) 已加回，默认在Chinese Dictionary和英文词典服务列表中启用，使用预构建的 `resources/data/dict/cc_cedict.db`（只读模式）。
+- [x] **Chinese Dictionary查找失败**：已验证 `resources/data/dict/chinese_dictionary.db` 样例词查询正常，并增加旧 ECDICT 配置迁移，确保旧配置恢复为 `chinese_dictionary@default`；词典 e2e 覆盖中文真实查询。
 - [x] **Cambridge 词典没有声音**：audioUrl 提取仍命中 Cambridge 当前 HTML；根因是打包 CSP 的 `media-src` 未允许 `https:`，导致远程 mp3 被拦截。已允许 `media-src https:` 并补充 CSP 单测，外部 Cambridge audioUrl 测试通过。
 - [x] **Google Translate e2e 测试失败**：`external_services.spec.ts` 已读取 `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY`（含小写）并用 undici `ProxyAgent` 配置 Node fetch；若 Node 测试进程仍网络不可达，仅 skip Google 用例，不影响其他外部服务健康检查。
 
@@ -157,7 +157,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 - [x] **provider salt/nonce 改 `crypto.randomUUID()`**：`baidu.ts:57`、`baidu_field.ts:58`、`youdao.ts:71`、`alibaba.ts:88` 当前 `Math.random().toString(36).substring(2)` 可能产空串。
 - [ ] **Bing/Google/Ollama 错误处理**：`bing.ts:124-127` 缺 `!resp.ok` 检查；`google.ts:50-56` 对合法空译响应抛错；`ollama.ts:62-67` 静默丢弃 malformed JSON。
 - [ ] **OpenAI `requestArguments` JSON 解析失败显式报错**：`src/services/openai.ts:85-87/140-146` 当前静默回退默认值。
-- [ ] **中文词典错误不再吞为空结果**：`src/services/chinese_dictionary.ts:15-20` DB 缺失 / IPC 失败 / SQL 错误与"无该词"不可区分；记录错误并 UI 暴露。
+- [ ] **Chinese Dictionary错误不再吞为空结果**：`src/services/chinese_dictionary.ts:15-20` DB 缺失 / IPC 失败 / SQL 错误与"无该词"不可区分；记录错误并 UI 暴露。
 - [ ] **macOS System OCR Swift 脚本打包**：`ipc/ocr_handlers.ts:90-98` 指向 `scripts/macos_ocr.swift`，但 `package.json:60-63` 的 app files 不含该脚本。改 extraResource 或内联 helper。
 - [ ] **macOS 划词实现或在 spec 标缺口**：`electron/selection/darwin.ts:3-5` 永远返回 `unsupported-platform`，与跨平台目标不符。
 - [ ] **WebDAV 备份能力对齐 spec**：`electron/backup/index.ts:338-356/383-428` 始终用本地 zip；`shared/types/config.ts:167-170` 默认 `backup_type: 'webdav'`；`docs/spec.md:571-576` 要求 WebDAV。实现或改默认 + 标 spec。
@@ -169,8 +169,9 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 ### F. 测试与脚本
 
 - [ ] **vitest include glob 修复**：`vitest.config.ts:7` 当前 `tests/**/*.test.ts` 漏掉以下文件（均为 `test_*.ts`）：`tests/unit/services/test_google.ts`、`test_deepl.ts`、`tests/unit/windows/test_manager.ts`、`tests/unit/stores/test_translate_store.ts`、`tests/unit/lib/test_crypto.ts`。重命名或调整 glob 后同步修订 `docs/test.md §5.1`。（`test_bing.ts` → `bing.test.ts` 已重命名。）
-- [ ] **网络门变量统一为 `OMNI_POT_EXTERNAL_SERVICE_TESTS`**：`tests/unit/services/test_bing.ts:4`、`test_google.ts:4` 当前用 `RUN_NETWORK_TESTS`。
-- [ ] **`external_services.spec.ts` 不再 silent skip**：`tests/user_e2e/specs/external_services.spec.ts:121/157` 与 `docs/test.md §2.1` 冲突；删除 skip，让具体服务失败暴露，或更新策略文档。
+- [ ] **外部服务测试策略收口**：所有需要真实公网请求的 provider 健康检查只能放在 `tests/user_e2e/specs/external_services.spec.ts`（`@external`）统一覆盖；其他单元测试、集成测试、E2E（含 `@core` / `@ui`）必须使用本地 stub / fake response / fixture，不允许直连公网。`external_services.spec.ts` 应枚举当前代码注册且无需用户 key 的外部网络 provider，并逐个暴露失败服务名；网络不可达或上游 429/封禁等失败不得 silent skip，除非该服务已明确移出当前代码或在 TASKS/运行问题中作为已知环境问题单独标注。完成时同步清理分散在 unit 测试里的真实网络用例，并同步 `docs/test.md`、`docs/test_user_e2e.md` 的测试边界说明。
+- [ ] **网络门变量统一为 `OMNI_POT_EXTERNAL_SERVICE_TESTS`**：所有 opt-in 真实公网测试统一只认 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1`；`tests/unit/services/test_google.ts:4` 当前仍用 `RUN_NETWORK_TESTS`，若保留该用例也必须改名/迁移到 `external_services.spec.ts`。
+- [ ] **`external_services.spec.ts` 不再 silent skip**：`tests/user_e2e/specs/external_services.spec.ts:118-120/146` 与上面的统一策略冲突；删除 Google 网络不可达 skip，让具体服务失败暴露。
 - [ ] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
 - [ ] **HTTP server 单元/契约测试**：当前 `tests/` 无 server-focused 测试；覆盖 CORS、auth、body limit、redaction、history privacy、`/dict` 真正使用 text、`/history` seed 多条断言分页（`docs/spec.md:927-934`，对比 `tests/user_e2e/specs/app_http_api.spec.ts:49-64`）。
 - [ ] **updater repo/allowlist 契约测试**：`electron/updater/index.ts` 无对应测试。
@@ -188,7 +189,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 - [ ] **spec 与代码差异修订**：(1) `docs/spec.md:409` 截图先 overlay 后 capture，但当前实现先 capture 后 show；(2) `docs/spec.md:101` 标 Electron 35+，实际 ^39.8.10；(3) `docs/spec.md:147` updater 600×400，实际 `electron/updater/index.ts:221-225` 是 480×520；(4) `docs/spec.md:699-701` 默认 `service_instances` 缺 `system@default`、`qrcode@default`（实际见 `shared/types/config.ts:88-99`）；(5) `docs/spec.md:479` 与 `:1110` 对 Linux System OCR 自相矛盾。
 - [ ] **test 文档同步**：(1) `docs/test_user_e2e.md:413` 仍提"文字（字体+字号）"；(2) `:363` 词典 titlebar 漏 pin；(3) `:450-455` HTTP API 漏 `/dict`、`/history`；(4) `:234-238` endpoint 列表漏 `/e2e/set-config` 等 fixture；(5) `docs/test.md:24-27` 写 15 个 spec，`docs/test_user_e2e.md:54` 写 26 个，实际 27 个；(6) `docs/test.md:279` 表行漏 Google。
 - [ ] **About / updater UI 链接同步**：仓库地址改公开 release 仓库。
-- [ ] **`build_chinese_dict.ts` 收口**：(1) 注释要求单对象 JSON fail，但 `scripts/build_chinese_dict.ts:36-42` 实际接受；(2) `:197-199` 开启 WAL 但 `package.json:72-78` 只 include `.db`，结束前需 checkpoint/truncate。
+- [ ] **`build_chinese_dictionary.ts` 收口**：(1) 注释要求单对象 JSON fail，但 `scripts/build_chinese_dictionary.ts:36-42` 实际接受；(2) `:197-199` 开启 WAL 但 `package.json:72-78` 只 include `.db`，结束前需 checkpoint/truncate。
 - [ ] **`shared/types/ipc.ts` 命名一致性**：`writeClipboardImage(base64Image)` vs handler 的 `base64_image` snake_case；`chineseDict:` 通道名混用 camelCase；`HistoryRecord.service_key` 与 `service.ts` `serviceKey` 不一致。
 - [ ] **archive 文档 OCR/识别术语**：`docs/archive/closed_issues/issues0518.md:41`、`docs/archive/old_pot/spec.md:126`、`docs/design/omni-pot/project/uploads/spec.md:113`、`docs/design/omni-pot/chats/chat1.md:306`。确认 archive 豁免否；不豁免则改"文字识别"。
 
@@ -214,7 +215,7 @@ P11 主体已完成并归档；以下是后续仍有效的清理 / 复测项。
 
 - [ ] **`compare_versions` 处理 pre-release**：`electron/updater/index.ts:37-45` 当前 `1.2.0-beta` 与 `1.2.0` 视为相等。
 - [ ] **`handleResetConfig` 批量 set**：`electron/server/index.ts:531-541` 循环 setConfig 触发约 50 次 broadcast。
-- [ ] **chinese_dict FTS5 前缀最小长度**：`electron/chinese_dict/index.ts:162-177`，单字符前缀在大库上慢。
+- [ ] **Chinese Dictionary FTS5 前缀最小长度**：`electron/chinese_dictionary/index.ts:162-177`，单字符前缀在大库上慢。
 - [ ] **`package.json:25-26` cross-env**：`node -e "..."` 设环境变量 Windows 下脆弱；`format:check` 长 biome 参数挪 `biome.json`。
 - [ ] **`scripts/check_dist_locks.mjs:111/136` `Atomics.wait` → `node:timers/promises`**。
 - [ ] **`source_area.tsx` 动态翻译 timer ref-持有 `onTranslate`**：`src/windows/translate/source_area.tsx:171-178` 当前依赖父 rerender 重置 timer。

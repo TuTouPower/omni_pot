@@ -56,12 +56,12 @@
 
 ## 二、词典窗口
 
-### 2.1 中文词典卡片未隐藏词性标签和朗读按钮 [高] 设计稿
+### 2.1 Chinese Dictionary卡片未隐藏词性标签和朗读按钮 [高] 设计稿
 
 | | 内容 |
 |---|---|
-| **Spec (§6.2)** | **中文词典卡片隐藏词性标签（POS tag）和朗读按钮**；英文词典保留 |
-| **设计稿** | `translate.jsx:581-623` — `SAMPLE_DICT_ZH` 中中文词典 (`chinese_dictionary`) 正常渲染了词性标签（"动""形"）和朗读按钮（VolumeButton） |
+| **Spec (§6.2)** | **Chinese Dictionary卡片隐藏词性标签（POS tag）和朗读按钮**；英文词典保留 |
+| **设计稿** | `translate.jsx:581-623` — `SAMPLE_DICT_ZH` 中Chinese Dictionary (`chinese_dictionary`) 正常渲染了词性标签（"动""形"）和朗读按钮（VolumeButton） |
 
 **影响**：需在 `DictBody` 组件中按服务类型区分中英文词典渲染逻辑。
 
@@ -98,7 +98,7 @@
 
 | | 内容 |
 |---|---|
-| **Spec (§9.7)** | Tabs 切换**五类服务**：翻译 / 中文词典 / 英文词典 / 文字识别 / 语音朗读 |
+| **Spec (§9.7)** | Tabs 切换**五类服务**：翻译 / Chinese Dictionary / 英文词典 / 文字识别 / 语音朗读 |
 | **设计稿** | `config.jsx:264-271` — 6 个 Tab，多出 `collection: '收藏'`（count: 1） |
 
 **影响**：收藏系统 spec 中无定义。如保留需从 spec 层面设计。
@@ -109,7 +109,7 @@
 
 ocr 系统 ocr tesseract 二维码 qrcode
 
-中文词典 cc-cedict
+Chinese Dictionary cc-cedict
 
 cambridge_dict cc-cedict
 
@@ -219,7 +219,7 @@ cambridge_dict cc-cedict
 | # | 差异 | 严重程度 | 分类 |
 |---|---|---|---|
 | 1.1 | 翻译结果卡多了"收藏"按钮 | 高 | 翻译 |
-| 2.1 | 中文词典未隐藏词性标签/朗读按钮 | 高 | 词典 |
+| 2.1 | Chinese Dictionary未隐藏词性标签/朗读按钮 | 高 | 词典 |
 | 2.2 | 源词卡片多了"朗读""收藏"按钮 | 高 | 词典 |
 | 3.1 | 服务设置多了"收藏"Tab | 高 | 设置 |
 | 5.1 | shared.jsx Titlebar 缺少置顶/固定按钮 | 高 | 设计系统 |
@@ -259,7 +259,7 @@ cambridge_dict cc-cedict
 | 1.1 | 翻译结果卡多了"收藏"按钮 | 设计稿 — 移除 |
 | 1.2 | 源文本区域多了"收藏"按钮 | 设计稿 — 移除（ResultCard 中的 Heart） |
 | 1.4 | 托盘菜单额外快捷键 | 设计稿 — spec 明确仅 4 个功能项有快捷键，设计稿中设置等非功能项的快捷键全部移除 |
-| 2.1 | 中文词典未隐藏词性标签/朗读按钮 | 设计稿 — 加上中英文词典区分逻辑 |
+| 2.1 | Chinese Dictionary未隐藏词性标签/朗读按钮 | 设计稿 — 加上中英文词典区分逻辑 |
 | 2.2 | 源词卡片多了朗读/收藏按钮 | 设计稿 — 只保留复制+查询 |
 | 2.4 | 词典窗口默认宽度 420 | 设计稿 — 改为 spec 定义值 |
 | 3.1 | 服务设置多了"收藏"Tab | 设计稿 — 移除收藏 Tab |
@@ -290,7 +290,7 @@ cambridge_dict cc-cedict
 
 | # | 差异 | 决定 |
 |---|---|---|
-| 3.2 | 服务列表含未定义服务 (ecdict/lingva) | **两个都要改**，只实现以下服务：<br>翻译：`bing` `google` `deepl` `mymemory`<br>OCR：`system` `tesseract` `qrcode`<br>中文词典：`cc-cedict`<br>英文词典：`cambridge_dict` `cc-cedict` |
+| 3.2 | 服务列表含未定义服务 (ecdict/lingva) | **两个都要改**，只实现以下服务：<br>翻译：`bing` `google` `deepl` `mymemory`<br>OCR：`system` `tesseract` `qrcode`<br>Chinese Dictionary：`cc-cedict`<br>英文词典：`cambridge_dict` `cc-cedict` |
 
 ### 收藏功能归宿
 

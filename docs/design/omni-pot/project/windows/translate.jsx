@@ -582,7 +582,7 @@ const SAMPLE_DICT_ZH = {
   word: '调和',
   detected: '中文',
   services: [
-    { key: 'chinese_dictionary', name: 'chinese_dictionary', label: '中文词典' },
+    { key: 'chinese_dictionary', name: 'chinese_dictionary', label: 'Chinese Dictionary' },
     { key: 'ecdict', name: 'ecdict', label: 'ECDict · 中→英' },
   ],
   results: {

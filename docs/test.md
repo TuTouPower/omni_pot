@@ -120,14 +120,14 @@
 - 朗读按钮是否调用 TTS IPC/服务；服务不可用时是否显示明确 disabled 态或错误反馈。
 - 源语言/目标语言下拉是否可点击、可选择，选择后是否更新方向并触发重新翻译。
 - 自动检测后的目标语言、请求参数和 UI 显示方向是否一致。
-- 中文输入是否走中文词典/中文字典并返回中文释义；英文输入是否走英文词典。
+- 中文输入是否走Chinese Dictionary/中文字典并返回中文释义；英文输入是否走英文词典。
 - 欢迎空状态、加载态、结果卡片数量、错误态、空态等 DOM 状态是否符合 `docs/spec.md`。
 - 快捷键 action 链路是否能从“读取选区/剪贴板”走到目标窗口与目标功能。
 - 默认配置、服务列表、fallback 语言、禁用态文案等产品规则。
 - 语言下拉框选项列表完整性：不出现多余的"自动检测"、不出现 raw language code（`auto` / `zh_cn` / `EN`）。
 - 语言标签文字正确性：断言具体文字（如 `native_language_name` 返回值），不能只断言 `toBeVisible()`。
 - 快捷键录入互斥：同时只有一个字段处于录入态；点击另一个字段的"绑定"时，前一个自动退出。
-- 词典服务分流：中文查询只出中文词典卡片，英文查询只出英文词典卡片，通过 `data-result-key` 验证。
+- 词典服务分流：中文查询只出Chinese Dictionary卡片，英文查询只出英文词典卡片，通过 `data-result-key` 验证。
 - 中文场景覆盖：测试数据不能只有 `hello world`，必须包含中文查询（如"经济"、"学习"）。
 
 ### 3.2 可半自动化覆盖
@@ -226,7 +226,7 @@
 | 文件 | 测试内容 |
 |---|---|
 | `config_store.test.ts` | 配置读写、持久化 |
-| `chinese_dict_build.test.ts` | `chinese_dict.db` 构建产物正确性 |
+| `chinese_dictionary_build.test.ts` | `chinese_dictionary.db` 构建产物正确性 |
 
 ### 5.3 `tests/user_e2e/` — 用户端到端测试 (Playwright + 真实 Electron)
 
@@ -290,11 +290,11 @@
 
 ```bash
 npm install
-npm run build:chinese-dict   # 生成 chinese_dict.db（词典相关单元/E2E 测试依赖）
+npm run build:chinese-dictionary   # 生成 chinese_dictionary.db（词典相关单元/E2E 测试依赖）
 ```
 
-> 中文词典 DB 不提交到仓库（gitignored）。`npm run dist` 会自动运行上述构建；
-> 纯本地 `dev`/`test` 路径需手动运行一次。词典相关测试（`tests/integration/chinese_dict_build.test.ts`、
+> Chinese Dictionary DB 不提交到仓库（gitignored）。`npm run dist` 会自动运行上述构建；
+> 纯本地 `dev`/`test` 路径需手动运行一次。词典相关测试（`tests/integration/chinese_dictionary_build.test.ts`、
 > 词典 E2E spec）在 DB 缺失时会直接报错并提示运行生成命令。
 
 ### 验收命令
@@ -330,8 +330,8 @@ npm run test:e2e:external
 
 > `test:e2e:external` 需要真实网络访问，通常由脚本设置 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 后运行真实公共服务检查。
 > 覆盖所有"免费无需 key"且"当前代码存在"的外部服务（对照 `docs/external_service_catalog.md`）：
-> Bing、Google、DeepL 免费（含长文本/葡语变体）、MyMemory、Cambridge Dictionary、
-> Free Dictionary。本地服务（Chinese Dictionary、Tesseract）通过 E2E 环境覆盖。
+> Bing、Google、DeepL 免费（含长文本/葡语变体）、MyMemory、Cambridge Dictionary。
+> 本地服务（Chinese Dictionary、Tesseract）通过 E2E 环境覆盖。
 > CI nightly 跑此项；PR 不跑。新增免费服务时必须同步添加到此 spec。
 
 ### 分层执行说明

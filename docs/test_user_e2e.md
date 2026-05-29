@@ -361,12 +361,12 @@ class TranslatePage {
 
 - `/trigger-dict` 打开词典窗口
 - 标题栏：置顶 → wordmark → 模式标签 `词典`，右上角关闭按钮
-- 查英文词（`hello`）：本地 stub 模拟英文词典（free_dictionary）响应，断言**不渲染任何中文词典卡片**
-- 查中文词：**只渲染中文词典**（chinese_dictionary 中文释义），断言**不渲染任何英文词典卡片**
-- 查中文词"经济"/"学习"等常用字词：中文词典卡片出现且含真实内容
-- 服务分流通过 `data-result-key` 验证：英文查询的卡片 key 均以 `free_dictionary@` 开头；中文查询的卡片 key 均以 `chinese_dictionary@` 开头
-- 多词典并行出结果：本地 stub 模拟 free_dictionary 响应，中文词典走真实本地词典；中英文查询后各自只渲染对应语言的词典服务卡片
-- 释义按词性分组：每个词性作为小标题（chip 样式），下方编号义项从 01 重新开始；中文词典不显示词性分组
+- 查英文词（`hello`）：Cambridge Dictionary 响应，断言**不渲染任何 Chinese Dictionary 卡片**
+- 查中文词：**只渲染 Chinese Dictionary**（chinese_dictionary 中文释义），断言**不渲染任何英文词典卡片**
+- 查中文词"经济"/"学习"等常用字词：Chinese Dictionary 卡片出现且含真实内容
+- 服务分流通过 `data-result-key` 验证：英文查询的卡片 key 均以 `cambridge_dict@` 开头；中文查询的卡片 key 均以 `chinese_dictionary@` 开头
+- 多词典并行出结果：Cambridge Dictionary 和 Chinese Dictionary 分别覆盖英文、中文查询；中英文查询后各自只渲染对应语言的词典服务卡片
+- 释义按词性分组：每个词性作为小标题（chip 样式），下方编号义项从 01 重新开始；Chinese Dictionary 不显示词性分组
 - **无搜索框**：断言窗口内不存在搜索输入框
 - **无换行符号**：断言不存在去换行按钮
 - **无词形变化卡片**：断言不存在词形变化区块
@@ -421,7 +421,7 @@ class TranslatePage {
 
 ### 5.12 config_service_mgmt.spec.ts — 服务管理页
 
-- Tabs 切换**翻译 / 中文词典 / 英文词典 / 文字识别 / 语音朗读** 五类
+- Tabs 切换**翻译 / Chinese Dictionary / 英文词典 / 文字识别 / 语音朗读** 五类
 - 服务实例列表项渲染：拖拽手柄、图标、实例名、key、启停、编辑、上移/下移、删除
 - **添加内置服务** → 创建新实例（key 形如 `bing@xxxx`），出现在列表与 `*_service_list`
 - **删除实例** → 从列表与 `*_service_list` 移除，并同步删除 `service_instances` 项

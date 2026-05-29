@@ -35,11 +35,11 @@
 
 ## 二、词典窗口
 
-### [高] 2.1 中文词典卡片隐藏词性标签和朗读按钮
+### [高] 2.1 Chinese Dictionary卡片隐藏词性标签和朗读按钮
 
 - 文件：`windows/translate.jsx`（DictBody / SAMPLE_DICT_ZH）
-- 当前：中文词典 (`chinese_dictionary`) 正常渲染词性标签（"动""形"）和朗读按钮
-- 目标：中文词典卡片隐藏词性标签（POS tag）和朗读按钮；英文词典保留
+- 当前：Chinese Dictionary (`chinese_dictionary`) 正常渲染词性标签（"动""形"）和朗读按钮
+- 目标：Chinese Dictionary卡片隐藏词性标签（POS tag）和朗读按钮；英文词典保留
 
 ### [高] 2.2 源词卡片操作栏只保留复制+查询
 
@@ -60,7 +60,7 @@
 ### [高] 3.1 服务设置移除"收藏"Tab
 
 - 文件：`windows/config.jsx`（PageService）
-- 当前：6 个 Tab（翻译/中文词典/英文词典/文字识别/语音朗读/**收藏**）
+- 当前：6 个 Tab（翻译/Chinese Dictionary/英文词典/文字识别/语音朗读/**收藏**）
 - 目标：只保留 5 个 Tab，移除"收藏"
 
 ### [中] 3.2 服务列表示例数据精简为实际服务
@@ -70,7 +70,7 @@
 - 目标：只使用以下服务：
   - 翻译：`bing` `google` `deepl` `mymemory`
   - OCR：`system` `tesseract` `qrcode`
-  - 中文词典：`cc-cedict`
+  - Chinese Dictionary：`cc-cedict`
   - 英文词典：`cambridge_dict` `cc-cedict`
 
 ### [中] 3.3 服务实例列表不显示 key 和 PLATFORM/OFFLINE 标签

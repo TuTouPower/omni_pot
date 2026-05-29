@@ -50,7 +50,7 @@ NODE_MODULE_VERSION 140.
 
 ```bash
 npm test
-npm run build:chinese-dict
+npm run build:chinese-dictionary
 npm rebuild better-sqlite3
 ```
 
@@ -74,7 +74,7 @@ npm run dist
 ### 典型切换链路
 
 1. 执行 `npm run dist`。
-2. `dist` 前半段会跑中文词典构建脚本，这个脚本需要 Node ABI `127`。
+2. `dist` 前半段会跑Chinese Dictionary构建脚本，这个脚本需要 Node ABI `127`。
 3. `dist` 后半段会跑 `electron-builder`，它会把 `better-sqlite3` 重建成 Electron ABI `140`.
 4. 这时再跑 `npm test` 或词典构建脚本，就可能报“模块是 140，但 Node 要 127”。
 5. 手动执行 `npm rebuild better-sqlite3` 后，模块变回 Node ABI `127`。
@@ -89,15 +89,15 @@ npm run dist
   - `test`: `vitest run`
   - `test:e2e`: `npx playwright test --project=full`
   - `test:e2e:external`: `npx playwright test --project=external`
-  - `build:chinese-dict`: `npx tsx scripts/build_chinese_dict.ts`
-- `scripts/build_chinese_dict.ts`
-  - Node 进程中 import `better-sqlite3`，用于生成 `resources/data/dict/chinese_dict.db`。
-- `electron/chinese_dict/index.ts`
-  - Electron 主进程中 import `better-sqlite3`，运行中文词典查询。
+  - `build:chinese-dictionary`: `npx tsx scripts/build_chinese_dictionary.ts`
+- `scripts/build_chinese_dictionary.ts`
+  - Node 进程中 import `better-sqlite3`，用于生成 `resources/data/dict/chinese_dictionary.db`。
+- `electron/chinese_dictionary/index.ts`
+  - Electron 主进程中 import `better-sqlite3`，运行Chinese Dictionary查询。
 - `electron/history/index.ts`
   - Electron 主进程中 import `better-sqlite3`，运行历史记录数据库。
-- `tests/integration/chinese_dict_build.test.ts`
-  - Vitest / Node 进程中 import `better-sqlite3`，检查生成的中文词典 DB。
+- `tests/integration/chinese_dictionary_build.test.ts`
+  - Vitest / Node 进程中 import `better-sqlite3`，检查生成的Chinese Dictionary DB。
 
 ## 解决方案：入口自动切 ABI（方案 A）
 
@@ -105,7 +105,7 @@ npm run dist
 
 每个 npm script 在执行前自动确保 `better-sqlite3` 处于正确的 ABI，开发者无需手动记忆或切换。
 
-- **Node 侧命令**（`test`、`build:chinese-dict`）：入口前置 `npm rebuild better-sqlite3`。
+- **Node 侧命令**（`test`、`build:chinese-dictionary`）：入口前置 `npm rebuild better-sqlite3`。
 - **Electron 侧命令**（`test:e2e`、`test:e2e:core`、`test:e2e:ui`、`test:e2e:external`）：入口前置 `npx electron-builder install-app-deps`。
 - **dist**：`run_dist.mjs` 已有分阶段逻辑，在词典构建前确保 Node ABI，electron-builder 自身会切到 Electron ABI，无需额外处理。
 
@@ -177,7 +177,7 @@ if (check.status === 0) {
   "scripts": {
     // Node 侧：前置 ensure_node_abi
     "test": "node scripts/ensure_node_abi.mjs && vitest run",
-    "build:chinese-dict": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dict.ts",
+    "build:chinese-dictionary": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dictionary.ts",
 
     // Electron 侧：前置 ensure_electron_abi
     "test:e2e": "node scripts/ensure_electron_abi.mjs && npx playwright test --project=full",
@@ -201,15 +201,15 @@ const ensure_node_abi = ['node', ['scripts/ensure_node_abi.mjs']]
 
 const steps = [
     [npm_cmd, ['run', 'dist:check-locks']],
-    ensure_node_abi,                              // 确保中文词典构建用 Node ABI
-    [npm_cmd, ['run', 'build:chinese-dict']],
+    ensure_node_abi,                              // 确保Chinese Dictionary构建用 Node ABI
+    [npm_cmd, ['run', 'build:chinese-dictionary']],
     [npm_cmd, ['run', 'build']],
     [npm_cmd, ['run', 'dist:check-locks']],
     [npx_cmd, ['electron-builder', ...]],         // electron-builder 自动切 Electron ABI
 ]
 ```
 
-注意：`build:chinese-dict` 的 script 定义里也有 `ensure_node_abi` 前缀，但从 `run_dist.mjs` 调用时会走 `npm run build:chinese-dict`，所以检查会执行两次。第二次检查是秒过的（已经是 Node ABI），不影响性能。
+注意：`build:chinese-dictionary` 的 script 定义里也有 `ensure_node_abi` 前缀，但从 `run_dist.mjs` 调用时会走 `npm run build:chinese-dictionary`，所以检查会执行两次。第二次检查是秒过的（已经是 Node ABI），不影响性能。
 
 ### 性能影响
 
@@ -224,7 +224,7 @@ const steps = [
 |---|---|
 | `npm run dist` → `npm test` | `test` 入口自动 rebuild 回 Node ABI，通过 |
 | `npm test` → `npm run test:e2e` | `test:e2e` 入口自动切到 Electron ABI，通过 |
-| `npm run test:e2e` → `npm run build:chinese-dict` | 词典构建入口自动 rebuild 回 Node ABI，通过 |
+| `npm run test:e2e` → `npm run build:chinese-dictionary` | 词典构建入口自动 rebuild 回 Node ABI，通过 |
 | 任意顺序连续执行 | 每个命令自行保证 ABI，互不干扰 |
 
 ### 不变的部分
