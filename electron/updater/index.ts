@@ -86,7 +86,20 @@ function compare_versions(current: string, latest: string): boolean {
     if (cur.pre_release && !lat.pre_release) return true
     if (!cur.pre_release && lat.pre_release) return false
     if (cur.pre_release && lat.pre_release) {
-        return lat.pre_release > cur.pre_release
+        const cur_parts = cur.pre_release.split('.').map((p) => { const n = Number(p); return Number.isNaN(n) ? p : n })
+        const lat_parts = lat.pre_release.split('.').map((p) => { const n = Number(p); return Number.isNaN(n) ? p : n })
+        for (let i = 0; i < Math.max(cur_parts.length, lat_parts.length); i++) {
+            const c = cur_parts[i] ?? 0
+            const l = lat_parts[i] ?? 0
+            if (typeof c === 'number' && typeof l === 'number') {
+                if (l !== c) return l > c
+            } else {
+                const cs = String(c)
+                const ls = String(l)
+                if (ls !== cs) return ls > cs
+            }
+        }
+        return false
     }
 
     return false
@@ -284,7 +297,12 @@ export function registerUpdateHandlers(manager: WindowManager): void {
             assert_updater_sender(manager, event.sender)
             const asset = resolve_bound_update_asset(asset_name)
             const output_path = await download_asset(asset, event.sender)
-            await verify_download_digest(output_path, asset.digest)
+            try {
+                await verify_download_digest(output_path, asset.digest)
+            } catch (verify_error) {
+                rm(output_path, { force: true }).catch(() => {})
+                throw verify_error
+            }
             if (process.env['OMNI_POT_E2E'] !== '1') {
                 const error = await shell.openPath(output_path)
                 if (error) throw new Error(error)
