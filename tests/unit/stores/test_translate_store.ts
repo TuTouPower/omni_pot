@@ -18,6 +18,19 @@ describe('TranslateStore', () => {
     expect(useTranslateStore.getState().sourceText).toBe('hello')
   })
 
+  it('setSourceText resets lockedTargetLanguage and effectiveTargetLanguage (Bug 2 regression)', () => {
+    useTranslateStore.setState({
+      lockedTargetLanguage: 'zh_cn',
+      effectiveTargetLanguage: 'zh_cn',
+      isTranslating: true,
+    })
+    useTranslateStore.getState().setSourceText('面条')
+    const state = useTranslateStore.getState()
+    expect(state.lockedTargetLanguage).toBeNull()
+    expect(state.effectiveTargetLanguage).toBeNull()
+    expect(state.isTranslating).toBe(false)
+  })
+
   it('sets target language', () => {
     useTranslateStore.getState().setTargetLanguage('ja')
     expect(useTranslateStore.getState().targetLanguage).toBe('ja')
