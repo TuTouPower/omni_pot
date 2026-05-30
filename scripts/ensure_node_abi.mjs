@@ -1,11 +1,11 @@
 import { spawnSync } from 'node:child_process'
 import process from 'node:process'
 
-function check_abi(exec_path, label) {
+function check_abi(exec_path, env) {
     const check = spawnSync(
         exec_path,
         ['-e', "new (require('better-sqlite3'))(':memory:').close()"],
-        { stdio: 'pipe' }
+        { stdio: 'pipe', env: env ?? process.env }
     )
     return check.status === 0
 }
@@ -24,7 +24,7 @@ function rebuild_for_electron() {
 }
 
 // Check Node.js ABI
-if (!check_abi(process.execPath, 'Node')) {
+if (!check_abi(process.execPath)) {
     process.stderr.write('[abi] better-sqlite3 not compatible with Node, rebuilding...\n')
     const rebuild = spawnSync(
         process.platform === 'win32' ? 'npm.cmd' : 'npm',
@@ -37,8 +37,8 @@ if (!check_abi(process.execPath, 'Node')) {
     process.stderr.write('[abi] Node rebuild complete\n')
 }
 
-// Check Electron ABI
+// Check Electron ABI (needs ELECTRON_RUN_AS_NODE to use -e flag)
 const electron_exe = require('electron')
-if (!check_abi(electron_exe, 'Electron')) {
+if (!check_abi(electron_exe, { ...process.env, ELECTRON_RUN_AS_NODE: '1' })) {
     rebuild_for_electron()
 }

@@ -1,11 +1,11 @@
 import { spawnSync } from 'node:child_process'
 import process from 'node:process'
 
-function check_abi(exec_path: string): boolean {
+function check_abi(exec_path: string, env?: Record<string, string | undefined>): boolean {
     const check = spawnSync(
         exec_path,
         ['-e', "new (require('better-sqlite3'))(':memory:').close()"],
-        { stdio: 'pipe' }
+        { stdio: 'pipe', env: env ?? process.env }
     )
     return check.status === 0
 }
@@ -38,9 +38,9 @@ export default function ensureNodeAbi() {
         process.stderr.write('[abi] Node rebuild complete\n')
     }
 
-    // Check Electron ABI
+    // Check Electron ABI (needs ELECTRON_RUN_AS_NODE to use -e flag)
     const electron_exe: string = require('electron')
-    if (!check_abi(electron_exe)) {
+    if (!check_abi(electron_exe, { ...process.env, ELECTRON_RUN_AS_NODE: '1' })) {
         rebuild_for_electron()
     }
 }

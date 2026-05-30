@@ -8,7 +8,7 @@ function check_electron_abi(): boolean {
     const check = spawnSync(
         electron_exe,
         ['-e', "new (require('better-sqlite3'))(':memory:').close()"],
-        { stdio: 'pipe', cwd: PROJECT_ROOT }
+        { stdio: 'pipe', cwd: PROJECT_ROOT, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }
     )
     return check.status === 0
 }
