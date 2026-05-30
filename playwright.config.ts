@@ -5,7 +5,6 @@ export default defineConfig({
     timeout: 60_000,
     expect: { timeout: 10_000 },
     fullyParallel: false,
-    workers: 1,
     retries: 0,
     reporter: [['html', { open: 'never' }], ['list']],
     globalSetup: './tests/user_e2e/global_setup.ts',
@@ -21,9 +20,6 @@ export default defineConfig({
         {
             name: 'external',
             grep: /@external/,
-        },
-        {
-            name: 'full',
         },
     ],
     use: {

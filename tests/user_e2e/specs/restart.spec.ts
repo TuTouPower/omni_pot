@@ -139,7 +139,7 @@ async function port_responds(port: number, api_token: string): Promise<boolean> 
     }
 }
 
-test.describe('restart process lifecycle', () => {
+test.describe('restart process lifecycle @core', () => {
     test('restart triggers process exit, shutdown, and relaunch', async () => {
         await kill_instances_and_wait()
 
@@ -167,9 +167,8 @@ test.describe('restart process lifecycle', () => {
             const relaunched = await wait_for_http(port, api_token, 30_000)
             expect(relaunched, 'new instance should start after restart').toBe(true)
         } finally {
-            if (!proc_exited) proc.kill('SIGKILL')
-            try { rmSync(user_data_dir, { recursive: true, force: true }) } catch { /* ignore */ }
             await kill_instances_and_wait()
+            try { rmSync(user_data_dir, { recursive: true, force: true }) } catch { /* ignore */ }
         }
     })
 })
