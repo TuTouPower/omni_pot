@@ -47,7 +47,7 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
   isTranslating: false,
   requestId: 0,
 
-  setSourceText: (text) => { set((state) => ({ sourceText: text, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 })); },
+  setSourceText: (text) => { set((state) => ({ sourceText: text, effectiveTargetLanguage: null, lockedTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 })); },
   setSourceLanguage: (lang) => { set((state) => state.sourceLanguage === lang
     ? { sourceLanguage: lang }
     : { sourceLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }); },
