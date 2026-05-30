@@ -241,9 +241,29 @@ export default function DictWindow(): React.ReactElement {
     const pinned = configPinned || alwaysOnTop
     const setConfig = useConfigStore((s) => s.set)
 
-    const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set())
+    const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(() => new Set())
     const lookup_request_ref = useRef(0)
     const inputRef = useRef<HTMLInputElement>(null)
+    const root_ref = useRef<HTMLDivElement>(null)
+    const titlebar_ref = useRef<HTMLDivElement>(null)
+    const content_ref = useRef<HTMLDivElement>(null)
+    const last_reported_content_height_ref = useRef(0)
+    const appFont = useConfigStore((s) => s.config.app_font)
+    const appFontSize = useConfigStore((s) => s.config.app_font_size)
+
+    useEffect(() => {
+        setCollapsedKeys((prev) => {
+            const next = new Set(prev)
+            let changed = false
+            for (const key of enabledServiceList) {
+                if (!Object.prototype.hasOwnProperty.call(results, key) && !next.has(key)) {
+                    next.add(key)
+                    changed = true
+                }
+            }
+            return changed ? next : prev
+        })
+    }, [enabledServiceList, results])
 
     const handleLookup = useCallback(async (text: string) => {
         const trimmed = text.trim()
@@ -252,7 +272,7 @@ export default function DictWindow(): React.ReactElement {
         const request_id = lookup_request_ref.current + 1
         lookup_request_ref.current = request_id
         setWord(trimmed)
-        setCollapsedKeys(new Set())
+        setCollapsedKeys(new Set(enabledServiceList))
         setIsLoading(true)
         clearResults()
 
@@ -283,6 +303,12 @@ export default function DictWindow(): React.ReactElement {
                 if (lookup_request_ref.current !== request_id) return
                 if (typeof result === 'object') {
                     setResult(instanceKey, result)
+                    setCollapsedKeys((prev) => {
+                        if (!prev.has(instanceKey)) return prev
+                        const next = new Set(prev)
+                        next.delete(instanceKey)
+                        return next
+                    })
                 } else {
                     setResult(instanceKey, null)
                 }
@@ -298,7 +324,7 @@ export default function DictWindow(): React.ReactElement {
         if (lookup_request_ref.current === request_id) {
             setIsLoading(false)
         }
-    }, [zhServiceList, enServiceList, serviceInstances, setWord, setDetectedLanguage, setIsLoading, clearResults, setResult])
+    }, [zhServiceList, enServiceList, serviceInstances, enabledServiceList, setWord, setDetectedLanguage, setIsLoading, clearResults, setResult])
 
     const focusWordInput = useCallback(() => {
         window.requestAnimationFrame(() => { inputRef.current?.focus() })
@@ -327,6 +353,33 @@ export default function DictWindow(): React.ReactElement {
     useEffect(() => {
         window.electronAPI.ready('dict')
     }, [])
+
+    useEffect(() => {
+        const titlebar = titlebar_ref.current
+        const content = content_ref.current
+
+        let frame_id = 0
+        const report = (): void => {
+            window.cancelAnimationFrame(frame_id)
+            frame_id = window.requestAnimationFrame(() => {
+                const titlebar_h = titlebar ? titlebar.getBoundingClientRect().height : 0
+                const content_h = content ? content.scrollHeight : 0
+                const total = Math.ceil(titlebar_h + content_h)
+                if (total === last_reported_content_height_ref.current) return
+                last_reported_content_height_ref.current = total
+                window.electronAPI.dict.reportContentHeight(total).catch(() => undefined)
+            })
+        }
+
+        report()
+        const observer = new ResizeObserver(report)
+        if (titlebar) observer.observe(titlebar)
+        if (content) observer.observe(content)
+        return () => {
+            window.cancelAnimationFrame(frame_id)
+            observer.disconnect()
+        }
+    }, [activeList.length, results, collapsedKeys, isLoading, appFont, appFontSize, word, detectedLanguage])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -407,9 +460,10 @@ export default function DictWindow(): React.ReactElement {
     }, [activeList, zhServiceList, enServiceList])
 
     return (
-        <div className="op-window">
+        <div ref={root_ref} className="op-window">
             {/* Titlebar */}
             <Titlebar
+                containerRef={titlebar_ref}
                 alwaysOnTop={alwaysOnTop}
                 pinned={pinned}
                 onToggleTopmost={handleToggleAlwaysOnTop}
@@ -418,7 +472,7 @@ export default function DictWindow(): React.ReactElement {
                 onClose={handleClose}
             />
 
-            <div style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div ref={content_ref} style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Source word card */}
                 <div className="card" data-testid="dict-card" style={{ padding: 0, overflow: 'visible' }}>
                     <div style={{ padding: '12px 14px 4px' }}>

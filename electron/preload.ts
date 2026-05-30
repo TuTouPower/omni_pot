@@ -69,7 +69,7 @@ function add_ecdict_api(api: PartialElectronAPI): void {
   api.dict = {
     lookup: (text: string, from: string) => ipcRenderer.invoke('dict:lookup', text, from),
     check: () => ipcRenderer.invoke('dict:check'),
-  }
+  } as ElectronAPI['dict']
 }
 
 function add_config_api(api: PartialElectronAPI): void {
@@ -164,6 +164,10 @@ function add_translate_api(api: PartialElectronAPI): void {
 function add_dict_api(api: PartialElectronAPI): void {
   add_chinese_dict_api(api, false)
   add_ecdict_api(api)
+  api.dict = {
+    ...(api.dict ?? {}),
+    reportContentHeight: (height: number) => ipcRenderer.invoke('dict:reportContentHeight', height),
+  } as ElectronAPI['dict']
   api.text = {
     writeClipboard: (text) => ipcRenderer.invoke('text:writeClipboard', text),
     onDictLookup: (callback) => {

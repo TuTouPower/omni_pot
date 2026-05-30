@@ -104,6 +104,7 @@ export interface ElectronAPI {
   dict: {
     lookup(text: string, from: string): Promise<DictResult | null>
     check(): Promise<{ ready: boolean; entry_count: number }>
+    reportContentHeight(height: number): Promise<void>
   }
   update: {
     onRelease(callback: (release: {

@@ -56,7 +56,7 @@ describe('window options', () => {
         vi.advanceTimersByTime(300)
 
         expect(set_config).toHaveBeenCalledWith('dict_window_width', 520)
-        expect(set_config).toHaveBeenCalledWith('dict_window_height', 530)
+        expect(set_config).not.toHaveBeenCalledWith('dict_window_height', expect.anything())
         expect(set_config).not.toHaveBeenCalledWith('translate_window_width', expect.anything())
         expect(set_config).not.toHaveBeenCalledWith('translate_window_height', expect.anything())
     })

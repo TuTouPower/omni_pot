@@ -7,7 +7,8 @@ import { getConfig, setConfig } from '../config/store'
 import { get_translate_window_options } from './translate_options'
 import { TranslateHeightController } from './translate_height_controller'
 import { get_recognize_window_options } from './recognize_options'
-import { get_dict_window_options, attach_dict_resize_persistence } from './dict_options'
+import { get_dict_window_options, attach_dict_resize_persistence, DICT_MIN_WIDTH, DICT_MIN_HEIGHT } from './dict_options'
+import { DictHeightController } from './dict_height_controller'
 import { log } from '../log'
 
 function debounce<F extends (...args: unknown[]) => void>(fn: F, ms: number): F {
@@ -52,6 +53,7 @@ export class WindowManager {
   /** Labels currently being rebuilt (e.g. transparency change); close handler skips config reset. */
   private rebuilding = new Set<WindowLabel>()
   private translate_height_controller: TranslateHeightController | null = null
+  private dict_height_controller: DictHeightController | null = null
 
   constructor() {
     // Listen for renderer-ready signals
@@ -142,6 +144,14 @@ export class WindowManager {
       this.translate_height_controller?.dispose()
       this.translate_height_controller = new TranslateHeightController(win, {
         initial_min_height: opts.height,
+      })
+    }
+    if (opts.label === WindowLabel.DICT) {
+      win.setSize(opts.width, opts.height)
+      this.dict_height_controller?.dispose()
+      this.dict_height_controller = new DictHeightController(win, {
+        initial_min_height: DICT_MIN_HEIGHT,
+        min_width: DICT_MIN_WIDTH,
       })
     }
 
@@ -264,6 +274,8 @@ export class WindowManager {
           if (opts.label === WindowLabel.DICT) {
             setConfig('dict_always_on_top', false)
             setConfig('dict_pinned', false)
+            this.dict_height_controller?.dispose()
+            this.dict_height_controller = null
           }
           if (opts.label === WindowLabel.RECOGNIZE) {
             setConfig('recognize_always_on_top', false)
@@ -300,6 +312,10 @@ export class WindowManager {
 
   getTranslateHeightController(): TranslateHeightController | null {
     return this.translate_height_controller
+  }
+
+  getDictHeightController(): DictHeightController | null {
+    return this.dict_height_controller
   }
 
   focusOrCreate(label: WindowLabel, opts: WindowOptions): BrowserWindow {

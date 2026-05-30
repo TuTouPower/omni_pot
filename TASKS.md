@@ -242,7 +242,137 @@
   - `ca915c4` — Reapply 回来，同样未实现 reset
   - `c386b57` — 只修了 config 加载时误锁，未补 `setSourceText` 的清除逻辑
 - **修复方向**: `setSourceText` 中清除 `lockedTargetLanguage: null`，使新输入重新走 auto 检测 + swap 逻辑。截图翻译窗口（`recognize/index.tsx`）的 `lockedTargetLang` 已在新截图时正确重置，可参考。
-- **状态**: **待做**。
+- **状态**: **已修复**（2026-05-31，commit `9b37a10`）。`setSourceText` 现重置 `lockedTargetLanguage` 与 `effectiveTargetLanguage`，下次输入重新走 auto 检测 + swap。
+
+---
+
+## 待做：词典窗口动态高度 + 卡片默认折叠
+
+### 目的
+
+词典窗口当前使用固定高度（默认 420px，min 320px，max 960px），与翻译窗口的行为不一致。翻译窗口的高度完全跟随内容（标题栏 + 源文本区 + 结果卡片），内容变化时自动调整窗口大小。词典窗口应具备相同能力：
+
+- 窗口高度跟随内容（标题栏 + 源词卡片 + 结果卡片）自动伸缩
+- 结果卡片默认折叠（只显示服务名 + 折叠箭头），出结果后自动展开，高度增长
+- 用户手动折叠卡片后高度随之缩小
+- 无结果时窗口紧凑，不浪费屏幕空间
+
+### 参考目标
+
+翻译窗口的动态高度实现：
+- **渲染进程**：`src/windows/translate/index.tsx:530-563` — ResizeObserver 监听 `titlebar`、`top`（源文本+语言区）、`results_content`（结果卡片容器），计算 `total = titlebar_h + top_h + results_h + padding`，通过 `window.electronAPI.translate.reportContentHeight(total)` 上报
+- **主进程**：`electron/windows/translate_height_controller.ts` — `TranslateHeightController` 接收 content_height，计算 `target_h = clamp(content_height, min_height, work_area * 0.75)`，通过 `setMinimumSize/setMaximumSize/setBounds` 锁高；监听 `move`/`restore`/`display-metrics-changed` 重新计算
+- **IPC 链路**：`electron/preload.ts:120` 暴露 `reportContentHeight` → `electron/ipc/window_handlers.ts:56` 注册 `translate:reportContentHeight` → `controller.report_content_height(height)`
+
+### 技术方案
+
+#### 1. 主进程：DictHeightController
+
+新建 `electron/windows/dict_height_controller.ts`，参照 `TranslateHeightController`：
+
+- 类结构：`DictHeightController` 持有 `BrowserWindow` 引用
+- `report_content_height(content_height: number)`：接收渲染进程上报的内容高度
+  - debounce 1px（与翻译窗口一致）
+  - 计算 `target_h = clamp(content_height, min_height, work_area * 0.75)`
+  - 通过 `setMinimumSize/setMaximumSize/setBounds` 锁高
+- `report_min_width(content_width: number)`：可选，同步最小宽度
+- 监听 `move`（防抖 100ms 重新计算 work area）、`restore`（重新应用锁高）、`display-metrics-changed`
+- `dispose()` 清理所有监听器
+- 常量：`DICT_MIN_HEIGHT`（沿用现有 320）、`DICT_MAX_HEIGHT_RATIO`（0.75，与翻译窗口一致）
+
+#### 2. 主进程：window_handlers 注册 IPC
+
+在 `electron/ipc/window_handlers.ts` 中新增：
+- `dict:reportContentHeight` handler，路由到 `DictHeightController.report_content_height`
+- 可选：`dict:reportMinWidth` handler
+
+#### 3. 主进程：preload 暴露 API
+
+在 `electron/preload.ts` 中新增 `dict` section：
+- `reportContentHeight: (height) => ipcRenderer.invoke('dict:reportContentHeight', height)`
+
+#### 4. 主进程：manager 集成
+
+在 `electron/windows/manager.ts` 中：
+- 创建 dict 窗口时初始化 `DictHeightController`（类似 `translate_height_controller`）
+- 窗口关闭时 dispose
+
+#### 5. 主进程：dict_options 调整
+
+修改 `electron/windows/dict_options.ts`：
+- `get_dict_window_options()` 去掉 `maxHeight: 960`（由 HeightController 管理）
+- 初始高度改为较小值（如 200px，仅标题栏+源词卡片+折叠卡片占位），后续由内容驱动
+- `attach_dict_resize_persistence` 保留（用户手动拖拽时仍持久化），但需与 HeightController 共存：用户手动拖拽后可暂停自动锁高，或直接由 HeightController 统一管理
+
+#### 6. 渲染进程：词典窗口 ResizeObserver
+
+修改 `src/windows/dict/index.tsx`：
+- 为 titlebar、源词卡片、结果区域添加 ref
+- `useEffect` + `ResizeObserver` 监听三个区域，计算 `total = titlebar_h + source_card_h + results_h + padding`
+- 通过 `window.electronAPI.dict.reportContentHeight(total)` 上报
+- 依赖项：`results`、`isLoading`、`collapsedKeys`、`activeList.length`、`appFont`、`appFontSize`
+
+#### 7. 渲染进程：卡片默认折叠
+
+修改 `src/windows/dict/index.tsx`：
+- `collapsedKeys` 初始值改为包含所有 `enabledServiceList` 的 `Set`（全部折叠）
+- `handleLookup` 中：新查询开始时折叠所有卡片（`setCollapsedKeys(new Set(enabledServiceList))`）
+- 单个服务返回结果时自动展开该卡片：在 `setResult` 后从 `collapsedKeys` 中移除该 key
+- 用户手动折叠/展开优先级最高（手动操作后标记该 key 为"用户已手动控制"，不再自动展开）
+  - 或简化：用户手动折叠后，下次查询仍然会自动展开（与当前行为一致），不做"用户已手动控制"标记
+
+### 涉及文件
+
+| 文件 | 改动 |
+|---|---|
+| `electron/windows/dict_height_controller.ts` | **新建** — DictHeightController 类 |
+| `electron/windows/dict_options.ts` | 去掉 `maxHeight: 960`，调整初始高度 |
+| `electron/windows/manager.ts` | 创建 dict 窗口时初始化 DictHeightController，关闭时 dispose |
+| `electron/ipc/window_handlers.ts` | 新增 `dict:reportContentHeight` IPC handler |
+| `electron/preload.ts` | 新增 `dict.reportContentHeight` API |
+| `src/windows/dict/index.tsx` | ResizeObserver 上报内容高度 + 卡片默认折叠逻辑 |
+| `src/stores/dict_store.ts` | 可选：如需在 store 层面管理 collapsed 状态 |
+| `docs/spec.md` | 更新词典窗口行为描述：动态高度、卡片默认折叠 |
+| `docs/test_user_e2e.md` | 新增词典窗口高度测试用例描述 |
+| `docs/test.md` | 同步更新测试覆盖说明 |
+
+### 测试
+
+#### 单元测试
+
+- `tests/unit/windows/dict_height_controller.test.ts`（新建）：
+  - `compute_target_height` 边界：content < min → min、content > work_area*0.75 → cap、正常范围 → 返回 content
+  - `report_content_height` debounce：1px 内变化不上报
+  - `report_content_height` → `setBounds` 调用验证
+  - `dispose` 后不上报、不崩溃
+  - `move`/`restore` 事件触发重新计算
+
+#### E2E 测试
+
+- `tests/user_e2e/specs/dict_card_height.spec.ts`（已有，需更新）：
+  - 词典窗口初始高度较小（卡片全部折叠）
+  - 查询后结果卡片展开，窗口高度增长
+  - 手动折叠卡片后窗口高度缩小
+  - 多服务结果时高度上限不超过 `work_area * 0.75`
+
+#### 文档更新
+
+- `docs/spec.md` §7 词典窗口：补充"窗口高度跟随内容自动伸缩"、"结果卡片默认折叠"
+- `docs/test_user_e2e.md`：新增词典窗口动态高度测试用例
+- `docs/test.md`：同步更新测试覆盖说明
+
+### 状态
+
+**已完成**（2026-05-31）。
+
+- `electron/windows/dict_height_controller.ts` 新建（参照 TranslateHeightController）
+- `electron/windows/dict_options.ts` 去掉 `maxHeight`、`DICT_MIN_HEIGHT` 改为 120、`attach_dict_resize_persistence` 仅持久化宽度
+- `electron/windows/manager.ts` 集成 DictHeightController（创建/关闭）
+- `electron/ipc/window_handlers.ts` 注册 `dict:reportContentHeight`
+- `electron/preload.ts` + `shared/types/ipc.ts` 暴露 `dict.reportContentHeight`
+- `src/windows/dict/index.tsx`：ResizeObserver 上报内容高度；卡片默认折叠；新查询折叠所有；单服务出结果自动展开
+- 单元测试：`tests/unit/windows/window_options.test.ts` 适配（不再期望持久化 dict_window_height）
+- 文档：`docs/spec.md` 与 `docs/test_user_e2e.md` 待后续补充
 
 ---
 
