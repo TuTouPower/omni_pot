@@ -50,6 +50,15 @@ export function preload_screenshot_window(manager: WindowManager): void {
     const { width, height } = display.size
     const win = manager.createWindow(get_screenshot_window_options(width, height, false))
     win.setBounds({ x: display.bounds.x, y: display.bounds.y, width, height })
+
+    // Warm up the desktop capturer pipeline.
+    // On Windows, the first call to desktopCapturer.getSources() initialises
+    // the DXGI capture infrastructure and can block for 1-3 seconds.
+    // Doing it here (async, fire-and-forget) hides this cost during the
+    // user's first screenshot trigger.
+    desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } })
+        .then(() => { log.info('[screenshot] preload: capturer warm-up complete') })
+        .catch((err) => { log.warn('[screenshot] preload: capturer warm-up failed:', err) })
 }
 
 export async function start_screenshot_capture(

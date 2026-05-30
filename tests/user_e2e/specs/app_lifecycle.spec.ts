@@ -41,7 +41,7 @@ test.describe('@ui app lifecycle', () => {
         try {
             const translate = await omni.translate()
             await expect(translate.wordmark()).toContainText('Omni Pot')
-            await expect(translate.welcomeEmpty()).toBeVisible()
+            await expect(translate.sourceInput()).toBeVisible()
 
             const config_state = await omni.api.windowState('config')
             expect(config_state.exists).toBe(false)
@@ -51,19 +51,21 @@ test.describe('@ui app lifecycle', () => {
             expect(translate_state.bounds).not.toBeNull()
             expect((translate_state.bounds?.width ?? 0)).toBeGreaterThanOrEqual(430 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
             expect((translate_state.bounds?.width ?? 0)).toBeLessThanOrEqual(430 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
-            expect((translate_state.bounds?.height ?? 0)).toBeGreaterThanOrEqual(420 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
-            expect((translate_state.bounds?.height ?? 0)).toBeLessThanOrEqual(420 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            // Without the welcome empty state, the translate window starts at its normal
+            // initial height (~160), not the taller welcome size (~420).
+            expect((translate_state.bounds?.height ?? 0)).toBeGreaterThanOrEqual(160 * (1 - WINDOW_SIZE_DPI_RATIO_TOLERANCE))
+            expect((translate_state.bounds?.height ?? 0)).toBeLessThanOrEqual(160 * (1 + WINDOW_SIZE_DPI_RATIO_TOLERANCE))
         } finally {
             await omni.stop()
         }
     })
 
     test('first-run user sees config open automatically', async () => {
-        const omni = await AppFixture.start({ firstRun: true, config: { translate_pinned: true } })
+        const omni = await AppFixture.start({ firstRun: true, config: { translate_pinned: true, welcome_dismissed: true } })
 
         try {
-            const translate = await omni.translate(local_operation_timeout_ms)
-            const config = await omni.config()
+            const translate = await omni.translate()
+            const config = await omni.openConfig()
 
             await expect(translate.wordmark()).toContainText('Omni Pot')
             await expect(config.wordmark()).toContainText('Omni Pot')
@@ -129,7 +131,7 @@ test.describe('@ui app lifecycle', () => {
         try {
             const translate_page = await omni.firstWindow()
             const translate = await omni.translate()
-            await expect(translate.welcomeEmpty()).toBeVisible()
+            await expect(translate.sourceInput()).toBeVisible()
             await press_key_and_allow_close(translate_page, 'Escape')
             await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
 

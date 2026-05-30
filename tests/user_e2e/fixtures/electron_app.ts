@@ -1,7 +1,8 @@
 import { _electron as electron, type ElectronApplication } from '@playwright/test'
+import { execSync } from 'child_process'
 import { resolve } from 'path'
 import { mkdtempSync, rmSync } from 'fs'
-import { tmpdir } from 'os'
+import { tmpdir, platform } from 'os'
 import { join } from 'path'
 import http from 'http'
 import { createServer } from 'net'
@@ -78,7 +79,7 @@ export async function launchApp(opts: {
     delete env.ELECTRON_RUN_AS_NODE
 
     const shouldPresetConfig = opts.firstRun || opts.config !== undefined || opts.userDataDir === undefined
-    const presetConfig = opts.firstRun ? opts.config : { __initialized: true, ...(opts.config ?? {}) }
+    const presetConfig = opts.firstRun ? opts.config : { __initialized: true, welcome_dismissed: true, ...(opts.config ?? {}) }
     if (shouldPresetConfig && presetConfig) {
         env.OMNI_POT_PRESET_CONFIG = JSON.stringify(presetConfig)
     }
@@ -97,7 +98,28 @@ export async function launchApp(opts: {
 }
 
 export async function closeApp(launched: LaunchedApp): Promise<void> {
+    const proc = launched.app.process()
+    const pid = proc?.pid
+
     await launched.app.close()
+
+    // Playwright's close() on Windows doesn't guarantee process termination.
+    // The app's empty window-all-closed handler prevents Electron from self-quitting,
+    // and Playwright's TerminateProcess may not trigger graceful shutdown.
+    // Force-kill the process tree to ensure clean isolation between tests.
+    if (pid) {
+        await new Promise(r => setTimeout(r, 500))
+        if (platform() === 'win32') {
+            try {
+                execSync(`taskkill /F /T /PID ${pid} 2>nul`, { timeout: 3000, stdio: 'ignore' })
+            } catch { /* process already exited */ }
+        } else {
+            try { process.kill(pid, 'SIGKILL') } catch { /* already exited */ }
+        }
+    }
+
+    // Delay cleanup to let the OS release file handles (config writes, DB flush).
+    await new Promise(r => setTimeout(r, 300))
     if (launched.cleanupUserDataDir) {
         try {
             rmSync(launched.userDataDir, { recursive: true, force: true })

@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process'
+import { spawnSync, execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
@@ -47,5 +47,19 @@ if (electron_check.status !== 0) {
     if (rebuild.status !== 0) {
         process.exit(rebuild.status ?? 1)
     }
+
+    // node-gyp rebuild may leave lingering Electron processes or file locks.
+    // Clean up before Playwright launches its own Electron instances.
+    if (process.platform === 'win32') {
+        try {
+            execSync(
+                `powershell -Command "Get-CimInstance Win32_Process -Filter \\"Name='electron.exe'\\" | Where-Object { $_.CommandLine -match 'omni_pot' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`,
+                { timeout: 5000, stdio: 'ignore' }
+            )
+        } catch { /* no leftover processes */ }
+        // Brief delay to let file handles release after rebuild
+        spawnSync('ping', ['-n', '2', '127.0.0.1'], { stdio: 'ignore' })
+    }
+
     process.stderr.write('[abi] switch complete\n')
 }

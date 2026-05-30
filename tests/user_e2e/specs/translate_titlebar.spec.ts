@@ -50,7 +50,7 @@ test.describe('@ui translate titlebar', () => {
     })
 
     test('pinned config applies when the translate window is created', async () => {
-        const omni = await AppFixture.start({ config: { translate_always_on_top: true } })
+        const omni = await AppFixture.start({ config: { translate_always_on_top: true, welcome_dismissed: true } })
         try {
             await omni.firstWindow()
             await expect.poll(async () => (await omni.api.windowState('translate')).alwaysOnTop).toBe(true)
