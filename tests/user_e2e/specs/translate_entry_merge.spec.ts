@@ -17,11 +17,10 @@ test.describe('@ui translate entry merge', () => {
     test('welcome page shows a single merged translate entry, not two separate ones', async () => {
         const omni = await AppFixture.start({ config: { welcome_dismissed: false } })
         try {
-            const translate = await omni.translate()
-            const page = translate.sourceInput().page()
-            await expect(page.getByTestId('welcome-translate')).toBeVisible()
-            await expect(page.getByTestId('welcome-selection-translate')).toHaveCount(0)
-            await expect(page.getByTestId('welcome-input-translate')).toHaveCount(0)
+            const welcome = await omni.welcome()
+            await expect(welcome.getByTestId('welcome-translate')).toBeVisible()
+            await expect(welcome.getByTestId('welcome-selection-translate')).toHaveCount(0)
+            await expect(welcome.getByTestId('welcome-input-translate')).toHaveCount(0)
         } finally {
             await omni.stop()
         }

@@ -98,10 +98,16 @@ export async function launchApp(opts: {
 }
 
 export async function closeApp(launched: LaunchedApp): Promise<void> {
-    const proc = launched.app.process()
-    const pid = proc?.pid
+    // Capture PID before close(); process() may throw if the Electron process
+    // already exited (crash, double-stop, or app.quit() from test actions).
+    let pid: number | undefined
+    try {
+        pid = launched.app.process()?.pid
+    } catch {
+        // App already dead — nothing to kill, skip straight to cleanup.
+    }
 
-    await launched.app.close()
+    try { await launched.app.close() } catch { /* already closed */ }
 
     // Playwright's close() on Windows doesn't guarantee process termination.
     // The app's empty window-all-closed handler prevents Electron from self-quitting,

@@ -16,3 +16,4 @@ resources/data/dict/chinese_dictionary.db
 *.db-shm
 *.db-wal
 github_repo/1.txt
+.reasonix
