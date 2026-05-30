@@ -120,27 +120,6 @@ async function wait_for_exit(proc: ChildProcess, timeout_ms: number): Promise<nu
     })
 }
 
-async function port_responds(port: number, api_token: string): Promise<boolean> {
-    try {
-        await new Promise<void>((resolve, reject) => {
-            const req = http.get({
-                hostname: '127.0.0.1',
-                port,
-                path: '/config',
-                headers: { 'X-Omni-Pot-Api-Token': api_token },
-            }, (res) => {
-                res.on('data', () => {})
-                res.on('end', () => { if (res.statusCode === 200) resolve(); else reject() })
-            })
-            req.on('error', reject)
-            setTimeout(reject, 2000)
-        })
-        return true
-    } catch {
-        return false
-    }
-}
-
 test.describe('restart process lifecycle @core', () => {
     test('restart triggers process exit, shutdown, and relaunch', async () => {
         const port = await get_free_port()
@@ -161,9 +140,8 @@ test.describe('restart process lifecycle @core', () => {
             const code = await wait_for_exit(proc, 15_000)
             expect(code, 'process should exit after restart').toBe(0)
 
-            const still_responds = await port_responds(port, api_token)
-            expect(still_responds, 'HTTP server should stop after exit').toBe(false)
-
+            // New instance spawns on the same port, so we can't assert the port is free.
+            // The exit code 0 above already proves the old process shut down cleanly.
             const relaunched = await wait_for_http(port, api_token, 30_000)
             expect(relaunched, 'new instance should start after restart').toBe(true)
         } finally {

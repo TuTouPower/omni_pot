@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import process from 'node:process'
+import { createRequire } from 'node:module'
 
 function check_abi(exec_path, env) {
     const check = spawnSync(
@@ -38,6 +39,7 @@ if (!check_abi(process.execPath)) {
 }
 
 // Check Electron ABI (needs ELECTRON_RUN_AS_NODE to use -e flag)
+const require = createRequire(import.meta.url)
 const electron_exe = require('electron')
 if (!check_abi(electron_exe, { ...process.env, ELECTRON_RUN_AS_NODE: '1' })) {
     rebuild_for_electron()

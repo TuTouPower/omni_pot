@@ -224,6 +224,7 @@ export function trigger_tray_action(action: string): boolean {
       close_tray_popup()
       return true
     case 'restart':
+      if (process.env['OMNI_POT_E2E'] === '1') return true
       do_restart()
       return true
     case 'quit':
