@@ -2,6 +2,7 @@ import { Tray, Menu, nativeImage, app, screen, shell } from 'electron'
 import type { Rectangle } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { do_restart } from './restart'
 import { WindowLabel } from '../windows/types'
 import { get_dict_window_options } from '../windows/dict_options'
 import type { WindowManager } from '../windows/manager'
@@ -223,9 +224,7 @@ export function trigger_tray_action(action: string): boolean {
       close_tray_popup()
       return true
     case 'restart':
-      if (process.env['OMNI_POT_E2E'] === '1') return true
-      app.relaunch()
-      app.quit()
+      do_restart()
       return true
     case 'quit':
       if (process.env['OMNI_POT_E2E'] === '1') return true

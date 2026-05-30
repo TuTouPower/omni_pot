@@ -10,7 +10,7 @@ import { initLog, log } from './log'
 const log_main = log.scope('main')
 
 app.name = 'omni_pot'
-log_main.info('starting...')
+log_main.info('starting..., pid=%d, argv=%j', process.pid, process.argv)
 import { createTray, setWindowManagerForTray } from './tray'
 import {
   setWindowManagerForHotkey,
@@ -50,7 +50,9 @@ let db_watcher: FSWatcher | null = null
 
 const isE2e = !!process.env['OMNI_POT_E2E']
 const gotLock = isE2e || app.requestSingleInstanceLock()
+log_main.info('single instance lock: got=%s, isE2e=%s', gotLock, isE2e)
 if (!gotLock) {
+  log_main.info('another instance already running, quitting')
   app.quit()
 } else {
   app.on('second-instance', () => {

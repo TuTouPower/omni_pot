@@ -483,7 +483,8 @@ class TranslatePage {
 托盘：
 
 - 菜单项触发：Input Translate → 打开翻译窗口；Clipboard Monitor → 切换
-  `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口；Restart / Quit 在 E2E 安全分支返回成功且不结束测试进程（实际 `app.relaunch()` + `app.quit()` 调用顺序由 `tests/unit/tray_labels.test.ts` 覆盖）
+  `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口；Quit 在 E2E 安全分支返回成功且不结束测试进程
+- Restart 的进程级 E2E 覆盖见 §5.21 `restart.spec.ts`
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 - 托盘弹窗渲染完整菜单项、分组分隔线、平台化快捷键文案，且底部菜单项不被裁剪
 
@@ -503,6 +504,11 @@ class TranslatePage {
 
 - 设置窗口、托盘菜单、翻译窗口不出现旧术语“配置”
 - 托盘菜单仍显示“Settings”或“设置”入口
+
+### 5.21 restart.spec.ts — 重启进程生命周期
+
+- POST `/e2e/tray-action` `{ action: 'restart' }` → 原进程退出（exit code 0）、HTTP 端口关闭
+- 新实例自动启动并监听同一端口（`spawn()` 方式绕过 `sandbox: true` 下 `app.relaunch()` 的已知问题）
 
 ---
 

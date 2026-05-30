@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
     on: vi.fn(),
     set_context_menu: vi.fn(),
     destroy: vi.fn(),
+    do_restart: vi.fn(),
 }))
 
 vi.mock('electron', () => ({
@@ -53,6 +54,10 @@ vi.mock('../../electron/updater', () => ({
 vi.mock('../../electron/log', () => ({
     getLogDir: vi.fn(() => process.cwd()),
     log: { scope: vi.fn(() => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() })) },
+}))
+
+vi.mock('../../electron/tray/restart', () => ({
+    do_restart: mocks.do_restart,
 }))
 
 import { createTray, destroyTray, get_tray_menu_labels, rebuildMenu, trigger_tray_action } from '../../electron/tray'
@@ -116,28 +121,9 @@ describe('tray restart action', () => {
         vi.clearAllMocks()
     })
 
-    it('calls app.relaunch() before app.quit()', () => {
-        const call_order: string[] = []
-        vi.mocked(app.relaunch).mockImplementation(() => { call_order.push('relaunch') })
-        vi.mocked(app.quit).mockImplementation(() => { call_order.push('quit') })
-
+    it('delegates to do_restart on restart action', () => {
         trigger_tray_action('restart')
 
-        expect(call_order).toEqual(['relaunch', 'quit'])
-    })
-
-    it('does not call app.exit() on restart', () => {
-        trigger_tray_action('restart')
-
-        expect(app.relaunch).toHaveBeenCalled()
-        expect(app.quit).toHaveBeenCalled()
-        expect(app.exit).not.toHaveBeenCalled()
-    })
-
-    it('calls app.quit() on quit action', () => {
-        trigger_tray_action('quit')
-
-        expect(app.quit).toHaveBeenCalled()
-        expect(app.relaunch).not.toHaveBeenCalled()
+        expect(mocks.do_restart).toHaveBeenCalledOnce()
     })
 })

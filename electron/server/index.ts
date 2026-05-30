@@ -395,7 +395,7 @@ export function startServer(mgr: WindowManager): Promise<void> {
                 return
             }
 
-            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/tray-action') {
+            if ((is_e2e_request(req) || is_api_request(req)) && req.method === 'POST' && url.pathname === '/e2e/tray-action') {
                 handle_tray_action(req, res)
                 return
             }
