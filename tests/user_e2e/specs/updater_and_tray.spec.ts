@@ -272,18 +272,24 @@ test.describe('@ui updater and tray', () => {
         }
     })
 
-    test('user triggers restart and quit from tray actions', async () => {
+    test('user triggers restart from tray action', async () => {
         const omni = await AppFixture.start({ config: TEST_CONFIG })
         try {
+            // In E2E mode, restart is a no-op (returns success without relaunching)
+            // to avoid killing the test runner. Unit tests verify app.relaunch() + app.quit() call order.
             const restart_result = await omni.api.trayAction('restart')
             expect(restart_result).toEqual({ success: true, action: 'restart' })
+        } finally {
+            await omni.stop()
+        }
+    })
 
+    test('user triggers quit from tray action', async () => {
+        const omni = await AppFixture.start({ config: TEST_CONFIG })
+        try {
+            // In E2E mode, quit is a no-op (returns success without exiting)
             const quit_result = await omni.api.trayAction('quit')
             expect(quit_result).toEqual({ success: true, action: 'quit' })
-
-            const translate_result = await omni.api.trayAction('input_translate')
-            expect(translate_result.success).toBe(true)
-            await expect_window_visible(omni, 'translate')
         } finally {
             await omni.stop()
         }

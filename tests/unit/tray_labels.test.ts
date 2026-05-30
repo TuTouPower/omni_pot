@@ -55,7 +55,8 @@ vi.mock('../../electron/log', () => ({
     log: { scope: vi.fn(() => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() })) },
 }))
 
-import { createTray, destroyTray, get_tray_menu_labels, rebuildMenu } from '../../electron/tray'
+import { createTray, destroyTray, get_tray_menu_labels, rebuildMenu, trigger_tray_action } from '../../electron/tray'
+import { app } from 'electron'
 
 describe('tray visible strings', () => {
     beforeEach(() => {
@@ -107,5 +108,36 @@ describe('tray visible strings', () => {
             '退出',
         ])
         expect(get_tray_menu_labels()).not.toContain('Pot Desktop')
+    })
+})
+
+describe('tray restart action', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('calls app.relaunch() before app.quit()', () => {
+        const call_order: string[] = []
+        vi.mocked(app.relaunch).mockImplementation(() => { call_order.push('relaunch') })
+        vi.mocked(app.quit).mockImplementation(() => { call_order.push('quit') })
+
+        trigger_tray_action('restart')
+
+        expect(call_order).toEqual(['relaunch', 'quit'])
+    })
+
+    it('does not call app.exit() on restart', () => {
+        trigger_tray_action('restart')
+
+        expect(app.relaunch).toHaveBeenCalled()
+        expect(app.quit).toHaveBeenCalled()
+        expect(app.exit).not.toHaveBeenCalled()
+    })
+
+    it('calls app.quit() on quit action', () => {
+        trigger_tray_action('quit')
+
+        expect(app.quit).toHaveBeenCalled()
+        expect(app.relaunch).not.toHaveBeenCalled()
     })
 })
