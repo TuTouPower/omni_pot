@@ -4,7 +4,7 @@ import type { TranslationTestServer } from '../fixtures/translation_test_server'
 
 const SERVICE_CATEGORIES = [
     ['translate_service_list', '翻译', ['Bing', 'DeepL', 'MyMemory']],
-    ['dictionary_service_list', 'Chinese Dictionary', ['Chinese Dictionary', 'CC-CEDICT']],
+    ['dictionary_service_list', '中文词典', ['Chinese Dictionary', 'CC-CEDICT']],
     ['english_dictionary_service_list', '英文词典', ['Cambridge Dict', 'CC-CEDICT']],
     ['recognize_service_list', '识别', ['Tesseract', 'System OCR', 'QR Code']],
     ['tts_service_list', '朗读', ['System TTS']],
@@ -222,6 +222,38 @@ test.describe('@ui config service management', () => {
             await expect_service_config(omni, 'mymemory@default', {
                 instanceName: 'MyMemory E2E',
             })
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('dictionary add modal shows only dictionary services', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('service')
+
+            // Chinese Dictionary tab
+            await config.openServiceCategory('dictionary_service_list')
+            await config.addServiceButton().click()
+            await expect(config.serviceAddOption('chinese_dictionary')).toBeVisible()
+            await expect(config.serviceAddOption('ecdict')).toBeVisible()
+            await expect(config.serviceAddOption('cambridge_dict')).toBeVisible()
+            await expect(config.serviceAddOption('bing')).toHaveCount(0)
+            await expect(config.serviceAddOption('google')).toHaveCount(0)
+
+            // Close modal
+            await config.serviceTab('dictionary_service_list').click()
+
+            // English Dictionary tab
+            await config.openServiceCategory('english_dictionary_service_list')
+            await config.addServiceButton().click()
+            await expect(config.serviceAddOption('chinese_dictionary')).toBeVisible()
+            await expect(config.serviceAddOption('ecdict')).toBeVisible()
+            await expect(config.serviceAddOption('cambridge_dict')).toBeVisible()
+            await expect(config.serviceAddOption('bing')).toHaveCount(0)
+            await expect(config.serviceAddOption('google')).toHaveCount(0)
         } finally {
             await omni.stop()
         }

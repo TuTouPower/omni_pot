@@ -33,7 +33,7 @@ beforeEach(() => {
 })
 
 describe('translate hotkey entry', () => {
-    it('opens translate window before selected text lookup finishes', async () => {
+    it('opens translate window and sends selection-pending after text lookup', async () => {
         let resolve_selection: (value: { text: string; method: 'clipboard'; reason: 'copy-failed' }) => void = () => {}
         read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))
         const manager = {
@@ -44,8 +44,8 @@ describe('translate hotkey entry', () => {
 
         const pending = triggerTranslateEntry(manager)
 
-        expect(focus_or_create).toHaveBeenCalledWith('translate', translate_options)
-        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
+        expect(focus_or_create).not.toHaveBeenCalled()
+        expect(send_when_ready).not.toHaveBeenCalled()
         expect(read_selected_text).not.toHaveBeenCalled()
 
         await Promise.resolve()
@@ -53,6 +53,8 @@ describe('translate hotkey entry', () => {
         resolve_selection({ text: '', method: 'clipboard', reason: 'copy-failed' })
         await pending
 
+        expect(focus_or_create).toHaveBeenCalledWith('translate', translate_options)
+        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:input-translate')
     })
 
@@ -67,8 +69,7 @@ describe('translate hotkey entry', () => {
 
         const pending = triggerTranslateEntry(manager)
 
-        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
-        expect(send_when_ready).toHaveBeenCalledTimes(1)
+        expect(send_when_ready).not.toHaveBeenCalled()
         expect(read_selected_text).not.toHaveBeenCalled()
 
         await Promise.resolve()
@@ -76,13 +77,15 @@ describe('translate hotkey entry', () => {
         resolve_selection({ text: 'hello', method: 'clipboard' })
         await pending
 
+        expect(focus_or_create).toHaveBeenCalledWith('translate', translate_options)
+        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:from-selection', 'hello')
         expect(send_when_ready).toHaveBeenCalledTimes(2)
     })
 })
 
 describe('selection dictionary hotkey entry', () => {
-    it('opens dictionary window before selected text lookup finishes', async () => {
+    it('opens dictionary window and sends lookup after text lookup', async () => {
         let resolve_selection: (value: { text: string; method: 'clipboard' }) => void = () => {}
         read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))
         const manager = {
@@ -93,7 +96,7 @@ describe('selection dictionary hotkey entry', () => {
 
         const pending = triggerSelectionDictionary(manager)
 
-        expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
+        expect(focus_or_create).not.toHaveBeenCalled()
         expect(send_when_ready).not.toHaveBeenCalled()
         expect(read_selected_text).not.toHaveBeenCalled()
 
@@ -102,6 +105,7 @@ describe('selection dictionary hotkey entry', () => {
         resolve_selection({ text: 'hello', method: 'clipboard' })
         await pending
 
+        expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
         expect(send_when_ready).toHaveBeenCalledWith('dict', 'dict:lookup', 'hello')
     })
 
@@ -116,7 +120,7 @@ describe('selection dictionary hotkey entry', () => {
 
         const pending = triggerSelectionDictionary(manager)
 
-        expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
+        expect(focus_or_create).not.toHaveBeenCalled()
         expect(send_when_ready).not.toHaveBeenCalled()
         expect(read_selected_text).not.toHaveBeenCalled()
 
@@ -125,6 +129,7 @@ describe('selection dictionary hotkey entry', () => {
         resolve_selection({ text: '', method: 'clipboard', reason: 'empty' })
         await pending
 
+        expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
         expect(send_when_ready).toHaveBeenCalledWith('dict', 'dict:selection-empty')
     })
 })

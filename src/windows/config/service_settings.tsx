@@ -5,7 +5,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Icons } from '../../components/icons'
 import { useConfigStore } from '../../stores/config_store'
-import { translateServiceRegistry, ocrServiceRegistry } from '../../services/registry'
+import { translateServiceRegistry, dictionaryServiceRegistry, ocrServiceRegistry } from '../../services/registry'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import { createServiceInstanceKey, getServiceKey } from '@shared/types/service'
 import type { ServiceConfig } from '@shared/types/service'
@@ -26,8 +26,8 @@ const CATEGORY_TABS = [
 function getRegistryForCategory(category: ServiceCategory) {
     switch (category) {
         case 'translate_service_list': return translateServiceRegistry
-        case 'dictionary_service_list': return translateServiceRegistry
-        case 'english_dictionary_service_list': return translateServiceRegistry
+        case 'dictionary_service_list': return dictionaryServiceRegistry
+        case 'english_dictionary_service_list': return dictionaryServiceRegistry
         case 'recognize_service_list': return ocrServiceRegistry
         case 'tts_service_list': return ttsServiceRegistry
     }

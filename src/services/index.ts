@@ -1,4 +1,4 @@
-import { translateServiceRegistry } from './registry'
+import { translateServiceRegistry, dictionaryServiceRegistry } from './registry'
 import { bingService } from './bing'
 import { googleService } from './google'
 import { deeplService } from './deepl'
@@ -42,8 +42,12 @@ export function registerAllServices(): void {
     translateServiceRegistry.register(chineseDictionaryService)
     translateServiceRegistry.register(ecdictService)
 
+    dictionaryServiceRegistry.register(chineseDictionaryService)
+    dictionaryServiceRegistry.register(ecdictService)
+    dictionaryServiceRegistry.register(cambridgeDictService)
+
     registerAllTtsServices()
     registerAllOcrServices()
 }
 
-export { translateServiceRegistry, ocrServiceRegistry } from './registry'
+export { translateServiceRegistry, dictionaryServiceRegistry, ocrServiceRegistry } from './registry'

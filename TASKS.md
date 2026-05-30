@@ -59,6 +59,37 @@
 
 ---
 
+## 待做 bug 修复：词典服务设置（2026-05-30 用户反馈）
+
+### Bug 1: 词典 tab "添加服务"显示全部翻译服务
+
+- **位置**: `src/windows/config/service_settings.tsx:28-29`
+- **问题**: `getRegistryForCategory` 对 `dictionary_service_list` 和 `english_dictionary_service_list` 都返回 `translateServiceRegistry`（19个翻译服务），导致添加服务弹窗显示 Bing、Google、DeepL 等无关服务
+- **修复**:
+  - [x] `src/services/registry.ts` — 新增 `dictionaryServiceRegistry`
+  - [x] `src/services/index.ts` — `chinese_dictionary`、`ecdict`、`cambridge_dict` 注册到 `dictionaryServiceRegistry`
+  - [x] `src/windows/config/service_settings.tsx:28-29` — 两个词典 tab 返回 `dictionaryServiceRegistry`
+  - [x] 测试：e2e `config_service_mgmt.spec.ts` 验证词典 tab 添加服务弹窗只显示词典服务；unit `test_registry.ts` 验证 registry 隔离
+
+### Bug 2: 中文 locale 标签错误
+
+- **位置**: `src/i18n/locales/zh_cn.json:201`、`zh_tw.json:93`
+- **问题**: `"chinese_dictionary": "Chinese Dictionary"` 应分别为 `"中文词典"` / `"中文詞典"`，导致中文模式下设置页服务 tab 显示英文
+- **修复**:
+  - [x] `src/i18n/locales/zh_cn.json` — 改为 `"中文词典"`
+  - [x] `src/i18n/locales/zh_tw.json` — 改为 `"中文詞典"`
+  - [x] 测试：`i18n_locale.test.ts` 断言 zh_cn/zh_tw 标签正确
+
+### Doc: spec 默认值过时
+
+- **位置**: `docs/spec.md:903`
+- **问题**: `english_dictionary_service_list` 默认值写的是 `['cambridge_dict@default']`，实际代码是 `['cambridge_dict@default', 'ecdict@default']`
+- **修复**:
+  - [x] `docs/spec.md:903` — 更新默认值
+  - [x] `docs/spec.md:561` — 服务 tab 列表改为"中文词典"
+
+---
+
 ## 待做 bug 修复（2026-05-24 用户反馈）
 
 - [x] **Google Translate e2e 不应 silent skip**：`external_services.spec.ts` 已支持代理环境变量，但当前仍会在 Google 网络不可达时 skip；按统一外部服务策略应删除 skip，让具体服务失败暴露。

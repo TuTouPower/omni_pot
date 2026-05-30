@@ -22,4 +22,5 @@ export class ServiceRegistry<T extends { readonly key: string }> {
 }
 
 export const translateServiceRegistry = new ServiceRegistry<TranslateService>()
+export const dictionaryServiceRegistry = new ServiceRegistry<TranslateService>()
 export const ocrServiceRegistry = new ServiceRegistry<OcrService>()

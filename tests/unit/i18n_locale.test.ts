@@ -16,4 +16,13 @@ describe('locale copy', () => {
             expect(JSON.stringify(locale), file).not.toContain('No selected text was found')
         }
     })
+
+    it('uses native language for chinese_dictionary label in zh_cn and zh_tw', () => {
+        const cases: [string, string][] = [['zh_cn.json', '中文词典'], ['zh_tw.json', '中文詞典']]
+        for (const [file, expected] of cases) {
+            const locale = JSON.parse(readFileSync(join(LOCALES_DIR, file), 'utf8')) as unknown
+            const service = (locale as { service?: Record<string, unknown> }).service ?? {}
+            expect(service.chinese_dictionary, file).toBe(expected)
+        }
+    })
 })
