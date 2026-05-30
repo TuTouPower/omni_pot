@@ -53,7 +53,7 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
     : { sourceLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }); },
   setTargetLanguage: (lang) => { set((state) => state.targetLanguage === lang
     ? { targetLanguage: lang, effectiveTargetLanguage: null }
-    : { targetLanguage: lang, effectiveTargetLanguage: null, lockedTargetLanguage: lang, isTranslating: false, requestId: state.requestId + 1 }); },
+    : { targetLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }); },
   setEffectiveTargetLanguage: (lang) => { set({ effectiveTargetLanguage: lang }); },
   setLockedTargetLanguage: (lang) => { set({ lockedTargetLanguage: lang }); },
   setDetectedLanguage: (lang) => { set({ detectedLanguage: lang }); },
