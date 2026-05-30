@@ -1,9 +1,33 @@
-import { spawn } from 'child_process'
+import { spawn, spawnSync } from 'child_process'
 import { resolve } from 'path'
 
 const PROJECT_ROOT = resolve(__dirname, '../..')
 
+function check_electron_abi(): boolean {
+    const electron_exe: string = require('electron')
+    const check = spawnSync(
+        electron_exe,
+        ['-e', "new (require('better-sqlite3'))(':memory:').close()"],
+        { stdio: 'pipe', cwd: PROJECT_ROOT }
+    )
+    return check.status === 0
+}
+
 async function run(): Promise<void> {
+    // Rebuild better-sqlite3 for Electron if ABI mismatch
+    if (!check_electron_abi()) {
+        process.stderr.write('[abi] better-sqlite3 not compatible with Electron, rebuilding...\n')
+        const rebuild = spawnSync(
+            process.platform === 'win32' ? 'npx.cmd' : 'npx',
+            ['electron-rebuild', '-m', 'node_modules/better-sqlite3'],
+            { stdio: 'inherit', shell: process.platform === 'win32', cwd: PROJECT_ROOT }
+        )
+        if (rebuild.status !== 0) {
+            throw new Error('better-sqlite3 Electron rebuild failed')
+        }
+        process.stderr.write('[abi] Electron rebuild complete\n')
+    }
+
     await new Promise<void>((resolve, reject) => {
         const build = spawn('npx', ['electron-vite', 'build', '--outDir', 'out'], {
             cwd: PROJECT_ROOT,
