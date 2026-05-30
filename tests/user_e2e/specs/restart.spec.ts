@@ -24,21 +24,23 @@ async function get_free_port(): Promise<number> {
     })
 }
 
-function kill_existing_instances(): void {
+function kill_pid(pid: number): void {
     try {
-        execSync('powershell -Command "Get-Process -Name \'Omni Pot*\' -ErrorAction SilentlyContinue | Stop-Process -Force"', { timeout: 5000, stdio: 'ignore' })
-    } catch { /* no processes found or already dead */ }
-    // Also kill orphan electron processes from previous test runs that hold the single-instance lock
-    try {
-        execSync('powershell -Command "Get-Process -Name \'electron\' -ErrorAction SilentlyContinue | Stop-Process -Force"', { timeout: 5000, stdio: 'ignore' })
-    } catch { /* no processes found or already dead */ }
+        execSync(`powershell -Command "Stop-Process -Id ${pid} -Force -ErrorAction SilentlyContinue"`, { timeout: 5000, stdio: 'ignore' })
+    } catch { /* already dead */ }
 }
 
-async function kill_instances_and_wait(): Promise<void> {
-    // Kill immediately, then wait and kill again to catch relaunched instances
-    kill_existing_instances()
-    await new Promise(r => setTimeout(r, 3000))
-    kill_existing_instances()
+async function kill_process_tree(proc: ChildProcess): Promise<void> {
+    if (proc.pid) {
+        // Kill process tree via PowerShell to catch detached children
+        try {
+            execSync(`powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq ${proc.pid} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`, { timeout: 5000, stdio: 'ignore' })
+        } catch { /* ignore */ }
+        kill_pid(proc.pid)
+    }
+    // Wait and kill again to catch relaunched instances
+    await new Promise(r => setTimeout(r, 2000))
+    if (proc.pid) kill_pid(proc.pid)
 }
 
 async function wait_for_http(port: number, api_token: string, timeout_ms: number): Promise<boolean> {
@@ -141,8 +143,6 @@ async function port_responds(port: number, api_token: string): Promise<boolean> 
 
 test.describe('restart process lifecycle @core', () => {
     test('restart triggers process exit, shutdown, and relaunch', async () => {
-        await kill_instances_and_wait()
-
         const port = await get_free_port()
         const user_data_dir = mkdtempSync(join(tmpdir(), 'omni_pot-restart-'))
         const api_token = randomUUID()
@@ -167,7 +167,7 @@ test.describe('restart process lifecycle @core', () => {
             const relaunched = await wait_for_http(port, api_token, 30_000)
             expect(relaunched, 'new instance should start after restart').toBe(true)
         } finally {
-            await kill_instances_and_wait()
+            await kill_process_tree(proc)
             try { rmSync(user_data_dir, { recursive: true, force: true }) } catch { /* ignore */ }
         }
     })
