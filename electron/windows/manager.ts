@@ -212,9 +212,11 @@ export class WindowManager {
         const persistSize = debounce(() => {
           if (win.isDestroyed()) return
           const [w] = win.getSize()
+          const bw = win.getBounds().width
+          log_wm.debug('[debug-persistSize] getSize.w=%d, bounds.w=%d', w, bw)
           setConfig('translate_window_width', w)
         }, 300)
-        win.on('resize', persistSize)
+        win.on('resize', () => { const s = win.getSize(); const b = win.getBounds(); log_wm.debug('[debug-resize] size=%j, bounds=%j', s, b); persistSize() })
       }
       if (getConfig('translate_window_position') === 'pre_state') {
         const persistPosition = debounce(() => {

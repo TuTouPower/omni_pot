@@ -216,7 +216,38 @@
 
 ---
 
-## 已知环境问题（不修，仅跟踪）
+## 待做 bug 修复（2026-05-31 日志分析）
 
+### Bug 2: DeepL 翻译返回原文（lockedTargetLanguage 残留）
+
+- **位置**: `src/stores/translate_store.ts:50` `setSourceText`；`src/windows/translate/index.tsx:154-161` `handleTranslate` 的 target swap 逻辑
+- **复现**: 翻译窗口目标语言为中文，输入"面条"，DeepL 返回"面条"（原文），其他翻译服务正常
+- **日志证据**:
+  ```
+  [renderer:translate] translate start: src=auto→zh_cn, len=3, services=4
+  [renderer:translate] detected language: zh_cn
+  ```
+  检测到中文，目标也是中文，理论上应 swap 到 `translate_second_language`（默认英文），但 DeepL 收到的是同语言翻译请求。
+- **根因**: `lockedTargetLanguage` 状态残留。commit `ca915c4` 引入 `lockedTargetLanguage` 机制（auto fallback/swap/手动选都锁），commit `77618b0` 原始设计承诺 "new input (translate) resets the lock"，但代码**从未实现这一步**。`setSourceText`（`translate_store.ts:50`）只清 `effectiveTargetLanguage`，不清 `lockedTargetLanguage`。
+- **影响路径**:
+  1. 用户之前手动选择目标语言或某次 swap 锁定了 `lockedTargetLanguage`
+  2. 新文本输入后 `lockedTargetLanguage` 残留旧值
+  3. `handleTranslate` 中 `effectiveTarget = lockedTargetLanguage ?? targetLanguage` 使用残留值
+  4. `!lockedTargetLanguage` 为 false → swap 条件不进入 → 目标语言不回退到第二语言
+  5. DeepL 收到同语言翻译请求（如 zh→zh）→ 返回原文
+  6. 其他服务对同语言请求可能有不同处理（忽略/透传），看起来"正常"
+- **相关 commit 历史**:
+  - `77618b0` — 引入 lockedTargetLanguage，commit msg 写 "new input resets the lock" 但代码未实现
+  - `75ba378` — 全 revert
+  - `ca915c4` — Reapply 回来，同样未实现 reset
+  - `c386b57` — 只修了 config 加载时误锁，未补 `setSourceText` 的清除逻辑
+- **修复方向**: `setSourceText` 中清除 `lockedTargetLanguage: null`，使新输入重新走 auto 检测 + swap 逻辑。截图翻译窗口（`recognize/index.tsx`）的 `lockedTargetLang` 已在新截图时正确重置，可参考。
+- **状态**: **待做**。
+
+---
+
+## 已知问题（不修，仅跟踪）
+
+- **CLD3 短文本语言误判**：`electron/detect/index.ts:95-113`。CLD3 对极短 CJK 文本（如"馄饨"2 字符）返回 `language: 'en', is_reliable: true`，代码信任 `is_reliable` 跳过 regex 回退，导致翻译方向错误。regex（line 44 `/[一-鿿]/`）能正确识别。同理可能影响日韩短文本。涉及语言检测策略变更，暂不修。
 - **DeepL free 当前环境限流**：`npm run test:e2e:external` 中长文本和葡语变体用例出现 429；只影响 opt-in 外部服务健康检查，不影响 `@core` / `@ui`。
 - **`cld3-asm` 依赖链 moderate audit 提示**：`npm audit --audit-level=high` 通过；npm 给出的 `--force` 修复会引入 breaking change，暂不自动修。

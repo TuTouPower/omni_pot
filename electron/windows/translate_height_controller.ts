@@ -1,4 +1,7 @@
 import { screen, type BrowserWindow, type Display } from 'electron'
+import { log } from '../log'
+
+const dbg = log.scope('debug-hlc')
 
 export const TRANSLATE_MIN_WIDTH_FALLBACK = 280
 export const TRANSLATE_MAX_HEIGHT_RATIO = 0.75
@@ -64,6 +67,7 @@ export class TranslateHeightController {
     report_min_width(content_width: number): void {
         if (this.disposed || this.win.isDestroyed() || !Number.isFinite(content_width) || content_width < 0) return
         const rounded = Math.ceil(content_width)
+        dbg.debug('report_min_width: raw=%.2f, rounded=%d, last=%d', content_width, rounded, this.last_reported_w)
         if (Math.abs(rounded - this.last_reported_w) < TRANSLATE_WIDTH_REPORT_DEBOUNCE_PX) return
         this.last_reported_w = rounded
         const min_width = compute_target_min_width(rounded)
@@ -79,6 +83,8 @@ export class TranslateHeightController {
         this.win.setMaximumSize(TRANSLATE_MAX_W_SENTINEL, h)
         const bounds = this.win.getBounds()
         const width = Math.max(bounds.width, this.current_min_width)
+        dbg.debug('apply_locked_size: bounds.w=%d, min_w=%d, target_h=%d, setW=%d, setH=%d, changed=%s',
+            bounds.width, this.current_min_width, h, width, h, bounds.height !== h || bounds.width !== width)
         if (bounds.height !== h || bounds.width !== width) {
             this.win.setBounds({ ...bounds, width, height: h })
         }
