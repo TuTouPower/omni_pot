@@ -17,6 +17,9 @@
     "source_placeholder": "Introduce el texto a traducir...",
     "translation_failed": "Error de traducción",
     "preview": "Vista previa",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "Actualización disponible",
     "no_updates": "Sin actualizaciones",
     "update_check_failed": "Error al buscar actualizaciones",

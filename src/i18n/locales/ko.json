@@ -17,6 +17,9 @@
     "source_placeholder": "번역할 텍스트를 입력하세요...",
     "translation_failed": "번역 실패",
     "preview": "미리보기",
+    "welcome": {
+        "window_title": "환영합니다"
+    },
     "update_available": "업데이트 가능",
     "no_updates": "업데이트 없음",
     "update_check_failed": "업데이트 확인 실패",

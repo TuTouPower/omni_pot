@@ -17,6 +17,9 @@
     "source_placeholder": "Введіть текст для перекладу...",
     "translation_failed": "Переклад не вдався",
     "preview": "Попередній перегляд",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "Оновлення доступне",
     "no_updates": "Оновлень немає",
     "update_check_failed": "Не вдалося перевірити оновлення",

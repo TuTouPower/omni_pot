@@ -20,6 +20,9 @@
     "source_placeholder": "輸入要翻譯的文字...",
     "translation_failed": "翻譯失敗",
     "preview": "預覽",
+    "welcome": {
+        "window_title": "歡迎"
+    },
     "update_available": "有可用更新",
     "no_updates": "已是最新版本",
     "update_check_failed": "檢查更新失敗",

@@ -17,6 +17,9 @@
     "source_placeholder": "أدخل النص للترجمة...",
     "translation_failed": "فشل الترجمة",
     "preview": "معاينة",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "تحديث متوفر",
     "no_updates": "لا توجد تحديثات",
     "update_check_failed": "فشل التحقق من التحديثات",

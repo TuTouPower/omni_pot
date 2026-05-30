@@ -17,6 +17,9 @@
     "source_placeholder": "翻訳するテキストを入力...",
     "translation_failed": "翻訳に失敗しました",
     "preview": "プレビュー",
+    "welcome": {
+        "window_title": "ようこそ"
+    },
     "update_available": "アップデートがあります",
     "no_updates": "アップデートはありません",
     "update_check_failed": "アップデートの確認に失敗しました",

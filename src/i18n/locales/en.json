@@ -43,6 +43,7 @@
         "translating": "Translating…"
     },
     "welcome": {
+        "window_title": "Welcome",
         "title": "Welcome to Omni Pot",
         "subtitle": "The shortcuts below are preset for you; change them anytime under Settings.",
         "translate": "Translate",

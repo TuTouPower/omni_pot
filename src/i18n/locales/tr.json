@@ -17,6 +17,9 @@
     "source_placeholder": "Çevrilecek metni girin...",
     "translation_failed": "Çeviri başarısız oldu",
     "preview": "Önizleme",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "Güncelleme mevcut",
     "no_updates": "Güncelleme yok",
     "update_check_failed": "Güncelleme kontrolü başarısız oldu",

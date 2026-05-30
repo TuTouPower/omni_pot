@@ -17,6 +17,9 @@
     "source_placeholder": "Text zum Übersetzen eingeben...",
     "translation_failed": "Übersetzung fehlgeschlagen",
     "preview": "Vorschau",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "Update verfügbar",
     "no_updates": "Keine Updates",
     "update_check_failed": "Update-Prüfung fehlgeschlagen",

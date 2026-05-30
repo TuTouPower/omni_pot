@@ -17,6 +17,9 @@
     "source_placeholder": "הזן טקסט לתרגום...",
     "translation_failed": "התרגום נכשל",
     "preview": "תצוגה מקדימה",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "עדכון זמין",
     "no_updates": "אין עדכונים",
     "update_check_failed": "בדיקת העדכון נכשלה",

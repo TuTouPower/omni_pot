@@ -17,6 +17,9 @@
     "source_placeholder": "متن را برای ترجمه وارد کنید...",
     "translation_failed": "ترجمه ناموفق بود",
     "preview": "پیش‌نمایش",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "به‌روزرسانی موجود است",
     "no_updates": "به‌روزرسانی موجود نیست",
     "update_check_failed": "بررسی به‌روزرسانی ناموفق بود",

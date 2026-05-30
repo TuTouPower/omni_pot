@@ -17,6 +17,9 @@
     "source_placeholder": "Введите текст для перевода...",
     "translation_failed": "Ошибка перевода",
     "preview": "Предпросмотр",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "Доступно обновление",
     "no_updates": "Обновлений нет",
     "update_check_failed": "Ошибка проверки обновлений",

@@ -17,6 +17,9 @@
     "source_placeholder": "Skriv inn tekst for å oversette...",
     "translation_failed": "Oversettelse mislyktes",
     "preview": "Forhåndsvisning",
+    "welcome": {
+        "window_title": "Welcome"
+    },
     "update_available": "Oppdatering tilgjengelig",
     "no_updates": "Ingen oppdateringer",
     "update_check_failed": "Oppdateringssjekk mislyktes",

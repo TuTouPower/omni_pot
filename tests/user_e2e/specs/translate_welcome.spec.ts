@@ -54,7 +54,7 @@ test.describe('@ui standalone welcome window', () => {
             await expect(page.getByTestId('source-input')).toHaveCount(0)
             await expect(page.getByTestId('lang-source')).toHaveCount(0)
             await expect(page.getByTestId('lang-target')).toHaveCount(0)
-            await expect(page.getByTestId('welcome-title')).toContainText('欢迎使用 Omni Pot')
+            await expect(page.getByTestId('titlebar-mode')).toContainText('欢迎')
             await expect(page.getByTestId('welcome-empty')).not.toContainText(/welcome\./)
 
             await expect(page.getByTestId('welcome-translate')).toContainText('翻译')

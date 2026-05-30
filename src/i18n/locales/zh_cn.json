@@ -44,6 +44,7 @@
         "translating": "翻译中…"
     },
     "welcome": {
+        "window_title": "欢迎",
         "title": "欢迎使用 Omni Pot",
         "subtitle": "下面的快捷键已为你预设，随时可在「设置」中修改",
         "translate": "翻译",
