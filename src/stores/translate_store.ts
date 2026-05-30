@@ -11,6 +11,7 @@ interface TranslateStore {
   sourceLanguage: LanguageCode
   targetLanguage: LanguageCode
   effectiveTargetLanguage: LanguageCode | null
+  lockedTargetLanguage: LanguageCode | null
   detectedLanguage: LanguageCode | null
   results: TranslateResults
   isTranslating: boolean
@@ -20,6 +21,7 @@ interface TranslateStore {
   setSourceLanguage: (lang: LanguageCode) => void
   setTargetLanguage: (lang: LanguageCode) => void
   setEffectiveTargetLanguage: (lang: LanguageCode | null) => void
+  setLockedTargetLanguage: (lang: LanguageCode | null) => void
   setDetectedLanguage: (lang: LanguageCode | null) => void
   setResult: (instanceKey: string, result: string | DictResult | null) => void
   setIsTranslating: (flag: boolean) => void
@@ -39,6 +41,7 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
   sourceLanguage: 'auto',
   targetLanguage: guessDefaultTargetLang(),
   effectiveTargetLanguage: null,
+  lockedTargetLanguage: null,
   detectedLanguage: null,
   results: {},
   isTranslating: false,
@@ -50,8 +53,9 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
     : { sourceLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }); },
   setTargetLanguage: (lang) => { set((state) => state.targetLanguage === lang
     ? { targetLanguage: lang, effectiveTargetLanguage: null }
-    : { targetLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }); },
+    : { targetLanguage: lang, effectiveTargetLanguage: null, lockedTargetLanguage: lang, isTranslating: false, requestId: state.requestId + 1 }); },
   setEffectiveTargetLanguage: (lang) => { set({ effectiveTargetLanguage: lang }); },
+  setLockedTargetLanguage: (lang) => { set({ lockedTargetLanguage: lang }); },
   setDetectedLanguage: (lang) => { set({ detectedLanguage: lang }); },
   setResult: (instanceKey, result) =>
     { set((state) => ({ results: { ...state.results, [instanceKey]: result } })); },
@@ -68,13 +72,14 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
           targetLanguage: detectedLanguage,
           detectedLanguage: null,
           effectiveTargetLanguage: null,
+          lockedTargetLanguage: detectedLanguage,
           isTranslating: false,
           requestId: get().requestId + 1
         })
       }
       return
     }
-    set({ sourceLanguage: targetLanguage, targetLanguage: sourceLanguage, detectedLanguage: null, effectiveTargetLanguage: null, isTranslating: false, requestId: get().requestId + 1 })
+    set({ sourceLanguage: targetLanguage, targetLanguage: sourceLanguage, detectedLanguage: null, effectiveTargetLanguage: null, lockedTargetLanguage: sourceLanguage, isTranslating: false, requestId: get().requestId + 1 })
   },
   clearResults: () => { set({ results: {} }); },
   nextRequestId: () => {
