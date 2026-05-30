@@ -205,7 +205,7 @@ test.describe('@ui translate behavior settings', () => {
             const dict_result = await omni.api.triggerHotkey('hotkey_selection_dictionary', 'selected')
             expect(dict_result.success).toBe(true)
             const dict = await omni.dict()
-            await expect(dict.word()).toContainText('selected')
+            await expect(dict.word()).toHaveValue('selected')
         } finally {
             await omni.stop()
         }

@@ -243,8 +243,9 @@ test.describe('@ui config service management', () => {
             await expect(config.serviceAddOption('bing')).toHaveCount(0)
             await expect(config.serviceAddOption('google')).toHaveCount(0)
 
-            // Close modal
-            await config.serviceTab('dictionary_service_list').click()
+            // Close modal via its close button (tab is behind the overlay)
+            const config_win = omni.app.windows().find((w) => w.url().includes('#config'))
+            if (config_win) await config_win.locator('[data-testid="svc-add-close"]').click()
 
             // English Dictionary tab
             await config.openServiceCategory('english_dictionary_service_list')

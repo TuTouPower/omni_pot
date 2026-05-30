@@ -81,7 +81,7 @@ test.describe('@ui screenshot window', () => {
     })
 
     test('user opens screenshot overlay and sees drag selection affordances', async () => {
-        const omni = await AppFixture.start({ config: screenshot_config })
+        const omni = await AppFixture.start({ config: { ...screenshot_config, app_language: 'zh_cn' } })
 
         try {
             const screenshot = await omni.triggerScreenshot('recognize')
