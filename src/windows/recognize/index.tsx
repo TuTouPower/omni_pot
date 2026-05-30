@@ -391,6 +391,7 @@ export default function RecognizeWindow(): React.ReactElement {
     const [recognizeShowId, setRecognizeShowId] = useState(0)
     const [qr_detected, setQrDetected] = useState(false)
     const [effectiveTargetLang, setEffectiveTargetLang] = useState<LanguageCode | null>(null)
+    const [lockedTargetLang, setLockedTargetLang] = useState<LanguageCode | null>(null)
     const [detectedSourceLang, setDetectedSourceLang] = useState<LanguageCode | null>(null)
 
     const config = useConfigStore((s) => s.config)
@@ -416,6 +417,7 @@ export default function RecognizeWindow(): React.ReactElement {
             setTranslatedText('')
             setQrDetected(false)
             setEffectiveTargetLang(null)
+            setLockedTargetLang(null)
             setDetectedSourceLang(null)
             setMode(m === 'translate' ? 'translate' : 'recognize')
             if (recognizeAutoCopyRef.current && next_text) {
@@ -469,7 +471,7 @@ export default function RecognizeWindow(): React.ReactElement {
     const effectiveServiceKey = effectiveService ? getServiceKey(effectiveService) : ''
     const effectiveMeta = effectiveServiceKey ? (OCR_META[effectiveServiceKey] ?? null) : null
 
-    const effectiveTarget = targetLanguage || config.translate_target_language || 'zh_cn'
+    const effectiveTarget = lockedTargetLang || targetLanguage || config.translate_target_language || 'zh_cn'
 
     // ---- Request ID guard for OCR ----
     const bumpOcrRequestId = useCallback((): number => {
@@ -523,9 +525,10 @@ export default function RecognizeWindow(): React.ReactElement {
         }
         setDetectedSourceLang(detectedSource)
 
-        let effectiveTargetLangLocal = effectiveTarget as LanguageCode
-        if (sourceLang === 'auto' && detectedSource && detectedSource === effectiveTargetLangLocal) {
+        let effectiveTargetLangLocal = (lockedTargetLang || effectiveTarget) as LanguageCode
+        if (!lockedTargetLang && sourceLang === 'auto' && detectedSource && detectedSource === effectiveTargetLangLocal) {
             effectiveTargetLangLocal = (secondLanguage || 'en') as LanguageCode
+            setLockedTargetLang(effectiveTargetLangLocal)
         }
         setEffectiveTargetLang(effectiveTargetLangLocal !== effectiveTarget ? effectiveTargetLangLocal : null)
         const effectiveSource = sourceLang === 'auto' ? (detectedSource ?? 'auto') : sourceLang
@@ -676,10 +679,14 @@ export default function RecognizeWindow(): React.ReactElement {
     const handleSwap = useCallback(() => {
         if (selectedLanguage === 'auto') {
             if (!detectedSourceLang) return
+            const newTarget = selectedLanguage
             setSelectedLanguage(detectedSourceLang)
+            setLockedTargetLang(newTarget)
             return
         }
+        const prev_source = selectedLanguage as LanguageCode
         setSelectedLanguage(effectiveTarget)
+        setLockedTargetLang(prev_source)
     }, [selectedLanguage, effectiveTarget, detectedSourceLang])
 
     const is_translate_mode = mode === 'translate'
@@ -852,7 +859,7 @@ export default function RecognizeWindow(): React.ReactElement {
                         <PillSelect
                             value={effectiveTargetLang ?? effectiveTarget}
                             options={target_lang_options}
-                            onChange={setTargetLanguage}
+                            onChange={(lang: string) => { setTargetLanguage(lang); setLockedTargetLang(lang as LanguageCode); }}
                             testId="ocr-target-lang-select"
                         />
                     </>

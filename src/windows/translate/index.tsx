@@ -38,12 +38,14 @@ export default function TranslateWindow(): React.ReactElement {
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
     const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
     const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
+    const lockedTargetLanguage = useTranslateStore((s) => s.lockedTargetLanguage)
     const setIsTranslating = useTranslateStore((s) => s.setIsTranslating)
     const setResult = useTranslateStore((s) => s.setResult)
     const clearResults = useTranslateStore((s) => s.clearResults)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
     const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
     const setEffectiveTargetLanguage = useTranslateStore((s) => s.setEffectiveTargetLanguage)
+    const setLockedTargetLanguage = useTranslateStore((s) => s.setLockedTargetLanguage)
     const nextRequestId = useTranslateStore((s) => s.nextRequestId)
 
     const serviceList = useConfigStore((s) => s.config.translate_service_list)
@@ -149,11 +151,14 @@ export default function TranslateWindow(): React.ReactElement {
             setDetectedLanguage(detected)
         }
 
-        let effectiveTarget = targetLanguage
-        if (sourceLanguage === 'auto' && detected && detected === targetLanguage) {
+        let effectiveTarget = lockedTargetLanguage ?? targetLanguage
+        if (!lockedTargetLanguage && sourceLanguage === 'auto' && detected && detected === targetLanguage) {
             effectiveTarget = secondLanguage as LanguageCode
         }
         setEffectiveTargetLanguage(effectiveTarget === targetLanguage ? null : effectiveTarget)
+        if (!lockedTargetLanguage && effectiveTarget !== targetLanguage) {
+            setLockedTargetLanguage(effectiveTarget)
+        }
 
         const resultsMap: Record<string, string | DictResult | null> = {}
 
@@ -239,7 +244,7 @@ export default function TranslateWindow(): React.ReactElement {
                 .join('\n')
             if (clipboardText) window.electronAPI.text.writeClipboard(clipboardText).catch(() => undefined)
         }
-    }, [sourceLanguage, targetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, setEffectiveTargetLanguage, secondLanguage, autoCopy, historyDisable])
+    }, [sourceLanguage, targetLanguage, lockedTargetLanguage, enabledServiceList, serviceInstances, setIsTranslating, setResult, clearResults, nextRequestId, setDetectedLanguage, setEffectiveTargetLanguage, setLockedTargetLanguage, secondLanguage, autoCopy, historyDisable])
 
     useEffect(() => {
         const previous = previousLanguagesRef.current
