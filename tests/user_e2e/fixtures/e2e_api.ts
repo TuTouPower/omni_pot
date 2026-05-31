@@ -224,7 +224,7 @@ export class E2eApi {
         return this.request('POST', '/e2e/hotkey-system-failures', { shortcuts }) as Promise<{ success: boolean; error?: string }>
     }
 
-    async trayAction(action: 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'tray_click' | 'show_tray' | 'restart' | 'quit'): Promise<{ success: boolean; action?: string; error?: string }> {
+    async trayAction(action: 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'support_author' | 'check_update' | 'view_log' | 'tray_click' | 'show_tray' | 'restart' | 'quit'): Promise<{ success: boolean; action?: string; error?: string }> {
         return this.request('POST', '/e2e/tray-action', { action }) as Promise<{ success: boolean; action?: string; error?: string }>
     }
 

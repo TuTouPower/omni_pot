@@ -279,6 +279,10 @@ export class ConfigPage {
         return this.page.getByTestId('about-check-update')
     }
 
+    aboutSupportAuthor(): Locator {
+        return this.page.getByTestId('about-support-author')
+    }
+
     aboutDiagnostic(testId: 'about-config-dir' | 'about-log-dir' | 'about-api-url'): Locator {
         return this.page.getByTestId(testId)
     }

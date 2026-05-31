@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
 import { format_hotkey } from '../../utils/format_hotkey'
 
-type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'check_update' | 'view_log' | 'restart' | 'quit'
+type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'support_author' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'input_translate', icon: 'Translate' },
@@ -11,6 +11,7 @@ const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'screenshot_translate', icon: 'Image' },
     { action: 'clipboard_monitor', icon: 'Copy' },
     { action: 'config', icon: 'Settings' },
+    { action: 'support_author', icon: 'Heart' },
     { action: 'check_update', icon: 'Cloud' },
     { action: 'view_log', icon: 'Info' },
     { action: 'restart', icon: 'Cycle' },
@@ -73,7 +74,8 @@ export default function TrayWindow(): React.ReactElement {
                 {ACTIONS.map(({ action, icon }, index) => {
                     const Icon = Icons[icon]
                     const active = action === 'clipboard_monitor' && clipboardMonitoring
-                    const separator = index === 4 || index === 5 || index === 8
+                    const isSupportAuthor = action === 'support_author'
+                    const separator = index === 4 || index === 5 || index === 9
                     return (
                         <React.Fragment key={action}>
                             {separator && <div data-testid="tray-separator" style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />}
@@ -84,7 +86,7 @@ export default function TrayWindow(): React.ReactElement {
                                     border: 0,
                                     borderRadius: 6,
                                     background: active ? 'var(--brand-primary-soft)' : 'transparent',
-                                    color: active ? 'var(--brand-primary)' : 'var(--text)',
+                                    color: active ? 'var(--brand-primary)' : isSupportAuthor ? '#9b59b6' : 'var(--text)',
                                     minHeight: 34,
                                     width: '100%',
                                     minWidth: 0,

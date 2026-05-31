@@ -81,6 +81,10 @@ export default function AboutPage(): React.ReactElement {
                         <Icons.Cloud size={12} />
                         {t('about.check_update')}
                     </button>
+                    <button className="btn sm" data-testid="about-support-author" style={{ color: '#9b59b6' }} onClick={() => { openExternal('https://afdian.com/a/tutoupower'); }}>
+                        <Icons.Heart size={12} />
+                        支持作者
+                    </button>
                 </div>
             </div>
 

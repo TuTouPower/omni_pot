@@ -20,6 +20,7 @@ const REQUIRED_TRAY_ACTIONS = [
     'tray-action-screenshot_translate',
     'tray-action-clipboard_monitor',
     'tray-action-config',
+    'tray-action-support_author',
     'tray-action-check_update',
     'tray-action-view_log',
     'tray-action-restart',
@@ -290,6 +291,24 @@ test.describe('@ui updater and tray', () => {
             // In E2E mode, quit is a no-op (returns success without exiting)
             const quit_result = await omni.api.trayAction('quit')
             expect(quit_result).toEqual({ success: true, action: 'quit' })
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('support_author tray action opens external link and closes popup', async () => {
+        const omni = await AppFixture.start({ config: { ...TEST_CONFIG, app_language: 'zh_cn' } })
+        try {
+            await omni.api.trayAction('show_tray')
+            await expect_window_visible(omni, 'tray')
+            const tray_page = await omni.waitForWindow(/#tray/)
+            const support_item = tray_page.getByTestId('tray-action-support_author')
+            await expect(support_item).toBeVisible()
+            await expect(support_item).toContainText('支持作者')
+            await expect(support_item).toHaveCSS('color', 'rgb(155, 89, 182)')
+
+            const result = await omni.api.trayAction('support_author')
+            expect(result.success).toBe(true)
         } finally {
             await omni.stop()
         }
