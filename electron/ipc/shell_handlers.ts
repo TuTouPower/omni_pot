@@ -9,14 +9,21 @@ import { readdirSync, readFileSync, lstatSync } from 'fs'
 import { join } from 'path'
 import { assert_sender_label } from './sender_validation'
 
+export const captured_open_external_urls: string[] = []
+
+const IS_E2E = !!process.env.OMNI_POT_E2E
+
 function is_allowed_external_url(value: string): boolean {
     try {
         const url = new URL(value)
         if (url.protocol === 'file:') return true
-        return url.protocol === 'https:'
-            && url.hostname === 'github.com'
+        if (url.protocol !== 'https:') return false
+        if (url.hostname === 'github.com'
             && (url.pathname === '/TuTouPower/omni_pot' || url.pathname.startsWith('/TuTouPower/omni_pot/')
-                || url.pathname === '/TuTouPower/omni_pot_release' || url.pathname.startsWith('/TuTouPower/omni_pot_release/'))
+                || url.pathname === '/TuTouPower/omni_pot_release' || url.pathname.startsWith('/TuTouPower/omni_pot_release/'))) return true
+        if (url.hostname === 'afdian.com'
+            && (url.pathname === '/a/tutoupower' || url.pathname.startsWith('/a/tutoupower/'))) return true
+        return false
     } catch {
         return false
     }
@@ -25,6 +32,7 @@ function is_allowed_external_url(value: string): boolean {
 export function registerShellHandlers(manager: WindowManager): void {
     ipcMain.handle('shell:openExternal', async (event, url: string): Promise<boolean> => {
         assert_sender_label(manager, event, [WindowLabel.CONFIG], 'shell:openExternal')
+        if (IS_E2E) captured_open_external_urls.push(url)
         if (!is_allowed_external_url(url)) return false
         await shell.openExternal(url)
         return true

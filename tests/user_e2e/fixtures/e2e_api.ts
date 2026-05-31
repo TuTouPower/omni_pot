@@ -271,4 +271,12 @@ export class E2eApi {
     async captureClock(): Promise<{ success: boolean; image?: string; error?: string }> {
         return this.request('GET', '/capture-clock') as Promise<{ success: boolean; image?: string; error?: string }>
     }
+
+    async shellOpenExternal(): Promise<{ success: boolean; urls: string[] }> {
+        return this.request('GET', '/e2e/shell-open-external') as Promise<{ success: boolean; urls: string[] }>
+    }
+
+    async resetShellOpenExternal(): Promise<{ success: boolean }> {
+        return this.request('POST', '/e2e/shell-open-external/reset') as Promise<{ success: boolean }>
+    }
 }

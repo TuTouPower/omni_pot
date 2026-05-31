@@ -361,6 +361,10 @@ test.describe('@ui config settings window', () => {
             await expect(config.aboutSupportAuthor()).toBeVisible()
             await expect(config.aboutSupportAuthor()).toContainText('支持作者')
             await expect(config.aboutSupportAuthor()).toHaveCSS('color', 'rgb(155, 89, 182)')
+
+            await omni.api.resetShellOpenExternal()
+            await config.aboutSupportAuthor().click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://afdian.com/a/tutoupower')
             await expect(config.aboutDiagnostic('about-config-dir')).toContainText(/omni_pot|unknown/)
             await expect(config.aboutDiagnostic('about-log-dir')).toContainText('logs')
             await expect(config.aboutDiagnostic('about-api-url')).toContainText(/http:\/\/127\.0\.0\.1:\d+/)

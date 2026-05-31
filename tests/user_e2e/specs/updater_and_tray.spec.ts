@@ -307,8 +307,10 @@ test.describe('@ui updater and tray', () => {
             await expect(support_item).toContainText('支持作者')
             await expect(support_item).toHaveCSS('color', 'rgb(155, 89, 182)')
 
+            await omni.api.resetShellOpenExternal()
             const result = await omni.api.trayAction('support_author')
             expect(result.success).toBe(true)
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://afdian.com/a/tutoupower')
         } finally {
             await omni.stop()
         }

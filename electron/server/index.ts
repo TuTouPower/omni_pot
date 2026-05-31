@@ -16,6 +16,7 @@ import { start_screenshot_capture } from '../screenshot'
 import { trigger_tray_action, get_tray_menu_labels } from '../tray'
 import { hasRegisteredHotkey, triggerRegisteredHotkey, setE2eHotkeySystemFailures, triggerTranslateEntry } from '../hotkey'
 import { readSelectedText, setE2eSelectedTextResult } from '../selection'
+import { captured_open_external_urls } from '../ipc/shell_handlers'
 import { get_history_page, get_history_count, add_history } from '../history'
 import type { HistoryRecord } from '@shared/types/ipc'
 import { log } from '../log'
@@ -407,6 +408,19 @@ export function startServer(mgr: WindowManager): Promise<void> {
 
             if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/mock-update') {
                 handle_mock_update(mgr, req, res)
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'GET' && url.pathname === '/e2e/shell-open-external') {
+                res.writeHead(200)
+                res.end(JSON.stringify({ success: true, urls: [...captured_open_external_urls] }))
+                return
+            }
+
+            if (is_e2e_request(req) && req.method === 'POST' && url.pathname === '/e2e/shell-open-external/reset') {
+                captured_open_external_urls.length = 0
+                res.writeHead(200)
+                res.end(JSON.stringify({ success: true }))
                 return
             }
 
