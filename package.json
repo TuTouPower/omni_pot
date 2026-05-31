@@ -53,7 +53,8 @@
   "build": {
     "appId": "com.tutoupower.omni_pot",
     "productName": "Omni Pot",
-    "executableName": "Omni Pot",
+    "executableName": "OmniPot",
+    "artifactName": "OmniPot${version}${ext}",
     "directories": {
       "output": "release"
     },
@@ -103,7 +104,7 @@
         "nsis",
         "portable"
       ],
-      "executableName": "Omni Pot"
+      "executableName": "OmniPot"
     },
     "nsis": {
       "oneClick": false,

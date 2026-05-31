@@ -25,6 +25,9 @@ type PackageJson = {
         asar?: boolean
         asarUnpack?: string[]
         npmRebuild?: boolean
+        productName?: string
+        executableName?: string
+        artifactName?: string
     }
 }
 
@@ -94,13 +97,27 @@ describe('native module packaging', () => {
     })
 
     it('prefers the matching packaged app for dist and dist:dir outputs', () => {
-        expect(typed_app_candidates('/repo', 'release', 'Omni Pot', '1.2.3', false)).toEqual([
-            join('/repo', 'release', 'Omni Pot 1.2.3.exe'),
-            join('/repo', 'release', 'win-unpacked', 'Omni Pot.exe'),
+        expect(typed_app_candidates('/repo', 'release', 'OmniPot', '1.2.3', false)).toEqual([
+            join('/repo', 'release', 'OmniPot1.2.3.exe'),
+            join('/repo', 'release', 'win-unpacked', 'OmniPot.exe'),
         ])
-        expect(typed_app_candidates('/repo', 'release', 'Omni Pot', '1.2.3', true)).toEqual([
-            join('/repo', 'release', 'win-unpacked', 'Omni Pot.exe'),
-            join('/repo', 'release', 'Omni Pot 1.2.3.exe'),
+        expect(typed_app_candidates('/repo', 'release', 'OmniPot', '1.2.3', true)).toEqual([
+            join('/repo', 'release', 'win-unpacked', 'OmniPot.exe'),
+            join('/repo', 'release', 'OmniPot1.2.3.exe'),
         ])
+    })
+
+    it('produces artifact filenames without spaces', () => {
+        const package_json = read_package_json()
+        const build = package_json.build!
+
+        expect(build.executableName).not.toMatch(/\s/)
+        expect(build.artifactName).toBeDefined()
+        expect(build.artifactName).not.toMatch(/\s/)
+
+        const expected_path = app_candidates('/repo', 'release', build.executableName!, '1.0.0', false)
+        for (const p of expected_path) {
+            expect(p).not.toMatch(/ /)
+        }
     })
 })

@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const repo_root = dirname(dirname(fileURLToPath(import.meta.url)))
 const package_json = JSON.parse(readFileSync(join(repo_root, 'package.json'), 'utf8'))
 const product_name = package_json.build?.productName ?? package_json.name
+const executable_name = package_json.build?.executableName ?? product_name
 const version = package_json.version
 const output_dir = package_json.build?.directories?.output ?? 'dist'
 const restart_state_file = join(repo_root, '.claude', 'dist_restart_state.json')
@@ -18,9 +19,9 @@ export function should_start_app(platform, always_start, restart_state_exists) {
     return platform === 'win32' && (always_start || restart_state_exists)
 }
 
-export function app_candidates(repo_root, output_dir, product_name, version, is_dir) {
-    const portable_app = join(repo_root, output_dir, `${product_name} ${version}.exe`)
-    const unpacked_app = join(repo_root, output_dir, 'win-unpacked', `${product_name}.exe`)
+export function app_candidates(repo_root, output_dir, executable_name, version, is_dir) {
+    const portable_app = join(repo_root, output_dir, `${executable_name}${version}.exe`)
+    const unpacked_app = join(repo_root, output_dir, 'win-unpacked', `${executable_name}.exe`)
     return is_dir ? [unpacked_app, portable_app] : [portable_app, unpacked_app]
 }
 
@@ -31,7 +32,7 @@ function missing_app_message(always_start) {
 }
 
 function main() {
-    const candidates = app_candidates(repo_root, output_dir, product_name, version, is_dir)
+    const candidates = app_candidates(repo_root, output_dir, executable_name, version, is_dir)
 
     if (!should_start_app(process.platform, always_start, existsSync(restart_state_file))) {
         process.exit(0)

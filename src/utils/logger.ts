@@ -1,7 +1,7 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 function write(level: LogLevel, scope: string, message: string, ...args: unknown[]): void {
-    window.electronAPI.log.write(level, scope, message, ...args).catch(() => { return undefined })
+    window.electronAPI?.log.write(level, scope, message, ...args).catch?.(() => { return undefined })
 }
 
 export function create_logger(scope: string) {
