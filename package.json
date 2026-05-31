@@ -1,6 +1,6 @@
 {
   "name": "omni_pot",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Cross-platform translation, OCR and dictionary tool",
   "author": "TuTouPower",
   "private": true,
@@ -10,6 +10,7 @@
     "build": "electron-vite build",
     "dist:check-locks": "node scripts/check_dist_locks.mjs",
     "dist": "node scripts/run_dist.mjs",
+    "release:publish": "node scripts/publish_release.mjs",
     "dist:dir": "node scripts/run_dist.mjs --dir",
     "postinstall": "electron-builder install-app-deps",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
@@ -54,7 +55,6 @@
     "appId": "com.tutoupower.omni_pot",
     "productName": "Omni Pot",
     "executableName": "OmniPot",
-    "artifactName": "OmniPot${version}${ext}",
     "directories": {
       "output": "release"
     },
@@ -108,7 +108,11 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "OmniPot${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "OmniPot${version}-portable.${ext}"
     }
   },
   "devDependencies": {

@@ -143,7 +143,7 @@
 
 以下问题涉及操作系统、打包产物或硬件环境，自动化只能辅助，不能单独宣称已解决：
 
-- `release/Omni Pot 0.1.0.exe`、NSIS 安装版、便携版的首次启动和重新打开行为。
+- `release/OmniPot{VERSION}.exe`、`release/OmniPot{VERSION}-portable.exe` 的首次启动和重新打开行为，其中 `{VERSION}` 来自 `package.json` 的 `version` 字段。
 - Windows 系统托盘真实显示效果、托盘 popup 位置、失焦关闭、浅色主题和 example 对齐。
 - 真实 `globalShortcut` 是否被 Windows 接收并触发应用 action。
 - OCR 鼠标框选截图在 DPI 缩放、多显示器、窗口偏移下是否裁剪到用户实际框选区域。

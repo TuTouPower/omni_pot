@@ -14,44 +14,29 @@
 
 ## 发布步骤
 
-### 1. 构建产物
-
-```bash
-npm run dist
-```
-
-产物输出在 `release/` 目录，包含 NSIS 安装版（`.exe`）和便携版（`-portable.zip`）。
-
-### 2. 确定版本号
+### 1. 确定版本号
 
 版本号定义在 `package.json` 的 `version` 字段，遵循 semver。
 
 发布前确认版本号已更新。
 
-### 3. 创建 release
-
-通过 GitHub API 在公开发布仓库创建 release 并上传产物：
+### 2. 本地发布
 
 ```bash
-# 获取 token（git credential manager 中已存储）
-TOKEN=$(printf "protocol=https\nhost=github.com\n" | git credential fill 2>/dev/null | grep '^password=' | cut -d= -f2-)
-
-# 创建 release
-curl -X POST \
-  -H "Authorization: token $TOKEN" \
-  -H "Content-Type: application/json" \
-  https://api.github.com/repos/TuTouPower/omni_pot_release/releases \
-  -d '{"tag_name":"v{VERSION}","name":"Omni Pot v{VERSION}","body":"release notes here"}'
-
-# 上传产物（用返回的 upload_url）
-curl -X POST \
-  -H "Authorization: token $TOKEN" \
-  -H "Content-Type: application/octet-stream" \
-  "{UPLOAD_URL}?name={FILENAME}" \
-  --data-binary @"release/{FILENAME}"
+npm run release:publish
 ```
 
-将 `{VERSION}` 替换为实际版本号，`{FILENAME}` 替换为产物文件名。
+脚本会运行 `npm run dist`，生成 `release/latest.json`，创建或复用公开发布仓库的 `v{VERSION}` release，上传 GitHub Release 产物，并同步 Cloudflare R2。同步 R2 时会先上传并读回校验当前 `latest/` 文件，再切换 GitHub 与 R2 的 `latest.json`，最后删除旧 `latest.json` 指向、且不在当前版本 manifest 里的 `omni-pot/latest/` 对象；Wrangler CLI 不能枚举对象，手工散落对象需要人工删除。
+
+可选参数：
+
+| 参数 | 说明 |
+|---|---|
+| `--version {VERSION}` | 可选一致性校验；传入值必须等于 `package.json` 的 `version` |
+| `--skip-dist` | 跳过 `npm run dist`，使用已有 `release/` 产物 |
+| `--dry-run` | 只打印将执行的上传命令，不执行上传 |
+
+产物输出在 `release/` 目录，包含 NSIS 安装版（`OmniPot{VERSION}.exe`）和便携版（`OmniPot{VERSION}-portable.exe`）。
 
 ## 注意事项
 

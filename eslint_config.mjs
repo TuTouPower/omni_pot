@@ -62,6 +62,18 @@ export default tseslint.config(
         extends: [tseslint.configs.disableTypeChecked]
     },
     {
+        files: ['scripts/**/*.mjs'],
+        languageOptions: {
+            globals: {
+                Buffer: 'readonly',
+                URL: 'readonly',
+                console: 'readonly',
+                fetch: 'readonly',
+                process: 'readonly'
+            }
+        }
+    },
+    {
         files: ['scripts/**/*.ts'],
         rules: {
             '@typescript-eslint/no-unsafe-return': 'off',

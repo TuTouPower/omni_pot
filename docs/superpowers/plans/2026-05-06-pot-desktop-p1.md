@@ -98,7 +98,7 @@ npm init -y
 ```json
 {
   "name": "omni-pot",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "main": "out/main/index.js",
   "scripts": {

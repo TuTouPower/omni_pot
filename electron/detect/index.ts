@@ -127,7 +127,3 @@ export function detect_local_cld3(text: string): { lang: LanguageCode; source: '
         return { lang: detect_regex(text), source: 'regex' }
     }
 }
-
-export function get_wasm_state(): WasmState {
-    return wasm_state
-}

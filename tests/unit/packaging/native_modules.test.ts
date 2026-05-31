@@ -19,6 +19,7 @@ const RUN_DIST_PATH = join(ROOT_DIR, 'scripts', 'run_dist.mjs')
 const ENSURE_ELECTRON_ABI_PATH = join(ROOT_DIR, 'scripts', 'ensure_electron_abi.mjs')
 
 type PackageJson = {
+    version: string
     dependencies?: Record<string, string>
     scripts?: Record<string, string>
     build?: {
@@ -28,6 +29,12 @@ type PackageJson = {
         productName?: string
         executableName?: string
         artifactName?: string
+        nsis?: {
+            artifactName?: string
+        }
+        portable?: {
+            artifactName?: string
+        }
     }
 }
 
@@ -107,15 +114,19 @@ describe('native module packaging', () => {
         ])
     })
 
-    it('produces artifact filenames without spaces', () => {
+    it('produces target-specific artifact filenames without spaces', () => {
         const package_json = read_package_json()
-        const build = package_json.build!
+        const build = package_json.build
+        if (!build?.executableName) throw new Error('package.json build.executableName is required')
 
         expect(build.executableName).not.toMatch(/\s/)
-        expect(build.artifactName).toBeDefined()
-        expect(build.artifactName).not.toMatch(/\s/)
+        expect(build.artifactName).toBeUndefined()
+        expect(build.nsis?.artifactName).toBe('OmniPot${version}.${ext}')
+        expect(build.portable?.artifactName).toBe('OmniPot${version}-portable.${ext}')
+        expect(build.nsis?.artifactName).not.toMatch(/\s/)
+        expect(build.portable?.artifactName).not.toMatch(/\s/)
 
-        const expected_path = app_candidates('/repo', 'release', build.executableName!, '1.0.0', false)
+        const expected_path = typed_app_candidates('/repo', 'release', build.executableName, package_json.version, false)
         for (const p of expected_path) {
             expect(p).not.toMatch(/ /)
         }

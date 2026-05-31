@@ -159,12 +159,4 @@ function hexToBase64(hex: string): string {
     return btoa(binary)
 }
 
-function utcDate(timestamp: number): string {
-    const d = new Date(timestamp * 1000)
-    const year = String(d.getUTCFullYear())
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(d.getUTCDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-}
-
-export { md5, hmac, sha256, hexToBytes, hexToBase64, utcDate }
+export { md5, hmac, sha256, hexToBytes, hexToBase64 }

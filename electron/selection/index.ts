@@ -1,6 +1,6 @@
-export type SelectionMethod = 'uia' | 'accessibility' | 'clipboard' | 'none'
+type SelectionMethod = 'uia' | 'accessibility' | 'clipboard' | 'none'
 
-export type SelectionFailureReason =
+type SelectionFailureReason =
     | 'empty'
     | 'permission-denied'
     | 'unsupported-platform'
