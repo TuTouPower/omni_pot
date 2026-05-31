@@ -247,6 +247,7 @@ export default function DictWindow(): React.ReactElement {
     const root_ref = useRef<HTMLDivElement>(null)
     const titlebar_ref = useRef<HTMLDivElement>(null)
     const content_ref = useRef<HTMLDivElement>(null)
+    const inner_content_ref = useRef<HTMLDivElement>(null)
     const last_reported_content_height_ref = useRef(0)
     const appFont = useConfigStore((s) => s.config.app_font)
     const appFontSize = useConfigStore((s) => s.config.app_font_size)
@@ -356,17 +357,24 @@ export default function DictWindow(): React.ReactElement {
 
     useEffect(() => {
         const titlebar = titlebar_ref.current
-        const content = content_ref.current
+        const content_outer = content_ref.current
+        const inner = inner_content_ref.current
 
         let frame_id = 0
         const report = (): void => {
             window.cancelAnimationFrame(frame_id)
             frame_id = window.requestAnimationFrame(() => {
                 const titlebar_h = titlebar ? titlebar.getBoundingClientRect().height : 0
-                const content_h = content ? content.scrollHeight : 0
-                const total = Math.ceil(titlebar_h + content_h)
+                const inner_h = inner ? inner.getBoundingClientRect().height : 0
+                const outer_style = content_outer ? getComputedStyle(content_outer) : null
+                const padding_h = outer_style
+                    ? Number.parseFloat(outer_style.paddingTop) + Number.parseFloat(outer_style.paddingBottom)
+                    : 0
+                const total = Math.ceil(titlebar_h + inner_h + padding_h)
                 if (total === last_reported_content_height_ref.current) return
                 last_reported_content_height_ref.current = total
+                log.info('[dict-height] report titlebar=%d inner=%d pad=%d total=%d',
+                    Math.round(titlebar_h), Math.round(inner_h), Math.round(padding_h), total)
                 window.electronAPI.dict.reportContentHeight(total).catch(() => undefined)
             })
         }
@@ -374,7 +382,7 @@ export default function DictWindow(): React.ReactElement {
         report()
         const observer = new ResizeObserver(report)
         if (titlebar) observer.observe(titlebar)
-        if (content) observer.observe(content)
+        if (inner) observer.observe(inner)
         return () => {
             window.cancelAnimationFrame(frame_id)
             observer.disconnect()
@@ -472,7 +480,8 @@ export default function DictWindow(): React.ReactElement {
                 onClose={handleClose}
             />
 
-            <div ref={content_ref} style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div ref={content_ref} style={{ flex: 1, overflow: 'auto', padding: '4px 12px 14px' }}>
+                <div ref={inner_content_ref} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Source word card */}
                 <div className="card" data-testid="dict-card" style={{ padding: 0, overflow: 'visible' }}>
                     <div style={{ padding: '12px 14px 4px' }}>
@@ -547,6 +556,7 @@ export default function DictWindow(): React.ReactElement {
                         </div>
                     </SortableContext>
                 </DndContext>
+                </div>
             </div>
         </div>
     )

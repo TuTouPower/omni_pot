@@ -126,6 +126,14 @@ export class DictPage {
         await this.page.setViewportSize(viewport)
     }
 
+    collapseButtons(): Locator {
+        return this.page.locator('[data-testid="dict-collapse-btn"]')
+    }
+
+    async clickCollapseByIndex(index: number): Promise<void> {
+        await this.collapseButtons().nth(index).click()
+    }
+
     // Dict cards
     dictCards(): Locator {
         return this.page.locator('[data-testid="dict-card"]')
