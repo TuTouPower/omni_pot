@@ -273,6 +273,19 @@ test.describe('@ui updater and tray', () => {
         }
     })
 
+    test('check_update and view_log tray actions execute their functions', async () => {
+        const omni = await AppFixture.start({ config: TEST_CONFIG })
+        try {
+            const check_update_result = await omni.api.trayAction('check_update')
+            expect(check_update_result.success).toBe(true)
+
+            const view_log_result = await omni.api.trayAction('view_log')
+            expect(view_log_result.success).toBe(true)
+        } finally {
+            await omni.stop()
+        }
+    })
+
     test('user triggers restart from tray action', async () => {
         const omni = await AppFixture.start({ config: TEST_CONFIG })
         try {

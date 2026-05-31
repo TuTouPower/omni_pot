@@ -363,6 +363,22 @@ test.describe('@ui config settings window', () => {
             await expect(config.aboutSupportAuthor()).toHaveCSS('color', 'rgb(155, 89, 182)')
 
             await omni.api.resetShellOpenExternal()
+            await config.aboutLink('home').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot')
+
+            await omni.api.resetShellOpenExternal()
+            await config.aboutLink('docs').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/tree/master/docs')
+
+            await omni.api.resetShellOpenExternal()
+            await config.aboutLink('feedback').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/issues')
+
+            await omni.api.resetShellOpenExternal()
+            await config.aboutCheckUpdate().click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/releases')
+
+            await omni.api.resetShellOpenExternal()
             await config.aboutSupportAuthor().click()
             await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://afdian.com/a/tutoupower')
             await expect(config.aboutDiagnostic('about-config-dir')).toContainText(/omni_pot|unknown/)
