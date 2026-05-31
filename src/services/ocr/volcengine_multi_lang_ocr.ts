@@ -39,7 +39,7 @@ export const volcengineMultiLangOcrService: OcrService = {
         const body = `image_base64=${encodeURIComponent(base64Image)}&approximate_pixel=0&mode=default&filter_thresh=80`
         const body_hash = await sha256(body)
 
-        const now = new Date()
+        const now = new Date(Date.now() + 8 * 3600000)
         const x_date = now.toISOString().replace(/-/g, '').replace(/:/g, '').replace(/\.\d+/, '')
         const short_date = x_date.slice(0, 8)
 

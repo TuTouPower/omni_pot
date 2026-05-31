@@ -87,7 +87,7 @@ export const alibabaService: TranslateService = {
             SignatureMethod: 'HMAC-SHA1',
             SignatureVersion: '1.0',
             SignatureNonce: crypto.randomUUID().replace(/-/g, ''),
-            Timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+            Timestamp: new Date(Date.now() + 8 * 3600000).toISOString().replace(/\.\d{3}Z$/, 'Z'),
             Version: '2018-10-12'
         }
 

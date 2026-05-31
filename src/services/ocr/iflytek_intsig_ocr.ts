@@ -24,7 +24,7 @@ export const iflytekIntsigOcrService: OcrService = {
         const apikey = config.apikey as string
 
         const host = 'rest-api.xfyun.cn'
-        const date = new Date().toUTCString()
+        const date = new Date(Date.now() + 8 * 3600000).toUTCString()
         const request_line = 'POST /v2/itr HTTP/1.1'
 
         const body_json = JSON.stringify({

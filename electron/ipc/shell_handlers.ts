@@ -60,7 +60,7 @@ export function registerShellHandlers(manager: WindowManager): void {
             if (files.length === 0) return { success: false, error: 'No log files found in the last 7 days' }
             const win = BrowserWindow.getFocusedWindow()
             const options = {
-                defaultPath: `omni-pot-logs-${new Date().toISOString().slice(0, 10)}.zip`,
+                defaultPath: `omni-pot-logs-${new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10)}.zip`,
                 filters: [{ name: 'ZIP', extensions: ['zip'] }],
             }
             const result = win

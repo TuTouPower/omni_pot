@@ -146,7 +146,8 @@ export default function UpdaterWindow(): React.ReactElement {
     const format_date = (dateStr: string): string => {
         try {
             const d = new Date(dateStr)
-            return d.toISOString().slice(0, 10)
+            const cst = new Date(d.getTime() + 8 * 3600000)
+            return cst.toISOString().slice(0, 10)
         } catch {
             return dateStr
         }

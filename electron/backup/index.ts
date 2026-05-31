@@ -344,7 +344,7 @@ function remove_file_if_exists(path: string): void {
 }
 
 export function create_local_backup(): string {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const timestamp = (() => { const d = new Date(); const cst = new Date(d.getTime() + 8 * 3600000); return cst.toISOString().replace('Z', '').replace(/[:.]/g, '-') })()
     const backup_name = `pot-backup-${timestamp}-${randomUUID().slice(0, 8)}.zip`
     const backup_path = join(get_backup_dir(), backup_name)
 

@@ -244,7 +244,7 @@ function build(): void {
     `)
 
     // 8. Metadata
-    const build_time = new Date().toISOString()
+    const build_time = (() => { const d = new Date(); const cst = new Date(d.getTime() + 8 * 3600000); return cst.toISOString().replace('Z', '+08:00') })()
     const insert_meta = db.prepare('INSERT INTO metadata (key, value) VALUES (?, ?)')
     insert_meta.run('schema_version', '1')
     insert_meta.run('data_version', 'mapull-2026-05')

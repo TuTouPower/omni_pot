@@ -17,8 +17,8 @@ export async function signTencentRequest(opts: TencentSignOpts): Promise<{
     const { secretId, secretKey, host, service, region, action, version, body } = opts
 
     const timestamp = Math.floor(Date.now() / 1000)
-    const d = new Date(timestamp * 1000)
-    const date = `${String(d.getUTCFullYear())}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+    const cst = new Date(timestamp * 1000 + 8 * 3600000)
+    const date = `${String(cst.getFullYear())}-${String(cst.getMonth() + 1).padStart(2, '0')}-${String(cst.getDate()).padStart(2, '0')}`
 
     const contentType = 'application/json; charset=utf-8'
     const hashedPayload = await sha256(body)

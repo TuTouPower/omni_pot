@@ -27,7 +27,7 @@ export const iflytekLatexOcrService: OcrService = {
         const apikey = config.apikey as string
 
         const host = 'api.xf-yun.com'
-        const date = new Date().toUTCString()
+        const date = new Date(Date.now() + 8 * 3600000).toUTCString()
         const request_line = `POST /v1/private/${SERVICE_ID} HTTP/1.1`
         const auth = await iflytek_auth(apikey, apisecret, host, date, request_line)
 

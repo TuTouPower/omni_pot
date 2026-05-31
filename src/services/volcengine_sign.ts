@@ -18,7 +18,7 @@ export async function signVolcengineRequest(opts: VolcengineSignOpts): Promise<{
     const { appId, secret, host, service, region, action, version, body } = opts
 
     const timestamp = Math.floor(Date.now() / 1000)
-    const d = new Date(timestamp * 1000)
+    const d = new Date(timestamp * 1000 + 8 * 3600000)
     const x_date = d.toISOString().replace(/-/g, '').replace(/:/g, '').replace(/\.\d+/, '')
     const date = x_date.slice(0, 8)
 
