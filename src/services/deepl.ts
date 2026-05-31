@@ -1,6 +1,9 @@
 import type { TranslateService, ServiceConfig } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { fetch_with_timeout } from './fetch_timeout'
+import { create_logger } from '../utils/logger'
+
+const log = create_logger('deepl')
 
 const DEEPL_LANGUAGES: LanguageCode[] = [
   'auto', 'zh_cn', 'zh_tw', 'ja', 'en', 'ko', 'fr', 'es', 'ru', 'de',
@@ -96,6 +99,7 @@ async function translate_free(
 ): Promise<string> {
   const source_lang = get_free_lang_code(from)
   const target_lang = get_free_lang_code(to)
+  log.info('[deeplx_free] CALL from=%s→%s mapped=%s→%s text=%j', from, to, source_lang, target_lang, text.slice(0, 30))
 
   const parts = text.split('\n').map(line => line.trim() === '' ? '\n' : line)
   const translated_parts: string[] = []
@@ -137,6 +141,7 @@ async function translate_free(
         timestamp: get_timestamp(i_count)
       }
     }
+    log.info('[deeplx_free] request lang=%j part=%j', post_data.params.lang, part.slice(0, 30))
 
     const resp = await fetch_with_timeout('https://www2.deepl.com/jsonrpc', {
       method: 'POST',
@@ -145,10 +150,13 @@ async function translate_free(
     })
 
     if (!resp.ok) {
+      log.error('[deeplx_free] HTTP %d', resp.status)
       throw new Error(`DeepL free API error: ${String(resp.status)}`)
     }
 
-    const data = (await resp.json()) as {
+    const raw = await resp.text()
+    log.info('[deeplx_free] response raw (first 400 chars): %s', raw.slice(0, 400))
+    const data = JSON.parse(raw) as {
       result?: {
         translations?: Array<{
           beams: Array<{ sentences: Array<{ text: string }> }>
@@ -158,11 +166,13 @@ async function translate_free(
     }
 
     if (data.error) {
+      log.error('[deeplx_free] api error: %s', data.error.message)
       throw new Error(`DeepL free API error: ${data.error.message}`)
     }
 
     const translations = data.result?.translations
     if (!translations || translations.length === 0) {
+      log.error('[deeplx_free] no translations in response')
       throw new Error('DeepL free API: no translation returned')
     }
 
@@ -173,7 +183,9 @@ async function translate_free(
     translated_parts.push(part_result.trim())
   }
 
-  return translated_parts.join('\n')
+  const final_result = translated_parts.join('\n')
+  log.info('[deeplx_free] FINAL result=%j (orig=%j)', final_result.slice(0, 60), text.slice(0, 30))
+  return final_result
 }
 
 function getApiUrl(type: string, customUrl?: string): string {
@@ -201,6 +213,8 @@ export const deeplService: TranslateService = {
     config: ServiceConfig
   ): Promise<string> {
     const type = (config.type as string) || 'deeplx_free'
+    log.info('[deepl.translate] ENTRY from=%s to=%s type=%s text=%j config=%j',
+      from, to, type, text.slice(0, 30), config)
 
     if (type === 'deeplx_free') {
       return translate_free(text, from, to)
@@ -217,6 +231,7 @@ export const deeplService: TranslateService = {
     if (from !== 'auto') {
       body.source_lang = get_lang_code(from)
     }
+    log.info('[deepl.translate] %s body=%j url=%s', type, body, url)
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -233,22 +248,29 @@ export const deeplService: TranslateService = {
     })
 
     if (!resp.ok) {
+      log.error('[deepl.translate] HTTP %d', resp.status)
       throw new Error(`DeepL API error: ${String(resp.status)}`)
     }
 
-    const data = (await resp.json()) as {
+    const raw = await resp.text()
+    log.info('[deepl.translate] response raw (first 400): %s', raw.slice(0, 400))
+    const data = JSON.parse(raw) as {
       translations?: Array<{ text: string }>
       data?: { translations: Array<{ text: string }> }
     }
 
+    let final: string
     if (type === 'deeplx') {
-      return (
+      final = (
         data.data?.translations[0]?.text ??
         data.translations?.[0]?.text ??
         ''
       )
+    } else {
+      final = data.translations?.[0]?.text ?? ''
     }
-    return data.translations?.[0]?.text ?? ''
+    log.info('[deepl.translate] FINAL result=%j (orig=%j)', final.slice(0, 60), text.slice(0, 30))
+    return final
   },
 
   async testConfig(config: ServiceConfig): Promise<boolean> {

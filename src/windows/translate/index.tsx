@@ -132,11 +132,16 @@ export default function TranslateWindow(): React.ReactElement {
     const previousLanguagesRef = useRef({ sourceLanguage, targetLanguage })
 
     const handleTranslate = useCallback(async (textOverride?: string) => {
-        const textToTranslate = textOverride ?? useTranslateStore.getState().sourceText
+        const storeAtEntry = useTranslateStore.getState()
+        const textToTranslate = textOverride ?? storeAtEntry.sourceText
         if (!textToTranslate.trim()) return
 
-        log.info('translate start: src=%s→%s, len=%d, services=%d',
-            sourceLanguage, targetLanguage, textToTranslate.length, enabledServiceList.length)
+        log.info('[handleTranslate] ENTRY closure src=%s target=%s locked=%s | store src=%s target=%s locked=%s text=%j override=%j',
+            sourceLanguage, targetLanguage, lockedTargetLanguage ?? '-',
+            storeAtEntry.sourceLanguage, storeAtEntry.targetLanguage, storeAtEntry.lockedTargetLanguage ?? '-',
+            storeAtEntry.sourceText.slice(0, 30), textOverride?.slice(0, 30) ?? null)
+        log.info('[handleTranslate] config secondLanguage=%s services=[%s]',
+            secondLanguage, enabledServiceList.join(','))
 
         const id = nextRequestId()
         setIsTranslating(true)
@@ -145,18 +150,30 @@ export default function TranslateWindow(): React.ReactElement {
         setEffectiveTargetLanguage(null)
 
         const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate) : null
-        if (useTranslateStore.getState().requestId !== id) return
+        if (useTranslateStore.getState().requestId !== id) {
+            log.info('[handleTranslate] BAIL after detect: requestId changed (was %d now %d)',
+                id, useTranslateStore.getState().requestId)
+            return
+        }
         if (detected) {
-            log.info('detected language: %s', detected)
+            log.info('[handleTranslate] detected=%s', detected)
             setDetectedLanguage(detected)
         }
 
         let effectiveTarget = lockedTargetLanguage ?? targetLanguage
-        if (!lockedTargetLanguage && sourceLanguage === 'auto' && detected && detected === targetLanguage) {
+        const fallbackEligible = !lockedTargetLanguage && sourceLanguage === 'auto' && detected !== null && detected === targetLanguage
+        log.info('[handleTranslate] fallback check: locked=%s src=%s detected=%s target=%s → eligible=%s',
+            lockedTargetLanguage ?? '-', sourceLanguage, detected ?? '-', targetLanguage, String(fallbackEligible))
+        if (fallbackEligible) {
             effectiveTarget = secondLanguage as LanguageCode
+            log.info('[handleTranslate] fallback APPLIED → effective=%s (second=%s)', effectiveTarget, secondLanguage)
         }
+        const effectiveSource: LanguageCode = (sourceLanguage === 'auto' && detected) ? detected : sourceLanguage
+        log.info('[handleTranslate] RESOLVED effectiveSource=%s effectiveTarget=%s (src=%s target=%s locked=%s detected=%s) — will send to %d services',
+            effectiveSource, effectiveTarget, sourceLanguage, targetLanguage, lockedTargetLanguage ?? '-', detected ?? '-', enabledServiceList.length)
         setEffectiveTargetLanguage(effectiveTarget === targetLanguage ? null : effectiveTarget)
         if (!lockedTargetLanguage && effectiveTarget !== targetLanguage) {
+            log.info('[handleTranslate] setLocked(%s) — first fallback for this text', effectiveTarget)
             setLockedTargetLanguage(effectiveTarget)
         }
 
@@ -166,6 +183,7 @@ export default function TranslateWindow(): React.ReactElement {
             const serviceKey = getServiceKey(instanceKey)
             const service = translateServiceRegistry.get(serviceKey)
             if (!service) {
+                log.warn('[service:%s] not found in registry (serviceKey=%s)', instanceKey, serviceKey)
                 resultsMap[instanceKey] = null
                 if (useTranslateStore.getState().requestId === id) {
                     setResult(instanceKey, null)
@@ -173,12 +191,15 @@ export default function TranslateWindow(): React.ReactElement {
                 return
             }
             const instanceConfig = get_service_config(serviceInstances, instanceKey)
+            log.info('[service:%s] CALL service=%s from=%s(orig=%s) to=%s text=%j config=%j',
+                instanceKey, serviceKey, effectiveSource, sourceLanguage, effectiveTarget,
+                textToTranslate.slice(0, 30), instanceConfig)
 
             try {
                 if (service.translateStream) {
                     let accumulated = ''
                     let lastUpdateTime = 0
-                    for await (const chunk of service.translateStream(textToTranslate, sourceLanguage, effectiveTarget, instanceConfig)) {
+                    for await (const chunk of service.translateStream(textToTranslate, effectiveSource, effectiveTarget, instanceConfig)) {
                         accumulated += chunk
                         const now = Date.now()
                         if (now - lastUpdateTime > 50 && useTranslateStore.getState().requestId === id) {
@@ -190,15 +211,21 @@ export default function TranslateWindow(): React.ReactElement {
                         setResult(instanceKey, accumulated)
                     }
                     resultsMap[instanceKey] = accumulated
+                    log.info('[service:%s] RESULT stream len=%d preview=%j', instanceKey, accumulated.length, accumulated.slice(0, 60))
                 } else {
-                    const result = await service.translate(textToTranslate, sourceLanguage, effectiveTarget, instanceConfig)
+                    const result = await service.translate(textToTranslate, effectiveSource, effectiveTarget, instanceConfig)
                     resultsMap[instanceKey] = result
                     if (useTranslateStore.getState().requestId === id) {
                         setResult(instanceKey, result)
                     }
+                    const previewStr = typeof result === 'string'
+                        ? result.slice(0, 60)
+                        : JSON.stringify(result).slice(0, 120)
+                    log.info('[service:%s] RESULT type=%s preview=%j',
+                        instanceKey, typeof result, previewStr)
                 }
             } catch (err) {
-                log.error('service %s failed: %s', instanceKey, err instanceof Error ? err.message : String(err))
+                log.error('[service:%s] FAILED: %s', instanceKey, err instanceof Error ? err.stack ?? err.message : String(err))
                 resultsMap[instanceKey] = null
                 if (useTranslateStore.getState().requestId === id) {
                     setResult(instanceKey, null)
@@ -228,7 +255,7 @@ export default function TranslateWindow(): React.ReactElement {
                 return window.electronAPI.history.add({
                     service_key: instanceKey,
                     source_text: textToTranslate,
-                    source_lang: sourceLanguage,
+                    source_lang: effectiveSource,
                     target_text: targetText,
                     target_lang: effectiveTarget
                 }).catch(() => {})
@@ -262,8 +289,14 @@ export default function TranslateWindow(): React.ReactElement {
 
     const schedule_translate = useCallback((text: string) => {
         cancel_scheduled_translate()
+        const snap = useTranslateStore.getState()
+        log.info('[schedule_translate] queued text=%j | store src=%s target=%s locked=%s',
+            text.slice(0, 30), snap.sourceLanguage, snap.targetLanguage, snap.lockedTargetLanguage ?? '-')
         translate_timer_ref.current = window.setTimeout(() => {
             translate_timer_ref.current = null
+            const snap2 = useTranslateStore.getState()
+            log.info('[schedule_translate] FIRE text=%j | store src=%s target=%s locked=%s',
+                text.slice(0, 30), snap2.sourceLanguage, snap2.targetLanguage, snap2.lockedTargetLanguage ?? '-')
             handleTranslate(text).catch((err: unknown) => { log_error('translate', err) })
         }, 0)
     }, [cancel_scheduled_translate, handleTranslate])
@@ -277,6 +310,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
+            log.info('[ipc:onTranslateFromSelection] recv text=%j', text.slice(0, 30))
             if (!text.trim()) return
 
             const nextText = prepareIncomingText(text)
@@ -290,6 +324,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateSelectionEmpty(() => {
+            log.info('[ipc:onTranslateSelectionEmpty]')
             cancel_scheduled_translate()
             setSourceText('')
             setDetectedLanguage(null)
@@ -300,6 +335,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
+            log.info('[ipc:onTranslateFromApi] recv text=%j', text.slice(0, 30))
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
             setSourceText(nextText)
@@ -311,6 +347,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
+            log.info('[ipc:onTranslateFromClipboard] recv text=%j', text.slice(0, 30))
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
             setSourceText(nextText)
@@ -510,9 +547,10 @@ export default function TranslateWindow(): React.ReactElement {
         if (!retryEffectiveTargetLanguage && retrySourceLanguage === 'auto' && detected && detected === retryTargetLanguage) {
             effectiveTarget = secondLanguage as LanguageCode
         }
+        const effectiveSource: LanguageCode = (retrySourceLanguage === 'auto' && detected) ? detected : retrySourceLanguage
 
         try {
-            const result = await service.translate(textToTranslate, retrySourceLanguage, effectiveTarget, instanceConfig)
+            const result = await service.translate(textToTranslate, effectiveSource, effectiveTarget, instanceConfig)
             if (isCurrentRetry()) {
                 setResult(instanceKey, result)
             }

@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import type { LanguageCode } from '@shared/types/language'
 import type { DictResult } from '@shared/types/service'
+import { create_logger } from '../utils/logger'
+
+const log = create_logger('translate-store')
 
 interface TranslateResults {
   [instanceKey: string]: string | DictResult | null
@@ -47,26 +50,42 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
   isTranslating: false,
   requestId: 0,
 
-  setSourceText: (text) => { set((state) => ({ sourceText: text, effectiveTargetLanguage: null, lockedTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 })); },
-  setSourceLanguage: (lang) => { set((state) => state.sourceLanguage === lang
-    ? { sourceLanguage: lang }
-    : { sourceLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }); },
-  setTargetLanguage: (lang) => { set((state) => state.targetLanguage === lang
-    ? { targetLanguage: lang, effectiveTargetLanguage: null }
-    : { targetLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }); },
+  setSourceText: (text) => {
+    log.info('[store] setSourceText text=%j (prev locked=%s → null)', text.slice(0, 30), get().lockedTargetLanguage ?? '-')
+    set((state) => ({ sourceText: text, effectiveTargetLanguage: null, lockedTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 }))
+  },
+  setSourceLanguage: (lang) => {
+    log.info('[store] setSourceLanguage %s → %s', get().sourceLanguage, lang)
+    set((state) => state.sourceLanguage === lang
+      ? { sourceLanguage: lang }
+      : { sourceLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 })
+  },
+  setTargetLanguage: (lang) => {
+    log.info('[store] setTargetLanguage %s → %s (locked stays %s)', get().targetLanguage, lang, get().lockedTargetLanguage ?? '-')
+    set((state) => state.targetLanguage === lang
+      ? { targetLanguage: lang, effectiveTargetLanguage: null }
+      : { targetLanguage: lang, effectiveTargetLanguage: null, isTranslating: false, requestId: state.requestId + 1 })
+  },
   setEffectiveTargetLanguage: (lang) => { set({ effectiveTargetLanguage: lang }); },
-  setLockedTargetLanguage: (lang) => { set({ lockedTargetLanguage: lang }); },
+  setLockedTargetLanguage: (lang) => {
+    log.info('[store] setLockedTargetLanguage %s → %s', get().lockedTargetLanguage ?? '-', lang ?? '-')
+    set({ lockedTargetLanguage: lang })
+  },
   setDetectedLanguage: (lang) => { set({ detectedLanguage: lang }); },
   setResult: (instanceKey, result) =>
     { set((state) => ({ results: { ...state.results, [instanceKey]: result } })); },
   setIsTranslating: (flag) => { set({ isTranslating: flag }); },
   swapLanguages: (fallbackLanguage) => {
     const { sourceLanguage, targetLanguage, detectedLanguage } = get()
+    log.info('[store] swapLanguages BEFORE src=%s target=%s detected=%s fallback=%s',
+      sourceLanguage, targetLanguage, detectedLanguage ?? '-', fallbackLanguage ?? '-')
     if (sourceLanguage === 'auto') {
       if (detectedLanguage) {
         const nextSourceLanguage = detectedLanguage === targetLanguage && fallbackLanguage && fallbackLanguage !== 'auto'
           ? fallbackLanguage
           : targetLanguage
+        log.info('[store] swapLanguages AFTER (auto branch) src=%s target=%s locked=%s',
+          nextSourceLanguage, detectedLanguage, detectedLanguage)
         set({
           sourceLanguage: nextSourceLanguage,
           targetLanguage: detectedLanguage,
@@ -76,9 +95,13 @@ export const useTranslateStore = create<TranslateStore>()((set, get) => ({
           isTranslating: false,
           requestId: get().requestId + 1
         })
+      } else {
+        log.info('[store] swapLanguages SKIP: auto but no detected')
       }
       return
     }
+    log.info('[store] swapLanguages AFTER (manual branch) src=%s target=%s locked=%s',
+      targetLanguage, sourceLanguage, sourceLanguage)
     set({ sourceLanguage: targetLanguage, targetLanguage: sourceLanguage, detectedLanguage: null, effectiveTargetLanguage: null, lockedTargetLanguage: sourceLanguage, isTranslating: false, requestId: get().requestId + 1 })
   },
   clearResults: () => { set({ results: {} }); },
