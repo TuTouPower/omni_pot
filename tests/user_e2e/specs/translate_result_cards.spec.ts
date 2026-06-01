@@ -176,6 +176,7 @@ test.describe('@ui translate result cards', () => {
     })
 
     test('retry only re-triggers the specific failed service, not all services (stubbed)', async () => {
+        test.info().annotations.push({ type: 'retries', description: '2' })
         const omni = await AppFixture.start({ config: test_service_config })
         let server: TranslationTestServer | null = null
 
@@ -190,6 +191,9 @@ test.describe('@ui translate result cards', () => {
             await translate.clickTranslate()
             await expect(translate.resultBody('mymemory@e2e_ok')).toContainText('成功结果', { timeout: local_translation_timeout_ms })
             await expect(translate.resultError('mymemory@e2e_fail')).toBeVisible({ timeout: local_translation_timeout_ms })
+
+            // Wait for retry button to be ready before clicking
+            await expect(translate.resultRetryButton('mymemory@e2e_fail')).toBeVisible({ timeout: local_translation_timeout_ms })
 
             server.clear_requests()
             await translate.clickResultRetry('mymemory@e2e_fail')

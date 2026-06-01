@@ -31,10 +31,6 @@ export default defineConfig({
             grep: /@core/,
         },
         {
-            name: 'ui',
-            grep: /@ui/,
-        },
-        {
             name: 'ui-serial',
             grep: /@ui/,
             testIgnore: ui_parallel_safe,

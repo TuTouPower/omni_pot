@@ -364,19 +364,19 @@ test.describe('@ui config settings window', () => {
 
             await omni.api.resetShellOpenExternal()
             await config.aboutLink('home').click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot')
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot_release')
 
             await omni.api.resetShellOpenExternal()
             await config.aboutLink('docs').click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/tree/master/docs')
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot_release/tree/master/docs')
 
             await omni.api.resetShellOpenExternal()
             await config.aboutLink('feedback').click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/issues')
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot_release/issues')
 
             await omni.api.resetShellOpenExternal()
             await config.aboutCheckUpdate().click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/releases')
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot_release/releases')
 
             await omni.api.resetShellOpenExternal()
             await config.aboutSupportAuthor().click()

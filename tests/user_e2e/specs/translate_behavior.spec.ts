@@ -364,7 +364,7 @@ test.describe('@ui translate behavior settings', () => {
             await expect(translate.detectedLanguage()).toContainText('English')
             await expect(translate.resultBody('mymemory@e2e')).toContainText('回退到第二语言')
             expect(server.requests).toHaveLength(1)
-            expect(new URL(server.requests[0].url, server.base_url).searchParams.get('langpair')).toBe('autodetect|zh-CN')
+            expect(new URL(server.requests[0].url, server.base_url).searchParams.get('langpair')).toBe('en|zh-CN')
         } finally {
             await server?.stop()
             await omni.stop()

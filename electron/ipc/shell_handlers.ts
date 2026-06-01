@@ -29,13 +29,17 @@ function is_allowed_external_url(value: string): boolean {
     }
 }
 
+export async function open_external_safely(url: string): Promise<boolean> {
+    if (IS_E2E) captured_open_external_urls.push(url)
+    if (!is_allowed_external_url(url)) return false
+    await shell.openExternal(url)
+    return true
+}
+
 export function registerShellHandlers(manager: WindowManager): void {
     ipcMain.handle('shell:openExternal', async (event, url: string): Promise<boolean> => {
         assert_sender_label(manager, event, [WindowLabel.CONFIG], 'shell:openExternal')
-        if (IS_E2E) captured_open_external_urls.push(url)
-        if (!is_allowed_external_url(url)) return false
-        await shell.openExternal(url)
-        return true
+        return open_external_safely(url)
     })
 
     ipcMain.handle('log:getDir', (event): string => {

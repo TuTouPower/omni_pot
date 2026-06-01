@@ -30,16 +30,11 @@ test.describe('@ui dict window height responds to card collapse', () => {
             await expect(dict.definitions().first()).toBeVisible({ timeout: ocr_timeout_ms })
 
             // Get the initial window height after content has settled
-            const initial_bounds = await expect.poll(
-                async () => {
-                    const state = await omni.api.windowState('dict')
-                    expect(state.bounds).not.toBeNull()
-                    return state.bounds!
-                },
+            await expect.poll(
+                async () => (await omni.api.windowState('dict')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
-            const initial_height = initial_bounds.height
-            expect(initial_height).toBeGreaterThan(100)
+            ).toBeGreaterThan(100)
+            const initial_height = (await omni.api.windowState('dict')).bounds?.height ?? 0
 
             // Collapse the last result card (has a collapse button)
             const btn_count = await dict.collapseButtons().count()
@@ -75,11 +70,11 @@ test.describe('@ui dict window height responds to card collapse', () => {
             await dict.clickCollapseByIndex(btn_count - 1)
 
             // Wait for collapse to settle
-            const collapsed_height = await expect.poll(
+            await expect.poll(
                 async () => (await omni.api.windowState('dict')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
-            expect(collapsed_height).toBeGreaterThan(100)
+            ).toBeGreaterThan(100)
+            const collapsed_height = (await omni.api.windowState('dict')).bounds?.height ?? 0
 
             // Expand the card back
             await dict.clickCollapseByIndex(btn_count - 1)

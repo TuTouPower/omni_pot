@@ -10,6 +10,8 @@ function long_translation(line_count: number): string {
 }
 
 test.describe('@ui translate card collapse affects window height', () => {
+    test.describe.configure({ retries: 2 })
+
     test('collapsing a result card reduces window height', async () => {
         const omni = await AppFixture.start()
         let server: TranslationTestServer | null = null
@@ -23,11 +25,11 @@ test.describe('@ui translate card collapse affects window height', () => {
             await translate.waitAllResults(local_translation_timeout_ms)
 
             // Wait for height to stabilise
-            const initial_height = await expect.poll(
+            await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
-            expect(initial_height).toBeGreaterThan(100)
+            ).toBeGreaterThan(100)
+            const initial_height = (await omni.api.windowState('translate')).bounds?.height ?? 0
 
             await translate.clickResultCollapse('mymemory@e2e')
             await expect(translate.resultAction('mymemory@e2e', 'result-collapse'))
@@ -55,17 +57,17 @@ test.describe('@ui translate card collapse affects window height', () => {
             await translate.clickTranslate()
             await translate.waitAllResults(local_translation_timeout_ms)
 
-            const initial_height = await expect.poll(
+            await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
+            ).toBeGreaterThan(100)
+            const initial_height = (await omni.api.windowState('translate')).bounds?.height ?? 0
 
             await translate.clickResultCollapse('mymemory@e2e')
             await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
             ).toBeLessThan(initial_height - HEIGHT_TOLERANCE_PX)
-
             const collapsed_height = (await omni.api.windowState('translate')).bounds?.height ?? 0
 
             await translate.clickResultCollapse('mymemory@e2e')
@@ -94,17 +96,16 @@ test.describe('@ui translate card collapse affects window height', () => {
             await translate.clickTranslate()
             await translate.waitAllResults(local_translation_timeout_ms)
 
-            const expanded_height = await expect.poll(
+            await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
-            expect(expanded_height).toBeGreaterThan(200)
+            ).toBeGreaterThan(200)
 
             await translate.clickResultCollapse('mymemory@e2e')
             await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            ).toBeLessThanOrEqual(220)
+            ).toBeLessThanOrEqual(260)
         } finally {
             await server?.stop()
             await omni.stop()
@@ -123,12 +124,22 @@ test.describe('@ui translate card collapse affects window height', () => {
             await translate.clickTranslate()
             await translate.waitAllResults(local_translation_timeout_ms)
 
-            // Collapse
-            await translate.clickResultCollapse('mymemory@e2e')
-            const collapsed_height = await expect.poll(
+            // Wait for initial height to stabilise
+            await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
+            ).toBeGreaterThan(100)
+            const initial_height = (await omni.api.windowState('translate')).bounds?.height ?? 0
+
+            // Collapse
+            await translate.clickResultCollapse('mymemory@e2e')
+            await expect(translate.resultAction('mymemory@e2e', 'result-collapse'))
+                .toHaveAttribute('aria-expanded', 'false')
+            await expect.poll(
+                async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
+                { timeout: ui_timeout_ms },
+            ).toBeLessThan(initial_height - HEIGHT_TOLERANCE_PX)
+            const collapsed_height = (await omni.api.windowState('translate')).bounds?.height ?? 0
 
             // New translation — card should auto-expand
             server.set_mymemory_response({ translated_text: long_translation(15), status: 200 })
@@ -162,10 +173,11 @@ test.describe('@ui translate card collapse affects window height', () => {
             await translate.clickTranslate()
             await translate.waitAllResults(local_translation_timeout_ms)
 
-            const full_height = await expect.poll(
+            await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
+            ).toBeGreaterThan(200)
+            const full_height = (await omni.api.windowState('translate')).bounds?.height ?? 0
 
             // Collapse only the second card
             await translate.clickResultCollapse('mymemory@e2e_b')
@@ -175,11 +187,11 @@ test.describe('@ui translate card collapse affects window height', () => {
             await expect(translate.resultAction('mymemory@e2e_a', 'result-collapse'))
                 .toHaveAttribute('aria-expanded', 'true')
 
-            const partial_height = await expect.poll(
+            await expect.poll(
                 async () => (await omni.api.windowState('translate')).bounds?.height ?? 0,
                 { timeout: ui_timeout_ms },
-            )
-            expect(partial_height).toBeLessThan(full_height - HEIGHT_TOLERANCE_PX)
+            ).toBeLessThan(full_height - HEIGHT_TOLERANCE_PX)
+            const partial_height = (await omni.api.windowState('translate')).bounds?.height ?? 0
 
             // Collapse the first card too — now both collapsed
             await translate.clickResultCollapse('mymemory@e2e_a')

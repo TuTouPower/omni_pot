@@ -17,6 +17,7 @@ import { start_screenshot_capture } from '../screenshot'
 import { log, getLogDir } from '../log'
 import { getUserDataDir } from '../config/store'
 import { checkForUpdate } from '../updater'
+import { open_external_safely } from '../ipc/shell_handlers'
 
 let tray: Tray | null = null
 let windowManager: WindowManager | null = null
@@ -217,7 +218,7 @@ export function trigger_tray_action(action: string): boolean {
       close_tray_popup()
       return true
     case 'support_author':
-      shell.openExternal('https://afdian.com/a/tutoupower').catch((err: unknown) => { log_tray.error(err) })
+      open_external_safely('https://afdian.com/a/tutoupower').catch((err: unknown) => { log_tray.error(err) })
       close_tray_popup()
       return true
     case 'check_update':

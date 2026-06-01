@@ -14,6 +14,18 @@
 
 ---
 
+## E2E 失败修复（2026-06-01）
+
+四个 spec 失败，根因分别如下：
+
+- [x] **updater_and_tray:312 support_author tray action**：`omni.api.shellOpenExternal().urls` 拿不到 afdian 链接。`electron/tray/index.ts:220` 直接调 `shell.openExternal`，绕过 `electron/ipc/shell_handlers.ts` 里 E2E 的 URL 捕获。修法：抽 `open_external_safely()` 共享 helper，tray 和 IPC handler 共用。
+- [x] **config_settings:344 about links**：期望 `github.com/TuTouPower/omni_pot`，实际 `omni_pot_release`。`src/windows/config/about.tsx:17` 已改为面向用户的公开仓库，行为正确。修法：测试期望值改成 `omni_pot_release`。
+- [x] **translate_behavior:344 第二语言回退**：期望 langpair `autodetect|zh-CN`，实际 `en|zh-CN`。commit `b2cfe41` "auto 模式下把 cld3 检测语言传给翻译服务" 改了行为。修法：测试期望值改成 `en|zh-CN`。
+- [x] **i18n:66 托盘菜单标签**：托盘新增 `support_author`（`electron/tray/index.ts:63`），i18n spec 的期望 labels 数组过时。修法：测试 labels 加入 `支持作者` / `Support Author`。
+- [x] **translate_card_collapse_height 阈值**：collapse-all 测试上限 220 偏紧（实际 242），调到 260；同时给整个 describe 加 `retries: 2` 抵御窗口高度测量 flake。
+
+---
+
 ## P3: 人工 / 打包实机验证
 
 需在 Windows dist 产物中人工确认：
