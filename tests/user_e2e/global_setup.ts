@@ -1,5 +1,6 @@
 import { spawn, spawnSync, execSync } from 'child_process'
 import { resolve } from 'path'
+import { existsSync } from 'fs'
 
 const PROJECT_ROOT = resolve(__dirname, '../..')
 
@@ -39,6 +40,13 @@ async function run(): Promise<void> {
             throw new Error('better-sqlite3 Electron rebuild failed')
         }
         process.stderr.write('[abi] Electron rebuild complete\n')
+    }
+
+    // Skip rebuild when developer is iterating locally and out/ is already up-to-date.
+    // Set OMNI_POT_E2E_SKIP_BUILD=1 to reuse the existing out/ build.
+    if (process.env.OMNI_POT_E2E_SKIP_BUILD === '1' && existsSync(resolve(PROJECT_ROOT, 'out/main/index.js'))) {
+        process.stderr.write('[setup] OMNI_POT_E2E_SKIP_BUILD=1, reusing existing out/\n')
+        return
     }
 
     await new Promise<void>((resolve, reject) => {

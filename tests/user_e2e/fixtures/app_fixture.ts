@@ -19,7 +19,6 @@ export class AppFixture {
     private cleanupUserDataDir: boolean
     private init_script: string | undefined
     private init_script_applied_to_first_window = false
-
     private constructor(launched: LaunchedApp, init_script?: string) {
         this.app = launched.app
         this.httpPort = launched.httpPort

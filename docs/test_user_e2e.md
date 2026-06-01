@@ -267,8 +267,11 @@ class TranslatePage {
 
 ## 5. 测试文件规划
 
-当前基础版 fixture：常规用例每个测试启动独立实例 → `resetConfig()` →
-用例用 PO 操作与断言 → 测试结束停止实例并清理 userData。生命周期类用例可手动 `AppFixture.start()`，以覆盖首次运行、窗口常驻等启动状态。Playwright `workers: 1`，固定顺序，无 shuffle。
+当前 fixture：`omni` 为 test-scoped，每个用例独立 Electron 实例、独立端口、独立 userData 目录；用例结束自动 stop 并清理。需要纯净启动状态（`firstRun`、自定义 `userDataDir`、`init_script`、非默认 startup config）的用例自己 `AppFixture.start(...)` 即可。
+
+- `core` / `ui-serial` 项目：`workers: 1`，固定顺序、无 shuffle。
+- `ui-parallel` 项目：`fullyParallel: true`，并行 worker 跑 OS 全局态隔离的安全 spec。
+- `globalSetup` 仅在每次命令开始时执行一次 `electron-vite build`；`scripts/run_e2e.mjs` 在两阶段之间通过 `OMNI_POT_E2E_SKIP_BUILD=1` 复用首阶段产物。本地迭代手动跑 Playwright 时也可设置该变量跳过重建。
 
 ### 5.1 app_lifecycle.spec.ts — 应用生命周期与窗口管理
 
@@ -572,9 +575,9 @@ class TranslatePage {
 
 ### CI 策略
 
-- Playwright 当前由 fixture 为每个测试启动独立 Electron 实例、独立端口、独立 userData。
-- Playwright `workers: 1`，用例固定顺序执行。
-- `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
+- Playwright 默认 `workers: 1`、`fullyParallel: false`；`ui-parallel` 项目单独开 `fullyParallel: true`，由 `scripts/run_e2e.mjs` 第二阶段以 `--workers=4` 跑。
+- `omni` fixture 为 test 级，每个用例独立 Electron 实例、独立端口、独立 userData；用例结束自动 stop 并清理。
+- `globalSetup` 每次命令开始时执行一次 `electron-vite build`；`scripts/run_e2e.mjs` 阶段二复用产物，本地迭代时也可手动 `OMNI_POT_E2E_SKIP_BUILD=1` 跳过重建。
 - CI：PR 跑 `core + ui`（离线通过）；nightly 另跑 `external_services.spec.ts`（需要网络）。
 - issues #1（better-sqlite3 缺失）、#2（双击两次启动）属打包/启动问题，
   E2E 难直接覆盖 → 使用 `npm run dist:dir` 生成 unsigned unpacked 包做本地 smoke 验证，

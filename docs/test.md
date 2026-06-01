@@ -350,8 +350,7 @@ npm run test:e2e:external
 > project；对应 project 通过 `@core` / `@ui` 标签分组，spec 文件中需用
 > `test.describe('@core', ...)` 或 `test('@ui ...', ...)` 标注。
 
-- 用户端到端测试当前由 Playwright fixture 为每个测试启动独立 Electron 实例、
-  独立随机端口、独立 userData 目录；Playwright `workers: 1`，用例固定顺序执行。
-- Playwright `globalSetup` 在每次 `test:e2e` 命令开始时执行一次 `electron-vite build`，
-  避免源码修改后继续运行旧 `out/` 产物。
+- `omni` fixture 为 test 级，每个用例独立 Electron 实例、独立端口、独立 userData；用例结束自动 stop 并清理。需要纯净启动状态（`firstRun`、自定义 `userDataDir`、`init_script`、非默认 startup config）的用例直接 `AppFixture.start(...)` 拉独立实例。
+- `core` / `ui-serial` project 跑 `workers: 1` 固定顺序；`ui-parallel` project 跑 `fullyParallel: true`，并行 worker 限于 OS 全局态隔离的安全 spec。
+- `scripts/run_e2e.mjs` 是默认 e2e 入口：阶段一跑串行 project，阶段二以 `OMNI_POT_E2E_SKIP_BUILD=1` 复用 build 跑并行 project。本地迭代手动 `npx playwright test ...` 时也可设该变量跳过 `electron-vite build`。
 - 详细的实例生命周期、Page Object、E2E HTTP 端点见 `docs/test_user_e2e.md`。
