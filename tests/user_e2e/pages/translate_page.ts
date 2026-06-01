@@ -327,6 +327,10 @@ export class TranslatePage {
         return this.page.locator('[data-result-key]')
     }
 
+    collapseButtons(): Locator {
+        return this.page.getByTestId('result-collapse')
+    }
+
     resultAction(instanceKey: string, testId: string): Locator {
         return this.resultCard(instanceKey).getByTestId(testId)
     }
