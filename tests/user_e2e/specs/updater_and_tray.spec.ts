@@ -19,6 +19,7 @@ const REQUIRED_TRAY_ACTIONS = [
     'tray-action-ocr_recognize',
     'tray-action-screenshot_translate',
     'tray-action-clipboard_monitor',
+    'tray-action-auto_start',
     'tray-action-config',
     'tray-action-support_author',
     'tray-action-check_update',

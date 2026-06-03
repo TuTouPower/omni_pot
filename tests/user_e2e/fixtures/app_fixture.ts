@@ -80,6 +80,7 @@ export class AppFixture {
     }
 
     async firstWindow(timeout = app_window_timeout_ms): Promise<Page> {
+        await this.api.openWindow('translate')
         const page = await this.waitForWindow(/#translate/, timeout)
         if (this.init_script && !this.init_script_applied_to_first_window) {
             // The first window was created during app startup, before

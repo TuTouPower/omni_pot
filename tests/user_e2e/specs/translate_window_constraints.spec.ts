@@ -33,6 +33,7 @@ test.describe('@ui translate window constraints', () => {
         const min_required = 3 * 8 * 22
         const omni = await AppFixture.start({ config: single_service_config })
         try {
+            await omni.translate()
             expect(await max_translate_height(omni), '75vh max height must accommodate 3×8 body lines').toBeGreaterThanOrEqual(min_required)
         } finally {
             await omni.stop()
