@@ -35,6 +35,14 @@ const config_read_labels = [
   WindowLabel.TRAY,
   WindowLabel.UPDATER,
 ] as const
+
+const full_config_labels = new Set([
+  WindowLabel.CONFIG,
+  WindowLabel.TRANSLATE,
+  WindowLabel.DICT,
+  WindowLabel.RECOGNIZE,
+  WindowLabel.SCREENSHOT,
+])
 const config_write_labels = [
   WindowLabel.CONFIG,
   WindowLabel.WELCOME,
@@ -74,7 +82,7 @@ export function registerConfigHandlers(manager: WindowManager): void {
   ipcMain.handle('config:getAll', (event) => {
     const sender_label = assert_sender_label(manager, event, config_read_labels, 'config:getAll')
     const all_config = getAllConfig()
-    if (sender_label === WindowLabel.CONFIG) return all_config
+    if (full_config_labels.has(sender_label)) return all_config
     return sanitize_config_secrets(all_config)
   })
   ipcMain.handle('config:getUserDir', (event) => {
