@@ -96,6 +96,9 @@ async function http_post(port: number, path: string, body: unknown, api_token: s
 function spawn_app(http_port: number, user_data_dir: string, api_token: string): ChildProcess {
     const env: Record<string, string> = {
         ...process.env as Record<string, string>,
+        OMNI_POT_E2E: '1',
+        OMNI_POT_E2E_TOKEN: api_token,
+        OMNI_POT_E2E_REAL_RESTART: '1',
         OMNI_POT_SERVER_PORT: String(http_port),
         OMNI_POT_USER_DATA: user_data_dir,
         OMNI_POT_PRESET_CONFIG: JSON.stringify({
@@ -107,8 +110,6 @@ function spawn_app(http_port: number, user_data_dir: string, api_token: string):
         }),
     }
     delete env.ELECTRON_RUN_AS_NODE
-    delete env.OMNI_POT_E2E
-    delete env.OMNI_POT_E2E_TOKEN
 
     return spawn(ELECTRON_EXE, [MAIN_JS], { env, stdio: ['ignore', 'pipe', 'pipe'] })
 }

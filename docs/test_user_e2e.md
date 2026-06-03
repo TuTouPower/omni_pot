@@ -247,7 +247,7 @@ class TranslatePage {
 | `GET /e2e/window-state` | 查询窗口存在、可见、聚焦、置顶与 bounds 状态 |
 | `GET /e2e/window-display` | 查询指定窗口所在显示器工作区，用于当前显示器尺寸断言 |
 | `GET /e2e/primary-display` | 查询主显示器工作区，用于非窗口绑定的尺寸断言 |
-| `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `clipboard_monitor` / `config` / `restart` / `quit` / `tray_click` |
+| `POST /e2e/tray-action` | 触发托盘动作：`input_translate` / `dictionary` / `ocr_recognize` / `screenshot_translate` / `config` / `auto_start` / `clipboard_monitor` / `feedback` / `support_author` / `check_update` / `view_log` / `restart` / `quit` / `tray_click` / `show_tray` |
 | `GET /e2e/tray-menu` | 读取原生托盘菜单当前文案，用于验证界面语言切换后的托盘项本地化 |
 | `POST /e2e/mock-update` | 注入一个假的“有新版本”用于更新器测试 |
 
@@ -275,7 +275,7 @@ class TranslatePage {
 
 ### 5.1 app_lifecycle.spec.ts — 应用生命周期与窗口管理
 
-- 启动后创建 daemon（隐藏）+ 欢迎窗口或翻译窗口：`welcome_dismissed=false` 时打开 `#welcome`，为 true 时打开 `#translate`
+- 启动后创建 daemon（隐藏）+ 可选欢迎窗口：`welcome_dismissed=false` 时打开 `#welcome`，为 true 时不自动打开翻译窗口
 - `firstRun` 模式只标记首次运行完成，不额外自动打开设置窗口
 - 窗口复用：重复触发同一窗口 → focus 而非新建（窗口数不增）
 - 关闭所有可见窗口后应用进程仍存活（托盘常驻）
@@ -485,8 +485,8 @@ class TranslatePage {
 
 托盘：
 
-- 菜单项触发：Input Translate → 打开翻译窗口；Clipboard Monitor → 切换
-  `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口；Quit 在 E2E 安全分支返回成功且不结束测试进程
+- 菜单项触发：Translate → 打开翻译窗口；Clipboard Monitor → 切换
+  `clipboard_monitor` 并在复制文本后自动翻译；Settings → 打开设置窗口；Feedback / Support Author → 打开外部链接；Quit 在 E2E 安全分支返回成功且不结束测试进程
 - Restart 的进程级 E2E 覆盖见 §5.21 `restart.spec.ts`
 - 左键点击：`tray_click_event` 为 `show_config` / `show_translate` / `none` 时行为正确
 - 托盘弹窗渲染完整菜单项、分组分隔线、平台化快捷键文案，且底部菜单项不被裁剪
@@ -510,7 +510,7 @@ class TranslatePage {
 
 ### 5.21 restart.spec.ts — 重启进程生命周期
 
-- POST `/e2e/tray-action` `{ action: 'restart' }` → 原进程退出（exit code 0）、HTTP 端口关闭
+- POST `/e2e/tray-action` `{ action: 'restart' }` → 原进程退出（exit code 0）、HTTP 端口关闭；该 spec 使用独立 `OMNI_POT_E2E_REAL_RESTART=1` 覆盖真实重启分支，同时保留独立 userData / token 隔离
 - 新实例自动启动并监听同一端口（`spawn()` 方式绕过 `sandbox: true` 下 `app.relaunch()` 的已知问题）
 
 ---

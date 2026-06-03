@@ -39,14 +39,14 @@ export function initLog(userDataDir: string): void {
     if (!log.hooks.includes(redact_log_message)) log.hooks.push(redact_log_message)
 
     // Force Asia/Shanghai (UTC+8) timezone in log timestamps
-    log.transports.file.format = ({ message, data }: { message: { date?: Date; level: string; scope?: string }; data: unknown[] }) => {
-        const utcMs = (message?.date ?? new Date()).getTime()
+    log.transports.file.format = ({ message, data }) => {
+        const utcMs = (message.date ?? new Date()).getTime()
         const cst = new Date(utcMs + 8 * 3600000)
         const ts = cst.toISOString().replace('T', ' ').replace('Z', '')
-        const level = (message?.level || 'info').toUpperCase().padEnd(5)
-        const scope = message?.scope ? ` (${message.scope})` : ''
+        const level = message.level.toUpperCase().padEnd(5)
+        const scope = message.scope ? ` (${message.scope})` : ''
         const text = data.map(String).join(' ')
-        return `[${ts}] [${level}]${scope} ${text}`
+        return [`[${ts}] [${level}]${scope} ${text}`]
     }
 
     if (app.isPackaged) {

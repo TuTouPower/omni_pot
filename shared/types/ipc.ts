@@ -131,7 +131,7 @@ export interface ElectronAPI {
   tray: {
     show(): Promise<boolean>
     close(): Promise<void>
-    action(action: 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'auto_start' | 'config' | 'support_author' | 'check_update' | 'view_log' | 'tray_click' | 'show_tray' | 'restart' | 'quit'): Promise<boolean>
+    action(action: 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'config' | 'auto_start' | 'clipboard_monitor' | 'feedback' | 'support_author' | 'check_update' | 'view_log' | 'tray_click' | 'show_tray' | 'restart' | 'quit'): Promise<boolean>
     labels(): Promise<string[]>
     clipboardMonitoring(): Promise<boolean>
     autoStart(): Promise<boolean>

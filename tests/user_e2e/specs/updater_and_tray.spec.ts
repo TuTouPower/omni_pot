@@ -18,9 +18,10 @@ const REQUIRED_TRAY_ACTIONS = [
     'tray-action-dictionary',
     'tray-action-ocr_recognize',
     'tray-action-screenshot_translate',
-    'tray-action-clipboard_monitor',
-    'tray-action-auto_start',
     'tray-action-config',
+    'tray-action-auto_start',
+    'tray-action-clipboard_monitor',
+    'tray-action-feedback',
     'tray-action-support_author',
     'tray-action-check_update',
     'tray-action-view_log',
@@ -185,7 +186,10 @@ test.describe('@ui updater and tray', () => {
             await expect(popover).toBeVisible()
             await expect(tray_page.getByTestId('tray-action-input_translate')).toContainText('翻译')
             await expect(tray_page.getByTestId('tray-action-ocr_recognize')).toContainText('文字识别')
+            await expect(tray_page.getByTestId('tray-action-config')).toContainText('设置')
+            await expect(tray_page.getByTestId('tray-action-auto_start')).toContainText('开机自启')
             await expect(tray_page.getByTestId('tray-action-clipboard_monitor')).toContainText('剪贴板监听')
+            await expect(tray_page.getByTestId('tray-action-feedback')).toContainText('反馈')
             await expect(popover).toHaveCSS('background-color', 'rgb(255, 255, 255)')
             await expect(popover).not.toContainText('CommandOrControl')
 
@@ -197,7 +201,7 @@ test.describe('@ui updater and tray', () => {
             }
 
             const separator_count = await tray_page.locator('[data-testid="tray-separator"]').count()
-            expect(separator_count, '托盘菜单需有分组分隔线').toBeGreaterThanOrEqual(2)
+            expect(separator_count, '托盘菜单需有 3 处分组分隔线').toBe(3)
 
             const popover_box = await popover.boundingBox()
             const quit_box = await tray_page.getByTestId('tray-action-quit').boundingBox()
@@ -310,7 +314,7 @@ test.describe('@ui updater and tray', () => {
         }
     })
 
-    test('support_author tray action opens external link and closes popup', async () => {
+    test('feedback and support_author tray actions open external links and close popup', async () => {
         const omni = await AppFixture.start({ config: { ...TEST_CONFIG, app_language: 'zh_cn' } })
         try {
             await omni.api.trayAction('show_tray')
@@ -320,6 +324,11 @@ test.describe('@ui updater and tray', () => {
             await expect(support_item).toBeVisible()
             await expect(support_item).toContainText('支持作者')
             await expect(support_item).toHaveCSS('color', 'rgb(155, 89, 182)')
+
+            await omni.api.resetShellOpenExternal()
+            const feedback_result = await omni.api.trayAction('feedback')
+            expect(feedback_result.success).toBe(true)
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot_release/issues')
 
             await omni.api.resetShellOpenExternal()
             const result = await omni.api.trayAction('support_author')

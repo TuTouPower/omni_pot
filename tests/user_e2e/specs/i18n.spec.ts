@@ -11,8 +11,8 @@ const NATIVE_LANGUAGE_NAMES = {
     zh_cn: '简体中文',
 }
 
-const ZH_CN_TRAY_LABELS = ['翻译', '词典', '文字识别', '截图翻译', '剪贴板监听', '开机自启', '设置', '支持作者', '检查更新', '查看日志', '重启', '退出']
-const EN_TRAY_LABELS = ['Translate', 'Dictionary', 'Text Recognize', 'Screenshot Translate', 'Clipboard Monitor', 'Auto Start', 'Settings', 'Support Author', 'Check Updates', 'View Logs', 'Restart', 'Quit']
+const ZH_CN_TRAY_LABELS = ['翻译', '词典', '文字识别', '截图翻译', '设置', '开机自启', '剪贴板监听', '反馈', '支持作者', '检查更新', '查看日志', '重启', '退出']
+const EN_TRAY_LABELS = ['Translate', 'Dictionary', 'Text Recognize', 'Screenshot Translate', 'Settings', 'Auto Start', 'Clipboard Monitor', 'Feedback', 'Support Author', 'Check Updates', 'View Logs', 'Restart', 'Quit']
 
 const BASE_CONFIG = {
     check_update: false,
