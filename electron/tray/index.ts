@@ -25,7 +25,7 @@ let last_tray_menu_labels: string[] = []
 
 const log_tray = log.scope('tray')
 
-type TrayLabelKey = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'support_author' | 'check_update' | 'view_log' | 'restart' | 'quit'
+type TrayLabelKey = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'auto_start' | 'config' | 'support_author' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
   en: {
@@ -34,6 +34,7 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
     ocr_recognize: 'Text Recognize',
     screenshot_translate: 'Screenshot Translate',
     clipboard_monitor: 'Clipboard Monitor',
+    auto_start: 'Auto Start',
     config: 'Settings',
     support_author: 'Support Author',
     check_update: 'Check Updates',
@@ -47,6 +48,7 @@ const TRAY_LABELS: Record<'en' | 'zh_cn', Record<TrayLabelKey, string>> = {
     ocr_recognize: '文字识别',
     screenshot_translate: '截图翻译',
     clipboard_monitor: '剪贴板监听',
+    auto_start: '开机自启',
     config: '设置',
     support_author: '支持作者',
     check_update: '检查更新',
@@ -61,7 +63,7 @@ function get_tray_labels(): Record<TrayLabelKey, string> {
 }
 
 function tray_labels_to_array(labels: Record<TrayLabelKey, string>): string[] {
-  return [labels.input_translate, labels.dictionary, labels.ocr_recognize, labels.screenshot_translate, labels.clipboard_monitor, labels.config, labels.support_author, labels.check_update, labels.view_log, labels.restart, labels.quit]
+  return [labels.input_translate, labels.dictionary, labels.ocr_recognize, labels.screenshot_translate, labels.clipboard_monitor, labels.auto_start, labels.config, labels.support_author, labels.check_update, labels.view_log, labels.restart, labels.quit]
 }
 
 export function get_tray_menu_labels(): string[] {
@@ -166,6 +168,10 @@ export function is_tray_clipboard_monitoring(): boolean {
   return isClipboardMonitoring()
 }
 
+export function is_auto_start(): boolean {
+  return app.getLoginItemSettings().openAtLogin
+}
+
 export function trigger_tray_click(): boolean {
   const action = getConfig('tray_click_event') as string
   if (action === 'show_translate') {
@@ -210,6 +216,11 @@ export function trigger_tray_action(action: string): boolean {
         startClipboardMonitor(windowManager)
         setConfig('clipboard_monitor', true)
       }
+      rebuildMenu()
+      close_tray_popup()
+      return true
+    case 'auto_start':
+      app.setLoginItemSettings({ openAtLogin: !is_auto_start() })
       rebuildMenu()
       close_tray_popup()
       return true
@@ -286,6 +297,12 @@ function install_linux_fallback_menu(): void {
       type: 'checkbox',
       checked: isClipboardMonitoring(),
       click: () => { trigger_tray_action('clipboard_monitor') }
+    },
+    {
+      label: labels.auto_start,
+      type: 'checkbox',
+      checked: is_auto_start(),
+      click: () => { trigger_tray_action('auto_start') }
     },
     { type: 'separator' },
     { label: labels.config, click: () => { trigger_tray_action('config') } },

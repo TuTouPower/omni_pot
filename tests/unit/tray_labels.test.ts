@@ -15,6 +15,8 @@ vi.mock('electron', () => ({
         relaunch: vi.fn(),
         exit: vi.fn(),
         quit: vi.fn(),
+        getLoginItemSettings: vi.fn(() => ({ openAtLogin: false })),
+        setLoginItemSettings: vi.fn(),
     },
     Tray: vi.fn().mockImplementation(function () {
         return {
@@ -87,6 +89,7 @@ describe('tray visible strings', () => {
             'Text Recognize',
             'Screenshot Translate',
             'Clipboard Monitor',
+            'Auto Start',
             'Settings',
             'Support Author',
             'Check Updates',
@@ -107,6 +110,7 @@ describe('tray visible strings', () => {
             '文字识别',
             '截图翻译',
             '剪贴板监听',
+            '开机自启',
             '设置',
             '支持作者',
             '检查更新',

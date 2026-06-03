@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
 import { format_hotkey } from '../../utils/format_hotkey'
 
-type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'config' | 'support_author' | 'check_update' | 'view_log' | 'restart' | 'quit'
+type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'clipboard_monitor' | 'auto_start' | 'config' | 'support_author' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'input_translate', icon: 'Translate' },
@@ -10,6 +10,7 @@ const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'ocr_recognize', icon: 'Camera' },
     { action: 'screenshot_translate', icon: 'Image' },
     { action: 'clipboard_monitor', icon: 'Copy' },
+    { action: 'auto_start', icon: 'Power' },
     { action: 'config', icon: 'Settings' },
     { action: 'support_author', icon: 'Heart' },
     { action: 'check_update', icon: 'Cloud' },
@@ -23,15 +24,18 @@ export default function TrayWindow(): React.ReactElement {
     const [labels, setLabels] = useState<string[] | null>(null)
     const [shortcuts, setShortcuts] = useState<Record<string, string>>({})
     const [clipboardMonitoring, setClipboardMonitoring] = useState(false)
+    const [autoStart, setAutoStart] = useState(false)
 
     useEffect(() => {
         Promise.all([
             window.electronAPI.tray.labels(),
             window.electronAPI.tray.clipboardMonitoring(),
+            window.electronAPI.tray.autoStart(),
             window.electronAPI.config.getAll(),
-        ]).then(([next_labels, monitoring, config]) => {
+        ]).then(([next_labels, monitoring, auto_start, config]) => {
             setLabels(next_labels)
             setClipboardMonitoring(monitoring)
+            setAutoStart(auto_start)
             setShortcuts({
                 input_translate: config.hotkey_translate,
                 dictionary: config.hotkey_selection_dictionary,
@@ -49,12 +53,15 @@ export default function TrayWindow(): React.ReactElement {
         window.electronAPI.tray.popupReady(width, height).then(() => {
             window.electronAPI.ready('tray')
         }).catch(() => undefined)
-    }, [labels, shortcuts, clipboardMonitoring])
+    }, [labels, shortcuts, clipboardMonitoring, autoStart])
 
     const run_action = (action: TrayAction): void => {
         window.electronAPI.tray.action(action).then(() => {
             if (action === 'clipboard_monitor') {
                 return window.electronAPI.tray.clipboardMonitoring().then(setClipboardMonitoring)
+            }
+            if (action === 'auto_start') {
+                return window.electronAPI.tray.autoStart().then(setAutoStart)
             }
             return undefined
         }).catch(() => undefined)
@@ -73,9 +80,9 @@ export default function TrayWindow(): React.ReactElement {
                 </div>
                 {ACTIONS.map(({ action, icon }, index) => {
                     const Icon = Icons[icon]
-                    const active = action === 'clipboard_monitor' && clipboardMonitoring
+                    const active = (action === 'clipboard_monitor' && clipboardMonitoring) || (action === 'auto_start' && autoStart)
                     const isSupportAuthor = action === 'support_author'
-                    const separator = index === 4 || index === 5 || index === 9
+                    const separator = index === 4 || index === 5 || index === 10
                     return (
                         <React.Fragment key={action}>
                             {separator && <div data-testid="tray-separator" style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />}

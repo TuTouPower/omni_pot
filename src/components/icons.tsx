@@ -84,4 +84,5 @@ export const Icons = {
     Globe: (p: IconProps) => <Icon {...p} d={["M12 21a9 9 0 100-18 9 9 0 000 18z", "M3 12h18", "M12 3a14 14 0 010 18", "M12 3a14 14 0 000 18"]} />,
     Type: (p: IconProps) => <Icon {...p} d={["M4 7V5h16v2", "M9 5v14", "M15 5v14", "M7 19h4M13 19h4"]} />,
     Sliders: (p: IconProps) => <Icon {...p} d={["M4 6h10", "M18 6h2", "M4 12h4", "M12 12h8", "M4 18h12", "M18 18h2", "M16 4v4", "M10 10v4", "M16 16v4"]} />,
+    Power: (p: IconProps) => <Icon {...p} d={["M12 2v10", "M18.4 6.6a9 9 0 11-12.8 0"]} />,
 }

@@ -106,6 +106,7 @@ function add_config_api(api: PartialElectronAPI): void {
     action: (action) => ipcRenderer.invoke('tray:action', action),
     labels: () => ipcRenderer.invoke('tray:labels'),
     clipboardMonitoring: () => ipcRenderer.invoke('tray:clipboard-monitoring'),
+    autoStart: () => ipcRenderer.invoke('tray:auto-start'),
     popupReady: (width, height) => ipcRenderer.invoke('tray:popup-ready', width, height)
   }
   api.text = {
@@ -253,6 +254,7 @@ function add_tray_api(api: PartialElectronAPI): void {
     action: (action) => ipcRenderer.invoke('tray:action', action),
     labels: () => ipcRenderer.invoke('tray:labels'),
     clipboardMonitoring: () => ipcRenderer.invoke('tray:clipboard-monitoring'),
+    autoStart: () => ipcRenderer.invoke('tray:auto-start'),
     popupReady: (width, height) => ipcRenderer.invoke('tray:popup-ready', width, height)
   }
 }
