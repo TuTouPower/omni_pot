@@ -47,7 +47,7 @@ export class DictHeightController {
     report_content_height(content_height: number): void {
         if (this.disposed || this.win.isDestroyed() || !Number.isFinite(content_height) || content_height < 0) return
         const rounded = Math.round(content_height)
-        if (Math.abs(rounded - this.last_reported_h) < DICT_HEIGHT_REPORT_DEBOUNCE_PX) return
+        if (Math.abs(rounded - this.last_reported_h) <= DICT_HEIGHT_REPORT_DEBOUNCE_PX) return
         this.last_reported_h = rounded
         const work_area_h = this.current_display().workArea.height
         const target_h = compute_dict_target_height(rounded, work_area_h, this.min_height)

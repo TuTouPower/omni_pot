@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Titlebar } from '../../components/titlebar'
 import { SourceArea } from './source_area'
@@ -375,7 +375,7 @@ export default function TranslateWindow(): React.ReactElement {
         window.electronAPI.ready('translate')
     }, [])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) })
         }

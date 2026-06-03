@@ -12,6 +12,7 @@ function is_target_closed_error(error: unknown): boolean {
 
 async function press_key_and_allow_close(page: Page, key: string): Promise<void> {
     try {
+        await page.bringToFront()
         await page.keyboard.press(key)
     } catch (error) {
         if (!is_target_closed_error(error)) throw error

@@ -103,7 +103,7 @@ describe('DictHeightController', () => {
         const c = new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
         c.report_content_height(500)
         set_bounds.mockClear()
-        c.report_content_height(500.4)
+        c.report_content_height(501)
         expect(set_bounds).not.toHaveBeenCalled()
     })
 
