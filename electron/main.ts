@@ -219,9 +219,7 @@ if (!gotLock) {
       frame: false
     })
 
-    if (getConfig('welcome_dismissed')) {
-      manager.createWindow(get_translate_window_options())
-    } else {
+    if (!getConfig('welcome_dismissed')) {
       manager.createWindow(get_welcome_window_options())
     }
 
