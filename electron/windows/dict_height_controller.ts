@@ -2,9 +2,9 @@ import { screen, type BrowserWindow, type Display } from 'electron'
 import { apply_locked_window_size, compute_locked_height } from './height_controller_common'
 
 export const DICT_MAX_HEIGHT_RATIO = 0.75
-export const DICT_HEIGHT_REPORT_DEBOUNCE_PX = 1
-export const DICT_SCREEN_MOVE_DEBOUNCE_MS = 100
-export const DICT_MAX_W_SENTINEL = 100000
+const DICT_HEIGHT_REPORT_DEBOUNCE_PX = 1
+const DICT_SCREEN_MOVE_DEBOUNCE_MS = 100
+const DICT_MAX_W_SENTINEL = 100000
 
 export function compute_dict_target_height(
     content_height: number,

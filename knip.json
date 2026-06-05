@@ -30,7 +30,7 @@
     "ws"
   ],
   "rules": {
-    "exports": "off",
-    "types": "off"
+    "exports": "warn",
+    "types": "warn"
   }
 }

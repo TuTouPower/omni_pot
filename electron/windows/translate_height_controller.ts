@@ -6,10 +6,10 @@ const dbg = log.scope('debug-hlc')
 
 export const TRANSLATE_MIN_WIDTH_FALLBACK = 280
 export const TRANSLATE_MAX_HEIGHT_RATIO = 0.75
-export const TRANSLATE_HEIGHT_REPORT_DEBOUNCE_PX = 1
-export const TRANSLATE_WIDTH_REPORT_DEBOUNCE_PX = 1
-export const TRANSLATE_SCREEN_MOVE_DEBOUNCE_MS = 100
-export const TRANSLATE_MAX_W_SENTINEL = 100000
+const TRANSLATE_HEIGHT_REPORT_DEBOUNCE_PX = 1
+const TRANSLATE_WIDTH_REPORT_DEBOUNCE_PX = 1
+const TRANSLATE_SCREEN_MOVE_DEBOUNCE_MS = 100
+const TRANSLATE_MAX_W_SENTINEL = 100000
 
 export function compute_target_height(
     content_height: number,

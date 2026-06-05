@@ -6,18 +6,18 @@ export interface ServiceConfig {
   enable?: boolean
 }
 
-export interface DictPronunciation {
+interface DictPronunciation {
   region: string
   phonetic: string
   audioUrl?: string
 }
 
-export interface DictDefinition {
+interface DictDefinition {
   partOfSpeech: string
   meanings: string[]
 }
 
-export interface DictExample {
+interface DictExample {
   source: string
   target: string
 }
@@ -46,12 +46,6 @@ export interface TranslateService {
     config: ServiceConfig
   ): AsyncGenerator<string, void, unknown>
   testConfig(config: ServiceConfig): Promise<boolean>
-}
-
-export interface ServiceInstance {
-  key: string        // e.g. 'bing@abc123'
-  serviceKey: string // e.g. 'bing'
-  config: ServiceConfig
 }
 
 export function createServiceInstanceKey(serviceKey: string): string {

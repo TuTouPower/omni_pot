@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const SVC_META: Partial<Record<string, { name: string; mono: string; tone: string }>> = {
+const SVC_META: Partial<Record<string, { name: string; mono: string; tone: string }>> = {
     deepl: { name: 'DeepL', mono: 'DL', tone: 'oklch(70% 0.10 240)' },
     bing: { name: 'Bing', mono: 'BG', tone: 'oklch(65% 0.10 200)' },
     google: { name: 'Google', mono: 'GG', tone: 'oklch(68% 0.10 130)' },

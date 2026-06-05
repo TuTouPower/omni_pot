@@ -37,7 +37,7 @@ import {
 } from './e2e_handlers'
 
 export { is_config_value_allowed }
-export { get_public_config_from_config, type PublicConfig }
+export { get_public_config_from_config }
 
 const log_server = log.scope('server')
 

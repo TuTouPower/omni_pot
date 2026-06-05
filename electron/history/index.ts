@@ -38,16 +38,6 @@ function get_db(): Database.Database {
     return db
 }
 
-/**
- * Reset database connection (used by backup restore)
- */
-export function reset_db(): void {
-    if (db) {
-        db.close()
-        db = undefined
-    }
-}
-
 export function add_history(record: Omit<HistoryRecord, 'id' | 'created_at'>): void {
     get_db().prepare(
         'INSERT INTO history (service_key, source_text, source_lang, target_text, target_lang) VALUES (?, ?, ?, ?, ?)'

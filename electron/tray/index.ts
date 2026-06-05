@@ -174,7 +174,7 @@ export function is_auto_start(): boolean {
   return app.getLoginItemSettings().openAtLogin
 }
 
-export function trigger_tray_click(): boolean {
+function trigger_tray_click(): boolean {
   const action = getConfig('tray_click_event') as string
   if (action === 'show_translate') {
     open_translate_window()
