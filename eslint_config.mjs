@@ -11,7 +11,7 @@ export default tseslint.config(
             'release/**',
             '.claude/**',
             'playwright-report/**',
-            'tests/user_e2e/test-results/**',
+            'tests/e2e/test-results/**',
             'data/**',
             'public/**',
             'docs/**'
@@ -52,7 +52,7 @@ export default tseslint.config(
         }
     },
     {
-        files: ['tests/user_e2e/fixtures/test.ts'],
+        files: ['tests/e2e/fixtures/test.ts'],
         rules: {
             'react-hooks/rules-of-hooks': 'off'
         }
