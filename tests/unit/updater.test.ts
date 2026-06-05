@@ -74,7 +74,7 @@ describe('updater security helpers', () => {
     })
 
     it('waits for failed download cleanup before trying fallback sources', async () => {
-        const source = await readFile(join(process.cwd(), 'electron/updater/index.ts'), 'utf8')
+        const source = await readFile(join(process.cwd(), 'electron/updater/download.ts'), 'utf8')
 
         expect(source).not.toContain('rm(output_path, { force: true }).catch(() => {})')
     })
