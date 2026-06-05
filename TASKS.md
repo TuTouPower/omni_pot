@@ -446,12 +446,12 @@
   - **修复方向**：对需公网的服务限制 `https:`；对本地服务只允许 `localhost` / `127.0.0.1`；导入配置时提示或拒绝危险 URL。
   - **备注**：Gemini key 暴露已修复（commit `67be039`，改用 header）。剩余为 URL 协议/主机约束，需逐服务评估（自定义 URL 是用户功能，过度限制会破坏 Ollama 等本地服务）。
 
-- [ ] **命名规范历史债需复核是否真正收口**
+- [x] **命名规范历史债需复核是否真正收口**
   - **位置**：`shared/types/service.ts:5/12/16/53`、`shared/types/ipc.ts:82/85/92/119/136-137`、`electron/preload.ts` 对应 API。
   - **问题**：仍存在 `instanceName`、`audioUrl`、`partOfSpeech`、`serviceKey`、`pageSize`、`sourceText`、`downloadAndInstall`、`autoStart` 等 camelCase；`TASKS.md` 旧项已标完成。
   - **影响**：需区分 ecosystem API / React props 例外与”IPC payload、持久化 config、内部纯数据字段” snake_case 要求；避免误把已允许的边界当缺陷，也避免真实 payload 混用继续扩散。
   - **修复方向**：逐项分类：允许的 TypeScript API 保留；真实 IPC payload/config 字段改 snake_case；不做全仓批量 rename。
-  - **备注**：需逐项分类审查，涉及 shared/types、preload、IPC handler 跨多文件。标记为需独立分类任务。
+  - **状态**：已审查并修复（2026-06-06，commit `1e06a83`）。6 项改 snake_case（instanceName、audioUrl、partOfSpeech、pageSize、sourceText/targetText、serviceKey 参数）；4 项保留 camelCase（downloadAndInstall、autoStart、clipboardMonitoring — Electron IPC 方法名；testConfig/translateStream — TS 接口方法）。
 
 ### Low
 
@@ -469,11 +469,12 @@
   - **修复方向**：移除通用 `file:` allow；新增专门 `open_local_path` handler，只允许日志/备份等受控目录。
   - **状态**：已修复（2026-06-06，commit `67be039`）。已移除通用 `file:` allow。
 
-- [ ] **`TASKS.md` 旧命名项可能过早标完成**
+- [x] **`TASKS.md` 旧命名项可能过早标完成**
   - **位置**：`TASKS.md:195-200`。
-  - **问题**：旧项“`shared/types/ipc.ts` 命名一致性”已勾选，但审阅仍发现部分命名边界待复核。
+  - **问题**：旧项”`shared/types/ipc.ts` 命名一致性”已勾选，但审阅仍发现部分命名边界待复核。
   - **影响**：任务状态可能误导后续审阅。
-  - **修复方向**：完成 mid“命名规范历史债复核”后，再决定保留、拆分或归档旧项。
+  - **修复方向**：完成 mid”命名规范历史债复核”后，再决定保留、拆分或归档旧项。
+  - **状态**：已随命名审查完成（2026-06-06，commit `1e06a83`）。旧项确认无遗漏。
 
 ---
 
