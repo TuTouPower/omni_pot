@@ -1,7 +1,7 @@
 import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { SortableDictCard } from '../../../src/windows/dict/index'
+import { SortableDictCard } from '../../../src/windows/dict/dict_card'
 import type { DictResult } from '@shared/types/service'
 
 vi.mock('react-i18next', () => ({
