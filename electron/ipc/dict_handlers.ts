@@ -13,7 +13,7 @@ import { assert_sender_label } from './sender_validation'
 interface DictResult {
     type: 'dict'
     pronunciations: Array<{ region: string; phonetic: string }>
-    definitions: Array<{ partOfSpeech: string; meanings: string[] }>
+    definitions: Array<{ part_of_speech: string; meanings: string[] }>
     examples: Array<{ source: string; target: string }>
 }
 
@@ -48,7 +48,7 @@ function to_dict_result(entries: DictLookupResult[], is_en_to_zh: boolean): Dict
     return {
         type: 'dict',
         pronunciations,
-        definitions: [{ partOfSpeech: is_en_to_zh ? 'zh' : 'en', meanings }],
+        definitions: [{ part_of_speech: is_en_to_zh ? 'zh' : 'en', meanings }],
         examples: []
     }
 }

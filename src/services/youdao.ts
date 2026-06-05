@@ -124,9 +124,9 @@ export const youdaoService: TranslateService = {
                 .map((exp) => {
                     const match = exp.match(/^([a-z]+\.)\s*(.*)/)
                     if (match) {
-                        return { partOfSpeech: regex_capture(match, 1), meanings: [regex_capture(match, 2)] }
+                        return { part_of_speech: regex_capture(match, 1), meanings: [regex_capture(match, 2)] }
                     }
-                    return { partOfSpeech: '', meanings: [exp] }
+                    return { part_of_speech: '', meanings: [exp] }
                 })
 
             if (pronunciations.length > 0 || definitions.length > 0) {

@@ -79,10 +79,10 @@ export interface ElectronAPI {
   }
   history: {
     add(record: Omit<HistoryRecord, 'id' | 'created_at'>): Promise<void>
-    list(page: number, pageSize: number, filters?: { search?: string; service_key?: string; days?: number }): Promise<HistoryRecord[]>
+    list(page: number, page_size: number, filters?: { search?: string; service_key?: string; days?: number }): Promise<HistoryRecord[]>
     count(filters?: { search?: string; service_key?: string; days?: number }): Promise<number>
     service_keys(): Promise<string[]>
-    update(id: number, sourceText: string, targetText: string): Promise<void>
+    update(id: number, source_text: string, target_text: string): Promise<void>
     delete(id: number): Promise<void>
     clear(): Promise<void>
   }

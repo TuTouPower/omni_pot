@@ -45,7 +45,7 @@ export default function ServiceSettings(): React.ReactElement {
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
     const getInstanceName = (instanceKey: string): string => {
-        const customName = get_service_config(serviceInstances, instanceKey).instanceName
+        const customName = get_service_config(serviceInstances, instanceKey).instance_name
         if (typeof customName === 'string' && customName.trim()) return customName
         const svcKey = getServiceKey(instanceKey)
         const svc = registry.get(svcKey)
@@ -131,7 +131,7 @@ export default function ServiceSettings(): React.ReactElement {
         editing_key_ref.current = instanceKey
         edit_test_request_ref.current += 1
         setEditingKey(instanceKey)
-        setEditName(typeof config.instanceName === 'string' ? config.instanceName : '')
+        setEditName(typeof config.instance_name === 'string' ? config.instance_name : '')
         setEditConfigText(visible_config_text(config))
         setEditStatus('')
     }
@@ -164,7 +164,7 @@ export default function ServiceSettings(): React.ReactElement {
             return {
                 ...parsed,
                 ...(typeof currentConfig.enable === 'boolean' ? { enable: currentConfig.enable } : {}),
-                ...(name ? { instanceName: name } : {}),
+                ...(name ? { instance_name: name } : {}),
             }
         } catch {
             return null

@@ -84,10 +84,10 @@ function add_config_api(api: PartialElectronAPI): void {
   }
   api.history = {
     add: (record) => ipcRenderer.invoke('history:add', record),
-    list: (page, pageSize, filters) => ipcRenderer.invoke('history:list', page, pageSize, filters),
+    list: (page, page_size, filters) => ipcRenderer.invoke('history:list', page, page_size, filters),
     count: (filters) => ipcRenderer.invoke('history:count', filters),
     service_keys: () => ipcRenderer.invoke('history:service-keys'),
-    update: (id, sourceText, targetText) => ipcRenderer.invoke('history:update', id, sourceText, targetText),
+    update: (id, source_text, target_text) => ipcRenderer.invoke('history:update', id, source_text, target_text),
     delete: (id) => ipcRenderer.invoke('history:delete', id),
     clear: () => ipcRenderer.invoke('history:clear')
   }

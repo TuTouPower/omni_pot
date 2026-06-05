@@ -14,6 +14,6 @@ export function get_service_config(service_instances: ServiceInstancesMap, insta
 
 export function dict_result_to_text(result: DictResult): string {
     return result.definitions
-        .map((d) => `${d.partOfSpeech} ${d.meanings.join('; ')}`)
+        .map((d) => `${d.part_of_speech} ${d.meanings.join('; ')}`)
         .join('\n')
 }

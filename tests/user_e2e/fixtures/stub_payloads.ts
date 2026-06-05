@@ -1,5 +1,5 @@
 export interface CambridgeDefinitionPayload {
-    partOfSpeech: string
+    part_of_speech: string
     definition: string
     example?: string
     phonetic?: string
@@ -9,7 +9,7 @@ export interface CambridgeDefinitionPayload {
 export type CambridgePayloadByWord = Partial<Record<string, CambridgeDefinitionPayload[]>>
 
 export const cambridge_dict_hello_payload: CambridgeDefinitionPayload[] = [{
-    partOfSpeech: 'noun',
+    part_of_speech: 'noun',
     definition: 'A greeting or expression of goodwill.',
     example: 'She said hello to everyone in the room.',
     phonetic: 'həˈləʊ',
@@ -17,13 +17,13 @@ export const cambridge_dict_hello_payload: CambridgeDefinitionPayload[] = [{
 }]
 
 export const cambridge_dict_run_payload: CambridgeDefinitionPayload[] = [
-    { partOfSpeech: 'verb', definition: 'Move at a speed faster than a walk.', phonetic: 'rʌn' },
-    { partOfSpeech: 'verb', definition: 'Manage or operate something.' },
-    { partOfSpeech: 'noun', definition: 'An act or spell of running.' },
+    { part_of_speech: 'verb', definition: 'Move at a speed faster than a walk.', phonetic: 'rʌn' },
+    { part_of_speech: 'verb', definition: 'Manage or operate something.' },
+    { part_of_speech: 'noun', definition: 'An act or spell of running.' },
 ]
 
 export const cambridge_dict_reconcile_payload: CambridgeDefinitionPayload[] = [{
-    partOfSpeech: 'verb',
+    part_of_speech: 'verb',
     definition: 'Restore friendly relations between people or groups.',
     phonetic: 'ˈrekənsaɪl',
 }]
@@ -59,7 +59,7 @@ export function build_cambridge_dict_init_script(payload_by_word: CambridgePaylo
         const example = entry.example ? '<div class="examp"><span class="eg">' + escape_html(entry.example) + '</span></div>' : ''
         return '<div class="pr entry-body__el">'
             + pron
-            + '<span class="posgram">' + escape_html(entry.partOfSpeech) + '</span>'
+            + '<span class="posgram">' + escape_html(entry.part_of_speech) + '</span>'
             + '<div><div><div class="def-block ddef_block ">'
             + '<span class="def ddef_d db">' + escape_html(entry.definition) + '</span>'
             + example

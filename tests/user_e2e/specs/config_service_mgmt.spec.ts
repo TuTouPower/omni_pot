@@ -220,7 +220,7 @@ test.describe('@ui config service management', () => {
             await expect(config.serviceEditModal()).toHaveCount(0)
             await expect(config.serviceItem('mymemory@default')).toContainText('MyMemory E2E')
             await expect_service_config(omni, 'mymemory@default', {
-                instanceName: 'MyMemory E2E',
+                instance_name: 'MyMemory E2E',
             })
         } finally {
             await omni.stop()

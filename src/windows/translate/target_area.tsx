@@ -27,7 +27,7 @@ interface TargetAreaProps {
 function result_to_text(result: string | DictResult | null | undefined): string {
     if (typeof result === 'string') return result
     if (!result) return ''
-    return result.definitions.map((d) => `${d.partOfSpeech} ${d.meanings.join('; ')}`).join('\n')
+    return result.definitions.map((d) => `${d.part_of_speech} ${d.meanings.join('; ')}`).join('\n')
 }
 
 interface SortableCardProps {
@@ -158,7 +158,7 @@ function DictResultInline({ result }: { result: DictResult }): React.ReactElemen
             )}
             {result.definitions.map((def, i) => (
                 <div key={i} style={{ marginBottom: 6 }}>
-                    <span className="chip plain mono" style={{ fontSize: 10, marginRight: 6 }}>{def.partOfSpeech}</span>
+                    <span className="chip plain mono" style={{ fontSize: 10, marginRight: 6 }}>{def.part_of_speech}</span>
                     {def.meanings.join('; ')}
                 </div>
             ))}

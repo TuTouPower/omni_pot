@@ -98,7 +98,7 @@ export const cambridgeDictService: TranslateService = {
                         pronunciations.push({
                             region: regex_capture(region_match, 1).trim(),
                             phonetic: regex_capture(symbol_match, 1).trim(),
-                            audioUrl: audio_url
+                            audio_url: audio_url
                         })
                         if (pronunciations.length >= 2) break
                     }
@@ -137,7 +137,7 @@ export const cambridgeDictService: TranslateService = {
                     }
 
                     definitions.push({
-                        partOfSpeech: part_of_speech || eng_def,
+                        part_of_speech: part_of_speech || eng_def,
                         meanings
                     })
                 }

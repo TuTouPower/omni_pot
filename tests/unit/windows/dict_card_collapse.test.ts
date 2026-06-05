@@ -46,7 +46,7 @@ function make_result(): DictResult {
         type: 'dict',
         pronunciations: [],
         definitions: [
-            { partOfSpeech: 'noun', meanings: ['面条 (noodle)'] },
+            { part_of_speech: 'noun', meanings: ['面条 (noodle)'] },
         ],
         examples: [],
     }

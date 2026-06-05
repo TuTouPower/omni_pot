@@ -108,6 +108,17 @@ export function initConfigStore(): void {
     }
     const service_instances = data.service_instances as Partial<typeof DEFAULT_SERVICE_INSTANCES>
 
+    // Migrate: rename instanceName → instance_name in service configs
+    for (const inst of Object.values(service_instances)) {
+        if (!inst?.config) continue
+        const cfg = inst.config as Record<string, unknown>
+        if (typeof cfg['instanceName'] === 'string' && cfg['instance_name'] === undefined) {
+            cfg['instance_name'] = cfg['instanceName']
+            delete cfg['instanceName']
+            saveToDisk()
+        }
+    }
+
     // Migrate: clear stale DeepL config that pointed to official API with empty key
     const deeplInst = service_instances['deepl@default']
     if (deeplInst && (deeplInst.config as Record<string, unknown>).type === 'free'

@@ -104,7 +104,7 @@ describe('server security helpers', () => {
                     serviceKey: 'secret',
                     config: {
                         enable: true,
-                        instanceName: 'Secret Service',
+                        instance_name: 'Secret Service',
                         apiKey: 'api-key',
                         endpoint: 'https://api.example.com',
                     },
@@ -124,7 +124,7 @@ describe('server security helpers', () => {
         expect(public_instance.serviceKey).toBe('secret')
         expect(public_instance.config).toEqual({
             enable: true,
-            instanceName: 'Secret Service',
+            instance_name: 'Secret Service',
         })
         expect(public_instance.config).not.toHaveProperty('apiKey')
         expect(public_instance.config).not.toHaveProperty('endpoint')
@@ -138,7 +138,7 @@ describe('server security helpers', () => {
         expect(is_config_value_allowed('service_instances', {
             'bing@default': {
                 serviceKey: 'bing',
-                config: { enable: true, instanceName: 'Bing' },
+                config: { enable: true, instance_name: 'Bing' },
             },
         })).toBe(true)
     })

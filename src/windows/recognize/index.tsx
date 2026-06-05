@@ -197,7 +197,7 @@ export default function RecognizeWindow(): React.ReactElement {
             } else {
                 const result = await service.translate(text, effectiveSource, effectiveTargetLangLocal, instanceConfig)
                 if (ocrRequestIdRef.current !== requestId) return
-                const translated = typeof result === 'string' ? result : result.definitions.map((d) => `${d.partOfSpeech ? `[${d.partOfSpeech}] ` : ''}${d.meanings.join('; ')}`).join('\n')
+                const translated = typeof result === 'string' ? result : result.definitions.map((d) => `${d.part_of_speech ? `[${d.part_of_speech}] ` : ''}${d.meanings.join('; ')}`).join('\n')
                 setTranslatedText(translated)
             }
         } catch {

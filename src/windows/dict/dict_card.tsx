@@ -83,12 +83,12 @@ export function SortableDictCard({ instanceKey, result, isLoading, collapsed, on
                                     <span key={i} data-testid="dict-pronunciation" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                         {p.region && <span className="hint" style={{ fontSize: 11 }}>{p.region}</span>}
                                         <span className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>{p.phonetic}</span>
-                                        {p.audioUrl && (
+                                        {p.audio_url && (
                                             <button
                                                 className="ic-btn"
                                                 data-testid="dict-pron-audio-btn"
                                                 title={t('result.tts', { defaultValue: '朗读' })}
-                                                onClick={() => { const a = new Audio(p.audioUrl); a.play().catch(() => undefined); }}
+                                                onClick={() => { const a = new Audio(p.audio_url); a.play().catch(() => undefined); }}
                                                 style={{ padding: 2 }}
                                             >
                                                 <Icons.Volume size={12} />
@@ -106,7 +106,7 @@ export function SortableDictCard({ instanceKey, result, isLoading, collapsed, on
                                     (() => {
                                         const groups = new Map<string, typeof result.definitions>()
                                         for (const def of result.definitions) {
-                                            const key = def.partOfSpeech || ''
+                                            const key = def.part_of_speech || ''
                                             let defs = groups.get(key)
                                             if (!defs) {
                                                 defs = []

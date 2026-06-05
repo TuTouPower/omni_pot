@@ -61,8 +61,8 @@ describe('dictionary pronunciation audio', () => {
         vi.stubGlobal('Audio', MockAudio)
         const result: DictResult = {
             type: 'dict',
-            pronunciations: [{ region: 'UK', phonetic: '/test/', audioUrl: 'https://dictionary.cambridge.org/media/test.mp3' }],
-            definitions: [{ partOfSpeech: 'noun', meanings: ['test meaning'] }],
+            pronunciations: [{ region: 'UK', phonetic: '/test/', audio_url: 'https://dictionary.cambridge.org/media/test.mp3' }],
+            definitions: [{ part_of_speech: 'noun', meanings: ['test meaning'] }],
             examples: [],
         }
 

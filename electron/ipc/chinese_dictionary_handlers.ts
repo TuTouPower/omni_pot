@@ -28,7 +28,7 @@ function to_dict_result_word(row: { word: string; pinyin: string; explanation: s
     return {
         type: 'dict',
         pronunciations: [{ region: '普通话', phonetic: row.pinyin }],
-        definitions: [{ partOfSpeech: '', meanings: [row.explanation] }],
+        definitions: [{ part_of_speech: '', meanings: [row.explanation] }],
         examples: [],
     }
 }
@@ -55,7 +55,7 @@ function to_dict_result_char(row: {
     const definitions: DictResult['definitions'] = []
     for (const [, items] of grouped) {
         definitions.push({
-            partOfSpeech: items.map(i => i.speech).filter(Boolean).join('、'),
+            part_of_speech: items.map(i => i.speech).filter(Boolean).join('、'),
             meanings: items.map(i => i.content),
         })
     }
@@ -99,7 +99,7 @@ function to_dict_result_idiom(row: {
     return {
         type: 'dict',
         pronunciations: [{ region: '普通话', phonetic: row.pinyin }],
-        definitions: [{ partOfSpeech: '成语', meanings: [row.explanation] }],
+        definitions: [{ part_of_speech: '成语', meanings: [row.explanation] }],
         examples,
         // FUTURE: extend DictResult with idiom_meta?: { source, similar, opposite }
     }

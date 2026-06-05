@@ -4,7 +4,7 @@ export type PublicConfig = Partial<Omit<AppConfig, 'service_instances' | 'server
     service_instances: Record<string, { serviceKey: string; config: Record<string, unknown> }>
 }
 
-const PUBLIC_SERVICE_CONFIG_KEYS = new Set(['enable', 'instanceName'])
+const PUBLIC_SERVICE_CONFIG_KEYS = new Set(['enable', 'instance_name'])
 const PUBLIC_CONFIG_KEYS: Array<keyof Omit<AppConfig, 'service_instances' | 'server_api_token'>> = [
     'app_language',
     'app_theme',

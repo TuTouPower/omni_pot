@@ -29,9 +29,9 @@ test.describe('@ui external HTTP API', () => {
             webdav_password: 'webdav-secret',
             service_instances: {
                 'bing@default': { serviceKey: 'bing', config: {} },
-                'mymemory@default': { serviceKey: 'mymemory', config: { enable: true, instanceName: 'MyMemory E2E', api_key: 'mymemory-secret', custom_url: 'http://127.0.0.1:1' } },
+                'mymemory@default': { serviceKey: 'mymemory', config: { enable: true, instance_name: 'MyMemory E2E', api_key: 'mymemory-secret', custom_url: 'http://127.0.0.1:1' } },
                 'tesseract@default': { serviceKey: 'tesseract', config: {} },
-                'youdao@default': { serviceKey: 'youdao', config: { enable: true, appkey: 'youdao-appkey', key: 'youdao-secret', endpoint: 'https://api.example.com', instanceName: 'Youdao E2E' } },
+                'youdao@default': { serviceKey: 'youdao', config: { enable: true, appkey: 'youdao-appkey', key: 'youdao-secret', endpoint: 'https://api.example.com', instance_name: 'Youdao E2E' } },
             },
         })
 
@@ -51,9 +51,9 @@ test.describe('@ui external HTTP API', () => {
         expect(config).not.toHaveProperty('webdav_password')
         expect(service_instances).toMatchObject({
             'bing@default': { serviceKey: 'bing', config: {} },
-            'mymemory@default': { serviceKey: 'mymemory', config: { enable: true, instanceName: 'MyMemory E2E' } },
+            'mymemory@default': { serviceKey: 'mymemory', config: { enable: true, instance_name: 'MyMemory E2E' } },
             'tesseract@default': { serviceKey: 'tesseract', config: {} },
-            'youdao@default': { serviceKey: 'youdao', config: { enable: true, instanceName: 'Youdao E2E' } },
+            'youdao@default': { serviceKey: 'youdao', config: { enable: true, instance_name: 'Youdao E2E' } },
         })
         expect(service_instances['mymemory@default'].config).not.toHaveProperty('api_key')
         expect(service_instances['mymemory@default'].config).not.toHaveProperty('custom_url')

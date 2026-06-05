@@ -2,18 +2,18 @@ import type { LanguageCode } from './language'
 
 export interface ServiceConfig {
   [key: string]: string | number | boolean | undefined
-  instanceName?: string
+  instance_name?: string
   enable?: boolean
 }
 
 interface DictPronunciation {
   region: string
   phonetic: string
-  audioUrl?: string
+  audio_url?: string
 }
 
 interface DictDefinition {
-  partOfSpeech: string
+  part_of_speech: string
   meanings: string[]
 }
 
@@ -48,11 +48,11 @@ export interface TranslateService {
   testConfig(config: ServiceConfig): Promise<boolean>
 }
 
-export function createServiceInstanceKey(serviceKey: string): string {
+export function createServiceInstanceKey(service_key: string): string {
   const id = Math.random().toString(36).substring(2, 10)
-  return `${serviceKey}@${id}`
+  return `${service_key}@${id}`
 }
 
-export function getServiceKey(instanceKey: string): string {
-  return instanceKey.split('@')[0] ?? instanceKey
+export function getServiceKey(instance_key: string): string {
+  return instance_key.split('@')[0] ?? instance_key
 }

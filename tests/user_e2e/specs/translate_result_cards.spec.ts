@@ -212,8 +212,8 @@ test.describe('@ui translate result cards', () => {
                 dynamic_translate: false,
                 translate_service_list: ['mymemory@e2e_a', 'mymemory@e2e_b'],
                 service_instances: {
-                    'mymemory@e2e_a': { serviceKey: 'mymemory', config: { instanceName: 'MyMemory A' } },
-                    'mymemory@e2e_b': { serviceKey: 'mymemory', config: { instanceName: 'MyMemory B' } },
+                    'mymemory@e2e_a': { serviceKey: 'mymemory', config: { instance_name: 'MyMemory A' } },
+                    'mymemory@e2e_b': { serviceKey: 'mymemory', config: { instance_name: 'MyMemory B' } },
                 },
             },
         })
@@ -251,9 +251,9 @@ test.describe('@ui translate result cards', () => {
                 dynamic_translate: false,
                 translate_service_list: ['mymemory@e2e_a', 'mymemory@e2e_disabled', 'mymemory@e2e_b'],
                 service_instances: {
-                    'mymemory@e2e_a': { serviceKey: 'mymemory', config: { instanceName: 'MyMemory A' } },
-                    'mymemory@e2e_disabled': { serviceKey: 'mymemory', config: { enable: false, instanceName: 'MyMemory Disabled' } },
-                    'mymemory@e2e_b': { serviceKey: 'mymemory', config: { instanceName: 'MyMemory B' } },
+                    'mymemory@e2e_a': { serviceKey: 'mymemory', config: { instance_name: 'MyMemory A' } },
+                    'mymemory@e2e_disabled': { serviceKey: 'mymemory', config: { enable: false, instance_name: 'MyMemory Disabled' } },
+                    'mymemory@e2e_b': { serviceKey: 'mymemory', config: { instance_name: 'MyMemory B' } },
                 },
             },
         })

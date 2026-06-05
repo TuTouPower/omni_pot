@@ -352,8 +352,8 @@ export class ConfigPage {
         await this.serviceEdit(instanceKey).click()
     }
 
-    async fillServiceEditor(instanceName: string, configJson: string): Promise<void> {
-        await this.serviceEditName().fill(instanceName)
+    async fillServiceEditor(instance_name: string, configJson: string): Promise<void> {
+        await this.serviceEditName().fill(instance_name)
         await this.serviceEditConfig().fill(configJson)
     }
 

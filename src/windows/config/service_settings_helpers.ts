@@ -31,7 +31,7 @@ export function service_has_test_config(service: unknown): service is TestableSe
 export function visible_config_text(config: ServiceConfig): string {
     const values = { ...config }
     delete values.enable
-    delete values.instanceName
+    delete values.instance_name
     return JSON.stringify(values, null, 4)
 }
 
