@@ -203,7 +203,7 @@ export default function RecognizeWindow(): React.ReactElement {
         } catch {
             // keep existing on failure
         }
-    }, [effectiveTarget])
+    }, [effectiveTarget, lockedTargetLang])
 
     // ---- OCR ----
     const handleRecognize = useCallback(async () => {

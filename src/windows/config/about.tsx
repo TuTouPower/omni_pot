@@ -108,7 +108,7 @@ export default function AboutPage(): React.ReactElement {
                     </button>
                 </ConfigRow>
                 <ConfigRow label="API Token">
-                    <div className="mono hint" data-testid="about-api-token" style={{ marginRight: 8, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apiToken ?? '...'}</div>
+                    <div className="mono hint" data-testid="about-api-token" style={{ marginRight: 8, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apiToken || '...'}</div>
                     <button className="ic-btn" title={t('about.copy_token', { defaultValue: '复制 Token' })} data-testid="about-copy-api-token" onClick={() => { if (apiToken) window.electronAPI.text.writeClipboard(apiToken).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>

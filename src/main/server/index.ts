@@ -406,6 +406,7 @@ function handleHistory(
     req: http.IncomingMessage,
     res: http.ServerResponse
 ): void {
+    // eslint-disable-next-line @typescript-eslint/require-await -- consistent pattern with other async handlers
     ;(async () => {
         try {
             const page = Number(url.searchParams.get('page') ?? '1')

@@ -1,4 +1,4 @@
-import http from 'http'
+import type http from 'http'
 import { app, clipboard } from 'electron'
 import { setConfig, resetConfigToDefaults } from '../config/store'
 import { DEFAULT_CONFIG, type ConfigKey } from '@shared/types/config'

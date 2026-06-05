@@ -219,7 +219,7 @@ export function LanguageArea({ onSwap, containerRef }: LanguageAreaProps): React
                 <Icons.Swap size={18} />
             </button>
             <div data-testid="lang-target">
-                <LangPick value={effectiveTargetLanguage ?? targetLanguage} onChange={(lang) => { setTargetLanguage(lang); setLockedTargetLanguage(lang as LanguageCode); }} options={TARGET_LANGUAGES} testId="lang-target-button" optionTestIdPrefix="lang-target-option" />
+                <LangPick value={effectiveTargetLanguage ?? targetLanguage} onChange={(lang) => { setTargetLanguage(lang); setLockedTargetLanguage(lang); }} options={TARGET_LANGUAGES} testId="lang-target-button" optionTestIdPrefix="lang-target-option" />
             </div>
         </div>
     )

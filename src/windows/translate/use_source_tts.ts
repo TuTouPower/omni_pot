@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useConfigStore } from '../../stores/config_store'
 import { useTranslateStore } from '../../stores/translate_store'

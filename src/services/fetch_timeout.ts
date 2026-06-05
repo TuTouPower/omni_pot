@@ -50,6 +50,7 @@ export async function fetch_with_timeout(
             signal: controller.signal,
         })
     } catch (error: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- set via setTimeout callback
         if (timed_out) {
             throw new Error(`provider request timeout after ${String(timeout_ms)}ms`)
         }

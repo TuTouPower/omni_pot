@@ -1,6 +1,7 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 function write(level: LogLevel, scope: string, message: string, ...args: unknown[]): void {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- safety for non-Electron contexts
     window.electronAPI?.log.write(level, scope, message, ...args).catch?.(() => { return undefined })
 }
 

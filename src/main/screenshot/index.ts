@@ -58,7 +58,7 @@ export function preload_screenshot_window(manager: WindowManager): void {
     // user's first screenshot trigger.
     desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } })
         .then(() => { log.info('[screenshot] preload: capturer warm-up complete') })
-        .catch((err) => { log.warn('[screenshot] preload: capturer warm-up failed:', err) })
+        .catch((err: unknown) => { log.warn('[screenshot] preload: capturer warm-up failed:', err) })
 }
 
 export async function start_screenshot_capture(

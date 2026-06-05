@@ -40,7 +40,8 @@ export function initLog(userDataDir: string): void {
 
     // Force Asia/Shanghai (UTC+8) timezone in log timestamps
     log.transports.file.format = ({ message, data }) => {
-        const utcMs = (message.date ?? new Date()).getTime()
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- electron-log date is optional
+        const utcMs = (message.date || new Date()).getTime()
         const cst = new Date(utcMs + 8 * 3600000)
         const ts = cst.toISOString().replace('T', ' ').replace('Z', '')
         const level = message.level.toUpperCase().padEnd(5)

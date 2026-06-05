@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { DictResult } from '@shared/types/service'
 

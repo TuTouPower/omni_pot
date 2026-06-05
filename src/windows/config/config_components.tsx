@@ -95,6 +95,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     const selected_index = Math.max(0, options.findIndex((o) => o.value === value))
     const listbox_id = `${testId ?? 'config-select'}-listbox`
     const active_option = require_select_option(options, active_index)
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- options array may be empty
     const active_id = active_option ? `${listbox_id}-option-${active_option.value}` : undefined
 
     const updateMenuPosition = React.useCallback(() => {

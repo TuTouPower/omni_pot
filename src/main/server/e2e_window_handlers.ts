@@ -1,4 +1,4 @@
-import http from 'http'
+import type http from 'http'
 import { desktopCapturer, screen } from 'electron'
 import type { WindowManager } from '../windows/manager'
 import { WindowLabel } from '../windows/types'
