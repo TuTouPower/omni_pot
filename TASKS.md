@@ -418,12 +418,12 @@
 
 ### Mid
 
-- [ ] **`/e2e/set-config` 对 `service_instances` 缺结构校验**
+- [x] **`/e2e/set-config` 对 `service_instances` 缺结构校验**
   - **位置**：`electron/server/index.ts:759-785`、`electron/ipc/config_handlers.ts:14-18`。
   - **问题**：HTTP E2E 配置入口仅检查 key 是否存在后 `setConfig(key, value)`；IPC 校验也只按顶层 `typeof` / array 判断，复杂对象没有 schema。
   - **影响**：持有本地 API/E2E token 的调用方可写入畸形 `service_instances`，破坏翻译/词典服务配置。
   - **修复方向**：复用严格 config schema；至少对 `service_instances` 做 service key、instance config、enable 字段结构校验。
-  - **备注**：已添加 `electron/config/validation.ts`（commit `67be039`），IPC 端已有基础校验。HTTP E2E 端仍需补齐。
+  - **状态**：已修复（2026-06-06，commit `67be039`）。`electron/config/validation.ts` 已包含 `is_service_instances()` 校验（检查 serviceKey、config 结构、URL 合法性），HTTP E2E 端和 IPC 端均已通过 `is_config_value_allowed` 调用。
 
 - [x] **`fetch_with_timeout` 成功路径留下未 settle 的 timeout promise**
   - **位置**：`src/services/fetch_timeout.ts:18-39`。
