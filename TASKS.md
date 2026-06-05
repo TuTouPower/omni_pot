@@ -423,6 +423,7 @@
   - **问题**：HTTP E2E 配置入口仅检查 key 是否存在后 `setConfig(key, value)`；IPC 校验也只按顶层 `typeof` / array 判断，复杂对象没有 schema。
   - **影响**：持有本地 API/E2E token 的调用方可写入畸形 `service_instances`，破坏翻译/词典服务配置。
   - **修复方向**：复用严格 config schema；至少对 `service_instances` 做 service key、instance config、enable 字段结构校验。
+  - **备注**：已添加 `electron/config/validation.ts`（commit `67be039`），IPC 端已有基础校验。HTTP E2E 端仍需补齐。
 
 - [x] **`fetch_with_timeout` 成功路径留下未 settle 的 timeout promise**
   - **位置**：`src/services/fetch_timeout.ts:18-39`。
@@ -451,11 +452,12 @@
 
 ### Low
 
-- [ ] **`auto_start` 被列入 sensitive write keys 后，托盘不能走普通 `config:set` 路径**
+- [x] **`auto_start` 被列入 sensitive write keys 后，托盘不能走普通 `config:set` 路径**
   - **位置**：`electron/ipc/config_handlers.ts:54-56`、`:70-72`。
   - **问题**：`auto_start` 只有 CONFIG 窗口能写；托盘若试图复用 IPC `config:set` 会被拒绝。
-  - **影响**：这是 high 项“托盘开机自启不持久化”的修复约束，不是独立用户可见 bug。
+  - **影响**：这是 high 项”托盘开机自启不持久化”的修复约束，不是独立用户可见 bug。
   - **修复方向**：修 high 项时从 main 直接调用 config store，或新增明确授权的 main helper。
+  - **状态**：已随 high 项修复（2026-06-06，commit `67be039`）。托盘直接调用 config store，无需经过 sensitive write keys 路径。
 
 - [x] **`shell.openExternal` 允许任意 `file:` URL**
   - **位置**：`electron/ipc/shell_handlers.ts:16-35`。
@@ -541,12 +543,14 @@
   - **问题**：base64 图片展示、窗口事件、截图状态处理存在重复片段。
   - **处理方向**：只提取无业务状态的展示/尺寸 helper；截图翻译与纯截图捕获流程保持分离。
   - **验证**：截图捕获、截图翻译、OCR 失败 UI 回归。
+  - **备注**：recognize/index.tsx 已从 900 行拆分到 448 行（commit `10efbe0`），提取了 image_card.tsx。剩余共享逻辑较少，可后续按需提取。
 
 - [ ] **统一自定义下拉/语言选择重复逻辑**
   - **位置**：`src/windows/config/config_components.tsx`、`src/windows/translate/language_area.tsx`、`src/windows/recognize/index.tsx`。
   - **问题**：combobox/listbox 键盘、ARIA、过滤/选中逻辑分散，容易出现可访问性和行为差异。
   - **处理方向**：优先复用已有组件；若抽公共组件，必须覆盖键盘导航、aria-expanded、aria-selected、Escape/Enter 行为。
   - **验证**：配置页服务选择、翻译语言选择、识别语言选择 E2E/可访问性断言。
+  - **备注**：recognize 的 PillSelect 已提取为独立模块（`pill_select.tsx`，commit `10efbe0`），后续可考虑与 config_components 的 SimpleSelect 统一。
 
 ### C. 死代码 / 依赖清理
 
