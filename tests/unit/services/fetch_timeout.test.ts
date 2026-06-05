@@ -76,4 +76,24 @@ describe('fetch_with_timeout', () => {
     it('uses the default provider timeout', () => {
         expect(DEFAULT_PROVIDER_TIMEOUT_MS).toBe(15000)
     })
+
+    it('blocks non-HTTP(S) protocols', async () => {
+        await expect(fetch_with_timeout('file:///etc/passwd')).rejects.toThrow('non-HTTP(S)')
+        await expect(fetch_with_timeout('ftp://example.com')).rejects.toThrow('non-HTTP(S)')
+    })
+
+    it('blocks HTTP to non-localhost hosts', async () => {
+        await expect(fetch_with_timeout('http://example.com/api')).rejects.toThrow('insecure HTTP')
+        await expect(fetch_with_timeout('http://10.0.0.1/api')).rejects.toThrow('insecure HTTP')
+    })
+
+    it('allows HTTP to localhost', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response('ok'))
+        await expect(fetch_with_timeout('http://localhost:11434/api')).resolves.toBeInstanceOf(Response)
+        await expect(fetch_with_timeout('http://127.0.0.1:11434/api')).resolves.toBeInstanceOf(Response)
+    })
+
+    it('blocks SSRF to cloud metadata endpoints', async () => {
+        await expect(fetch_with_timeout('https://169.254.169.254/latest/meta-data/')).rejects.toThrow('reserved/metadata')
+    })
 })

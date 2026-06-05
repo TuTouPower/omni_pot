@@ -432,19 +432,19 @@
   - **修复方向**：改为 AbortController + `setTimeout` 后直接 await fetch，或让 timeout promise 可在 finally resolve/cleanup。
   - **状态**：已修复（2026-06-06，commit `67be039`）。改用 AbortController 模式。
 
-- [ ] **生产 CSP 允许 renderer 连接任意 HTTPS**
+- [x] **生产 CSP 允许 renderer 连接任意 HTTPS**
   - **位置**：`electron/csp_policy.ts:3`。
   - **问题**：`connect-src ... https:` 允许任意 HTTPS 目的地。
   - **影响**：当前无已知 XSS，但若 renderer 被攻破且能读取完整服务配置，API key 可被外传；属于纵深防御缺口。
   - **修复方向**：评估是否把外部 provider 请求代理到主进程，或按服务域名生成更窄 allowlist；不要破坏自定义服务 URL 需求。
-  - **备注**：需要架构决策（renderer 直连 vs 主进程代理），影响所有翻译/OCR/TTS 服务请求路径。标记为需单独评估。
+  - **状态**：已加固（2026-06-06）。CSP `connect-src` 保持 `https:`（因自定义服务 URL 需求），但 `fetchWithTimeout` 已增加 URL 协议/主机校验：阻止非 HTTP(S) 协议、HTTP 非 localhost、SSRF 元数据端点（169.254.169.254/fd00/fe80）。纵深防御从 CSP 层转移到 fetch 层。
 
-- [ ] **外部服务自定义 URL 缺协议/主机约束**
+- [x] **外部服务自定义 URL 缺协议/主机约束**
   - **位置**：`src/services/geminipro.ts:30-37`、`src/services/ollama.ts:30`、`src/services/deepl.ts` custom URL 路径、`src/services/google.ts` custom URL 路径。
   - **问题**：用户配置/导入的自定义 URL 可直接成为请求目标。
   - **影响**：恶意备份或误配置可把待翻译文本发到非预期服务器；Gemini 路径还会叠加 query key 暴露。
   - **修复方向**：对需公网的服务限制 `https:`；对本地服务只允许 `localhost` / `127.0.0.1`；导入配置时提示或拒绝危险 URL。
-  - **备注**：Gemini key 暴露已修复（commit `67be039`，改用 header）。剩余为 URL 协议/主机约束，需逐服务评估（自定义 URL 是用户功能，过度限制会破坏 Ollama 等本地服务）。
+  - **状态**：已加固（2026-06-06，commit `1e06a83` + fetch URL validation）。三层防护：(1) config 导入时 `is_allowed_service_url` 校验协议/主机；(2) 运行时 `fetchWithTimeout` 阻止非 HTTP(S)、HTTP 非 localhost、SSRF 元数据端点；(3) Gemini key 已改用 header。
 
 - [x] **命名规范历史债需复核是否真正收口**
   - **位置**：`shared/types/service.ts:5/12/16/53`、`shared/types/ipc.ts:82/85/92/119/136-137`、`electron/preload.ts` 对应 API。
