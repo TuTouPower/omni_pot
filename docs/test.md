@@ -2,7 +2,7 @@
 
 > omni_pot 测试的总则与约定。
 > 用户端到端测试的**详细设计**（基础设施、文件规划、每个 spec 测什么）见
-> `docs/test_user_e2e.md`；本文只讲总则、分层职责与运行约定。
+> `docs/test_e2e.md`；本文只讲总则、分层职责与运行约定。
 
 ---
 
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 单元测试 | `tests/unit/` | Vitest | 服务接口、工具函数、状态管理逻辑、语言检测、默认配置边界 |
 | 集成测试 | `tests/integration/` | Vitest | 能在 Node/Vitest 环境真实运行的主进程模块行为，例如配置读写、词典数据库构建产物 |
-| 用户端到端测试 | `tests/user_e2e/` | Playwright | 真实 Electron 实例，**模拟真实用户操作** |
+| 用户端到端测试 | `tests/e2e/` | Playwright | 真实 Electron 实例，**模拟真实用户操作** |
 
 三层职责不重叠：
 
@@ -23,7 +23,7 @@
 
 > 两个测试文档的分工：
 > **本文档（`test.md`）** = 测试总则与约定（分层、原则、快捷键策略、运行命令）。
-> **`test_user_e2e.md`** = 用户端到端测试的设计方案（基础设施架构、Page Object、
+> **`test_e2e.md`** = 用户端到端测试的设计方案（基础设施架构、Page Object、
 > 27 个 spec 各测什么、实施路线）。
 
 ---
@@ -56,7 +56,7 @@
 ## 2.1 mock / stub 使用准则
 
 > 核心原则：E2E 测真实用户交互与真实应用 service adapter；除
-> `tests/user_e2e/specs/external_services.spec.ts` 外，所有 spec 对外部翻译、词典、文字识别服务都必须使用本地可控桩，不能直接访问公网服务。任何 mock/stub 测试都不能冒充真实公网连通性测试。
+> `tests/e2e/specs/external_services.spec.ts` 外，所有 spec 对外部翻译、词典、文字识别服务都必须使用本地可控桩，不能直接访问公网服务。任何 mock/stub 测试都不能冒充真实公网连通性测试。
 
 ### 外部服务边界
 
@@ -228,7 +228,7 @@
 | `config_store.test.ts` | 配置读写、持久化 |
 | `chinese_dictionary_build.test.ts` | `chinese_dictionary.db` 构建产物正确性 |
 
-### 5.3 `tests/user_e2e/` — 用户端到端测试 (Playwright + 真实 Electron)
+### 5.3 `tests/e2e/` — 用户端到端测试 (Playwright + 真实 Electron)
 
 启动真实 Electron 实例，模拟用户操作。
 
@@ -343,7 +343,7 @@ npm run test:e2e:external
 | 外部服务连通性 | `npm run test:e2e:external` | `@external` 标签 / `external_services.spec.ts`；需要真实网络访问 |
 | 完整回归 | `npm run test:e2e` | 全部 spec；默认仍跳过需 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1` 的真实外部服务用例 |
 | 完整回归 + 外部 | `npm run test:e2e:all` | 全部 spec + 真实外部服务；需要网络 |
-| 单文件调试 | `npm run test:e2e -- tests/user_e2e/specs/<file>.spec.ts` | 指定文件 |
+| 单文件调试 | `npm run test:e2e -- tests/e2e/specs/<file>.spec.ts` | 指定文件 |
 | 单元 + 集成 | `npx vitest run tests/unit tests/integration` | 模块正确性、配置读写、服务逻辑、语言检测、词典数据构建产物 |
 
 > **注意**: `test:e2e:core` 和 `test:e2e:ui` 分别指定 Playwright `core` / `ui`
@@ -353,4 +353,4 @@ npm run test:e2e:external
 - `omni` fixture 为 test 级，每个用例独立 Electron 实例、独立端口、独立 userData；用例结束自动 stop 并清理。需要纯净启动状态（`firstRun`、自定义 `userDataDir`、`init_script`、非默认 startup config）的用例直接 `AppFixture.start(...)` 拉独立实例。
 - `core` / `ui-serial` project 跑 `workers: 1` 固定顺序；`ui-parallel` project 跑 `fullyParallel: true`，并行 worker 限于 OS 全局态隔离的安全 spec。
 - `scripts/run_e2e.mjs` 是默认 e2e 入口：阶段一跑串行 project，阶段二以 `OMNI_POT_E2E_SKIP_BUILD=1` 复用 build 跑并行 project。本地迭代手动 `npx playwright test ...` 时也可设该变量跳过 `electron-vite build`。
-- 详细的实例生命周期、Page Object、E2E HTTP 端点见 `docs/test_user_e2e.md`。
+- 详细的实例生命周期、Page Object、E2E HTTP 端点见 `docs/test_e2e.md`。

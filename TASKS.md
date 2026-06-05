@@ -1,6 +1,6 @@
 # omni_pot 任务清单
 
-> **权威来源**: 功能定义以 `docs/spec.md` 为准，测试设计以 `docs/test_user_e2e.md` 为准。
+> **权威来源**: 功能定义以 `docs/spec.md` 为准，测试设计以 `docs/test_e2e.md` 为准。
 > 已完成项归档见 `docs/archive/plan_archives/`、`docs/archive/closed_issues/`。
 
 ---
@@ -51,8 +51,8 @@
 
 ### P4 后续测试要求
 
-- [ ] 新增任何免费无需 key 且当前代码存在的外部服务时，同步添加到 `tests/user_e2e/specs/external_services.spec.ts`。
-- [ ] 同步更新 `docs/external_service_catalog.md`、`docs/test.md`、`docs/test_user_e2e.md` 中的服务覆盖说明。
+- [ ] 新增任何免费无需 key 且当前代码存在的外部服务时，同步添加到 `tests/e2e/specs/external_services.spec.ts`。
+- [ ] 同步更新 `docs/external_service_catalog.md`、`docs/test.md`、`docs/test_e2e.md` 中的服务覆盖说明。
 
 ---
 
@@ -65,9 +65,9 @@
   - 热键逻辑：翻译热键无选区时打开 `TRANSLATE` 输入模式；有选区时直接投递到 `TRANSLATE`；任何热键路径都不应打开或闪现 `WELCOME`。
   - 欢迎页按钮行为：欢迎窗口中的“翻译 / 词典 / 文字识别 / 截图翻译 / 设置快捷键 / 跳过”等入口触发对应窗口或设置页后关闭 `WELCOME`；跳过写入 `welcome_dismissed=true` 并关闭欢迎窗口。
   - 测试要求：新增/调整 E2E 覆盖首次启动显示独立欢迎窗口、欢迎窗口没有 `titlebar-mode=翻译`、点击入口会关闭欢迎窗口并打开对应功能窗口、空翻译窗口不显示欢迎页、热键无选区只打开翻译输入区、已跳过后不再启动欢迎窗口。
-  - 文档要求：更新 `docs/spec.md` 明确“欢迎窗口 ≠ 翻译窗口”；更新 `docs/test_user_e2e.md` 中欢迎页与翻译窗口测试边界；移除所有“欢迎页是翻译窗口空状态”的描述。
+  - 文档要求：更新 `docs/spec.md` 明确“欢迎窗口 ≠ 翻译窗口”；更新 `docs/test_e2e.md` 中欢迎页与翻译窗口测试边界；移除所有“欢迎页是翻译窗口空状态”的描述。
 
-- [x] **词典/文字识别窗口固定按钮 bug + 补测试未收口**：blur 逻辑已部分修复，但 `electron/windows/manager.ts` close reset 仍把 `translate_pinned` 写成词典/识别路径的 reset，未清理 `dict_pinned` / `recognize_pinned`；`tests/user_e2e/specs/window_pin_topmost.spec.ts` 也只断言 `alwaysOnTop`，缺 pinned / `aria-pressed` 回归。
+- [x] **词典/文字识别窗口固定按钮 bug + 补测试未收口**：blur 逻辑已部分修复，但 `electron/windows/manager.ts` close reset 仍把 `translate_pinned` 写成词典/识别路径的 reset，未清理 `dict_pinned` / `recognize_pinned`；`tests/e2e/specs/window_pin_topmost.spec.ts` 也只断言 `alwaysOnTop`，缺 pinned / `aria-pressed` 回归。
 
 ---
 
@@ -173,12 +173,12 @@
 ### F. 测试与脚本
 
 - [x] **vitest include glob 修复**：`vitest.config.ts:7` 当前 `tests/**/*.test.ts` 漏掉以下文件（均为 `test_*.ts`）：`tests/unit/services/test_google.ts`、`test_deepl.ts`、`tests/unit/windows/test_manager.ts`、`tests/unit/stores/test_translate_store.ts`、`tests/unit/lib/test_crypto.ts`。重命名或调整 glob 后同步修订 `docs/test.md §5.1`。（`test_bing.ts` → `bing.test.ts` 已重命名。）
-- [x] **外部服务测试策略收口**：所有需要真实公网请求的 provider 健康检查只能放在 `tests/user_e2e/specs/external_services.spec.ts`（`@external`）统一覆盖；其他单元测试、集成测试、E2E（含 `@core` / `@ui`）必须使用本地 stub / fake response / fixture，不允许直连公网。`external_services.spec.ts` 应枚举当前代码注册且无需用户 key 的外部网络 provider，并逐个暴露失败服务名；网络不可达或上游 429/封禁等失败不得 silent skip。完成时同步清理分散在 unit 测试里的真实网络用例，并同步 `docs/test.md`、`docs/test_user_e2e.md` 的测试边界说明。
+- [x] **外部服务测试策略收口**：所有需要真实公网请求的 provider 健康检查只能放在 `tests/e2e/specs/external_services.spec.ts`（`@external`）统一覆盖；其他单元测试、集成测试、E2E（含 `@core` / `@ui`）必须使用本地 stub / fake response / fixture，不允许直连公网。`external_services.spec.ts` 应枚举当前代码注册且无需用户 key 的外部网络 provider，并逐个暴露失败服务名；网络不可达或上游 429/封禁等失败不得 silent skip。完成时同步清理分散在 unit 测试里的真实网络用例，并同步 `docs/test.md`、`docs/test_e2e.md` 的测试边界说明。
 - [x] **网络门变量统一为 `OMNI_POT_EXTERNAL_SERVICE_TESTS`**：所有 opt-in 真实公网测试统一只认 `OMNI_POT_EXTERNAL_SERVICE_TESTS=1`；`tests/unit/services/test_google.ts:4` 当前仍用 `RUN_NETWORK_TESTS`，若保留该用例也必须改名/迁移到 `external_services.spec.ts`。
-- [x] **`external_services.spec.ts` 不再 silent skip**：`tests/user_e2e/specs/external_services.spec.ts:118-120/146` 与上面的统一策略冲突；删除 Google 网络不可达 skip，让具体服务失败暴露。
-- [x] **`i18n.spec.ts` 文案来源审计**：`tests/user_e2e/specs/i18n.spec.ts` 的 locale 文案断言已从 `src/i18n/locales/*.json` 派生；原生语言名与托盘菜单固定源保留独立断言。
+- [x] **`external_services.spec.ts` 不再 silent skip**：`tests/e2e/specs/external_services.spec.ts:118-120/146` 与上面的统一策略冲突；删除 Google 网络不可达 skip，让具体服务失败暴露。
+- [x] **`i18n.spec.ts` 文案来源审计**：`tests/e2e/specs/i18n.spec.ts` 的 locale 文案断言已从 `src/i18n/locales/*.json` 派生；原生语言名与托盘菜单固定源保留独立断言。
 - [x] **`@core` 标签收敛**：`@core` 只保留 `translate_core.spec.ts` 中“启动 → 翻译窗口可见 → 本地 stub 译文出现 → 关闭窗口”最小关键路径；生命周期、HTTP API、剪贴板等细节迁到 `@ui`。
-- [x] **timeout 标准化**：按 `docs/test_user_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 本地 stub 翻译 15s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
+- [x] **timeout 标准化**：按 `docs/test_e2e.md` §6.2 的分级（UI 5s / 本地 8s / 本地 stub 翻译 15s / 网络 45s / TTS 60s / OCR 60s）统一 E2E 超时；去外网化后多数 45s+ 网络超时可降到 8–15s。
 - [x] **移除 `scripts/test_pot_plugins.cjs` 中的硬编码 token/cookie/secret**：约 39、67、84、118-119、162、192 行，改为环境变量。
 - [x] **HTTP server 单元/契约测试**：`tests/unit/server/test_server_security.ts` 覆盖 Host/CORS/token/public config 安全边界；`app_http_api.spec.ts` 覆盖 auth、`/dict` 使用 text、`/history` 分页与公开配置 allowlist。
 - [x] **updater repo/allowlist 契约测试**：`tests/unit/updater.test.ts` 覆盖 release asset 绑定、下载 URL allowlist / redirect allowlist、updater sender 限制。
@@ -186,15 +186,15 @@
 - [x] **tray 用户可见字符串 contract 测试**：`tests/unit/tray_labels.test.ts` 锁定托盘 tooltip 为 Omni Pot，菜单中不出现 Pot Desktop。
 - [x] **screenshot overlay bounds 单测**：`tests/unit/screenshot_display.test.ts` 覆盖 `preload_screenshot_window()` / `start_screenshot_capture()` 的 `setBounds()`。
 - [x] **Cambridge 音频按钮 UI 回归**：`tests/unit/windows/dict_audio.test.ts` stub `Audio` 并断言发音按钮用 Cambridge URL 调 `play()`。
-- [x] **pin/topmost 回归断言 pinned 状态**：`tests/user_e2e/specs/window_pin_topmost.spec.ts:87-98/176-186` 当前只检 `alwaysOnTop`。
-- [x] **翻译窗口高度 cap 用 current display**：`tests/user_e2e/specs/translate_window_constraints.spec.ts:20-22` 走 `primaryDisplay()`；`docs/spec.md:240` 要求当前显示器；e2e fixture 暴露 current display 或补单测。
+- [x] **pin/topmost 回归断言 pinned 状态**：`tests/e2e/specs/window_pin_topmost.spec.ts:87-98/176-186` 当前只检 `alwaysOnTop`。
+- [x] **翻译窗口高度 cap 用 current display**：`tests/e2e/specs/translate_window_constraints.spec.ts:20-22` 走 `primaryDisplay()`；`docs/spec.md:240` 要求当前显示器；e2e fixture 暴露 current display 或补单测。
 - [x] **mock 测试加 `@electron-mock` / 原因标注**：`tests/unit/screenshot_display.test.ts:17-26`、`tests/unit/config_store_migration.test.ts:6-14` 违反 `docs/test.md §2.1`。
 
 ### G. 文档与项目约定
 
 - [x] **命名 / 缩进 / 日志规范**：已明确 TS/React 命名边界：文件/目录、IPC payload、DB columns、持久化 config key、项目内部纯数据字段用 snake_case；React props/hooks/setter、DOM/Electron/第三方 API 保留 ecosystem 惯例；不做全仓批量 rename / reindent。renderer `.catch(console.error)` 已替换为 `src/utils/logger.ts` scoped logger，scripts 用户可见 console 输出仍允许。
 - [x] **spec 与代码差异修订**：(1) `docs/spec.md:409` 截图先 overlay 后 capture，但当前实现先 capture 后 show；(2) `docs/spec.md:101` 标 Electron 35+，实际 ^39.8.10；(3) `docs/spec.md:147` updater 600×400，实际 `electron/updater/index.ts:221-225` 是 480×520；(4) `docs/spec.md:699-701` 默认 `service_instances` 缺 `system@default`、`qrcode@default`（实际见 `shared/types/config.ts:88-99`）；(5) `docs/spec.md:479` 与 `:1110` 对 Linux System OCR 自相矛盾。
-- [x] **test 文档同步**：(1) `docs/test_user_e2e.md:413` 仍提"文字（字体+字号）"；(2) `:363` 词典 titlebar 漏 pin；(3) `:450-455` HTTP API 漏 `/dict`、`/history`；(4) `:234-238` endpoint 列表漏 `/e2e/set-config` 等 fixture；(5) `docs/test.md:24-27` 写 15 个 spec，`docs/test_user_e2e.md:54` 写 26 个，实际 27 个；(6) `docs/test.md:279` 表行漏 Google。
+- [x] **test 文档同步**：(1) `docs/test_e2e.md:413` 仍提"文字（字体+字号）"；(2) `:363` 词典 titlebar 漏 pin；(3) `:450-455` HTTP API 漏 `/dict`、`/history`；(4) `:234-238` endpoint 列表漏 `/e2e/set-config` 等 fixture；(5) `docs/test.md:24-27` 写 15 个 spec，`docs/test_e2e.md:54` 写 26 个，实际 27 个；(6) `docs/test.md:279` 表行漏 Google。
 - [x] **About / updater UI 链接同步**：仓库地址改公开 release 仓库。
 - [x] **`build_chinese_dictionary.ts` 收口**：(1) 注释要求单对象 JSON fail，但 `scripts/build_chinese_dictionary.ts:36-42` 实际接受；(2) `:197-199` 开启 WAL 但 `package.json:72-78` 只 include `.db`，结束前需 checkpoint/truncate。
 - [x] **`shared/types/ipc.ts` 命名一致性**：`writeClipboardImage(base64Image)` vs handler 的 `base64_image` snake_case；`chineseDict:` 通道名混用 camelCase；`HistoryRecord.service_key` 与 `service.ts` `serviceKey` 不一致。
@@ -206,7 +206,7 @@
 
 - [x] **A 解耦：先开窗，选区并行读**：`electron/hotkey/index.ts` 已让 `triggerTranslateEntry` 与 `triggerSelectionDictionary` 在 `readSelectedText()` resolve 前先 `focusOrCreate(TRANSLATE/DICT)`，文本通过 `sendWhenReady` 异步投递。空选区路径走 `translate:input-translate` / `dict:selection-empty`。
 - [x] **加 timing 日志**：`electron/hotkey/index.ts` 的 translate / dict trigger 记录 `show_ms`（热键入口到窗口创建/聚焦请求返回）、`total_ms`、`entry`、`reason`，区分空选区与有选区路径，且不记录用户原文。
-- [x] **E2E 断言可见性与总时延**：`tests/user_e2e/specs/dict_window.spec.ts` 覆盖词典热键空选区后窗口可见且可立即输入；`tests/unit/hotkey/index.test.ts` 严格覆盖选区 promise 未 resolve 时窗口已打开、resolve 后才发 `dict:lookup` / `dict:selection-empty`。
+- [x] **E2E 断言可见性与总时延**：`tests/e2e/specs/dict_window.spec.ts` 覆盖词典热键空选区后窗口可见且可立即输入；`tests/unit/hotkey/index.test.ts` 严格覆盖选区 promise 未 resolve 时窗口已打开、resolve 后才发 `dict:lookup` / `dict:selection-empty`。
 - [ ] **复杂焦点应用手测**：在 dist 产物下，分别在 **VS Code**、**Microsoft Word**、Office Excel、Chromium 浏览器选区上手动触发翻译 / 词典 / 截图翻译热键，记录 `show_ms` / `total_ms`，结果回写到 `docs/archive/runtime_issues.md §4` 的"验证"小节。验收门槛：window visible < 200ms、文本到达 < 1.5s。
 - [ ] **B 预热（A 验证后再评估）**：按 `docs/archive/runtime_issues.md §4 修复方案 B` 预热 translate / dict 窗口前，必须先完成 §C 中的 "透明度切换不重置 pin/置顶" 与 "Windows 选区 COM 引用泄漏" 两项（A 阶段路径未受影响，但 B 会放大这两个 bug）。是否默认开启视 A 阶段数据决定；若开启走 `preload_windows` 配置开关。
 - [ ] **C UIA 软超时（兜底，按需）**：仅当 A + B 后仍有用户报慢时启动；按 `runtime_issues.md §4 方案 C` 把 UIA 调用挪到 utility process / worker，主线程 `Promise.race(uia, sleep(150))`，并校验 `CoInitializeEx` / `CoUninitialize` 顺序避免放大 §C COM 泄漏。
@@ -345,7 +345,7 @@
 | `src/windows/dict/index.tsx` | ResizeObserver 上报内容高度 + 卡片默认折叠逻辑 |
 | `src/stores/dict_store.ts` | 可选：如需在 store 层面管理 collapsed 状态 |
 | `docs/spec.md` | 更新词典窗口行为描述：动态高度、卡片默认折叠 |
-| `docs/test_user_e2e.md` | 新增词典窗口高度测试用例描述 |
+| `docs/test_e2e.md` | 新增词典窗口高度测试用例描述 |
 | `docs/test.md` | 同步更新测试覆盖说明 |
 
 ### 测试
@@ -361,7 +361,7 @@
 
 #### E2E 测试
 
-- `tests/user_e2e/specs/dict_card_height.spec.ts`（已有，需更新）：
+- `tests/e2e/specs/dict_card_height.spec.ts`（已有，需更新）：
   - 词典窗口初始高度较小（卡片全部折叠）
   - 查询后结果卡片展开，窗口高度增长
   - 手动折叠卡片后窗口高度缩小
@@ -370,7 +370,7 @@
 #### 文档更新
 
 - `docs/spec.md` §7 词典窗口：补充"窗口高度跟随内容自动伸缩"、"结果卡片默认折叠"
-- `docs/test_user_e2e.md`：新增词典窗口动态高度测试用例
+- `docs/test_e2e.md`：新增词典窗口动态高度测试用例
 - `docs/test.md`：同步更新测试覆盖说明
 
 ### 状态
@@ -384,7 +384,7 @@
 - `electron/preload.ts` + `shared/types/ipc.ts` 暴露 `dict.reportContentHeight`
 - `src/windows/dict/index.tsx`：ResizeObserver 上报内容高度；卡片默认折叠；新查询折叠所有；单服务出结果自动展开
 - 单元测试：`tests/unit/windows/window_options.test.ts` 适配（不再期望持久化 dict_window_height）
-- 文档：`docs/spec.md` 与 `docs/test_user_e2e.md` 待后续补充
+- 文档：`docs/spec.md` 与 `docs/test_e2e.md` 待后续补充
 
 ---
 
@@ -487,7 +487,7 @@
 - [x] **拆分 `electron/server/index.ts`（1135 行）**
   - **问题**：本地 HTTP API、鉴权、CORS/Host 校验、E2E helper、路由处理集中在单文件，后续修改风险高。
   - **拆分方向**：保留 server 启停与路由分发；把 auth/host/origin 校验、public API handlers、E2E handlers、clipboard/config/history handlers 分到独立模块。
-  - **验证**：`tests/unit/server/test_server_security.ts`、`tests/user_e2e/specs/app_http_api.spec.ts`、相关 E2E API fixture。
+  - **验证**：`tests/unit/server/test_server_security.ts`、`tests/e2e/specs/app_http_api.spec.ts`、相关 E2E API fixture。
   - **状态**：已拆分（2026-06-06，commit `e8e5958`）。server/index.ts → 431 行；新建 body.ts、public_config.ts、e2e_handlers.ts（barrel）、e2e_data_handlers.ts、e2e_trigger_handlers.ts、e2e_window_handlers.ts。
 
 - [x] **拆分 `src/windows/recognize/index.tsx`（900 行）**
@@ -502,7 +502,7 @@
   - **验证**：`translate_core`、`translate_result_cards`、`translate_window_constraints`、语言 auto/swap 回归。
   - **状态**：已拆分（2026-06-06，commit `207a8bd`）。index.tsx → 498 行；新建 translate_helpers.ts、use_source_tts.ts、use_translate_height_reporting.ts。
 
-- [x] **拆分 `tests/user_e2e/pages/translate_page.ts`（596 行）**
+- [x] **拆分 `tests/e2e/pages/translate_page.ts`（596 行）**
   - **问题**：Page Object 同时承担翻译、词典、识别、窗口控制 helper，测试语义不够聚焦。
   - **拆分方向**：按窗口或能力拆为 translate/dict/recognize/window helper；保持现有 spec 调用语义，先迁移再清理旧方法。
   - **验证**：受影响的全部 user_e2e spec。
@@ -582,7 +582,7 @@
 
 - [x] **清理顺序**：先死代码/ignore → 再重复小 helper → 最后拆大文件。
 - [x] **每项要求**：改前有基线测试；一次只删/移一类；失败立即回滚；不顺手改 UI/行为。
-- [x] **文档同步**：如果拆分影响 `docs/test_user_e2e.md`、`docs/test.md`、`docs/spec.md` 的文件/测试描述，同步更新。
+- [x] **文档同步**：如果拆分影响 `docs/test_e2e.md`、`docs/test.md`、`docs/spec.md` 的文件/测试描述，同步更新。
 
 ---
 

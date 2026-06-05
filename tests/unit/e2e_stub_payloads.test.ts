@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
     baidu_ocr_token_payload,
     baidu_ocr_words_payload,
-} from '../user_e2e/fixtures/stub_payloads'
+} from '../e2e/fixtures/stub_payloads'
 
 describe('e2e stub payloads', () => {
     test('baidu ocr payload helpers match upstream response shapes', () => {

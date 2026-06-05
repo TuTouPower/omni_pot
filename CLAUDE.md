@@ -50,7 +50,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `resources/` | 应用图标（icon.png, icon.ico） |
 | `data/` | 词典数据、Tesseract 训练数据 |
 | `tests/` | 单元测试 |
-| `tests/user_e2e/` | 端到端测试 |
+| `tests/e2e/` | 端到端测试 |
 | `docs/` | 项目文档 |
 | `out/` | 构建输出 |
 | `release/` | 打包输出 |
@@ -94,7 +94,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `docs/design/omni-pot/` | UI 设计稿原型（HTML/JSX/CSS，最高优先级） |
 | `docs/design/demo_todo.md` | omni_pot 设计稿与 spec 的已知偏差备忘 |
 | `docs/test.md` | 测试规范与总则（分层、原则、快捷键策略、运行命令） |
-| `docs/test_user_e2e.md` | 用户端到端测试设计（基础设施、文件规划、各 spec 内容） |
+| `docs/test_e2e.md` | 用户端到端测试设计（基础设施、文件规划、各 spec 内容） |
 | `docs/api.md` | 主进程对外暴露的 HTTP API（`server_port`，默认 20202） |
 | `docs/runtime_issues.md` | 运行时问题记录（日志证据、影响范围、修复方向与验证方式） |
 | `TASKS.md` | 开发待办、测试覆盖审查、已知问题（合并自原 PLAN/review/issues） |

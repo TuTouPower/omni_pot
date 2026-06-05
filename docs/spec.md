@@ -15,7 +15,7 @@
 
 - `docs/design/demo_todo.md` — omni_pot 设计稿与 spec 的已知偏差
 - `docs/test.md` — 测试规范与总则
-- `docs/test_user_e2e.md` — 用户端到端测试设计
+- `docs/test_e2e.md` — 用户端到端测试设计
 
 ---
 
@@ -1157,7 +1157,7 @@ export async function getSelectedText(): Promise<string>
 
 ## 29. 测试策略
 
-测试分层、运行命令、mock 准则与 E2E 设计详见 `docs/test.md` 与 `docs/test_user_e2e.md`。
+测试分层、运行命令、mock 准则与 E2E 设计详见 `docs/test.md` 与 `docs/test_e2e.md`。
 原则：少 mock、多真实环境，覆盖本规格的所有功能与 UI，覆盖率目标 80%+。
 
 ---

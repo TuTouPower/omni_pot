@@ -9,7 +9,7 @@ release/
 .codex
 .playwright-mcp
 playwright-report/
-tests/user_e2e/test-results/
+tests/e2e/test-results/
 data/
 !data/dict/
 resources/data/dict/chinese_dictionary.db
@@ -17,3 +17,4 @@ resources/data/dict/chinese_dictionary.db
 *.db-wal
 github_repo/1.txt
 .reasonix
+.agents

@@ -1,7 +1,7 @@
 # 用户端到端测试设计 (User E2E Test Design)
 
 > omni_pot 用户端到端测试的完整设计方案 —— 从头重做。
-> 测试目录：`tests/user_e2e/`
+> 测试目录：`tests/e2e/`
 > 测试总则与分层职责见 `docs/test.md`；本文是 E2E 这一层的详细设计。
 > E2E 框架为 **Playwright**（`@playwright/test` + Electron）。
 > 功能与 UI 定义见 `docs/spec.md`；UI 设计稿原型见 `docs/design/omni-pot/`。
@@ -35,7 +35,7 @@ E2E 框架为 **Playwright**（`@playwright/test` + Electron）。`locator` API 
 ## 3. 目录结构
 
 ```
-tests/user_e2e/
+tests/e2e/
 ├── global_setup.ts         # Playwright globalSetup：每次命令开始时执行一次 electron-vite build
 ├── fixtures/
 │   ├── electron_app.ts     # 启动/停止 Electron：_electron.launch()，独立端口 + 独立 userData
@@ -529,7 +529,7 @@ class TranslatePage {
 
 - 禁止裸 `setTimeout` 当“等渲染”。一律用 `waitForSelector` / `waitForText` /
   `waitFor(condition)` 显式等待条件。
-- 超时分级统一从 `tests/user_e2e/fixtures/timeout_constants.ts` 引用：UI 渲染 5s；本地操作 8s；应用窗口启动 20s；本地 stub 翻译 15s（允许 debounce / renderer 状态收敛）；网络翻译 45s；TTS 合成 60s；OCR 60s。
+- 超时分级统一从 `tests/e2e/fixtures/timeout_constants.ts` 引用：UI 渲染 5s；本地操作 8s；应用窗口启动 20s；本地 stub 翻译 15s（允许 debounce / renderer 状态收敛）；网络翻译 45s；TTS 合成 60s；OCR 60s。
 - flaky 来源（截图、OCR、网络服务）用 `retry(fn, 3)` 包装，并打印每次失败原因。
 
 ### 6.3 隔离

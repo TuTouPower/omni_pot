@@ -17,14 +17,14 @@ const ui_parallel_safe = [
 ]
 
 export default defineConfig({
-    testDir: './tests/user_e2e/specs',
+    testDir: './tests/e2e/specs',
     timeout: 60_000,
     expect: { timeout: 10_000 },
     fullyParallel: false,
     workers: 1,
     retries: 0,
     reporter: [['html', { open: 'never' }], ['list']],
-    globalSetup: './tests/user_e2e/global_setup.ts',
+    globalSetup: './tests/e2e/global_setup.ts',
     projects: [
         {
             name: 'core',
@@ -51,5 +51,5 @@ export default defineConfig({
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
     },
-    outputDir: './tests/user_e2e/test-results',
+    outputDir: './tests/e2e/test-results',
 })
