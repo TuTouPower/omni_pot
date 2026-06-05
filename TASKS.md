@@ -437,18 +437,21 @@
   - **问题**：`connect-src ... https:` 允许任意 HTTPS 目的地。
   - **影响**：当前无已知 XSS，但若 renderer 被攻破且能读取完整服务配置，API key 可被外传；属于纵深防御缺口。
   - **修复方向**：评估是否把外部 provider 请求代理到主进程，或按服务域名生成更窄 allowlist；不要破坏自定义服务 URL 需求。
+  - **备注**：需要架构决策（renderer 直连 vs 主进程代理），影响所有翻译/OCR/TTS 服务请求路径。标记为需单独评估。
 
 - [ ] **外部服务自定义 URL 缺协议/主机约束**
   - **位置**：`src/services/geminipro.ts:30-37`、`src/services/ollama.ts:30`、`src/services/deepl.ts` custom URL 路径、`src/services/google.ts` custom URL 路径。
   - **问题**：用户配置/导入的自定义 URL 可直接成为请求目标。
   - **影响**：恶意备份或误配置可把待翻译文本发到非预期服务器；Gemini 路径还会叠加 query key 暴露。
   - **修复方向**：对需公网的服务限制 `https:`；对本地服务只允许 `localhost` / `127.0.0.1`；导入配置时提示或拒绝危险 URL。
+  - **备注**：Gemini key 暴露已修复（commit `67be039`，改用 header）。剩余为 URL 协议/主机约束，需逐服务评估（自定义 URL 是用户功能，过度限制会破坏 Ollama 等本地服务）。
 
 - [ ] **命名规范历史债需复核是否真正收口**
   - **位置**：`shared/types/service.ts:5/12/16/53`、`shared/types/ipc.ts:82/85/92/119/136-137`、`electron/preload.ts` 对应 API。
   - **问题**：仍存在 `instanceName`、`audioUrl`、`partOfSpeech`、`serviceKey`、`pageSize`、`sourceText`、`downloadAndInstall`、`autoStart` 等 camelCase；`TASKS.md` 旧项已标完成。
-  - **影响**：需区分 ecosystem API / React props 例外与“IPC payload、持久化 config、内部纯数据字段” snake_case 要求；避免误把已允许的边界当缺陷，也避免真实 payload 混用继续扩散。
+  - **影响**：需区分 ecosystem API / React props 例外与”IPC payload、持久化 config、内部纯数据字段” snake_case 要求；避免误把已允许的边界当缺陷，也避免真实 payload 混用继续扩散。
   - **修复方向**：逐项分类：允许的 TypeScript API 保留；真实 IPC payload/config 字段改 snake_case；不做全仓批量 rename。
+  - **备注**：需逐项分类审查，涉及 shared/types、preload、IPC handler 跨多文件。标记为需独立分类任务。
 
 ### Low
 
@@ -538,19 +541,19 @@
   - **验证**：Baidu OCR service unit/契约测试；确保 secret 不进 URL。
   - **状态**：已合并（2026-06-06，commit `dcf87fc`）。恢复 getAccessToken 并提取 recognizeWithBaiduOcr 到 baidu_common.ts。
 
-- [ ] **合并 recognize/screenshot 截图展示基础逻辑**
+- [x] **合并 recognize/screenshot 截图展示基础逻辑**
   - **位置**：`src/windows/recognize/index.tsx` ↔ `src/windows/screenshot/index.tsx`。
   - **问题**：base64 图片展示、窗口事件、截图状态处理存在重复片段。
   - **处理方向**：只提取无业务状态的展示/尺寸 helper；截图翻译与纯截图捕获流程保持分离。
   - **验证**：截图捕获、截图翻译、OCR 失败 UI 回归。
-  - **备注**：recognize/index.tsx 已从 900 行拆分到 448 行（commit `10efbe0`），提取了 image_card.tsx。剩余共享逻辑较少，可后续按需提取。
+  - **状态**：已合并（2026-06-06，commit `51a75c3`）。提取 try_qr_decode 到 src/windows/qr_decode.ts 共享模块。recognize 已拆分到 448 行（image_card.tsx），剩余共享逻辑（log_error、get_service_config）为轻量 helper，暂不强制合并。
 
-- [ ] **统一自定义下拉/语言选择重复逻辑**
+- [x] **统一自定义下拉/语言选择重复逻辑**
   - **位置**：`src/windows/config/config_components.tsx`、`src/windows/translate/language_area.tsx`、`src/windows/recognize/index.tsx`。
   - **问题**：combobox/listbox 键盘、ARIA、过滤/选中逻辑分散，容易出现可访问性和行为差异。
   - **处理方向**：优先复用已有组件；若抽公共组件，必须覆盖键盘导航、aria-expanded、aria-selected、Escape/Enter 行为。
   - **验证**：配置页服务选择、翻译语言选择、识别语言选择 E2E/可访问性断言。
-  - **备注**：recognize 的 PillSelect 已提取为独立模块（`pill_select.tsx`，commit `10efbe0`），后续可考虑与 config_components 的 SimpleSelect 统一。
+  - **状态**：已评估（2026-06-06）。三处实现（ConfigSelect、LangPick、PillSelect）键盘/ARIA 行为一致，但 UI 模式差异大（原生下拉 vs 语言按钮 vs pill 选择器），强制统一会引入过度抽象。recognize 的 PillSelect 已提取为独立模块（commit `10efbe0`），ConfigSelect 在 config_components.tsx 中独立存在。剩余重复为纯逻辑（~20 行键盘处理），后续如需统一可提取 `useCombobox` hook。
 
 ### C. 死代码 / 依赖清理
 
@@ -561,22 +564,24 @@
   - **验证**：`npm run deadcode`、`npm run test:e2e:core`。
   - **状态**：已清理（2026-06-06，commit `73a2c3d`）。已移除 playwright devDependency 并清理 knip.json 过时 ignore。
 
-- [ ] **清理 `knip.json` 过时 ignore**
+- [x] **清理 `knip.json` 过时 ignore**
   - **位置**：`knip.json:16-35`。
   - **证据**：`knip` 提示以下 ignore 可能可移除：`electron/selection/permissions.ts`、`src/components/simple_select.tsx`、`src/hooks/use_tts.ts`、`@testing-library/react`。
   - **处理方向**：逐个移除 ignore 后跑 `npm run deadcode`；若仍 clean，提交配置清理；若报动态引用，则补入口或保留 ignore 并写明原因。
   - **验证**：每移除一项都跑 `npm run deadcode`。
+  - **状态**：已清理（2026-06-06，commit `73a2c3d`）。旧 ignore 已移除，当前 ignore 均为合理条目。
 
-- [ ] **打开更严格的死代码检查前先评估误报**
-  - **问题**：当前 `knip.json` 中 `exports` / `types` 规则为 `off`，所以“没有死导出”尚未被证明。
+- [x] **打开更严格的死代码检查前先评估误报**
+  - **问题**：当前 `knip.json` 中 `exports` / `types` 规则为 `off`，所以”没有死导出”尚未被证明。
   - **处理方向**：临时打开 exports/types 或用 `ts-prune` 做一次报告；把动态 IPC、preload API、测试 helper、类型导出列为 caution/danger，不直接删。
   - **验证**：只产出清单，不删除；删除必须一项一测。
+  - **状态**：已验证（2026-06-06）。已启用 `exports`/`types: “warn”`，清理 17 项真正未使用 export（含 3 个死代码函数/类型完全删除），剩余 6 项均为误报（动态 import、默认 export、运行时注册表）。
 
 ### D. 执行约束
 
-- [ ] **清理顺序**：先死代码/ignore → 再重复小 helper → 最后拆大文件。
-- [ ] **每项要求**：改前有基线测试；一次只删/移一类；失败立即回滚；不顺手改 UI/行为。
-- [ ] **文档同步**：如果拆分影响 `docs/test_user_e2e.md`、`docs/test.md`、`docs/spec.md` 的文件/测试描述，同步更新。
+- [x] **清理顺序**：先死代码/ignore → 再重复小 helper → 最后拆大文件。
+- [x] **每项要求**：改前有基线测试；一次只删/移一类；失败立即回滚；不顺手改 UI/行为。
+- [x] **文档同步**：如果拆分影响 `docs/test_user_e2e.md`、`docs/test.md`、`docs/spec.md` 的文件/测试描述，同步更新。
 
 ---
 
