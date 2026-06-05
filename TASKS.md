@@ -388,6 +388,194 @@
 
 ---
 
+## 代码全量审阅待办（2026-06-06）
+
+来源：本地 `master` 全量只读审阅（HEAD `3f8b543`），未跑 build/typecheck/test。以下条目只记录待修/待复核问题；修复时需同步相关测试与 `docs/`。
+
+### High
+
+- [x] **托盘”开机自启”只改 OS 状态，不持久化配置**
+  - **位置**：`electron/tray/index.ts:224-228`。
+  - **问题**：`auto_start` action 直接调用 `app.setLoginItemSettings({ openAtLogin: !is_auto_start() })`，但没有 `setConfig('auto_start', ...)`。
+  - **影响**：设置页仍读旧 `auto_start`；不会广播 `config:changed`；重启后 `electron/ipc/config_handlers.ts:78-80` 会按旧配置重新应用，导致托盘切换结果被还原。
+  - **参考**：同文件 `clipboard_monitor` 分支会同步 `setConfig('clipboard_monitor', ...)`。
+  - **修复方向**：主进程 tray action 直接持久化 `auto_start`，或抽公共 helper，避免绕过 config store。
+  - **状态**：已修复（2026-06-06，commit `67be039`）。托盘 action 现在直接写 config store。
+
+- [x] **Gemini Pro API key 拼在 URL query 中**
+  - **位置**：`src/services/geminipro.ts:29-37`。
+  - **问题**：`generateContent?key=${api_key}` 会把用户 Gemini key 放入 URL。
+  - **影响**：URL 可能进入代理、网络栈、错误日志或诊断工具；桌面端长期 key 暴露风险高于一次性请求。
+  - **修复方向**：改用 Google 支持的 header（如 `x-goog-api-key`）或授权 header；同步补服务契约测试。
+  - **状态**：已修复（2026-06-06，commit `67be039`）。改用 `x-goog-api-key` header。
+
+- [x] **词典窗口记忆高度配置读写不一致**
+  - **位置**：`electron/windows/dict_options.ts:8-18`、`:24-34`。
+  - **问题**：`get_dict_window_options()` 在 `dict_remember_window_size=true` 时读取 `dict_window_height`，但 `attach_dict_resize_persistence()` 只保存 `dict_window_width`。
+  - **影响**：如果文档/设置仍承诺词典窗口尺寸记忆，高度不会随用户调整持久化；若动态高度设计不再记忆高度，应删除/弱化 `dict_window_height` 读取与文档描述。
+  - **修复方向**：明确产品行为：要么保存高度，要么移除高度记忆路径并同步 `docs/spec.md` / 测试。
+  - **状态**：已修复（2026-06-06，commit `67be039`）。`dict_options.ts` 不再读取 `dict_window_height`。
+
+### Mid
+
+- [ ] **`/e2e/set-config` 对 `service_instances` 缺结构校验**
+  - **位置**：`electron/server/index.ts:759-785`、`electron/ipc/config_handlers.ts:14-18`。
+  - **问题**：HTTP E2E 配置入口仅检查 key 是否存在后 `setConfig(key, value)`；IPC 校验也只按顶层 `typeof` / array 判断，复杂对象没有 schema。
+  - **影响**：持有本地 API/E2E token 的调用方可写入畸形 `service_instances`，破坏翻译/词典服务配置。
+  - **修复方向**：复用严格 config schema；至少对 `service_instances` 做 service key、instance config、enable 字段结构校验。
+
+- [x] **`fetch_with_timeout` 成功路径留下未 settle 的 timeout promise**
+  - **位置**：`src/services/fetch_timeout.ts:18-39`。
+  - **问题**：fetch 先成功时，`timeout_promise` 永远 pending；`finally` 只 `clearTimeout`，未 settle timeout promise。
+  - **影响**：长时间大量请求下可能积累 pending promise/闭包；单次影响小，但桌面常驻应用会放大。
+  - **修复方向**：改为 AbortController + `setTimeout` 后直接 await fetch，或让 timeout promise 可在 finally resolve/cleanup。
+  - **状态**：已修复（2026-06-06，commit `67be039`）。改用 AbortController 模式。
+
+- [ ] **生产 CSP 允许 renderer 连接任意 HTTPS**
+  - **位置**：`electron/csp_policy.ts:3`。
+  - **问题**：`connect-src ... https:` 允许任意 HTTPS 目的地。
+  - **影响**：当前无已知 XSS，但若 renderer 被攻破且能读取完整服务配置，API key 可被外传；属于纵深防御缺口。
+  - **修复方向**：评估是否把外部 provider 请求代理到主进程，或按服务域名生成更窄 allowlist；不要破坏自定义服务 URL 需求。
+
+- [ ] **外部服务自定义 URL 缺协议/主机约束**
+  - **位置**：`src/services/geminipro.ts:30-37`、`src/services/ollama.ts:30`、`src/services/deepl.ts` custom URL 路径、`src/services/google.ts` custom URL 路径。
+  - **问题**：用户配置/导入的自定义 URL 可直接成为请求目标。
+  - **影响**：恶意备份或误配置可把待翻译文本发到非预期服务器；Gemini 路径还会叠加 query key 暴露。
+  - **修复方向**：对需公网的服务限制 `https:`；对本地服务只允许 `localhost` / `127.0.0.1`；导入配置时提示或拒绝危险 URL。
+
+- [ ] **命名规范历史债需复核是否真正收口**
+  - **位置**：`shared/types/service.ts:5/12/16/53`、`shared/types/ipc.ts:82/85/92/119/136-137`、`electron/preload.ts` 对应 API。
+  - **问题**：仍存在 `instanceName`、`audioUrl`、`partOfSpeech`、`serviceKey`、`pageSize`、`sourceText`、`downloadAndInstall`、`autoStart` 等 camelCase；`TASKS.md` 旧项已标完成。
+  - **影响**：需区分 ecosystem API / React props 例外与“IPC payload、持久化 config、内部纯数据字段” snake_case 要求；避免误把已允许的边界当缺陷，也避免真实 payload 混用继续扩散。
+  - **修复方向**：逐项分类：允许的 TypeScript API 保留；真实 IPC payload/config 字段改 snake_case；不做全仓批量 rename。
+
+### Low
+
+- [ ] **`auto_start` 被列入 sensitive write keys 后，托盘不能走普通 `config:set` 路径**
+  - **位置**：`electron/ipc/config_handlers.ts:54-56`、`:70-72`。
+  - **问题**：`auto_start` 只有 CONFIG 窗口能写；托盘若试图复用 IPC `config:set` 会被拒绝。
+  - **影响**：这是 high 项“托盘开机自启不持久化”的修复约束，不是独立用户可见 bug。
+  - **修复方向**：修 high 项时从 main 直接调用 config store，或新增明确授权的 main helper。
+
+- [x] **`shell.openExternal` 允许任意 `file:` URL**
+  - **位置**：`electron/ipc/shell_handlers.ts:16-35`。
+  - **问题**：`is_allowed_external_url()` 对所有 `file:` 返回 true。
+  - **影响**：当前只允许 CONFIG 窗口调用且未发现 XSS；但若配置窗口 renderer 被攻破，Windows 上 `file:///...exe` 可能经 ShellExecute 打开本地程序。
+  - **修复方向**：移除通用 `file:` allow；新增专门 `open_local_path` handler，只允许日志/备份等受控目录。
+  - **状态**：已修复（2026-06-06，commit `67be039`）。已移除通用 `file:` allow。
+
+- [ ] **`TASKS.md` 旧命名项可能过早标完成**
+  - **位置**：`TASKS.md:195-200`。
+  - **问题**：旧项“`shared/types/ipc.ts` 命名一致性”已勾选，但审阅仍发现部分命名边界待复核。
+  - **影响**：任务状态可能误导后续审阅。
+  - **修复方向**：完成 mid“命名规范历史债复核”后，再决定保留、拆分或归档旧项。
+
+---
+
+## 代码简化 / 拆分 / 死代码清理待办（2026-06-06）
+
+来源：本地静态扫描。目标是降低单文件复杂度、合并真实重复、删除已确认死代码；修复时必须保持行为不变，并按项目要求跑对应测试。**不做一次性大重构**，每项拆小 PR / 小提交处理。
+
+### A. 超 500 行文件拆分
+
+- [x] **拆分 `electron/server/index.ts`（1135 行）**
+  - **问题**：本地 HTTP API、鉴权、CORS/Host 校验、E2E helper、路由处理集中在单文件，后续修改风险高。
+  - **拆分方向**：保留 server 启停与路由分发；把 auth/host/origin 校验、public API handlers、E2E handlers、clipboard/config/history handlers 分到独立模块。
+  - **验证**：`tests/unit/server/test_server_security.ts`、`tests/user_e2e/specs/app_http_api.spec.ts`、相关 E2E API fixture。
+  - **状态**：已拆分（2026-06-06，commit `e8e5958`）。server/index.ts → 431 行；新建 body.ts、public_config.ts、e2e_handlers.ts（barrel）、e2e_data_handlers.ts、e2e_trigger_handlers.ts、e2e_window_handlers.ts。
+
+- [x] **拆分 `src/windows/recognize/index.tsx`（900 行）**
+  - **问题**：截图显示、OCR 请求、翻译请求、语言选择、结果编辑、窗口高度/状态管理混在一个 React 文件。
+  - **拆分方向**：提取 OCR/翻译状态 hook、语言栏组件、结果编辑区、截图预览区；不要改变现有 IPC 和 store 行为。
+  - **验证**：识别窗口相关 unit/E2E；重点覆盖截图翻译、识别语言切换、翻译 race、朗读/复制。
+  - **状态**：已拆分（2026-06-06，commit `10efbe0`）。index.tsx → 448 行；新建 pill_select.tsx、export_button.tsx、image_card.tsx、recognize_content.tsx、recognize_helpers.ts。
+
+- [x] **拆分 `src/windows/translate/index.tsx`（715 行）**
+  - **问题**：窗口生命周期、动态高度、输入区、结果卡片、翻译调度在同一文件，修改翻译行为时容易碰 UI 布局。
+  - **拆分方向**：提取翻译调度 hook、窗口高度 hook、结果列表组件；保留现有 `translate_store` 语义。
+  - **验证**：`translate_core`、`translate_result_cards`、`translate_window_constraints`、语言 auto/swap 回归。
+  - **状态**：已拆分（2026-06-06，commit `207a8bd`）。index.tsx → 498 行；新建 translate_helpers.ts、use_source_tts.ts、use_translate_height_reporting.ts。
+
+- [x] **拆分 `tests/user_e2e/pages/translate_page.ts`（596 行）**
+  - **问题**：Page Object 同时承担翻译、词典、识别、窗口控制 helper，测试语义不够聚焦。
+  - **拆分方向**：按窗口或能力拆为 translate/dict/recognize/window helper；保持现有 spec 调用语义，先迁移再清理旧方法。
+  - **验证**：受影响的全部 user_e2e spec。
+  - **状态**：已拆分（2026-06-06，commit `1ad6335`）。translate_page.ts → 473 行；新建 translate_page_lingva_helpers.ts。
+
+- [x] **拆分 `src/windows/dict/index.tsx`（564 行）**
+  - **问题**：查询调度、contentEditable/输入、服务卡片、动态高度、TTS/复制逻辑集中。
+  - **拆分方向**：提取查询 hook、服务结果卡片、输入区、动态高度上报 hook；避免改变卡片折叠和窗口高度行为。
+  - **验证**：词典窗口、词典动态高度、音频按钮、剪贴板/复制相关测试。
+  - **状态**：已拆分（2026-06-06，commit `10efbe0`）。index.tsx → 370 行；新建 dict_card.tsx、dict_helpers.ts。
+
+- [x] **拆分 `src/windows/config/service_settings.tsx`（554 行）**
+  - **问题**：服务列表、添加弹窗、服务实例表单、拖拽排序和不同服务分类逻辑集中。
+  - **拆分方向**：提取 service list、instance editor、add service dialog、排序逻辑；保持 registry/category 行为。
+  - **验证**：服务设置 E2E、registry 隔离 unit、i18n 标签回归。
+  - **状态**：已拆分（2026-06-06，commit `75ba92b`）。service_settings.tsx → 402 行；新建 service_settings_helpers.ts、service_item_row.tsx。
+
+- [x] **拆分 `electron/updater/index.ts`（507 行）**
+  - **问题**：版本比较、release metadata 拉取、双源校验、URL allowlist、下载/安装、窗口 UI 入口集中。
+  - **拆分方向**：提取 version/release metadata/asset validation/download installer；保持 updater IPC sender 限制和 hash 校验。
+  - **验证**：`tests/unit/updater.test.ts`、updater/tray E2E。
+  - **状态**：已拆分（2026-06-06，commit `ef42c29`）。index.ts → 116 行；新建 version.ts、download_url.ts、download.ts、types.ts、latest_metadata.ts。
+
+### B. 重复代码合并
+
+- [x] **合并 dict/translate 高度控制器重复逻辑**
+  - **位置**：`electron/windows/dict_height_controller.ts` ↔ `electron/windows/translate_height_controller.ts`。
+  - **问题**：移动/恢复/display metrics/锁高逻辑相似，后续 bugfix 可能只改一边。
+  - **处理方向**：先确认两者差异（min height、cap、debounce、宽度行为），再提取共享纯函数或小型 base helper；不要引入过度继承。
+  - **验证**：两个 height controller unit + 翻译/词典窗口高度 E2E。
+  - **状态**：已合并（2026-06-06，commit `dcf87fc`）。提取 height_controller_common.ts，共享 compute_locked_height 和 apply_locked_window_size。
+
+- [x] **合并百度普通/高精度 OCR 重复请求逻辑**
+  - **位置**：`src/services/ocr/baidu_ocr.ts` ↔ `src/services/ocr/baidu_accurate_ocr.ts`。
+  - **问题**：鉴权、请求体、响应解析大概率重复，只是 endpoint/服务名不同。
+  - **处理方向**：提取 `baidu_ocr_common` 请求函数，普通/高精度只保留 endpoint 与 service metadata。
+  - **验证**：Baidu OCR service unit/契约测试；确保 secret 不进 URL。
+  - **状态**：已合并（2026-06-06，commit `dcf87fc`）。恢复 getAccessToken 并提取 recognizeWithBaiduOcr 到 baidu_common.ts。
+
+- [ ] **合并 recognize/screenshot 截图展示基础逻辑**
+  - **位置**：`src/windows/recognize/index.tsx` ↔ `src/windows/screenshot/index.tsx`。
+  - **问题**：base64 图片展示、窗口事件、截图状态处理存在重复片段。
+  - **处理方向**：只提取无业务状态的展示/尺寸 helper；截图翻译与纯截图捕获流程保持分离。
+  - **验证**：截图捕获、截图翻译、OCR 失败 UI 回归。
+
+- [ ] **统一自定义下拉/语言选择重复逻辑**
+  - **位置**：`src/windows/config/config_components.tsx`、`src/windows/translate/language_area.tsx`、`src/windows/recognize/index.tsx`。
+  - **问题**：combobox/listbox 键盘、ARIA、过滤/选中逻辑分散，容易出现可访问性和行为差异。
+  - **处理方向**：优先复用已有组件；若抽公共组件，必须覆盖键盘导航、aria-expanded、aria-selected、Escape/Enter 行为。
+  - **验证**：配置页服务选择、翻译语言选择、识别语言选择 E2E/可访问性断言。
+
+### C. 死代码 / 依赖清理
+
+- [x] **复核并删除未使用的 `playwright` devDependency**
+  - **证据**：`npm run deadcode` / `knip` 报 `playwright package.json:140:6` 未使用。
+  - **风险**：项目直接使用 `@playwright/test`；但脚本或 MCP/调试流程可能间接依赖 `playwright` CLI，删除前要查 `scripts/`、docs 和 CI。
+  - **处理方向**：若确认无直接引用，移除依赖并更新 lockfile；否则把真实入口加入 `knip.json`。
+  - **验证**：`npm run deadcode`、`npm run test:e2e:core`。
+  - **状态**：已清理（2026-06-06，commit `73a2c3d`）。已移除 playwright devDependency 并清理 knip.json 过时 ignore。
+
+- [ ] **清理 `knip.json` 过时 ignore**
+  - **位置**：`knip.json:16-35`。
+  - **证据**：`knip` 提示以下 ignore 可能可移除：`electron/selection/permissions.ts`、`src/components/simple_select.tsx`、`src/hooks/use_tts.ts`、`@testing-library/react`。
+  - **处理方向**：逐个移除 ignore 后跑 `npm run deadcode`；若仍 clean，提交配置清理；若报动态引用，则补入口或保留 ignore 并写明原因。
+  - **验证**：每移除一项都跑 `npm run deadcode`。
+
+- [ ] **打开更严格的死代码检查前先评估误报**
+  - **问题**：当前 `knip.json` 中 `exports` / `types` 规则为 `off`，所以“没有死导出”尚未被证明。
+  - **处理方向**：临时打开 exports/types 或用 `ts-prune` 做一次报告；把动态 IPC、preload API、测试 helper、类型导出列为 caution/danger，不直接删。
+  - **验证**：只产出清单，不删除；删除必须一项一测。
+
+### D. 执行约束
+
+- [ ] **清理顺序**：先死代码/ignore → 再重复小 helper → 最后拆大文件。
+- [ ] **每项要求**：改前有基线测试；一次只删/移一类；失败立即回滚；不顺手改 UI/行为。
+- [ ] **文档同步**：如果拆分影响 `docs/test_user_e2e.md`、`docs/test.md`、`docs/spec.md` 的文件/测试描述，同步更新。
+
+---
+
 ## 已知问题（不修，仅跟踪）
 
 - **CLD3 短文本语言误判**：`electron/detect/index.ts:95-113`。CLD3 对极短 CJK 文本（如"馄饨"2 字符）返回 `language: 'en', is_reliable: true`，代码信任 `is_reliable` 跳过 regex 回退，导致翻译方向错误。regex（line 44 `/[一-鿿]/`）能正确识别。同理可能影响日韩短文本。涉及语言检测策略变更，暂不修。
