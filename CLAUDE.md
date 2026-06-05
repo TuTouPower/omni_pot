@@ -45,7 +45,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 |---|---|
 | `electron/` | 主进程代码（窗口管理、IPC、服务、配置等） |
 | `src/` | 渲染进程代码（React UI） |
-| `shared/` | 主进程/渲染进程共享类型 |
+| `src/shared/` | 主进程/渲染进程共享类型 |
 | `public/` | 静态资源（logo 等） |
 | `resources/` | 应用图标（icon.png, icon.ico） |
 | `data/` | 词典数据、Tesseract 训练数据 |

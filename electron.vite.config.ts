@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   main: {
     resolve: {
-      alias: { '@shared': resolve(__dirname, 'shared') }
+      alias: { '@src/shared': resolve(__dirname, 'src/shared') }
     },
     build: {
       externalizeDeps: true,
@@ -17,7 +17,7 @@ export default defineConfig({
   },
   preload: {
     resolve: {
-      alias: { '@shared': resolve(__dirname, 'shared') }
+      alias: { '@src/shared': resolve(__dirname, 'src/shared') }
     },
     build: {
       externalizeDeps: true,
@@ -32,7 +32,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src'),
-        '@shared': resolve(__dirname, 'shared')
+        '@src/shared': resolve(__dirname, 'src/shared')
       },
       dedupe: ['react', 'react-dom']
     },

@@ -17,13 +17,13 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["shared/*"]
+      "@shared/*": ["src/shared/*"]
     },
     "types": ["node", "electron-vite/node"]
   },
   "include": [
     "electron/**/*.ts",
-    "shared/**/*.ts",
+    "src/shared/**/*.ts",
     "electron.vite.config.ts"
   ]
 }

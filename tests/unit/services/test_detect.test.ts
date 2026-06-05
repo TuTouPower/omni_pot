@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
 import { detectLanguage } from '../../../src/services/detect'
-import type { LanguageCode } from '../../../shared/types/language'
+import type { LanguageCode } from '../../../src/shared/types/language'
 
 function mock_detect_local(lang: LanguageCode): ReturnType<typeof vi.fn> {
     const local = vi.fn(() => Promise.resolve({ lang, source: 'cld3' }))

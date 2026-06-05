@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { DEFAULT_CONFIG } from '../../shared/types/config'
+import { DEFAULT_CONFIG } from '../../src/shared/types/config'
 
 // @electron-mock Required: Vitest is not a real Electron runtime.
 // This mock stubs app.getLocale / app.getPath / BrowserWindow.getAllWindows so
