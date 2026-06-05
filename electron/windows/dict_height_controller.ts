@@ -1,4 +1,5 @@
 import { screen, type BrowserWindow, type Display } from 'electron'
+import { apply_locked_window_size, compute_locked_height } from './height_controller_common'
 
 export const DICT_MAX_HEIGHT_RATIO = 0.75
 export const DICT_HEIGHT_REPORT_DEBOUNCE_PX = 1
@@ -10,11 +11,7 @@ export function compute_dict_target_height(
     work_area_height: number,
     min_height: number,
 ): number {
-    const max_height = Math.floor(work_area_height * DICT_MAX_HEIGHT_RATIO)
-    const rounded = Math.round(content_height)
-    if (rounded > max_height) return Math.max(min_height, max_height)
-    if (rounded < min_height) return min_height
-    return rounded
+    return compute_locked_height(content_height, work_area_height, min_height, DICT_MAX_HEIGHT_RATIO)
 }
 
 interface ControllerOptions {
@@ -57,15 +54,7 @@ export class DictHeightController {
     }
 
     private apply_locked_size(): void {
-        if (this.win.isDestroyed()) return
-        const h = this.current_target_h
-        this.win.setMinimumSize(this.min_width, h)
-        this.win.setMaximumSize(DICT_MAX_W_SENTINEL, h)
-        const bounds = this.win.getBounds()
-        const width = Math.max(bounds.width, this.min_width)
-        if (bounds.height !== h || bounds.width !== width) {
-            this.win.setBounds({ ...bounds, width, height: h })
-        }
+        apply_locked_window_size(this.win, this.min_width, DICT_MAX_W_SENTINEL, this.current_target_h)
     }
 
     private current_display(): Display {

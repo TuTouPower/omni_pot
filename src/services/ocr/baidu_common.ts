@@ -1,4 +1,6 @@
+import type { ServiceConfig } from '@shared/types/service'
 import { fetch_with_timeout } from '../fetch_timeout'
+
 const tokenCache = new Map<string, { token: string; expiresAt: number }>()
 
 export async function getAccessToken(clientId: string, clientSecret: string): Promise<string> {
@@ -27,4 +29,47 @@ export async function getAccessToken(clientId: string, clientSecret: string): Pr
     const safetyMargin = Math.min(86400000, ttl / 10)
     tokenCache.set(cacheKey, { token: data.access_token, expiresAt: Date.now() + ttl - safetyMargin })
     return data.access_token
+}
+
+export async function recognizeWithBaiduOcr(
+    endpoint: string,
+    service_name: string,
+    base64Image: string,
+    language_type: string,
+    config: ServiceConfig,
+    extra_params: Record<string, string> = {},
+): Promise<string> {
+    const client_id = config.client_id as string
+    const client_secret = config.client_secret as string
+    const token = await getAccessToken(client_id, client_secret)
+    const body = new URLSearchParams({
+        image: base64Image,
+        language_type,
+        ...extra_params,
+    })
+
+    const resp = await fetch_with_timeout(
+        `https://aip.baidubce.com/rest/2.0/ocr/v1/${endpoint}?access_token=${token}`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+        }
+    )
+
+    if (!resp.ok) {
+        throw new Error(`${service_name} API error: ${String(resp.status)}`)
+    }
+
+    const data = (await resp.json()) as {
+        words_result?: Array<{ words: string }>
+        error_code?: number | string
+        error_msg?: string
+    }
+
+    if (data.error_code) {
+        throw new Error(`${service_name} error: ${String(data.error_msg ?? data.error_code)}`)
+    }
+
+    return data.words_result?.map((r) => r.words).join('\n') ?? ''
 }

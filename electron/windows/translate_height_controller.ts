@@ -1,5 +1,6 @@
 import { screen, type BrowserWindow, type Display } from 'electron'
 import { log } from '../log'
+import { apply_locked_window_size, compute_locked_height } from './height_controller_common'
 
 const dbg = log.scope('debug-hlc')
 
@@ -15,11 +16,7 @@ export function compute_target_height(
     work_area_height: number,
     min_height: number,
 ): number {
-    const max_height = Math.floor(work_area_height * TRANSLATE_MAX_HEIGHT_RATIO)
-    const rounded = Math.round(content_height)
-    if (rounded > max_height) return Math.max(min_height, max_height)
-    if (rounded < min_height) return min_height
-    return rounded
+    return compute_locked_height(content_height, work_area_height, min_height, TRANSLATE_MAX_HEIGHT_RATIO)
 }
 
 export function compute_target_min_width(content_width: number): number {
@@ -78,16 +75,11 @@ export class TranslateHeightController {
 
     private apply_locked_size(): void {
         if (this.win.isDestroyed()) return
-        const h = this.current_target_h
-        this.win.setMinimumSize(this.current_min_width, h)
-        this.win.setMaximumSize(TRANSLATE_MAX_W_SENTINEL, h)
         const bounds = this.win.getBounds()
         const width = Math.max(bounds.width, this.current_min_width)
         dbg.debug('apply_locked_size: bounds.w=%d, min_w=%d, target_h=%d, setW=%d, setH=%d, changed=%s',
-            bounds.width, this.current_min_width, h, width, h, bounds.height !== h || bounds.width !== width)
-        if (bounds.height !== h || bounds.width !== width) {
-            this.win.setBounds({ ...bounds, width, height: h })
-        }
+            bounds.width, this.current_min_width, this.current_target_h, width, this.current_target_h, bounds.height !== this.current_target_h || bounds.width !== width)
+        apply_locked_window_size(this.win, this.current_min_width, TRANSLATE_MAX_W_SENTINEL, this.current_target_h)
     }
 
     private current_display(): Display {

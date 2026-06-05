@@ -1,8 +1,7 @@
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
-import { getAccessToken } from './baidu_common'
-import { fetch_with_timeout } from '../fetch_timeout'
+import { getAccessToken, recognizeWithBaiduOcr } from './baidu_common'
 
 const BAIDU_OCR_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -47,35 +46,8 @@ export const baiduOcrService: OcrService = {
         language: LanguageCode,
         config: ServiceConfig
     ): Promise<string> {
-        const client_id = config.client_id as string
-        const client_secret = config.client_secret as string
-        const token = await getAccessToken(client_id, client_secret)
         const lang = BAIDU_OCR_LANG_MAP[language] ?? 'CHN_ENG'
-
-        const resp = await fetch_with_timeout(
-            `https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=${token}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `image=${encodeURIComponent(base64Image)}&language_type=${lang}`
-            }
-        )
-
-        if (!resp.ok) {
-            throw new Error(`Baidu OCR API error: ${String(resp.status)}`)
-        }
-
-        const data = (await resp.json()) as {
-            words_result?: Array<{ words: string }>
-            error_code?: number | string
-            error_msg?: string
-        }
-
-        if (data.error_code) {
-            throw new Error(`Baidu OCR error: ${String(data.error_msg ?? data.error_code)}`)
-        }
-
-        return data.words_result?.map((r) => r.words).join('\n') ?? ''
+        return recognizeWithBaiduOcr('general_basic', 'Baidu OCR', base64Image, lang, config)
     },
 
     async testConfig(config: ServiceConfig): Promise<boolean> {

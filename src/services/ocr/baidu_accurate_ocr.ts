@@ -1,8 +1,7 @@
 import type { OcrService } from '@shared/types/ocr_service'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
-import { getAccessToken } from './baidu_common'
-import { fetch_with_timeout } from '../fetch_timeout'
+import { getAccessToken, recognizeWithBaiduOcr } from './baidu_common'
 
 const BAIDU_ACCURATE_LANGUAGES: LanguageCode[] = [
     'auto', 'zh_cn', 'zh_tw', 'en', 'ja', 'ko', 'fr', 'es', 'ru',
@@ -47,35 +46,8 @@ export const baiduAccurateOcrService: OcrService = {
         language: LanguageCode,
         config: ServiceConfig
     ): Promise<string> {
-        const client_id = config.client_id as string
-        const client_secret = config.client_secret as string
-        const token = await getAccessToken(client_id, client_secret)
         const lang = BAIDU_ACCURATE_LANG_MAP[language] ?? 'CHN_ENG'
-
-        const resp = await fetch_with_timeout(
-            `https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic?access_token=${token}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `image=${encodeURIComponent(base64Image)}&language_type=${lang}&detect_direction=true`
-            }
-        )
-
-        if (!resp.ok) {
-            throw new Error(`Baidu Accurate OCR API error: ${String(resp.status)}`)
-        }
-
-        const data = (await resp.json()) as {
-            words_result?: Array<{ words: string }>
-            error_code?: number | string
-            error_msg?: string
-        }
-
-        if (data.error_code) {
-            throw new Error(`Baidu Accurate OCR error: ${String(data.error_msg ?? data.error_code)}`)
-        }
-
-        return data.words_result?.map((r) => r.words).join('\n') ?? ''
+        return recognizeWithBaiduOcr('accurate_basic', 'Baidu Accurate OCR', base64Image, lang, config, { detect_direction: 'true' })
     },
 
     async testConfig(config: ServiceConfig): Promise<boolean> {
