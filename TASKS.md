@@ -18,10 +18,10 @@
 
 四个 spec 失败，根因分别如下：
 
-- [x] **updater_and_tray:312 support_author tray action**：`omni.api.shellOpenExternal().urls` 拿不到 afdian 链接。`electron/tray/index.ts:220` 直接调 `shell.openExternal`，绕过 `electron/ipc/shell_handlers.ts` 里 E2E 的 URL 捕获。修法：抽 `open_external_safely()` 共享 helper，tray 和 IPC handler 共用。
+- [x] **updater_and_tray:312 support_author tray action**：`omni.api.shellOpenExternal().urls` 拿不到 afdian 链接。`src/main/tray/index.ts:220` 直接调 `shell.openExternal`，绕过 `src/main/ipc/shell_handlers.ts` 里 E2E 的 URL 捕获。修法：抽 `open_external_safely()` 共享 helper，tray 和 IPC handler 共用。
 - [x] **config_settings:344 about links**：期望 `github.com/TuTouPower/omni_pot`，实际 `omni_pot_release`。`src/windows/config/about.tsx:17` 已改为面向用户的公开仓库，行为正确。修法：测试期望值改成 `omni_pot_release`。
 - [x] **translate_behavior:344 第二语言回退**：期望 langpair `autodetect|zh-CN`，实际 `en|zh-CN`。commit `b2cfe41` "auto 模式下把 cld3 检测语言传给翻译服务" 改了行为。修法：测试期望值改成 `en|zh-CN`。
-- [x] **i18n:66 托盘菜单标签**：托盘新增 `support_author`（`electron/tray/index.ts:63`），i18n spec 的期望 labels 数组过时。修法：测试 labels 加入 `支持作者` / `Support Author`。
+- [x] **i18n:66 托盘菜单标签**：托盘新增 `support_author`（`src/main/tray/index.ts:63`），i18n spec 的期望 labels 数组过时。修法：测试 labels 加入 `支持作者` / `Support Author`。
 - [x] **translate_card_collapse_height 阈值**：collapse-all 测试上限 220 偏紧（实际 242），调到 260；同时给整个 describe 加 `retries: 2` 抵御窗口高度测量 flake。
 
 ---
@@ -59,7 +59,7 @@
 ## 待做 UI / 功能调整
 
 - [x] **欢迎窗口独立化：welcome 不能再嵌在翻译窗口里**：欢迎页已拆为独立 `welcome` 窗口，翻译窗口空状态只显示正常输入区和语言区。
-  - 新增独立窗口：在 `WindowLabel` 中新增 `WELCOME = 'welcome'`，新增 `electron/windows/welcome_options.ts`，创建独立 BrowserWindow 配置；路由支持 `#welcome`；渲染层新增独立 welcome page / entry，复用现有欢迎卡片内容但不复用翻译窗口标题栏的“翻译”模式语义。
+  - 新增独立窗口：在 `WindowLabel` 中新增 `WELCOME = 'welcome'`，新增 `src/main/windows/welcome_options.ts`，创建独立 BrowserWindow 配置；路由支持 `#welcome`；渲染层新增独立 welcome page / entry，复用现有欢迎卡片内容但不复用翻译窗口标题栏的“翻译”模式语义。
   - 翻译窗口去欢迎化：删除 `src/windows/translate/index.tsx` 内的 `WelcomeEmpty` 逻辑、`show_welcome_empty` 分支、欢迎态高度计算和欢迎态 padding 特例；翻译窗口源文本为空时仍显示正常输入区和语言区，不再展示欢迎内容。
   - 启动逻辑：首次启动打开 `WELCOME` 窗口，而不是把欢迎页塞进 `TRANSLATE`；`welcome_dismissed` 只表示独立欢迎窗口是否已跳过/完成，不参与翻译窗口空状态判断。
   - 热键逻辑：翻译热键无选区时打开 `TRANSLATE` 输入模式；有选区时直接投递到 `TRANSLATE`；任何热键路径都不应打开或闪现 `WELCOME`。
@@ -67,7 +67,7 @@
   - 测试要求：新增/调整 E2E 覆盖首次启动显示独立欢迎窗口、欢迎窗口没有 `titlebar-mode=翻译`、点击入口会关闭欢迎窗口并打开对应功能窗口、空翻译窗口不显示欢迎页、热键无选区只打开翻译输入区、已跳过后不再启动欢迎窗口。
   - 文档要求：更新 `docs/spec.md` 明确“欢迎窗口 ≠ 翻译窗口”；更新 `docs/test_e2e.md` 中欢迎页与翻译窗口测试边界；移除所有“欢迎页是翻译窗口空状态”的描述。
 
-- [x] **词典/文字识别窗口固定按钮 bug + 补测试未收口**：blur 逻辑已部分修复，但 `electron/windows/manager.ts` close reset 仍把 `translate_pinned` 写成词典/识别路径的 reset，未清理 `dict_pinned` / `recognize_pinned`；`tests/e2e/specs/window_pin_topmost.spec.ts` 也只断言 `alwaysOnTop`，缺 pinned / `aria-pressed` 回归。
+- [x] **词典/文字识别窗口固定按钮 bug + 补测试未收口**：blur 逻辑已部分修复，但 `src/main/windows/manager.ts` close reset 仍把 `translate_pinned` 写成词典/识别路径的 reset，未清理 `dict_pinned` / `recognize_pinned`；`tests/e2e/specs/window_pin_topmost.spec.ts` 也只断言 `alwaysOnTop`，缺 pinned / `aria-pressed` 回归。
 
 ---
 
@@ -128,17 +128,17 @@
 
 ### C. 数据可靠性与状态（high）
 
-- [x] **history.db 备份/恢复前关闭连接**：备份/恢复路径调用 `close_history()` 后再读写 `history.db`；`electron/history/index.ts` 中无效的同步 `db_mutex` 噪音已移除。
-- [x] **Windows 选区 COM 引用泄漏**：`electron/selection/windows.ts` 已用统一 `try/finally` 释放 UIA COM 对象、range 与 BSTR，并处理 `CoInitializeEx` 的 `S_FALSE` 初始化结果。
-- [x] **dict/recognize close 时 reset pinned**：`electron/windows/manager.ts` 当前仍未正确 reset `dict_pinned` / `recognize_pinned`，并且 e2e 只断言 `alwaysOnTop`；补 reset，并补 e2e 断言 pinned / `aria-pressed` 与 blur 行为。
-- [x] **dict 尺寸记忆使用独立开关**：`electron/windows/dict_options.ts:8-11/25-27` 复用 `translate_remember_window_size`。新增 `dict_remember_window_size`。
+- [x] **history.db 备份/恢复前关闭连接**：备份/恢复路径调用 `close_history()` 后再读写 `history.db`；`src/main/history/index.ts` 中无效的同步 `db_mutex` 噪音已移除。
+- [x] **Windows 选区 COM 引用泄漏**：`src/main/selection/windows.ts` 已用统一 `try/finally` 释放 UIA COM 对象、range 与 BSTR，并处理 `CoInitializeEx` 的 `S_FALSE` 初始化结果。
+- [x] **dict/recognize close 时 reset pinned**：`src/main/windows/manager.ts` 当前仍未正确 reset `dict_pinned` / `recognize_pinned`，并且 e2e 只断言 `alwaysOnTop`；补 reset，并补 e2e 断言 pinned / `aria-pressed` 与 blur 行为。
+- [x] **dict 尺寸记忆使用独立开关**：`src/main/windows/dict_options.ts:8-11/25-27` 复用 `translate_remember_window_size`。新增 `dict_remember_window_size`。
 - [x] **`translate_window_position='pre_state'` 实现**：`shared/types/config.ts:27/38-39`、`docs/spec.md:519` 定义"上次位置"，但 `windows/manager.ts:80-85` 永远按鼠标显示器居中。补 save/restore。
 - [x] **renderer config store 持久化失败不静默成功**：`src/stores/config_store.ts:35-39` 乐观更新 + `.catch(console.error)`；失败需回滚或提示。
-- [x] **backup restore 严格 schema + 广播 config**：`electron/backup/index.ts:239-250/305-309` 只检查 plain object 就替换 live config；`reload_config_from_disk()` 不广播，已打开窗口仍使用旧值。restore 用严格 schema 拒绝未知 key；写完广播 config changed。
+- [x] **backup restore 严格 schema + 广播 config**：`src/main/backup/index.ts:239-250/305-309` 只检查 plain object 就替换 live config；`reload_config_from_disk()` 不广播，已打开窗口仍使用旧值。restore 用严格 schema 拒绝未知 key；写完广播 config changed。
 
 ### D. UI / UX（high）
 
-- [x] **截图捕获 / OCR 失败不再静默吞**：`electron/screenshot/index.ts:72-76`、`ipc/ocr_handlers.ts:108-110`、`src/windows/screenshot/index.tsx:116/164-168`。补错误日志、UI 反馈、保留窗口与重试。
+- [x] **截图捕获 / OCR 失败不再静默吞**：`src/main/screenshot/index.ts:72-76`、`ipc/ocr_handlers.ts:108-110`、`src/windows/screenshot/index.tsx:116/164-168`。补错误日志、UI 反馈、保留窗口与重试。
 - [x] **截图翻译模式下识别语言变更需重新 OCR + 翻译**：`src/windows/recognize/index.tsx:400-405` 自动重识别 effect 在 translate 模式直接返回；与 `docs/spec.md:477-478` 不符。
 - [x] **recognize 窗口 source=auto 时交换语言按钮**：`src/windows/recognize/index.tsx:594-601/767` 当前两支返回相同值，swap 无效；用 `detectedSourceLang` 参与交换或无检测时禁用。
 - [x] **请求 race 防回退 loading**：`src/windows/recognize/index.tsx:421-425/541-545/496-527`。`setIsTranslating(false)` 应按 request id guard。`src/windows/config/history_settings.tsx:43-55/123/131/143` 同类问题。
@@ -163,10 +163,10 @@
 - [x] **Bing/Google/Ollama 错误处理**：`bing.ts:124-127` 缺 `!resp.ok` 检查；`google.ts:50-56` 对合法空译响应抛错；`ollama.ts:62-67` 静默丢弃 malformed JSON。
 - [x] **Chinese Dictionary错误不再吞为空结果**：`src/services/chinese_dictionary.ts:15-20` DB 缺失 / IPC 失败 / SQL 错误与"无该词"不可区分；记录错误并 UI 暴露。
 - [x] **macOS System OCR Swift 脚本打包**：`scripts/macos_ocr.swift` 已作为 extraResource 打包，并在生产环境从 `process.resourcesPath/scripts/macos_ocr.swift` 读取。
-- [x] **macOS 划词实现或在 spec 标缺口**：`electron/selection/darwin.ts:3-5` 当前返回 `unsupported-platform`，已在 spec 标为当前缺口。
+- [x] **macOS 划词实现或在 spec 标缺口**：`src/main/selection/darwin.ts:3-5` 当前返回 `unsupported-platform`，已在 spec 标为当前缺口。
 - [x] **WebDAV 备份能力对齐 spec**：当前备份实现为本地 zip；默认 `backup_type` 已改为 `local`，spec 明确 WebDAV 仅保留配置项、远端同步未实现。
-- [x] **text clipboard IPC 限制大小**：`electron/ipc/text_handlers.ts:9-12` 限制 renderer base64 输入为 20MB（约 15MB raw image），避免无上限创建 `nativeImage`。
-- [x] **clipboard 多并发互不打断**：`electron/clipboard/index.ts` 的 clipboard monitor 抑制改为嵌套引用计数；`electron/selection/clipboard.ts` 的备份/恢复路径继续由抑制窗口保护，已补并发抑制单测。
+- [x] **text clipboard IPC 限制大小**：`src/main/ipc/text_handlers.ts:9-12` 限制 renderer base64 输入为 20MB（约 15MB raw image），避免无上限创建 `nativeImage`。
+- [x] **clipboard 多并发互不打断**：`src/main/clipboard/index.ts` 的 clipboard monitor 抑制改为嵌套引用计数；`src/main/selection/clipboard.ts` 的备份/恢复路径继续由抑制窗口保护，已补并发抑制单测。
 - [x] **DeepL free / Bing UA 风险标注**：`src/services/deepl.ts:32-45/140-144`、`bing.ts:55` 仿冒官方客户端，封禁即失效；在 spec/limitations 记录。
 - [x] **Cambridge HTML 正则 ReDoS**：`src/services/cambridge_dict.ts:74/112/144` 无界长，必要时换解析器。
 
@@ -193,7 +193,7 @@
 ### G. 文档与项目约定
 
 - [x] **命名 / 缩进 / 日志规范**：已明确 TS/React 命名边界：文件/目录、IPC payload、DB columns、持久化 config key、项目内部纯数据字段用 snake_case；React props/hooks/setter、DOM/Electron/第三方 API 保留 ecosystem 惯例；不做全仓批量 rename / reindent。renderer `.catch(console.error)` 已替换为 `src/utils/logger.ts` scoped logger，scripts 用户可见 console 输出仍允许。
-- [x] **spec 与代码差异修订**：(1) `docs/spec.md:409` 截图先 overlay 后 capture，但当前实现先 capture 后 show；(2) `docs/spec.md:101` 标 Electron 35+，实际 ^39.8.10；(3) `docs/spec.md:147` updater 600×400，实际 `electron/updater/index.ts:221-225` 是 480×520；(4) `docs/spec.md:699-701` 默认 `service_instances` 缺 `system@default`、`qrcode@default`（实际见 `shared/types/config.ts:88-99`）；(5) `docs/spec.md:479` 与 `:1110` 对 Linux System OCR 自相矛盾。
+- [x] **spec 与代码差异修订**：(1) `docs/spec.md:409` 截图先 overlay 后 capture，但当前实现先 capture 后 show；(2) `docs/spec.md:101` 标 Electron 35+，实际 ^39.8.10；(3) `docs/spec.md:147` updater 600×400，实际 `src/main/updater/index.ts:221-225` 是 480×520；(4) `docs/spec.md:699-701` 默认 `service_instances` 缺 `system@default`、`qrcode@default`（实际见 `shared/types/config.ts:88-99`）；(5) `docs/spec.md:479` 与 `:1110` 对 Linux System OCR 自相矛盾。
 - [x] **test 文档同步**：(1) `docs/test_e2e.md:413` 仍提"文字（字体+字号）"；(2) `:363` 词典 titlebar 漏 pin；(3) `:450-455` HTTP API 漏 `/dict`、`/history`；(4) `:234-238` endpoint 列表漏 `/e2e/set-config` 等 fixture；(5) `docs/test.md:24-27` 写 15 个 spec，`docs/test_e2e.md:54` 写 26 个，实际 27 个；(6) `docs/test.md:279` 表行漏 Google。
 - [x] **About / updater UI 链接同步**：仓库地址改公开 release 仓库。
 - [x] **`build_chinese_dictionary.ts` 收口**：(1) 注释要求单对象 JSON fail，但 `scripts/build_chinese_dictionary.ts:36-42` 实际接受；(2) `:197-199` 开启 WAL 但 `package.json:72-78` 只 include `.db`，结束前需 checkpoint/truncate。
@@ -204,8 +204,8 @@
 
 > 策略：先做 A（解耦 `focusOrCreate` 与 `readSelectedText`），上线 timing 日志和 E2E 后再评估是否做 B（预热窗口）。**不要只凭体感判断**，所有验收都以 `show_ms` / `total_ms` 数据为准。
 
-- [x] **A 解耦：先开窗，选区并行读**：`electron/hotkey/index.ts` 已让 `triggerTranslateEntry` 与 `triggerSelectionDictionary` 在 `readSelectedText()` resolve 前先 `focusOrCreate(TRANSLATE/DICT)`，文本通过 `sendWhenReady` 异步投递。空选区路径走 `translate:input-translate` / `dict:selection-empty`。
-- [x] **加 timing 日志**：`electron/hotkey/index.ts` 的 translate / dict trigger 记录 `show_ms`（热键入口到窗口创建/聚焦请求返回）、`total_ms`、`entry`、`reason`，区分空选区与有选区路径，且不记录用户原文。
+- [x] **A 解耦：先开窗，选区并行读**：`src/main/hotkey/index.ts` 已让 `triggerTranslateEntry` 与 `triggerSelectionDictionary` 在 `readSelectedText()` resolve 前先 `focusOrCreate(TRANSLATE/DICT)`，文本通过 `sendWhenReady` 异步投递。空选区路径走 `translate:input-translate` / `dict:selection-empty`。
+- [x] **加 timing 日志**：`src/main/hotkey/index.ts` 的 translate / dict trigger 记录 `show_ms`（热键入口到窗口创建/聚焦请求返回）、`total_ms`、`entry`、`reason`，区分空选区与有选区路径，且不记录用户原文。
 - [x] **E2E 断言可见性与总时延**：`tests/e2e/specs/dict_window.spec.ts` 覆盖词典热键空选区后窗口可见且可立即输入；`tests/unit/hotkey/index.test.ts` 严格覆盖选区 promise 未 resolve 时窗口已打开、resolve 后才发 `dict:lookup` / `dict:selection-empty`。
 - [ ] **复杂焦点应用手测**：在 dist 产物下，分别在 **VS Code**、**Microsoft Word**、Office Excel、Chromium 浏览器选区上手动触发翻译 / 词典 / 截图翻译热键，记录 `show_ms` / `total_ms`，结果回写到 `docs/archive/runtime_issues.md §4` 的"验证"小节。验收门槛：window visible < 200ms、文本到达 < 1.5s。
 - [ ] **B 预热（A 验证后再评估）**：按 `docs/archive/runtime_issues.md §4 修复方案 B` 预热 translate / dict 窗口前，必须先完成 §C 中的 "透明度切换不重置 pin/置顶" 与 "Windows 选区 COM 引用泄漏" 两项（A 阶段路径未受影响，但 B 会放大这两个 bug）。是否默认开启视 A 阶段数据决定；若开启走 `preload_windows` 配置开关。
@@ -214,9 +214,9 @@
 
 ### I. 低优 / 备忘
 
-- [x] **`compare_versions` 处理 pre-release**：`electron/updater/index.ts:37-45` 当前 `1.2.0-beta` 与 `1.2.0` 视为相等。
-- [x] **`handleResetConfig` 批量 set**：`electron/server/index.ts:531-541` 循环 setConfig 触发约 50 次 broadcast。
-- [x] **Chinese Dictionary FTS5 前缀最小长度**：`electron/chinese_dictionary/index.ts:162-177`，单字符前缀在大库上慢。
+- [x] **`compare_versions` 处理 pre-release**：`src/main/updater/index.ts:37-45` 当前 `1.2.0-beta` 与 `1.2.0` 视为相等。
+- [x] **`handleResetConfig` 批量 set**：`src/main/server/index.ts:531-541` 循环 setConfig 触发约 50 次 broadcast。
+- [x] **Chinese Dictionary FTS5 前缀最小长度**：`src/main/chinese_dictionary/index.ts:162-177`，单字符前缀在大库上慢。
 - [x] **`package.json:25-26` cross-env**：`node -e "..."` 设环境变量 Windows 下脆弱；`format:check` 长 biome 参数挪 `biome.json`。
 - [x] **`scripts/check_dist_locks.mjs:111/136` `Atomics.wait` → `node:timers/promises`**。
 - [x] **`source_area.tsx` 动态翻译 timer ref-持有 `onTranslate`**：`src/windows/translate/source_area.tsx:171-178` 当前依赖父 rerender 重置 timer。
@@ -273,14 +273,14 @@
 
 翻译窗口的动态高度实现：
 - **渲染进程**：`src/windows/translate/index.tsx:530-563` — ResizeObserver 监听 `titlebar`、`top`（源文本+语言区）、`results_content`（结果卡片容器），计算 `total = titlebar_h + top_h + results_h + padding`，通过 `window.electronAPI.translate.reportContentHeight(total)` 上报
-- **主进程**：`electron/windows/translate_height_controller.ts` — `TranslateHeightController` 接收 content_height，计算 `target_h = clamp(content_height, min_height, work_area * 0.75)`，通过 `setMinimumSize/setMaximumSize/setBounds` 锁高；监听 `move`/`restore`/`display-metrics-changed` 重新计算
-- **IPC 链路**：`electron/preload.ts:120` 暴露 `reportContentHeight` → `electron/ipc/window_handlers.ts:56` 注册 `translate:reportContentHeight` → `controller.report_content_height(height)`
+- **主进程**：`src/main/windows/translate_height_controller.ts` — `TranslateHeightController` 接收 content_height，计算 `target_h = clamp(content_height, min_height, work_area * 0.75)`，通过 `setMinimumSize/setMaximumSize/setBounds` 锁高；监听 `move`/`restore`/`display-metrics-changed` 重新计算
+- **IPC 链路**：`src/main/preload.ts:120` 暴露 `reportContentHeight` → `src/main/ipc/window_handlers.ts:56` 注册 `translate:reportContentHeight` → `controller.report_content_height(height)`
 
 ### 技术方案
 
 #### 1. 主进程：DictHeightController
 
-新建 `electron/windows/dict_height_controller.ts`，参照 `TranslateHeightController`：
+新建 `src/main/windows/dict_height_controller.ts`，参照 `TranslateHeightController`：
 
 - 类结构：`DictHeightController` 持有 `BrowserWindow` 引用
 - `report_content_height(content_height: number)`：接收渲染进程上报的内容高度
@@ -294,24 +294,24 @@
 
 #### 2. 主进程：window_handlers 注册 IPC
 
-在 `electron/ipc/window_handlers.ts` 中新增：
+在 `src/main/ipc/window_handlers.ts` 中新增：
 - `dict:reportContentHeight` handler，路由到 `DictHeightController.report_content_height`
 - 可选：`dict:reportMinWidth` handler
 
 #### 3. 主进程：preload 暴露 API
 
-在 `electron/preload.ts` 中新增 `dict` section：
+在 `src/main/preload.ts` 中新增 `dict` section：
 - `reportContentHeight: (height) => ipcRenderer.invoke('dict:reportContentHeight', height)`
 
 #### 4. 主进程：manager 集成
 
-在 `electron/windows/manager.ts` 中：
+在 `src/main/windows/manager.ts` 中：
 - 创建 dict 窗口时初始化 `DictHeightController`（类似 `translate_height_controller`）
 - 窗口关闭时 dispose
 
 #### 5. 主进程：dict_options 调整
 
-修改 `electron/windows/dict_options.ts`：
+修改 `src/main/windows/dict_options.ts`：
 - `get_dict_window_options()` 去掉 `maxHeight: 960`（由 HeightController 管理）
 - 初始高度改为较小值（如 200px，仅标题栏+源词卡片+折叠卡片占位），后续由内容驱动
 - `attach_dict_resize_persistence` 保留（用户手动拖拽时仍持久化），但需与 HeightController 共存：用户手动拖拽后可暂停自动锁高，或直接由 HeightController 统一管理
@@ -337,11 +337,11 @@
 
 | 文件 | 改动 |
 |---|---|
-| `electron/windows/dict_height_controller.ts` | **新建** — DictHeightController 类 |
-| `electron/windows/dict_options.ts` | 去掉 `maxHeight: 960`，调整初始高度 |
-| `electron/windows/manager.ts` | 创建 dict 窗口时初始化 DictHeightController，关闭时 dispose |
-| `electron/ipc/window_handlers.ts` | 新增 `dict:reportContentHeight` IPC handler |
-| `electron/preload.ts` | 新增 `dict.reportContentHeight` API |
+| `src/main/windows/dict_height_controller.ts` | **新建** — DictHeightController 类 |
+| `src/main/windows/dict_options.ts` | 去掉 `maxHeight: 960`，调整初始高度 |
+| `src/main/windows/manager.ts` | 创建 dict 窗口时初始化 DictHeightController，关闭时 dispose |
+| `src/main/ipc/window_handlers.ts` | 新增 `dict:reportContentHeight` IPC handler |
+| `src/main/preload.ts` | 新增 `dict.reportContentHeight` API |
 | `src/windows/dict/index.tsx` | ResizeObserver 上报内容高度 + 卡片默认折叠逻辑 |
 | `src/stores/dict_store.ts` | 可选：如需在 store 层面管理 collapsed 状态 |
 | `docs/spec.md` | 更新词典窗口行为描述：动态高度、卡片默认折叠 |
@@ -377,11 +377,11 @@
 
 **已完成**（2026-05-31）。
 
-- `electron/windows/dict_height_controller.ts` 新建（参照 TranslateHeightController）
-- `electron/windows/dict_options.ts` 去掉 `maxHeight`、`DICT_MIN_HEIGHT` 改为 120、`attach_dict_resize_persistence` 仅持久化宽度
-- `electron/windows/manager.ts` 集成 DictHeightController（创建/关闭）
-- `electron/ipc/window_handlers.ts` 注册 `dict:reportContentHeight`
-- `electron/preload.ts` + `shared/types/ipc.ts` 暴露 `dict.reportContentHeight`
+- `src/main/windows/dict_height_controller.ts` 新建（参照 TranslateHeightController）
+- `src/main/windows/dict_options.ts` 去掉 `maxHeight`、`DICT_MIN_HEIGHT` 改为 120、`attach_dict_resize_persistence` 仅持久化宽度
+- `src/main/windows/manager.ts` 集成 DictHeightController（创建/关闭）
+- `src/main/ipc/window_handlers.ts` 注册 `dict:reportContentHeight`
+- `src/main/preload.ts` + `shared/types/ipc.ts` 暴露 `dict.reportContentHeight`
 - `src/windows/dict/index.tsx`：ResizeObserver 上报内容高度；卡片默认折叠；新查询折叠所有；单服务出结果自动展开
 - 单元测试：`tests/unit/windows/window_options.test.ts` 适配（不再期望持久化 dict_window_height）
 - 文档：`docs/spec.md` 与 `docs/test_e2e.md` 待后续补充
@@ -395,9 +395,9 @@
 ### High
 
 - [x] **托盘”开机自启”只改 OS 状态，不持久化配置**
-  - **位置**：`electron/tray/index.ts:224-228`。
+  - **位置**：`src/main/tray/index.ts:224-228`。
   - **问题**：`auto_start` action 直接调用 `app.setLoginItemSettings({ openAtLogin: !is_auto_start() })`，但没有 `setConfig('auto_start', ...)`。
-  - **影响**：设置页仍读旧 `auto_start`；不会广播 `config:changed`；重启后 `electron/ipc/config_handlers.ts:78-80` 会按旧配置重新应用，导致托盘切换结果被还原。
+  - **影响**：设置页仍读旧 `auto_start`；不会广播 `config:changed`；重启后 `src/main/ipc/config_handlers.ts:78-80` 会按旧配置重新应用，导致托盘切换结果被还原。
   - **参考**：同文件 `clipboard_monitor` 分支会同步 `setConfig('clipboard_monitor', ...)`。
   - **修复方向**：主进程 tray action 直接持久化 `auto_start`，或抽公共 helper，避免绕过 config store。
   - **状态**：已修复（2026-06-06，commit `67be039`）。托盘 action 现在直接写 config store。
@@ -410,7 +410,7 @@
   - **状态**：已修复（2026-06-06，commit `67be039`）。改用 `x-goog-api-key` header。
 
 - [x] **词典窗口记忆高度配置读写不一致**
-  - **位置**：`electron/windows/dict_options.ts:8-18`、`:24-34`。
+  - **位置**：`src/main/windows/dict_options.ts:8-18`、`:24-34`。
   - **问题**：`get_dict_window_options()` 在 `dict_remember_window_size=true` 时读取 `dict_window_height`，但 `attach_dict_resize_persistence()` 只保存 `dict_window_width`。
   - **影响**：如果文档/设置仍承诺词典窗口尺寸记忆，高度不会随用户调整持久化；若动态高度设计不再记忆高度，应删除/弱化 `dict_window_height` 读取与文档描述。
   - **修复方向**：明确产品行为：要么保存高度，要么移除高度记忆路径并同步 `docs/spec.md` / 测试。
@@ -419,11 +419,11 @@
 ### Mid
 
 - [x] **`/e2e/set-config` 对 `service_instances` 缺结构校验**
-  - **位置**：`electron/server/index.ts:759-785`、`electron/ipc/config_handlers.ts:14-18`。
+  - **位置**：`src/main/server/index.ts:759-785`、`src/main/ipc/config_handlers.ts:14-18`。
   - **问题**：HTTP E2E 配置入口仅检查 key 是否存在后 `setConfig(key, value)`；IPC 校验也只按顶层 `typeof` / array 判断，复杂对象没有 schema。
   - **影响**：持有本地 API/E2E token 的调用方可写入畸形 `service_instances`，破坏翻译/词典服务配置。
   - **修复方向**：复用严格 config schema；至少对 `service_instances` 做 service key、instance config、enable 字段结构校验。
-  - **状态**：已修复（2026-06-06，commit `67be039`）。`electron/config/validation.ts` 已包含 `is_service_instances()` 校验（检查 serviceKey、config 结构、URL 合法性），HTTP E2E 端和 IPC 端均已通过 `is_config_value_allowed` 调用。
+  - **状态**：已修复（2026-06-06，commit `67be039`）。`src/main/config/validation.ts` 已包含 `is_service_instances()` 校验（检查 serviceKey、config 结构、URL 合法性），HTTP E2E 端和 IPC 端均已通过 `is_config_value_allowed` 调用。
 
 - [x] **`fetch_with_timeout` 成功路径留下未 settle 的 timeout promise**
   - **位置**：`src/services/fetch_timeout.ts:18-39`。
@@ -433,7 +433,7 @@
   - **状态**：已修复（2026-06-06，commit `67be039`）。改用 AbortController 模式。
 
 - [x] **生产 CSP 允许 renderer 连接任意 HTTPS**
-  - **位置**：`electron/csp_policy.ts:3`。
+  - **位置**：`src/main/csp_policy.ts:3`。
   - **问题**：`connect-src ... https:` 允许任意 HTTPS 目的地。
   - **影响**：当前无已知 XSS，但若 renderer 被攻破且能读取完整服务配置，API key 可被外传；属于纵深防御缺口。
   - **修复方向**：评估是否把外部 provider 请求代理到主进程，或按服务域名生成更窄 allowlist；不要破坏自定义服务 URL 需求。
@@ -447,7 +447,7 @@
   - **状态**：已加固（2026-06-06，commit `1e06a83` + fetch URL validation）。三层防护：(1) config 导入时 `is_allowed_service_url` 校验协议/主机；(2) 运行时 `fetchWithTimeout` 阻止非 HTTP(S)、HTTP 非 localhost、SSRF 元数据端点；(3) Gemini key 已改用 header。
 
 - [x] **命名规范历史债需复核是否真正收口**
-  - **位置**：`shared/types/service.ts:5/12/16/53`、`shared/types/ipc.ts:82/85/92/119/136-137`、`electron/preload.ts` 对应 API。
+  - **位置**：`shared/types/service.ts:5/12/16/53`、`shared/types/ipc.ts:82/85/92/119/136-137`、`src/main/preload.ts` 对应 API。
   - **问题**：仍存在 `instanceName`、`audioUrl`、`partOfSpeech`、`serviceKey`、`pageSize`、`sourceText`、`downloadAndInstall`、`autoStart` 等 camelCase；`TASKS.md` 旧项已标完成。
   - **影响**：需区分 ecosystem API / React props 例外与”IPC payload、持久化 config、内部纯数据字段” snake_case 要求；避免误把已允许的边界当缺陷，也避免真实 payload 混用继续扩散。
   - **修复方向**：逐项分类：允许的 TypeScript API 保留；真实 IPC payload/config 字段改 snake_case；不做全仓批量 rename。
@@ -456,14 +456,14 @@
 ### Low
 
 - [x] **`auto_start` 被列入 sensitive write keys 后，托盘不能走普通 `config:set` 路径**
-  - **位置**：`electron/ipc/config_handlers.ts:54-56`、`:70-72`。
+  - **位置**：`src/main/ipc/config_handlers.ts:54-56`、`:70-72`。
   - **问题**：`auto_start` 只有 CONFIG 窗口能写；托盘若试图复用 IPC `config:set` 会被拒绝。
   - **影响**：这是 high 项”托盘开机自启不持久化”的修复约束，不是独立用户可见 bug。
   - **修复方向**：修 high 项时从 main 直接调用 config store，或新增明确授权的 main helper。
   - **状态**：已随 high 项修复（2026-06-06，commit `67be039`）。托盘直接调用 config store，无需经过 sensitive write keys 路径。
 
 - [x] **`shell.openExternal` 允许任意 `file:` URL**
-  - **位置**：`electron/ipc/shell_handlers.ts:16-35`。
+  - **位置**：`src/main/ipc/shell_handlers.ts:16-35`。
   - **问题**：`is_allowed_external_url()` 对所有 `file:` 返回 true。
   - **影响**：当前只允许 CONFIG 窗口调用且未发现 XSS；但若配置窗口 renderer 被攻破，Windows 上 `file:///...exe` 可能经 ShellExecute 打开本地程序。
   - **修复方向**：移除通用 `file:` allow；新增专门 `open_local_path` handler，只允许日志/备份等受控目录。
@@ -484,7 +484,7 @@
 
 ### A. 超 500 行文件拆分
 
-- [x] **拆分 `electron/server/index.ts`（1135 行）**
+- [x] **拆分 `src/main/server/index.ts`（1135 行）**
   - **问题**：本地 HTTP API、鉴权、CORS/Host 校验、E2E helper、路由处理集中在单文件，后续修改风险高。
   - **拆分方向**：保留 server 启停与路由分发；把 auth/host/origin 校验、public API handlers、E2E handlers、clipboard/config/history handlers 分到独立模块。
   - **验证**：`tests/unit/server/test_server_security.ts`、`tests/e2e/specs/app_http_api.spec.ts`、相关 E2E API fixture。
@@ -520,7 +520,7 @@
   - **验证**：服务设置 E2E、registry 隔离 unit、i18n 标签回归。
   - **状态**：已拆分（2026-06-06，commit `75ba92b`）。service_settings.tsx → 402 行；新建 service_settings_helpers.ts、service_item_row.tsx。
 
-- [x] **拆分 `electron/updater/index.ts`（507 行）**
+- [x] **拆分 `src/main/updater/index.ts`（507 行）**
   - **问题**：版本比较、release metadata 拉取、双源校验、URL allowlist、下载/安装、窗口 UI 入口集中。
   - **拆分方向**：提取 version/release metadata/asset validation/download installer；保持 updater IPC sender 限制和 hash 校验。
   - **验证**：`tests/unit/updater.test.ts`、updater/tray E2E。
@@ -529,7 +529,7 @@
 ### B. 重复代码合并
 
 - [x] **合并 dict/translate 高度控制器重复逻辑**
-  - **位置**：`electron/windows/dict_height_controller.ts` ↔ `electron/windows/translate_height_controller.ts`。
+  - **位置**：`src/main/windows/dict_height_controller.ts` ↔ `src/main/windows/translate_height_controller.ts`。
   - **问题**：移动/恢复/display metrics/锁高逻辑相似，后续 bugfix 可能只改一边。
   - **处理方向**：先确认两者差异（min height、cap、debounce、宽度行为），再提取共享纯函数或小型 base helper；不要引入过度继承。
   - **验证**：两个 height controller unit + 翻译/词典窗口高度 E2E。
@@ -567,7 +567,7 @@
 
 - [x] **清理 `knip.json` 过时 ignore**
   - **位置**：`knip.json:16-35`。
-  - **证据**：`knip` 提示以下 ignore 可能可移除：`electron/selection/permissions.ts`、`src/components/simple_select.tsx`、`src/hooks/use_tts.ts`、`@testing-library/react`。
+  - **证据**：`knip` 提示以下 ignore 可能可移除：`src/main/selection/permissions.ts`、`src/components/simple_select.tsx`、`src/hooks/use_tts.ts`、`@testing-library/react`。
   - **处理方向**：逐个移除 ignore 后跑 `npm run deadcode`；若仍 clean，提交配置清理；若报动态引用，则补入口或保留 ignore 并写明原因。
   - **验证**：每移除一项都跑 `npm run deadcode`。
   - **状态**：已清理（2026-06-06，commit `73a2c3d`）。旧 ignore 已移除，当前 ignore 均为合理条目。
@@ -588,6 +588,6 @@
 
 ## 已知问题（不修，仅跟踪）
 
-- **CLD3 短文本语言误判**：`electron/detect/index.ts:95-113`。CLD3 对极短 CJK 文本（如"馄饨"2 字符）返回 `language: 'en', is_reliable: true`，代码信任 `is_reliable` 跳过 regex 回退，导致翻译方向错误。regex（line 44 `/[一-鿿]/`）能正确识别。同理可能影响日韩短文本。涉及语言检测策略变更，暂不修。
+- **CLD3 短文本语言误判**：`src/main/detect/index.ts:95-113`。CLD3 对极短 CJK 文本（如"馄饨"2 字符）返回 `language: 'en', is_reliable: true`，代码信任 `is_reliable` 跳过 regex 回退，导致翻译方向错误。regex（line 44 `/[一-鿿]/`）能正确识别。同理可能影响日韩短文本。涉及语言检测策略变更，暂不修。
 - **DeepL free 当前环境限流**：`npm run test:e2e:external` 中长文本和葡语变体用例出现 429；只影响 opt-in 外部服务健康检查，不影响 `@core` / `@ui`。
 - **`cld3-asm` 依赖链 moderate audit 提示**：`npm audit --audit-level=high` 通过；npm 给出的 `--force` 修复会引入 breaking change，暂不自动修。

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { build_csp_policy } from '../../electron/csp_policy'
+import { build_csp_policy } from '../../src/main/csp_policy'
 
 function parse_csp(policy: string): Map<string, string[]> {
     return new Map(policy.split(';').map((directive) => {

@@ -42,7 +42,7 @@ vi.mock('electron-log/main', () => ({
     default: logger_mock,
 }))
 
-import { getLogDir, initLog, redact_log_value } from '../../electron/log'
+import { getLogDir, initLog, redact_log_value } from '../../src/main/log'
 
 describe('log system', () => {
     beforeEach(() => {

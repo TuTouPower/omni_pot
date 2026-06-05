@@ -32,7 +32,7 @@ describe('config store migrations', () => {
             service_instances: {},
         }), 'utf-8')
 
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
         store.initConfigStore()
         const config = store.getAllConfig()
 

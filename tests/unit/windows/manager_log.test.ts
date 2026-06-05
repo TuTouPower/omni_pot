@@ -19,13 +19,13 @@ vi.mock('electron', () => ({
     ipcMain: { on: vi.fn() },
 }))
 
-vi.mock('../../../electron/config/store', () => ({
+vi.mock('../../../src/main/config/store', () => ({
     getConfig: vi.fn(),
     setConfig: vi.fn(),
 }))
 
-import { WindowLabel } from '../../../electron/windows/types'
-import { log_renderer_console_message } from '../../../electron/windows/manager'
+import { WindowLabel } from '../../../src/main/windows/types'
+import { log_renderer_console_message } from '../../../src/main/windows/manager'
 
 describe('log_renderer_console_message', () => {
     beforeEach(() => {

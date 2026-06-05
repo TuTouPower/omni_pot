@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { get_macos_ocr_script_path, normalize_system_ocr_language, registerOcrHandlers } from '../../../electron/ipc/ocr_handlers'
-import { WindowLabel } from '../../../electron/windows/types'
+import { get_macos_ocr_script_path, normalize_system_ocr_language, registerOcrHandlers } from '../../../src/main/ipc/ocr_handlers'
+import { WindowLabel } from '../../../src/main/windows/types'
 import { normalize_recognized_text } from '@shared/text_normalize'
 
 const mocks = vi.hoisted(() => ({

@@ -5,13 +5,13 @@ const config_values = vi.hoisted(() => new Map<string, unknown>())
 const get_config = vi.hoisted(() => vi.fn((key: string) => config_values.get(key)))
 const set_config = vi.hoisted(() => vi.fn((key: string, value: unknown) => { config_values.set(key, value) }))
 
-vi.mock('../../../electron/config/store', () => ({
+vi.mock('../../../src/main/config/store', () => ({
     getConfig: get_config,
     setConfig: set_config,
 }))
 
-import { get_dict_window_options, attach_dict_resize_persistence } from '../../../electron/windows/dict_options'
-import { get_translate_window_options } from '../../../electron/windows/translate_options'
+import { get_dict_window_options, attach_dict_resize_persistence } from '../../../src/main/windows/dict_options'
+import { get_translate_window_options } from '../../../src/main/windows/translate_options'
 
 function reset_config(): void {
     config_values.clear()

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { WindowManager } from '../../../electron/windows/manager'
+import type { WindowManager } from '../../../src/main/windows/manager'
 
 const read_selected_text = vi.fn()
 const focus_or_create = vi.fn()
@@ -16,15 +16,15 @@ vi.mock('electron', () => ({
     },
 }))
 
-vi.mock('../../../electron/selection', () => ({
+vi.mock('../../../src/main/selection', () => ({
     readSelectedText: read_selected_text,
 }))
 
-vi.mock('../../../electron/windows/translate_options', () => ({
+vi.mock('../../../src/main/windows/translate_options', () => ({
     get_translate_window_options: () => translate_options,
 }))
 
-vi.mock('../../../electron/windows/dict_options', () => ({
+vi.mock('../../../src/main/windows/dict_options', () => ({
     get_dict_window_options: () => dict_options,
 }))
 
@@ -40,7 +40,7 @@ describe('translate hotkey entry', () => {
             focusOrCreate: focus_or_create,
             sendWhenReady: send_when_ready,
         } as unknown as WindowManager
-        const { triggerTranslateEntry } = await import('../../../electron/hotkey/index')
+        const { triggerTranslateEntry } = await import('../../../src/main/hotkey/index')
 
         const pending = triggerTranslateEntry(manager)
 
@@ -65,7 +65,7 @@ describe('translate hotkey entry', () => {
             focusOrCreate: focus_or_create,
             sendWhenReady: send_when_ready,
         } as unknown as WindowManager
-        const { triggerTranslateEntry } = await import('../../../electron/hotkey/index')
+        const { triggerTranslateEntry } = await import('../../../src/main/hotkey/index')
 
         const pending = triggerTranslateEntry(manager)
 
@@ -92,7 +92,7 @@ describe('selection dictionary hotkey entry', () => {
             focusOrCreate: focus_or_create,
             sendWhenReady: send_when_ready,
         } as unknown as WindowManager
-        const { triggerSelectionDictionary } = await import('../../../electron/hotkey/index')
+        const { triggerSelectionDictionary } = await import('../../../src/main/hotkey/index')
 
         const pending = triggerSelectionDictionary(manager)
 
@@ -116,7 +116,7 @@ describe('selection dictionary hotkey entry', () => {
             focusOrCreate: focus_or_create,
             sendWhenReady: send_when_ready,
         } as unknown as WindowManager
-        const { triggerSelectionDictionary } = await import('../../../electron/hotkey/index')
+        const { triggerSelectionDictionary } = await import('../../../src/main/hotkey/index')
 
         const pending = triggerSelectionDictionary(manager)
 

@@ -20,7 +20,7 @@
         "types": ["node", "electron-vite/node"]
     },
     "include": [
-        "electron/**/*.ts",
+        "src/main/**/*.ts",
         "src/**/*.ts",
         "src/**/*.tsx",
         "src/shared/**/*.ts",

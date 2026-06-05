@@ -15,7 +15,7 @@ import {
     compute_dict_target_height,
     DictHeightController,
     DICT_MAX_HEIGHT_RATIO,
-} from '../../../electron/windows/dict_height_controller'
+} from '../../../src/main/windows/dict_height_controller'
 
 describe('compute_dict_target_height', () => {
     it('returns content height within bounds', () => {

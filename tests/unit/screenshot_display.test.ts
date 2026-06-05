@@ -23,11 +23,11 @@ vi.mock('electron', () => ({
     },
 }))
 
-vi.mock('../../electron/log', () => ({
+vi.mock('../../src/main/log', () => ({
     log: { info: vi.fn(), scope: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })) },
 }))
 
-import { capture_screenshot, get_screenshot_display, preload_screenshot_window, start_screenshot_capture } from '../../electron/screenshot'
+import { capture_screenshot, get_screenshot_display, preload_screenshot_window, start_screenshot_capture } from '../../src/main/screenshot'
 
 describe('screenshot display selection', () => {
     beforeEach(() => {

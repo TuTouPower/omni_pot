@@ -64,7 +64,7 @@ vi.mock('electron', () => ({
   app: { isPackaged: true, getAppPath: vi.fn().mockReturnValue('/mock/app') }
 }))
 
-vi.mock('../../electron/log', () => ({
+vi.mock('../../src/main/log', () => ({
   log: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -73,13 +73,13 @@ vi.mock('../../electron/log', () => ({
   },
 }))
 
-vi.mock('../../electron/windows/translate_height_controller', () => ({
+vi.mock('../../src/main/windows/translate_height_controller', () => ({
   TranslateHeightController: vi.fn().mockImplementation(() => ({ dispose: vi.fn() })),
 }))
 
 import { BrowserWindow, ipcMain } from 'electron'
-import { WindowManager } from '../../../electron/windows/manager'
-import { WindowLabel } from '../../../electron/windows/types'
+import { WindowManager } from '../../../src/main/windows/manager'
+import { WindowLabel } from '../../../src/main/windows/types'
 
 describe('WindowManager', () => {
   let manager: WindowManager

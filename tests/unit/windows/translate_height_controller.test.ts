@@ -10,7 +10,7 @@ vi.mock('electron', () => {
     return { screen: screen_mock }
 })
 
-vi.mock('../../../electron/log', () => ({
+vi.mock('../../../src/main/log', () => ({
     log: {
         scope: vi.fn(() => ({
             debug: vi.fn(),
@@ -27,7 +27,7 @@ import {
     compute_target_min_width,
     TranslateHeightController,
     TRANSLATE_MAX_HEIGHT_RATIO,
-} from '../../../electron/windows/translate_height_controller'
+} from '../../../src/main/windows/translate_height_controller'
 
 describe('compute_target_height', () => {
     it('returns content height when within bounds', () => {

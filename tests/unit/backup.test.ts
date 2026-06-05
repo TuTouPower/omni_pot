@@ -8,7 +8,7 @@ import {
     list_local_backups_with_size,
     restore_from_zip_path,
     restore_local_backup,
-} from '../../electron/backup'
+} from '../../src/main/backup'
 
 const mocks = vi.hoisted(() => ({
     user_data_dir: '',
@@ -28,7 +28,7 @@ vi.mock('electron', () => ({
     },
 }))
 
-vi.mock('../../electron/config/store', () => ({
+vi.mock('../../src/main/config/store', () => ({
     cancel_pending_config_save: mocks.cancel_pending_config_save,
     flush_config: mocks.flush_config,
     getAllConfig: mocks.getAllConfig,
@@ -37,7 +37,7 @@ vi.mock('../../electron/config/store', () => ({
     broadcastAllConfig: mocks.broadcastAllConfig,
 }))
 
-vi.mock('../../electron/history', () => ({
+vi.mock('../../src/main/history', () => ({
     close_history: mocks.close_history,
 }))
 

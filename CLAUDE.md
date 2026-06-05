@@ -43,7 +43,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 
 | 目录 | 说明 |
 |---|---|
-| `electron/` | 主进程代码（窗口管理、IPC、服务、配置等） |
+| `src/main/` | 主进程代码（窗口管理、IPC、服务、配置等） |
 | `src/` | 渲染进程代码（React UI） |
 | `src/shared/` | 主进程/渲染进程共享类型 |
 | `public/` | 静态资源（logo 等） |

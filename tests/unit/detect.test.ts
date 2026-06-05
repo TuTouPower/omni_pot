@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detect_regex, detect_local_cld3, CLD3_LANG_MAP } from '../../electron/detect'
+import { detect_regex, detect_local_cld3, CLD3_LANG_MAP } from '../../src/main/detect'
 
 describe('regex fallback detection', () => {
     it('detects Chinese', () => {

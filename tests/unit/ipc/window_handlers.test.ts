@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { registerWindowHandlers } from '../../../electron/ipc/window_handlers'
-import { WindowLabel } from '../../../electron/windows/types'
+import { registerWindowHandlers } from '../../../src/main/ipc/window_handlers'
+import { WindowLabel } from '../../../src/main/windows/types'
 
 const mocks = vi.hoisted(() => ({
     handlers: new Map<string, (...args: unknown[]) => unknown>(),

@@ -36,7 +36,7 @@ vi.mock('electron', () => ({
     },
 }))
 
-vi.mock('../../../electron/config/store', () => ({
+vi.mock('../../../src/main/config/store', () => ({
     getConfig: vi.fn(() => 20202),
     getAllConfig: vi.fn(() => DEFAULT_CONFIG),
     setConfig: vi.fn(),
@@ -45,7 +45,7 @@ vi.mock('../../../electron/config/store', () => ({
 
 describe('server security helpers', () => {
     it('allows only exact localhost hosts with optional port', async () => {
-        const { is_host_allowed } = await import('../../../electron/server')
+        const { is_host_allowed } = await import('../../../src/main/server')
 
         expect(is_host_allowed('localhost')).toBe(true)
         expect(is_host_allowed('localhost:20202')).toBe(true)
@@ -61,7 +61,7 @@ describe('server security helpers', () => {
     })
 
     it('allows only localhost origins with optional port', async () => {
-        const { is_origin_allowed, should_reject_origin } = await import('../../../electron/server')
+        const { is_origin_allowed, should_reject_origin } = await import('../../../src/main/server')
 
         expect(is_origin_allowed('http://localhost')).toBe(true)
         expect(is_origin_allowed('http://127.0.0.1')).toBe(true)
@@ -82,7 +82,7 @@ describe('server security helpers', () => {
     })
 
     it('requires exact API token matches', async () => {
-        const { is_api_token_allowed } = await import('../../../electron/server')
+        const { is_api_token_allowed } = await import('../../../src/main/server')
 
         expect(is_api_token_allowed('expected-token', 'expected-token')).toBe(true)
         expect(is_api_token_allowed('expected-token', 'wrong-token')).toBe(false)
@@ -92,7 +92,7 @@ describe('server security helpers', () => {
     })
 
     it('redacts public config secrets while keeping allowed service keys', async () => {
-        const { get_public_config_from_config } = await import('../../../electron/server')
+        const { get_public_config_from_config } = await import('../../../src/main/server')
         const config: AppConfig = {
             ...DEFAULT_CONFIG,
             webdav_url: 'https://webdav.example.com/dav',
@@ -131,7 +131,7 @@ describe('server security helpers', () => {
     })
 
     it('rejects malformed service_instances values for set-config', async () => {
-        const { is_config_value_allowed } = await import('../../../electron/server')
+        const { is_config_value_allowed } = await import('../../../src/main/server')
 
         expect(is_config_value_allowed('service_instances', null)).toBe(false)
         expect(is_config_value_allowed('service_instances', { bad: 'value' })).toBe(false)

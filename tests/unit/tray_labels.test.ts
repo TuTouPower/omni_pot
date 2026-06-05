@@ -33,38 +33,38 @@ vi.mock('electron', () => ({
     shell: { openPath: vi.fn() },
 }))
 
-vi.mock('../../electron/config/store', () => ({
+vi.mock('../../src/main/config/store', () => ({
     getConfig: vi.fn(() => mocks.app_language),
     setConfig: vi.fn(),
     getUserDataDir: vi.fn(() => process.cwd()),
 }))
 
-vi.mock('../../electron/clipboard', () => ({
+vi.mock('../../src/main/clipboard', () => ({
     startClipboardMonitor: vi.fn(),
     stopClipboardMonitor: vi.fn(),
     isClipboardMonitoring: vi.fn(() => false),
 }))
 
-vi.mock('../../electron/screenshot', () => ({
+vi.mock('../../src/main/screenshot', () => ({
     start_screenshot_capture: vi.fn(() => Promise.resolve(true)),
 }))
 
-vi.mock('../../electron/updater', () => ({
+vi.mock('../../src/main/updater', () => ({
     checkForUpdate: vi.fn(() => Promise.resolve()),
 }))
 
-vi.mock('../../electron/log', () => ({
+vi.mock('../../src/main/log', () => ({
     getLogDir: vi.fn(() => process.cwd()),
     log: { scope: vi.fn(() => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() })) },
 }))
 
-vi.mock('../../electron/tray/restart', () => ({
+vi.mock('../../src/main/tray/restart', () => ({
     do_restart: mocks.do_restart,
 }))
 
-import { createTray, destroyTray, get_tray_menu_labels, rebuildMenu, trigger_tray_action } from '../../electron/tray'
+import { createTray, destroyTray, get_tray_menu_labels, rebuildMenu, trigger_tray_action } from '../../src/main/tray'
 import { app } from 'electron'
-import { setConfig } from '../../electron/config/store'
+import { setConfig } from '../../src/main/config/store'
 
 describe('tray visible strings', () => {
     beforeEach(() => {

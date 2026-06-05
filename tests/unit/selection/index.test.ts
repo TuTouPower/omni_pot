@@ -16,7 +16,7 @@ describe('readSelectedText platform dispatch', () => {
 
     it('returns unsupported-platform on linux', async () => {
         Object.defineProperty(process, 'platform', { value: 'linux', configurable: true })
-        const { readSelectedText } = await import('../../../electron/selection/index')
+        const { readSelectedText } = await import('../../../src/main/selection/index')
         const result = await readSelectedText()
         expect(result.method).toBe('none')
         expect(result.reason).toBe('unsupported-platform')
@@ -25,7 +25,7 @@ describe('readSelectedText platform dispatch', () => {
 
     it('getSelectedText returns only the text string on unsupported platform', async () => {
         Object.defineProperty(process, 'platform', { value: 'linux', configurable: true })
-        const { getSelectedText } = await import('../../../electron/selection/index')
+        const { getSelectedText } = await import('../../../src/main/selection/index')
         const text = await getSelectedText()
         expect(text).toBe('')
     })
@@ -34,11 +34,11 @@ describe('readSelectedText platform dispatch', () => {
         Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
         const fake_result = { text: 'hello from windows', method: 'uia' as const }
         const windows_fn = vi.fn().mockResolvedValue(fake_result)
-        vi.doMock('../../../electron/selection/windows', () => ({
+        vi.doMock('../../../src/main/selection/windows', () => ({
             readSelectedTextWindows: windows_fn,
         }))
 
-        const { readSelectedText } = await import('../../../electron/selection/index')
+        const { readSelectedText } = await import('../../../src/main/selection/index')
         const result = await readSelectedText()
 
         expect(windows_fn).toHaveBeenCalledOnce()
@@ -50,11 +50,11 @@ describe('readSelectedText platform dispatch', () => {
         Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true })
         const fake_result = { text: 'hello from mac', method: 'accessibility' as const }
         const darwin_fn = vi.fn().mockResolvedValue(fake_result)
-        vi.doMock('../../../electron/selection/darwin', () => ({
+        vi.doMock('../../../src/main/selection/darwin', () => ({
             readSelectedTextDarwin: darwin_fn,
         }))
 
-        const { readSelectedText } = await import('../../../electron/selection/index')
+        const { readSelectedText } = await import('../../../src/main/selection/index')
         const result = await readSelectedText()
 
         expect(darwin_fn).toHaveBeenCalledOnce()
@@ -69,11 +69,11 @@ describe('readSelectedText platform dispatch', () => {
             events.push('windows')
             return new Promise(() => {})
         })
-        vi.doMock('../../../electron/selection/windows', () => ({
+        vi.doMock('../../../src/main/selection/windows', () => ({
             readSelectedTextWindows: windows_fn,
         }))
 
-        const { prepareSelectedTextReader, readSelectedText } = await import('../../../electron/selection/index')
+        const { prepareSelectedTextReader, readSelectedText } = await import('../../../src/main/selection/index')
         await prepareSelectedTextReader()
 
         readSelectedText().catch(() => undefined)
@@ -84,11 +84,11 @@ describe('readSelectedText platform dispatch', () => {
 
     it('prepare failure does not throw or prevent later error result', async () => {
         Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
-        vi.doMock('../../../electron/selection/windows', () => {
+        vi.doMock('../../../src/main/selection/windows', () => {
             throw new Error('native preload failed')
         })
 
-        const { prepareSelectedTextReader, readSelectedText } = await import('../../../electron/selection/index')
+        const { prepareSelectedTextReader, readSelectedText } = await import('../../../src/main/selection/index')
         await expect(prepareSelectedTextReader()).resolves.toBeUndefined()
 
         const result = await readSelectedText()
@@ -100,11 +100,11 @@ describe('readSelectedText platform dispatch', () => {
 
     it('catches platform module error and returns error result', async () => {
         Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
-        vi.doMock('../../../electron/selection/windows', () => ({
+        vi.doMock('../../../src/main/selection/windows', () => ({
             readSelectedTextWindows: () => Promise.reject(new Error('koffi DLL explosion')),
         }))
 
-        const { readSelectedText } = await import('../../../electron/selection/index')
+        const { readSelectedText } = await import('../../../src/main/selection/index')
         const result = await readSelectedText()
 
         expect(result.method).toBe('none')

@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { beforeEach, afterEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { BrowserWindow, app, type WebContents } from 'electron'
-import { WindowLabel } from '../../electron/windows/types'
+import { WindowLabel } from '../../src/main/windows/types'
 
 const app_version = (createRequire(import.meta.url)('../../package.json') as { version: string }).version
 const app_installer_name = `OmniPot${app_version}.exe`
@@ -33,12 +33,12 @@ vi.mock('electron', () => ({
 
 describe('updater security helpers', () => {
     beforeEach(async () => {
-        const updater = await import('../../electron/updater')
+        const updater = await import('../../src/main/updater')
         updater.bind_update_release_assets([])
     })
 
     it('resolves downloads only from release assets bound by main process', async () => {
-        const { bind_update_release_assets, resolve_bound_update_asset } = await import('../../electron/updater')
+        const { bind_update_release_assets, resolve_bound_update_asset } = await import('../../src/main/updater')
         bind_update_release_assets([
             { name: app_installer_name, url: app_installer_github_url },
         ])
@@ -52,7 +52,7 @@ describe('updater security helpers', () => {
     })
 
     it('allows only release asset URLs before redirect and GitHub storage URLs after redirect', async () => {
-        const { assert_allowed_download_url } = await import('../../electron/updater')
+        const { assert_allowed_download_url } = await import('../../src/main/updater')
 
         expect(assert_allowed_download_url(app_installer_github_url, false).hostname).toBe('github.com')
         expect(assert_allowed_download_url(app_installer_r2_url, false).hostname).toBe('downloads.zzzkkkccc.site')
@@ -64,7 +64,7 @@ describe('updater security helpers', () => {
     })
 
     it('parses only GitHub sha256 asset digests', async () => {
-        const { parse_sha256_digest } = await import('../../electron/updater')
+        const { parse_sha256_digest } = await import('../../src/main/updater')
         const hash = createHash('sha256').update('update').digest('hex')
 
         expect(parse_sha256_digest(`sha256:${hash}`)).toBe(hash)
@@ -74,13 +74,13 @@ describe('updater security helpers', () => {
     })
 
     it('waits for failed download cleanup before trying fallback sources', async () => {
-        const source = await readFile(join(process.cwd(), 'electron/updater/download.ts'), 'utf8')
+        const source = await readFile(join(process.cwd(), 'src/main/updater/download.ts'), 'utf8')
 
         expect(source).not.toContain('rm(output_path, { force: true }).catch(() => {})')
     })
 
     it('limits download IPC to the updater window', async () => {
-        const { assert_updater_sender } = await import('../../electron/updater')
+        const { assert_updater_sender } = await import('../../src/main/updater')
         const sender = { id: 42 } as WebContents
         const browser_window = BrowserWindow as unknown as { fromWebContents: Mock }
         browser_window.fromWebContents.mockReturnValue({ id: 7 })
@@ -144,7 +144,7 @@ describe('updater latest metadata', () => {
     })
 
     it('parses latest.json metadata and rejects non-standard filenames', async () => {
-        const { parse_latest_metadata } = await import('../../electron/updater')
+        const { parse_latest_metadata } = await import('../../src/main/updater')
         const metadata = parse_latest_metadata(latest_metadata())
 
         expect(metadata.files.windows_installer.filename).toBe('OmniPot1.1.0.exe')
@@ -170,14 +170,14 @@ describe('updater latest metadata', () => {
     })
 
     it('does not update for unsupported latest.json format versions', async () => {
-        const { get_update_release_info } = await import('../../electron/updater')
+        const { get_update_release_info } = await import('../../src/main/updater')
         mock_metadata_fetch({ ...latest_metadata(), format_version: 99 }, latest_metadata())
 
         await expect(get_update_release_info()).rejects.toThrow('Unsupported latest metadata format_version')
     })
 
     it('uses dual-source metadata when version, sha256, and size match', async () => {
-        const { get_update_release_info } = await import('../../electron/updater')
+        const { get_update_release_info } = await import('../../src/main/updater')
         mock_metadata_fetch(latest_metadata(), latest_metadata())
 
         const release = await get_update_release_info()
@@ -187,7 +187,7 @@ describe('updater latest metadata', () => {
     })
 
     it('treats missing latest.json on both sources as no available update', async () => {
-        const { get_update_release_info } = await import('../../electron/updater')
+        const { get_update_release_info } = await import('../../src/main/updater')
         vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
             ok: false,
             status: 404,
@@ -198,7 +198,7 @@ describe('updater latest metadata', () => {
     })
 
     it('uses one source when the other source cannot be fetched', async () => {
-        const { get_update_release_info } = await import('../../electron/updater')
+        const { get_update_release_info } = await import('../../src/main/updater')
         vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url.includes('downloads.zzzkkkccc.site')
             ? { ok: true, status: 200, json: () => Promise.resolve(latest_metadata()) }
             : { ok: false, status: 503, json: () => Promise.resolve({}) })))
@@ -209,14 +209,14 @@ describe('updater latest metadata', () => {
     })
 
     it('rejects dual-source metadata conflicts', async () => {
-        const { get_update_release_info } = await import('../../electron/updater')
+        const { get_update_release_info } = await import('../../src/main/updater')
         mock_metadata_fetch(latest_metadata(), latest_metadata('1.1.0', 'c'.repeat(64)))
 
         await expect(get_update_release_info()).rejects.toThrow('Latest metadata conflict: windows_installer mismatch')
     })
 
     it('selects portable assets when running as portable', async () => {
-        const { get_update_release_info, get_windows_update_file_key } = await import('../../electron/updater')
+        const { get_update_release_info, get_windows_update_file_key } = await import('../../src/main/updater')
         process.env['PORTABLE_EXECUTABLE_DIR'] = '/portable'
         mock_metadata_fetch(latest_metadata(), latest_metadata())
 

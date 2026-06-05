@@ -230,7 +230,7 @@ class TranslatePage {
 当前 UI 尚未实现的控件不预埋选择器：词典朗读 `dict-tts`。
 后续实现这些用户功能时，同步补选择器与对应用户路径 spec。
 
-**(b) E2E HTTP 端点扩充**（`electron/server/index.ts`，仅 `OMNI_POT_E2E` +
+**(b) E2E HTTP 端点扩充**（`src/main/server/index.ts`，仅 `OMNI_POT_E2E` +
 `OMNI_POT_E2E_TOKEN` 匹配时启用）：
 
 当前已有：`/trigger-selection`、`/trigger-dict`、`/trigger-clipboard`、

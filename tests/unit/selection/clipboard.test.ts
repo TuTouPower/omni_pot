@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type * as node_crypto from 'node:crypto'
-import type { WindowManager } from '../../../electron/windows/manager'
-import type { getSelectedTextViaClipboard as getSelectedTextViaClipboardType } from '../../../electron/selection/clipboard'
-import type * as clipboard_monitor from '../../../electron/clipboard/index'
+import type { WindowManager } from '../../../src/main/windows/manager'
+import type { getSelectedTextViaClipboard as getSelectedTextViaClipboardType } from '../../../src/main/selection/clipboard'
+import type * as clipboard_monitor from '../../../src/main/clipboard/index'
 
 // @electron-mock Required: Vitest cannot access real system clipboard.
 // This mock stubs Electron clipboard (read/write/clear) and crypto.randomUUID
@@ -105,8 +105,8 @@ describe('getSelectedTextViaClipboard', () => {
             }
         })
 
-        const mod = await import('../../../electron/selection/clipboard')
-        const monitor_mod = await import('../../../electron/clipboard/index')
+        const mod = await import('../../../src/main/selection/clipboard')
+        const monitor_mod = await import('../../../src/main/clipboard/index')
         getSelectedTextViaClipboard = mod.getSelectedTextViaClipboard
         startClipboardMonitor = monitor_mod.startClipboardMonitor
         stopClipboardMonitor = monitor_mod.stopClipboardMonitor

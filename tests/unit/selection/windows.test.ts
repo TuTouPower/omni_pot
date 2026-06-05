@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { SelectedTextResult } from '../../../electron/selection/index'
-import type { getSelectedTextViaClipboard as getSelectedTextViaClipboardType } from '../../../electron/selection/clipboard'
+import type { SelectedTextResult } from '../../../src/main/selection/index'
+import type { getSelectedTextViaClipboard as getSelectedTextViaClipboardType } from '../../../src/main/selection/clipboard'
 
 const {
     mockSendInput,
@@ -47,11 +47,11 @@ vi.mock('koffi', () => ({
     },
 }))
 
-vi.mock('../../../electron/selection/clipboard', () => ({
+vi.mock('../../../src/main/selection/clipboard', () => ({
     getSelectedTextViaClipboard: mockGetSelectedTextViaClipboard,
 }))
 
-vi.mock('../../../electron/clipboard/index', () => ({
+vi.mock('../../../src/main/clipboard/index', () => ({
     withClipboardMutationSuppressed: mockWithClipboardMutationSuppressed,
 }))
 
@@ -124,7 +124,7 @@ describe('readSelectedTextWindows fallback chain', () => {
     })
 
     it('falls back from unavailable UIA to suppressed Ctrl+C clipboard extraction', async () => {
-        const { readSelectedTextWindows } = await import('../../../electron/selection/windows')
+        const { readSelectedTextWindows } = await import('../../../src/main/selection/windows')
 
         const result = await readSelectedTextWindows()
 
@@ -146,7 +146,7 @@ describe('readSelectedTextWindows fallback chain', () => {
 
     it('returns UIA text and releases COM resources', async () => {
         mock_successful_uia_selection()
-        const { readSelectedTextWindows } = await import('../../../electron/selection/windows')
+        const { readSelectedTextWindows } = await import('../../../src/main/selection/windows')
 
         const result = await readSelectedTextWindows()
 

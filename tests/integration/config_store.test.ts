@@ -41,7 +41,7 @@ describe('Config Store integration', () => {
     })
 
     afterEach(async () => {
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
         store.cancel_pending_config_save()
         delete process.env['OMNI_POT_USER_DATA']
         delete process.env['OMNI_POT_PRESET_CONFIG']
@@ -52,7 +52,7 @@ describe('Config Store integration', () => {
 
     it('initializes first-run config from system language and persists completion', async () => {
         electron_mock.locale = 'zh-CN'
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
 
@@ -70,7 +70,7 @@ describe('Config Store integration', () => {
 
     it('uses defaults when stored config is corrupted', async () => {
         writeFileSync(join(test_dir, 'config.json'), 'not valid json {{{')
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
 
@@ -86,7 +86,7 @@ describe('Config Store integration', () => {
             app_theme: 'dark',
             app_primary_color: 'invalid-color',
         }))
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
         store.flush_config()
@@ -101,7 +101,7 @@ describe('Config Store integration', () => {
             __initialized: true,
             translate_service_list: ['bing@default', 'google@default', 'deepl@default'],
         }))
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
         store.flush_config()
@@ -115,7 +115,7 @@ describe('Config Store integration', () => {
             __initialized: true,
             translate_auto_copy: 'disable',
         }))
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
         store.flush_config()
@@ -127,7 +127,7 @@ describe('Config Store integration', () => {
             translate_auto_copy: 'target',
         }))
         vi.resetModules()
-        const reloaded_store = await import('../../electron/config/store')
+        const reloaded_store = await import('../../src/main/config/store')
 
         reloaded_store.initConfigStore()
         reloaded_store.flush_config()
@@ -139,7 +139,7 @@ describe('Config Store integration', () => {
         writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
             __initialized: true,
         }))
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
         store.flush_config()
@@ -168,7 +168,7 @@ describe('Config Store integration', () => {
                 },
             },
         }))
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
 
@@ -187,7 +187,7 @@ describe('Config Store integration', () => {
     })
 
     it('regenerates server API token after loading sanitized backup config', async () => {
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
         store.initConfigStore()
         store.cancel_pending_config_save()
         writeFileSync(join(test_dir, 'config.json'), JSON.stringify({
@@ -212,7 +212,7 @@ describe('Config Store integration', () => {
             server_api_token: 'existing-token',
             app_theme: 'dark',
         }))
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
         store.resetConfigToDefaults()
@@ -228,7 +228,7 @@ describe('Config Store integration', () => {
             __initialized: true,
             translate_service_list: custom_list,
         }))
-        const store = await import('../../electron/config/store')
+        const store = await import('../../src/main/config/store')
 
         store.initConfigStore()
         store.flush_config()

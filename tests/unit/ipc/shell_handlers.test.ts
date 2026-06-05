@@ -9,22 +9,22 @@ vi.mock('electron', () => ({
     shell: { openExternal: shell_open_external },
 }))
 
-vi.mock('../../../electron/config/store', () => ({
+vi.mock('../../../src/main/config/store', () => ({
     getUserDataDir: vi.fn(() => process.cwd()),
 }))
 
-vi.mock('../../../electron/log', () => ({
+vi.mock('../../../src/main/log', () => ({
     getLogDir: vi.fn(() => process.cwd()),
     log: { scope: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
 }))
 
-vi.mock('../../../electron/backup/index', () => ({
+vi.mock('../../../src/main/backup/index', () => ({
     create_zip: vi.fn(),
 }))
 
 describe('open_external_safely', () => {
     it('rejects file URLs', async () => {
-        const { open_external_safely } = await import('../../../electron/ipc/shell_handlers')
+        const { open_external_safely } = await import('../../../src/main/ipc/shell_handlers')
 
         await expect(open_external_safely('file:///C:/Windows/System32/cmd.exe')).resolves.toBe(false)
         expect(shell_open_external).not.toHaveBeenCalled()

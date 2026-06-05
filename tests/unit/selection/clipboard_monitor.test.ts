@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { WindowManager } from '../../../electron/windows/manager'
+import type { WindowManager } from '../../../src/main/windows/manager'
 
 // @electron-mock Required: Vitest cannot access real system clipboard or
 // BrowserWindow. This mock stubs Electron clipboard.readText to test the
@@ -22,7 +22,7 @@ const {
     stopClipboardMonitor,
     pollClipboardMonitorOnce,
     withClipboardMutationSuppressed,
-} = await import('../../../electron/clipboard/index')
+} = await import('../../../src/main/clipboard/index')
 
 describe('clipboard monitor suppression', () => {
     beforeEach(() => {
