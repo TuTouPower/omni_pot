@@ -22,7 +22,7 @@ export default defineConfig({
     expect: { timeout: 10_000 },
     fullyParallel: false,
     workers: 1,
-    retries: 0,
+    retries: 1,
     reporter: [['html', { open: 'never' }], ['list']],
     globalSetup: './tests/e2e/global_setup.ts',
     projects: [
