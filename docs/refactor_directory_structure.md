@@ -1,5 +1,13 @@
 # omni_pot 目录结构规范化计划
 
+**状态：已完成（2026-06-06）**
+
+Commits:
+1. `c7bd304` — tests/user_e2e/ → tests/e2e/
+2. `cc6488d` — shared/ → src/shared/
+3. `84fa03a` — eslint_config.mjs → config/lint/ + knip.json → config/
+4. `f0a2d10` — electron/ → src/main/
+
 ## 目标
 
 参照 `project_manager/docs/project_structure.md` 规范，统一目录结构。
