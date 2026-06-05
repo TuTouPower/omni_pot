@@ -61,6 +61,18 @@ describe('fetch_with_timeout', () => {
         await expectation
     })
 
+    it('does not leave an active timeout after fetch resolves', async () => {
+        vi.useFakeTimers()
+        const response = new Response('ok')
+        vi.spyOn(global, 'fetch').mockResolvedValue(response)
+        const clear_timeout_spy = vi.spyOn(global, 'clearTimeout')
+
+        await expect(fetch_with_timeout('https://example.com/api', {}, 100)).resolves.toBe(response)
+
+        expect(clear_timeout_spy).toHaveBeenCalledTimes(1)
+        await vi.advanceTimersByTimeAsync(100)
+    })
+
     it('uses the default provider timeout', () => {
         expect(DEFAULT_PROVIDER_TIMEOUT_MS).toBe(15000)
     })

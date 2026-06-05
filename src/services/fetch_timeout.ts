@@ -15,24 +15,22 @@ export async function fetch_with_timeout(
         init.signal?.addEventListener('abort', abort_from_init_signal, { once: true })
     }
 
-    let reject_timeout: (error: Error) => void = () => {}
-    const timeout_promise = new Promise<never>((_resolve, reject) => {
-        reject_timeout = reject
-    })
+    let timed_out = false
     const timeout_id = setTimeout(() => {
-        const error = new Error(`provider request timeout after ${String(timeout_ms)}ms`)
-        reject_timeout(error)
+        timed_out = true
         controller.abort()
     }, timeout_ms)
 
     try {
-        return await Promise.race([
-            fetch(input, {
-                ...init,
-                signal: controller.signal,
-            }),
-            timeout_promise,
-        ])
+        return await fetch(input, {
+            ...init,
+            signal: controller.signal,
+        })
+    } catch (error: unknown) {
+        if (timed_out) {
+            throw new Error(`provider request timeout after ${String(timeout_ms)}ms`)
+        }
+        throw error
     } finally {
         clearTimeout(timeout_id)
         init.signal?.removeEventListener('abort', abort_from_init_signal)

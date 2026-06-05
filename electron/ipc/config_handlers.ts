@@ -3,6 +3,7 @@ import type { ConfigKey } from '@shared/types/config'
 import { DEFAULT_CONFIG } from '@shared/types/config'
 import { getConfig, setConfig, getAllConfig, getUserDataDir } from '../config/store'
 import { sanitize_config_secrets } from '../config/secrets'
+import { is_config_value_allowed } from '../config/validation'
 import { rebuildMenu } from '../tray'
 import { log } from '../log'
 import type { WindowManager } from '../windows/manager'
@@ -12,9 +13,7 @@ import { assert_sender_label } from './sender_validation'
 const log_ipc = log.scope('ipc:config')
 
 function validate_config_value(key: ConfigKey, value: unknown): boolean {
-  const default_val = DEFAULT_CONFIG[key]
-  if (Array.isArray(default_val)) return Array.isArray(value)
-  return typeof value === typeof default_val
+  return is_config_value_allowed(key, value)
 }
 
 function apply_auto_start(enabled: boolean): void {

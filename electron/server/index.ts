@@ -2,6 +2,9 @@ import http from 'http'
 import { app, clipboard, desktopCapturer, screen } from 'electron'
 import { getConfig, getAllConfig, setConfig, resetConfigToDefaults } from '../config/store'
 import { DEFAULT_CONFIG, type AppConfig, type ConfigKey } from '@shared/types/config'
+import { is_config_value_allowed } from '../config/validation'
+
+export { is_config_value_allowed }
 
 export type PublicConfig = Partial<Omit<AppConfig, 'service_instances' | 'server_api_token'>> & {
     service_instances: Record<string, { serviceKey: string; config: Record<string, unknown> }>
@@ -764,7 +767,7 @@ function handleSetConfig(req: http.IncomingMessage, res: http.ServerResponse): v
             const results: Record<string, boolean> = {}
             for (const [key, value] of Object.entries(body)) {
                 try {
-                    if (!(key in DEFAULT_CONFIG)) {
+                    if (!(key in DEFAULT_CONFIG) || !is_config_value_allowed(key as ConfigKey, value)) {
                         results[key] = false
                         continue
                     }

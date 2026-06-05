@@ -34,7 +34,7 @@ export const geminiproService: TranslateService = {
         const full_prompt = `${prompt}\n\n${text}`
 
         const base = request_path.replace(/\/+$/, '')
-        const url = `${base}/models/${model}:generateContent?key=${api_key}`
+        const url = `${base}/models/${model}:generateContent`
 
         const body: Record<string, unknown> = {
             contents: [{ parts: [{ text: full_prompt }] }],
@@ -49,7 +49,7 @@ export const geminiproService: TranslateService = {
 
         const resp = await fetch_with_timeout(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': api_key },
             body: JSON.stringify(body)
         })
 

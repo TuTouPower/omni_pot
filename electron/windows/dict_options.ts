@@ -27,8 +27,9 @@ export function attach_dict_resize_persistence(win: BrowserWindow): void {
         if (resizeTimer) clearTimeout(resizeTimer)
         resizeTimer = setTimeout(() => {
             if (win.isDestroyed()) { resizeTimer = null; return }
-            const [width] = win.getSize()
+            const [width, height] = win.getSize()
             setConfig('dict_window_width', width)
+            setConfig('dict_window_height', height)
             resizeTimer = null
         }, 300)
     })

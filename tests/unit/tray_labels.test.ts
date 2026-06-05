@@ -64,6 +64,7 @@ vi.mock('../../electron/tray/restart', () => ({
 
 import { createTray, destroyTray, get_tray_menu_labels, rebuildMenu, trigger_tray_action } from '../../electron/tray'
 import { app } from 'electron'
+import { setConfig } from '../../electron/config/store'
 
 describe('tray visible strings', () => {
     beforeEach(() => {
@@ -124,7 +125,7 @@ describe('tray visible strings', () => {
     })
 })
 
-describe('tray restart action', () => {
+describe('tray actions', () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })
@@ -133,5 +134,14 @@ describe('tray restart action', () => {
         trigger_tray_action('restart')
 
         expect(mocks.do_restart).toHaveBeenCalledOnce()
+    })
+
+    it('persists auto_start when toggled from tray', () => {
+        vi.mocked(app.getLoginItemSettings).mockReturnValue({ openAtLogin: false } as Electron.LoginItemSettings)
+
+        trigger_tray_action('auto_start')
+
+        expect(app.setLoginItemSettings).toHaveBeenCalledWith({ openAtLogin: true })
+        expect(setConfig).toHaveBeenCalledWith('auto_start', true)
     })
 })

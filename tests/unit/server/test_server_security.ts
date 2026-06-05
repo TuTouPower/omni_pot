@@ -129,4 +129,17 @@ describe('server security helpers', () => {
         expect(public_instance.config).not.toHaveProperty('apiKey')
         expect(public_instance.config).not.toHaveProperty('endpoint')
     })
+
+    it('rejects malformed service_instances values for set-config', async () => {
+        const { is_config_value_allowed } = await import('../../../electron/server')
+
+        expect(is_config_value_allowed('service_instances', null)).toBe(false)
+        expect(is_config_value_allowed('service_instances', { bad: 'value' })).toBe(false)
+        expect(is_config_value_allowed('service_instances', {
+            'bing@default': {
+                serviceKey: 'bing',
+                config: { enable: true, instanceName: 'Bing' },
+            },
+        })).toBe(true)
+    })
 })

@@ -221,11 +221,14 @@ export function trigger_tray_action(action: string): boolean {
       rebuildMenu()
       close_tray_popup()
       return true
-    case 'auto_start':
-      app.setLoginItemSettings({ openAtLogin: !is_auto_start() })
+    case 'auto_start': {
+      const next_auto_start = !is_auto_start()
+      app.setLoginItemSettings({ openAtLogin: next_auto_start })
+      setConfig('auto_start', next_auto_start)
       rebuildMenu()
       close_tray_popup()
       return true
+    }
     case 'config':
       open_config_window()
       close_tray_popup()

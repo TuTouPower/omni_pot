@@ -16,7 +16,6 @@ const IS_E2E = !!process.env.OMNI_POT_E2E
 function is_allowed_external_url(value: string): boolean {
     try {
         const url = new URL(value)
-        if (url.protocol === 'file:') return true
         if (url.protocol !== 'https:') return false
         if (url.hostname === 'github.com'
             && (url.pathname === '/TuTouPower/omni_pot' || url.pathname.startsWith('/TuTouPower/omni_pot/')
