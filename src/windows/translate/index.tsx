@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Titlebar } from '../../components/titlebar'
 import { SourceArea } from './source_area'
@@ -11,23 +11,13 @@ import { ttsServiceRegistry } from '../../services/tts_registry'
 import { detectLanguage } from '../../services/detect'
 import { getServiceKey } from '@shared/types/service'
 import { create_logger } from '../../utils/logger'
-import type { DictResult, ServiceConfig } from '@shared/types/service'
-import type { ServiceInstancesMap } from '@shared/types/config'
+import type { DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
+import { log_error, get_service_config, normalize_source_text } from './translate_helpers'
+import { use_source_tts } from './use_source_tts'
+import { use_translate_height_reporting } from './use_translate_height_reporting'
 
 const log = create_logger('translate')
-
-function log_error(action: string, err: unknown): void {
-    log.error('%s failed: %s', action, err instanceof Error ? err.message : String(err))
-}
-
-function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
-    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
-}
-
-function normalize_source_text(text: string): string {
-    return text.replace(/-\s+/g, '').replace(/\s+/g, ' ')
-}
 
 export default function TranslateWindow(): React.ReactElement {
     const { t } = useTranslation()
@@ -110,24 +100,8 @@ export default function TranslateWindow(): React.ReactElement {
     }, [configTargetLang, targetLanguage, setStoreTargetLang])
 
     const [forceShowSource, setForceShowSource] = useState(false)
-    const [sourceTtsBusy, setSourceTtsBusy] = useState(false)
-    const [sourceTtsPlaying, setSourceTtsPlaying] = useState(false)
     const inputRef = useRef<HTMLTextAreaElement>(null)
-    const sourceAudioCleanupRef = useRef<(() => void) | null>(null)
-    const sourceTtsBusyRef = useRef(false)
-    const sourceTtsMountedRef = useRef(true)
-    const sourceTtsRequestRef = useRef(0)
-    const sourceTtsTextRef = useRef('')
-    const sourceTtsLanguageRef = useRef<LanguageCode | null>(null)
     const retryRequestRef = useRef<Record<string, number>>({})
-    const root_ref = useRef<HTMLDivElement>(null)
-    const titlebar_ref = useRef<HTMLDivElement>(null)
-    const top_ref = useRef<HTMLDivElement>(null)
-    const language_ref = useRef<HTMLDivElement>(null)
-    const results_scroll_ref = useRef<HTMLDivElement>(null)
-    const results_content_ref = useRef<HTMLDivElement>(null)
-    const last_reported_content_height_ref = useRef(0)
-    const last_reported_min_width_ref = useRef(0)
     const translate_timer_ref = useRef<number | null>(null)
     const previousLanguagesRef = useRef({ sourceLanguage, targetLanguage })
 
@@ -135,13 +109,8 @@ export default function TranslateWindow(): React.ReactElement {
         const storeAtEntry = useTranslateStore.getState()
         const textToTranslate = textOverride ?? storeAtEntry.sourceText
         if (!textToTranslate.trim()) return
-
-        log.info('[handleTranslate] ENTRY closure src=%s target=%s locked=%s | store src=%s target=%s locked=%s text=%j override=%j',
-            sourceLanguage, targetLanguage, lockedTargetLanguage ?? '-',
-            storeAtEntry.sourceLanguage, storeAtEntry.targetLanguage, storeAtEntry.lockedTargetLanguage ?? '-',
-            storeAtEntry.sourceText.slice(0, 30), textOverride?.slice(0, 30) ?? null)
-        log.info('[handleTranslate] config secondLanguage=%s services=[%s]',
-            secondLanguage, enabledServiceList.join(','))
+        log.info('[handleTranslate] ENTRY closure src=%s target=%s locked=%s | store src=%s target=%s locked=%s text=%j override=%j', sourceLanguage, targetLanguage, lockedTargetLanguage ?? '-', storeAtEntry.sourceLanguage, storeAtEntry.targetLanguage, storeAtEntry.lockedTargetLanguage ?? '-', storeAtEntry.sourceText.slice(0, 30), textOverride?.slice(0, 30) ?? null)
+        log.info('[handleTranslate] config secondLanguage=%s services=[%s]', secondLanguage, enabledServiceList.join(','))
 
         const id = nextRequestId()
         setIsTranslating(true)
@@ -151,8 +120,7 @@ export default function TranslateWindow(): React.ReactElement {
 
         const detected = sourceLanguage === 'auto' ? await detectLanguage(textToTranslate) : null
         if (useTranslateStore.getState().requestId !== id) {
-            log.info('[handleTranslate] BAIL after detect: requestId changed (was %d now %d)',
-                id, useTranslateStore.getState().requestId)
+            log.info('[handleTranslate] BAIL after detect: requestId changed (was %d now %d)', id, useTranslateStore.getState().requestId)
             return
         }
         if (detected) {
@@ -162,8 +130,7 @@ export default function TranslateWindow(): React.ReactElement {
 
         let effectiveTarget = lockedTargetLanguage ?? targetLanguage
         const fallbackEligible = !lockedTargetLanguage && sourceLanguage === 'auto' && detected !== null && detected === targetLanguage
-        log.info('[handleTranslate] fallback check: locked=%s src=%s detected=%s target=%s → eligible=%s',
-            lockedTargetLanguage ?? '-', sourceLanguage, detected ?? '-', targetLanguage, String(fallbackEligible))
+        log.info('[handleTranslate] fallback check: locked=%s src=%s detected=%s target=%s -> eligible=%s', lockedTargetLanguage ?? '-', sourceLanguage, detected ?? '-', targetLanguage, String(fallbackEligible))
         if (fallbackEligible) {
             effectiveTarget = secondLanguage as LanguageCode
             log.info('[handleTranslate] fallback APPLIED → effective=%s (second=%s)', effectiveTarget, secondLanguage)
@@ -178,7 +145,6 @@ export default function TranslateWindow(): React.ReactElement {
         }
 
         const resultsMap: Record<string, string | DictResult | null> = {}
-
         const promises = enabledServiceList.map(async (instanceKey) => {
             const serviceKey = getServiceKey(instanceKey)
             const service = translateServiceRegistry.get(serviceKey)
@@ -221,8 +187,7 @@ export default function TranslateWindow(): React.ReactElement {
                     const previewStr = typeof result === 'string'
                         ? result.slice(0, 60)
                         : JSON.stringify(result).slice(0, 120)
-                    log.info('[service:%s] RESULT type=%s preview=%j',
-                        instanceKey, typeof result, previewStr)
+                    log.info('[service:%s] RESULT type=%s preview=%j', instanceKey, typeof result, previewStr)
                 }
             } catch (err) {
                 log.error('[service:%s] FAILED: %s', instanceKey, err instanceof Error ? err.stack ?? err.message : String(err))
@@ -232,7 +197,6 @@ export default function TranslateWindow(): React.ReactElement {
                 }
             }
         })
-
         const isActiveRequest = () => {
             const state = useTranslateStore.getState()
             return state.requestId === id
@@ -312,9 +276,7 @@ export default function TranslateWindow(): React.ReactElement {
         const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
             log.info('[ipc:onTranslateFromSelection] recv text=%j', text.slice(0, 30))
             if (!text.trim()) return
-
             const nextText = prepareIncomingText(text)
-
             setSourceText(nextText)
             setForceShowSource(false)
             schedule_translate(nextText)
@@ -375,7 +337,7 @@ export default function TranslateWindow(): React.ReactElement {
         window.electronAPI.ready('translate')
     }, [])
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) })
         }
@@ -385,123 +347,23 @@ export default function TranslateWindow(): React.ReactElement {
 
     const handleClose = useCallback(() => window.electronAPI.window.close(), [])
 
-    const handleTogglePin = useCallback(() => {
-        setConfig('translate_pinned', !configPinned)
-    }, [configPinned, setConfig])
+    const handleTogglePin = useCallback(() => { setConfig('translate_pinned', !configPinned) }, [configPinned, setConfig])
 
     const handleToggleAlwaysOnTop = useCallback(() => {
         const next = !alwaysOnTop
         window.electronAPI.window.setAlwaysOnTop(next)
-            .then(() => {
-                setConfig('translate_always_on_top', next)
-            })
+            .then(() => { setConfig('translate_always_on_top', next) })
             .catch((err: unknown) => { log_error('set always on top', err) })
     }, [alwaysOnTop, setConfig])
 
-    const handleSwapLanguages = useCallback(() => {
-        swapLanguages(secondLanguage as LanguageCode)
-    }, [secondLanguage, swapLanguages])
+    const handleSwapLanguages = useCallback(() => { swapLanguages(secondLanguage as LanguageCode) }, [secondLanguage, swapLanguages])
 
-    const cancelSourceTts = useCallback(() => {
-        sourceTtsRequestRef.current += 1
-        sourceAudioCleanupRef.current?.()
-        sourceAudioCleanupRef.current = null
-        sourceTtsTextRef.current = ''
-        sourceTtsLanguageRef.current = null
-        sourceTtsBusyRef.current = false
-        setSourceTtsBusy(false)
-        setSourceTtsPlaying(false)
-    }, [])
-
-    const handleSourceTts = useCallback(async () => {
-        const text = useTranslateStore.getState().sourceText.trim()
-        if (!text) return
-
-        if (sourceTtsPlaying || sourceTtsBusyRef.current || sourceAudioCleanupRef.current) {
-            cancelSourceTts()
-            return
-        }
-
-        const instanceKey = enabledTtsServiceList[0]
-        if (!instanceKey) return
-
-        const serviceKey = getServiceKey(instanceKey)
-        const ttsService = ttsServiceRegistry.get(serviceKey)
-        if (!ttsService) return
-
-        const requestId = sourceTtsRequestRef.current + 1
-        sourceTtsRequestRef.current = requestId
-        sourceTtsTextRef.current = text
-        sourceTtsBusyRef.current = true
-        setSourceTtsBusy(true)
-
-        try {
-            const { sourceLanguage: currentSourceLanguage, sourceText: currentSourceText } = useTranslateStore.getState()
-            const isCurrentSourceTtsRequest = () => {
-                const state = useTranslateStore.getState()
-                return sourceTtsMountedRef.current
-                    && sourceTtsRequestRef.current === requestId
-                    && state.sourceText.trim() === text
-                    && state.sourceLanguage === currentSourceLanguage
-            }
-            if (currentSourceText.trim() !== text) return
-            sourceTtsLanguageRef.current = currentSourceLanguage
-
-            const config = useConfigStore.getState().config
-            const language = currentSourceLanguage === 'auto'
-                ? await detectLanguage(text)
-                : currentSourceLanguage
-            if (!isCurrentSourceTtsRequest()) return
-            const instanceConfig = get_service_config(config.service_instances, instanceKey)
-
-            const handle = ttsService.play(text, language, instanceConfig)
-            const cleanup = (): void => {
-                if (sourceAudioCleanupRef.current === cleanup) {
-                    sourceAudioCleanupRef.current = null
-                }
-                if (sourceTtsTextRef.current === text) sourceTtsTextRef.current = ''
-                if (sourceTtsLanguageRef.current === currentSourceLanguage) sourceTtsLanguageRef.current = null
-                if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
-                    setSourceTtsPlaying(false)
-                }
-            }
-            sourceAudioCleanupRef.current = () => { handle.stop(); cleanup() }
-            setSourceTtsBusy(false)
-            setSourceTtsPlaying(true)
-            handle.done.then(cleanup, cleanup)
-        } catch {
-            if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
-                sourceTtsTextRef.current = ''
-                sourceTtsLanguageRef.current = null
-                setSourceTtsPlaying(false)
-            }
-        } finally {
-            if (sourceTtsMountedRef.current && sourceTtsRequestRef.current === requestId) {
-                sourceTtsBusyRef.current = false
-                setSourceTtsBusy(false)
-            }
-        }
-    }, [sourceTtsPlaying, enabledTtsServiceList, cancelSourceTts])
-
-    useEffect(() => {
-        const spokenText = sourceTtsTextRef.current
-        const spokenLanguage = sourceTtsLanguageRef.current
-        if (!spokenText) return
-        if (spokenText === sourceText.trim() && spokenLanguage === sourceLanguage) return
-        cancelSourceTts()
-    }, [sourceText, sourceLanguage, cancelSourceTts])
-
-    useEffect(() => {
-        return () => {
-            sourceTtsMountedRef.current = false
-            sourceTtsRequestRef.current += 1
-            sourceTtsBusyRef.current = false
-            sourceTtsTextRef.current = ''
-            sourceTtsLanguageRef.current = null
-            cancel_scheduled_translate()
-            sourceAudioCleanupRef.current?.()
-        }
-    }, [cancel_scheduled_translate])
+    const { sourceTtsBusy, sourceTtsPlaying, handleSourceTts } = use_source_tts(enabledTtsServiceList, cancel_scheduled_translate)
+    const { titlebar_ref, top_ref, language_ref, results_scroll_ref, results_content_ref } = use_translate_height_reporting(
+        showSource, hideLanguage, enabledServiceList.length, isTranslating,
+        appFont, appFontSize, results,
+        sourceLanguage, targetLanguage, detectedLanguage, effectiveTargetLanguage
+    )
 
     const handleRetry = useCallback(async (instanceKey: string) => {
         const {
@@ -565,91 +427,13 @@ export default function TranslateWindow(): React.ReactElement {
         }
     }, [secondLanguage, serviceInstances, setIsTranslating, setResult])
 
-    useEffect(() => {
-        const titlebar = titlebar_ref.current
-        const top = top_ref.current
-        const results_scroll = results_scroll_ref.current
-        const results_content = results_content_ref.current
-
-        let frame_id = 0
-        const report = (): void => {
-            window.cancelAnimationFrame(frame_id)
-            frame_id = window.requestAnimationFrame(() => {
-                const titlebar_h = titlebar ? titlebar.getBoundingClientRect().height : 0
-                const top_h = top ? top.getBoundingClientRect().height : 0
-                const results_h = results_content ? results_content.scrollHeight : 0
-                const results_style = results_scroll ? getComputedStyle(results_scroll) : null
-                const results_padding_h = results_style
-                    ? Number.parseFloat(results_style.paddingTop) + Number.parseFloat(results_style.paddingBottom)
-                    : 0
-                const total = Math.ceil(titlebar_h + top_h + results_h + results_padding_h)
-                if (total === last_reported_content_height_ref.current) return
-                last_reported_content_height_ref.current = total
-                window.electronAPI.translate.reportContentHeight(total).catch(() => undefined)
-            })
-        }
-
-        report()
-        const observer = new ResizeObserver(report)
-        if (titlebar) observer.observe(titlebar)
-        if (top) observer.observe(top)
-        if (results_content) observer.observe(results_content)
-        return () => {
-            window.cancelAnimationFrame(frame_id)
-            observer.disconnect()
-        }
-    }, [showSource, hideLanguage, enabledServiceList.length, isTranslating, appFont, appFontSize, results])
-
-    useEffect(() => {
-        const language = language_ref.current
-        if (!language) {
-            if (last_reported_min_width_ref.current !== 0) {
-                last_reported_min_width_ref.current = 0
-                window.electronAPI.translate.reportMinWidth(0).catch(() => undefined)
-            }
-            return
-        }
-
-        let frame_id = 0
-        const report = (): void => {
-            window.cancelAnimationFrame(frame_id)
-            frame_id = window.requestAnimationFrame(() => {
-                const source = language.querySelector('[data-testid="lang-source-button"]')
-                const swap = language.querySelector('[data-testid="lang-swap"]')
-                const target = language.querySelector('[data-testid="lang-target-button"]')
-                if (!source || !swap || !target) return
-
-                const rects = [source, swap, target].map((el) => (el as HTMLElement).getBoundingClientRect())
-                const style = getComputedStyle(language)
-                const padding_w = (Number.parseFloat(style.paddingLeft) || 0) + (Number.parseFloat(style.paddingRight) || 0)
-                const left = Math.min(...rects.map((rect) => rect.left))
-                const right = Math.max(...rects.map((rect) => rect.right))
-                const width = Math.ceil(right - left + padding_w)
-                if (width === last_reported_min_width_ref.current) return
-                last_reported_min_width_ref.current = width
-                window.electronAPI.translate.reportMinWidth(width).catch(() => undefined)
-            })
-        }
-
-        report()
-        const observer = new ResizeObserver(report)
-        observer.observe(language)
-        for (const el of language.querySelectorAll('[data-testid="lang-source-button"], [data-testid="lang-swap"], [data-testid="lang-target-button"]')) {
-            observer.observe(el)
-        }
-        return () => {
-            window.cancelAnimationFrame(frame_id)
-            observer.disconnect()
-        }
-    }, [hideLanguage, sourceLanguage, targetLanguage, detectedLanguage, effectiveTargetLanguage, appFont, appFontSize])
-
     const sourceTtsInstanceKey = enabledTtsServiceList[0]
     const sourceTtsAvailable = sourceTtsInstanceKey ? !!ttsServiceRegistry.get(getServiceKey(sourceTtsInstanceKey)) : false
     const handle_source_translate = useCallback(() => { handleTranslate().catch((err: unknown) => { log_error('translate', err) }); }, [handleTranslate])
 
     return (
         <div
-            ref={root_ref}
+            ref={undefined}
             className="op-window"
             style={{
                 fontSize: appFontSize,
