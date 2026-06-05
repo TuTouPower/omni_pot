@@ -14,9 +14,6 @@
     "tests/**/*.ts"
   ],
   "ignore": [
-    "electron/selection/permissions.ts",
-    "src/components/simple_select.tsx",
-    "src/hooks/use_tts.ts",
     "src/env.d.ts"
   ],
   "ignoreDependencies": [
@@ -27,7 +24,6 @@
     "nanoid",
     "rcedit",
     "@testing-library/jest-dom",
-    "@testing-library/react",
     "@types/ws",
     "autoprefixer",
     "eslint-plugin-react",
