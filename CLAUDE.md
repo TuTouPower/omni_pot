@@ -49,6 +49,8 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `public/` | 静态资源（logo 等） |
 | `resources/` | 应用图标（icon.png, icon.ico） |
 | `data/` | 词典数据、Tesseract 训练数据 |
+| `config/` | 代码规范/Lint 配置文件 |
+| `scripts/` | 自动构建/发布脚本 |
 | `tests/` | 单元测试 |
 | `tests/e2e/` | 端到端测试 |
 | `docs/` | 项目文档 |
