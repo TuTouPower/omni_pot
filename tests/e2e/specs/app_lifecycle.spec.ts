@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../fixtures/test'
 import { AppFixture } from '../fixtures/app_fixture'
-import { local_operation_timeout_ms } from '../fixtures/timeout_constants'
 
 type WindowLabel = 'translate' | 'dict' | 'recognize' | 'config'
 const WINDOW_SIZE_DPI_RATIO_TOLERANCE = 0.35

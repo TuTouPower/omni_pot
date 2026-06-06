@@ -20,7 +20,8 @@ type TestFixtures = { omni: AppFixture }
  * `AppFixture.start(...)` directly and skip this fixture.
  */
 export const test = base.extend<TestFixtures>({
-    omni: async ({ }, use) => {
+    // eslint-disable-next-line no-empty-pattern
+    omni: async ({}, use) => {
         const omni = await AppFixture.start({ config: { welcome_dismissed: true } })
         try {
             await use(omni)

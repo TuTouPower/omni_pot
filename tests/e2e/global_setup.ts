@@ -4,14 +4,15 @@ import { existsSync } from 'fs'
 
 const PROJECT_ROOT = resolve(__dirname, '../..')
 
-function check_electron_abi(): boolean {
-    const electron_exe: string = require('electron')
-    const check = spawnSync(
-        electron_exe,
-        ['-e', "new (require('better-sqlite3'))(':memory:').close()"],
-        { stdio: 'pipe', cwd: PROJECT_ROOT, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }
+function ensure_electron_abi(): void {
+    const ensure = spawnSync(
+        process.execPath,
+        ['scripts/ensure_electron_abi.mjs'],
+        { stdio: 'inherit', cwd: PROJECT_ROOT }
     )
-    return check.status === 0
+    if (ensure.status !== 0) {
+        throw new Error('better-sqlite3 Electron ABI setup failed')
+    }
 }
 
 async function run(): Promise<void> {
@@ -28,37 +29,29 @@ async function run(): Promise<void> {
         } catch { /* no leftover processes or kill failed */ }
     }
 
-    // Rebuild better-sqlite3 for Electron if ABI mismatch
-    if (!check_electron_abi()) {
-        process.stderr.write('[abi] better-sqlite3 not compatible with Electron, rebuilding...\n')
-        const rebuild = spawnSync(
-            process.platform === 'win32' ? 'npx.cmd' : 'npx',
-            ['electron-rebuild', '-m', 'node_modules/better-sqlite3'],
-            { stdio: 'inherit', shell: process.platform === 'win32', cwd: PROJECT_ROOT }
-        )
-        if (rebuild.status !== 0) {
-            throw new Error('better-sqlite3 Electron rebuild failed')
-        }
-        process.stderr.write('[abi] Electron rebuild complete\n')
-    }
+    ensure_electron_abi()
 
-    // Skip rebuild when developer is iterating locally and out/ is already up-to-date.
-    // Set OMNI_POT_E2E_SKIP_BUILD=1 to reuse the existing out/ build.
-    if (process.env.OMNI_POT_E2E_SKIP_BUILD === '1' && existsSync(resolve(PROJECT_ROOT, 'out/main/index.js'))) {
-        process.stderr.write('[setup] OMNI_POT_E2E_SKIP_BUILD=1, reusing existing out/\n')
+    // Skip rebuild when developer is iterating locally and build/app/ is already up-to-date.
+    // Set OMNI_POT_E2E_SKIP_BUILD=1 to reuse the existing build/app/ build.
+    if (process.env.OMNI_POT_E2E_SKIP_BUILD === '1' && existsSync(resolve(PROJECT_ROOT, 'build/app/main/index.js'))) {
+        process.stderr.write('[setup] OMNI_POT_E2E_SKIP_BUILD=1, reusing existing build/app/\n')
         return
     }
 
     await new Promise<void>((resolve, reject) => {
-        const build = spawn('npx', ['electron-vite', 'build', '--outDir', 'out'], {
+        const build = spawn('npx', ['electron-vite', 'build', '--outDir', 'build/app'], {
             cwd: PROJECT_ROOT,
             shell: true,
             stdio: 'inherit',
             env: { ...process.env, ELECTRON_RUN_AS_NODE: undefined }
         })
         build.on('exit', (code) => {
-            if (code === 0) resolve()
-            else reject(new Error(`Build failed with code ${String(code)}`))
+            if (code === 0) {
+                ensure_electron_abi()
+                resolve()
+            } else {
+                reject(new Error(`Build failed with code ${String(code)}`))
+            }
         })
     })
 }

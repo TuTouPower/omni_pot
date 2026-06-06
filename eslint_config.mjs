@@ -6,13 +6,9 @@ export default tseslint.config(
     {
         ignores: [
             'node_modules/**',
-            'out/**',
+            'build/**',
             'dist/**',
-            'release/**',
             '.claude/**',
-            'playwright-report/**',
-            'tests/e2e/test-results/**',
-            'data/**',
             'public/**',
             'docs/**'
         ]

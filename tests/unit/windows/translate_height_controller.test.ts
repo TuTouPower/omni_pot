@@ -22,6 +22,7 @@ vi.mock('../../../src/main/log', () => ({
 }))
 
 import { screen } from 'electron'
+import type { BrowserWindow } from 'electron'
 import {
     compute_target_height,
     compute_target_min_width,
@@ -65,17 +66,11 @@ describe('compute_target_min_width', () => {
     })
 })
 
-function make_fake_win(): {
-    win: any
-    set_min: ReturnType<typeof vi.fn>
-    set_max: ReturnType<typeof vi.fn>
-    set_bounds: ReturnType<typeof vi.fn>
-    listeners: Map<string, (...args: any[]) => void>
-} {
+function make_fake_win() {
     const set_min = vi.fn()
     const set_max = vi.fn()
     const set_bounds = vi.fn()
-    const listeners = new Map<string, (...args: any[]) => void>()
+    const listeners = new Map<string, (...args: unknown[]) => void>()
     let bounds = { x: 0, y: 0, width: 430, height: 160 }
     const win = {
         isDestroyed: vi.fn(() => false),
@@ -83,8 +78,8 @@ function make_fake_win(): {
         setMaximumSize: set_max,
         setBounds: vi.fn((b: typeof bounds) => { bounds = { ...bounds, ...b }; set_bounds(b) }),
         getBounds: () => ({ ...bounds }),
-        on: vi.fn((event: string, handler: (...args: any[]) => void) => { listeners.set(event, handler) }),
-        once: vi.fn((event: string, handler: (...args: any[]) => void) => { listeners.set(event, handler) }),
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => { listeners.set(event, handler) }),
+        once: vi.fn((event: string, handler: (...args: unknown[]) => void) => { listeners.set(event, handler) }),
         removeListener: vi.fn(),
     }
     return { win, set_min, set_max, set_bounds, listeners }
@@ -93,22 +88,24 @@ function make_fake_win(): {
 describe('TranslateHeightController', () => {
     beforeEach(() => {
         vi.useFakeTimers()
-        ;(screen.on as any).mockClear()
-        ;(screen.getDisplayMatching as any).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 1080 } })
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        ;vi.mocked(screen.on).mockClear()
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        ;vi.mocked(screen.getDisplayMatching).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 1080 } })
     })
 
     afterEach(() => { vi.useRealTimers() })
 
     it('applies locked size on construction using initial_min_height', () => {
         const { win, set_min, set_max } = make_fake_win()
-        new TranslateHeightController(win as any, { initial_min_height: 160 })
+        new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         expect(set_min).toHaveBeenCalledWith(280, 160)
         expect(set_max).toHaveBeenCalledWith(100000, 160)
     })
 
     it('report_content_height grows window to reported height', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         set_bounds.mockClear()
         c.report_content_height(500)
         expect(set_bounds).toHaveBeenCalledWith(expect.objectContaining({ height: 500 }))
@@ -116,7 +113,7 @@ describe('TranslateHeightController', () => {
 
     it('clamps reported height to work_area * 0.75', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         set_bounds.mockClear()
         c.report_content_height(5000)
         const max = Math.floor(1080 * TRANSLATE_MAX_HEIGHT_RATIO)
@@ -125,7 +122,7 @@ describe('TranslateHeightController', () => {
 
     it('debounces 1px changes in content height (no re-apply)', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         c.report_content_height(500)
         set_bounds.mockClear()
         c.report_content_height(500.4)
@@ -134,7 +131,7 @@ describe('TranslateHeightController', () => {
 
     it('applies height when change exceeds debounce threshold', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         c.report_content_height(500)
         set_bounds.mockClear()
         c.report_content_height(502)
@@ -143,7 +140,7 @@ describe('TranslateHeightController', () => {
 
     it('report_min_width updates minimum width', () => {
         const { win, set_min } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         set_min.mockClear()
         c.report_min_width(350)
         expect(set_min).toHaveBeenCalledWith(350, expect.any(Number))
@@ -151,7 +148,7 @@ describe('TranslateHeightController', () => {
 
     it('debounces 1px changes in min width (no re-apply)', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         c.report_min_width(350)
         set_bounds.mockClear()
         c.report_min_width(350.4)
@@ -160,7 +157,7 @@ describe('TranslateHeightController', () => {
 
     it('dispose stops further updates and is idempotent', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         c.dispose()
         c.dispose()
         set_bounds.mockClear()
@@ -170,7 +167,7 @@ describe('TranslateHeightController', () => {
 
     it('ignores invalid inputs (NaN / negative)', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         set_bounds.mockClear()
         c.report_content_height(Number.NaN)
         c.report_content_height(-100)
@@ -179,11 +176,13 @@ describe('TranslateHeightController', () => {
 
     it('recomputes after display-metrics-changed when workArea shrinks', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         c.report_content_height(800)
         set_bounds.mockClear()
-        ;(screen.getDisplayMatching as any).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 600 } })
-        const calls = (screen.on as any).mock.calls as Array<[string, () => void]>
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        ;vi.mocked(screen.getDisplayMatching).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 600 } })
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const calls = vi.mocked(screen.on).mock.calls as Array<[string, () => void]>
         const handler = calls.find(([ev]) => ev === 'display-metrics-changed')?.[1]
         handler?.()
         const max = Math.floor(600 * TRANSLATE_MAX_HEIGHT_RATIO)
@@ -192,10 +191,11 @@ describe('TranslateHeightController', () => {
 
     it('on_move debounces and recomputes after move timer elapses', () => {
         const { win, set_bounds, listeners } = make_fake_win()
-        const c = new TranslateHeightController(win as any, { initial_min_height: 160 })
+        const c = new TranslateHeightController(win as unknown as BrowserWindow, { initial_min_height: 160 })
         c.report_content_height(800)
         set_bounds.mockClear()
-        ;(screen.getDisplayMatching as any).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 600 } })
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        ;vi.mocked(screen.getDisplayMatching).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 600 } })
         listeners.get('move')?.()
         // Before debounce fires, no update
         expect(set_bounds).not.toHaveBeenCalled()

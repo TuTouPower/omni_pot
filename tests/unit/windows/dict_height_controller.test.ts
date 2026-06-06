@@ -11,6 +11,7 @@ vi.mock('electron', () => {
 })
 
 import { screen } from 'electron'
+import type { BrowserWindow } from 'electron'
 import {
     compute_dict_target_height,
     DictHeightController,
@@ -40,13 +41,7 @@ describe('compute_dict_target_height', () => {
     })
 })
 
-function make_fake_win(): {
-    win: any
-    set_min: ReturnType<typeof vi.fn>
-    set_max: ReturnType<typeof vi.fn>
-    set_bounds: ReturnType<typeof vi.fn>
-    listeners: Map<string, () => void>
-} {
+function make_fake_win() {
     const set_min = vi.fn()
     const set_max = vi.fn()
     const set_bounds = vi.fn()
@@ -68,22 +63,24 @@ function make_fake_win(): {
 describe('DictHeightController', () => {
     beforeEach(() => {
         vi.useFakeTimers()
-        ;(screen.on as any).mockClear()
-        ;(screen.getDisplayMatching as any).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 1080 } })
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        ;vi.mocked(screen.on).mockClear()
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        ;vi.mocked(screen.getDisplayMatching).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 1080 } })
     })
 
     afterEach(() => { vi.useRealTimers() })
 
     it('applies locked size on construction using initial_min_height', () => {
         const { win, set_min, set_max } = make_fake_win()
-        new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
+        new DictHeightController(win as unknown as BrowserWindow, { initial_min_height: 120, min_width: 280 })
         expect(set_min).toHaveBeenCalledWith(280, 120)
         expect(set_max).toHaveBeenCalledWith(100000, 120)
     })
 
     it('report_content_height grows window to reported height', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
+        const c = new DictHeightController(win as unknown as BrowserWindow, { initial_min_height: 120, min_width: 280 })
         set_bounds.mockClear()
         c.report_content_height(500)
         expect(set_bounds).toHaveBeenCalledWith(expect.objectContaining({ height: 500 }))
@@ -91,7 +88,7 @@ describe('DictHeightController', () => {
 
     it('clamps reported height to work_area * 0.75', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
+        const c = new DictHeightController(win as unknown as BrowserWindow, { initial_min_height: 120, min_width: 280 })
         set_bounds.mockClear()
         c.report_content_height(5000)
         const max = Math.floor(1080 * DICT_MAX_HEIGHT_RATIO)
@@ -100,7 +97,7 @@ describe('DictHeightController', () => {
 
     it('debounces 1px changes (no re-apply)', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
+        const c = new DictHeightController(win as unknown as BrowserWindow, { initial_min_height: 120, min_width: 280 })
         c.report_content_height(500)
         set_bounds.mockClear()
         c.report_content_height(501)
@@ -109,7 +106,7 @@ describe('DictHeightController', () => {
 
     it('dispose stops further updates and is idempotent', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
+        const c = new DictHeightController(win as unknown as BrowserWindow, { initial_min_height: 120, min_width: 280 })
         c.dispose()
         c.dispose()
         set_bounds.mockClear()
@@ -119,7 +116,7 @@ describe('DictHeightController', () => {
 
     it('ignores invalid inputs (NaN / negative)', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
+        const c = new DictHeightController(win as unknown as BrowserWindow, { initial_min_height: 120, min_width: 280 })
         set_bounds.mockClear()
         c.report_content_height(Number.NaN)
         c.report_content_height(-100)
@@ -128,12 +125,13 @@ describe('DictHeightController', () => {
 
     it('recomputes after display-metrics-changed when workArea shrinks', () => {
         const { win, set_bounds } = make_fake_win()
-        const c = new DictHeightController(win as any, { initial_min_height: 120, min_width: 280 })
+        const c = new DictHeightController(win as unknown as BrowserWindow, { initial_min_height: 120, min_width: 280 })
         c.report_content_height(800)
         set_bounds.mockClear()
-        ;(screen.getDisplayMatching as any).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 600 } })
-        // invoke registered display-metrics-changed handler captured via screen.on
-        const calls = (screen.on as any).mock.calls as Array<[string, () => void]>
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        ;vi.mocked(screen.getDisplayMatching).mockReturnValue({ workArea: { x: 0, y: 0, width: 1920, height: 600 } })
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const calls = vi.mocked(screen.on).mock.calls as Array<[string, () => void]>
         const handler = calls.find(([ev]) => ev === 'display-metrics-changed')?.[1]
         handler?.()
         const max = Math.floor(600 * DICT_MAX_HEIGHT_RATIO)

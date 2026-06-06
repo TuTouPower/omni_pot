@@ -47,7 +47,7 @@ describe('dict:reportContentHeight handler', () => {
         mocks.fromWebContents.mockReturnValue(args.win)
         const handler = mocks.handlers.get('dict:reportContentHeight')
         if (!handler) throw new Error('handler not registered')
-        handler({ sender: {} } as Electron.IpcMainInvokeEvent, args.height)
+        handler({ sender: {} }, args.height)
         return report
     }
 

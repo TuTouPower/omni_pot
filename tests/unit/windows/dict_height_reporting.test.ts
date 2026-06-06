@@ -68,7 +68,7 @@ describe('dict window height reporting uses inner content measurement', () => {
 
     beforeEach(() => {
         report_spy = vi.fn(() => Promise.resolve())
-        ;(window as any).electronAPI = {
+        ;window.electronAPI = {
             dict: { reportContentHeight: report_spy },
             text: { writeClipboard: vi.fn(() => Promise.resolve()), onDictLookup: vi.fn(() => () => {}), onDictSelectionEmpty: vi.fn(() => () => {}) },
             window: { close: vi.fn(() => Promise.resolve()), setAlwaysOnTop: vi.fn(() => Promise.resolve()) },
@@ -79,15 +79,15 @@ describe('dict window height reporting uses inner content measurement', () => {
         original_raf = window.requestAnimationFrame
         original_caf = window.cancelAnimationFrame
         raf_cb = null
-        window.requestAnimationFrame = ((cb: FrameRequestCallback) => { raf_cb = cb; return 1 }) as any
-        window.cancelAnimationFrame = vi.fn() as any
+        window.requestAnimationFrame = (cb: FrameRequestCallback) => { raf_cb = cb; return 1 }
+        window.cancelAnimationFrame = vi.fn<(handle: number) => void>()
         reset_stores()
     })
 
     afterEach(() => {
         window.requestAnimationFrame = original_raf
         window.cancelAnimationFrame = original_caf
-        delete (window as any).electronAPI
+        delete window.electronAPI
     })
 
     it('reports height based on inner content getBoundingClientRect, not scrollHeight', async () => {
@@ -100,19 +100,20 @@ describe('dict window height reporting uses inner content measurement', () => {
             disconnect = vi.fn()
             unobserve = vi.fn()
         }
-        ;(window as any).ResizeObserver = MockResizeObserver
+        ;window.ResizeObserver = MockResizeObserver
 
         const { container } = render(React.createElement(DictWindow))
 
         const titlebar_el = container.querySelector('.op-titlebar') as HTMLElement
         // content_outer is the flex:1 div, inner is its first child
-        const content_outer = titlebar_el?.nextElementSibling as HTMLElement | null
+        const content_outer = titlebar_el.nextElementSibling as HTMLElement | null
         const inner = content_outer?.firstElementChild as HTMLElement | null
         expect(titlebar_el).not.toBeNull()
         expect(content_outer).not.toBeNull()
         expect(inner).not.toBeNull()
 
         // Mock getBoundingClientRect per element
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         const original_gbr = Element.prototype.getBoundingClientRect
         let inner_height = 500
         vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
@@ -134,6 +135,7 @@ describe('dict window height reporting uses inner content measurement', () => {
 
         // Trigger initial RAF callback
         expect(raf_cb).not.toBeNull()
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         act(() => { raf_cb!(0) })
 
         // Initial: titlebar(40) + inner(500) + padding(18) = 558
@@ -141,6 +143,7 @@ describe('dict window height reporting uses inner content measurement', () => {
 
         // Simulate card collapse: inner shrinks
         inner_height = 200
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         act(() => { raf_cb!(0) })
 
         // After collapse: titlebar(40) + inner(200) + padding(18) = 258

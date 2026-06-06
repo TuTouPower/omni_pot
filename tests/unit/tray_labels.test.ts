@@ -137,10 +137,12 @@ describe('tray actions', () => {
     })
 
     it('persists auto_start when toggled from tray', () => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(app.getLoginItemSettings).mockReturnValue({ openAtLogin: false } as Electron.LoginItemSettings)
 
         trigger_tray_action('auto_start')
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(app.setLoginItemSettings).toHaveBeenCalledWith({ openAtLogin: true })
         expect(setConfig).toHaveBeenCalledWith('auto_start', true)
     })
