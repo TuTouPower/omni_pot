@@ -23,7 +23,7 @@ export default defineConfig({
     fullyParallel: false,
     workers: 1,
     retries: 1,
-    reporter: [['html', { open: 'never' }], ['list']],
+    reporter: [['html', { open: 'never', outputFolder: './build/reports/playwright' }], ['list']],
     globalSetup: './tests/e2e/global_setup.ts',
     projects: [
         {
@@ -51,5 +51,5 @@ export default defineConfig({
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
     },
-    outputDir: './tests/e2e/test-results',
+    outputDir: './build/reports/e2e-results',
 })

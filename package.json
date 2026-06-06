@@ -4,7 +4,7 @@
   "description": "Cross-platform translation, OCR and dictionary tool",
   "author": "TuTouPower",
   "private": true,
-  "main": "out/main/index.js",
+  "main": "build/app/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
@@ -56,10 +56,10 @@
     "productName": "Omni Pot",
     "executableName": "OmniPot",
     "directories": {
-      "output": "release"
+      "output": "build/release"
     },
     "files": [
-      "out/**",
+      "build/app/**",
       "package.json"
     ],
     "extraResources": [
@@ -71,7 +71,7 @@
         ]
       },
       {
-        "from": "resources/data/dict/",
+        "from": "data/dict/",
         "to": "data/dict/",
         "filter": [
           "chinese_dictionary.db",

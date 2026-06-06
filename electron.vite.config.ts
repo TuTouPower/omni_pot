@@ -2,12 +2,16 @@ import { resolve } from 'path'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 
+const build_app_dir = 'build/app'
+
 export default defineConfig({
   main: {
     resolve: {
       alias: { '@shared': resolve(__dirname, 'src/shared') }
     },
     build: {
+      outDir: `${build_app_dir}/main`,
+      emptyOutDir: true,
       externalizeDeps: true,
       rollupOptions: {
         input: { index: resolve(__dirname, 'src/main/main.ts') },
@@ -20,6 +24,8 @@ export default defineConfig({
       alias: { '@shared': resolve(__dirname, 'src/shared') }
     },
     build: {
+      outDir: `${build_app_dir}/preload`,
+      emptyOutDir: false,
       externalizeDeps: true,
       rollupOptions: {
         input: { index: resolve(__dirname, 'src/main/preload.ts') }
@@ -37,6 +43,8 @@ export default defineConfig({
       dedupe: ['react', 'react-dom']
     },
     build: {
+      outDir: `${build_app_dir}/renderer`,
+      emptyOutDir: false,
       rollupOptions: {
         input: { index: resolve(__dirname, 'index.html') }
       }

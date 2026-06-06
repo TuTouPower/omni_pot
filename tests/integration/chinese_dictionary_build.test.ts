@@ -3,8 +3,8 @@ import Database from 'better-sqlite3'
 import { existsSync, statSync } from 'fs'
 import { join } from 'path'
 
-const DB_PATH = join(__dirname, '..', '..', 'resources', 'data', 'dict', 'chinese_dictionary.db')
-const LICENSE_PATH = join(__dirname, '..', '..', 'resources', 'data', 'dict', 'chinese-dictionary-LICENSE')
+const DB_PATH = join(__dirname, '..', '..', 'data', 'dict', 'chinese_dictionary.db')
+const LICENSE_PATH = join(__dirname, '..', '..', 'data', 'dict', 'chinese-dictionary-LICENSE')
 
 describe('chinese_dict build', () => {
     let db: Database.Database

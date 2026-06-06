@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 
-const DB_PATH = join(__dirname, '..', '..', 'resources', 'data', 'dict', 'cc_cedict.db')
+const DB_PATH = join(__dirname, '..', '..', 'data', 'dict', 'cc_cedict.db')
 
 describe('ecdict (CC-CEDICT)', () => {
     let db: Database.Database | undefined
@@ -12,7 +12,7 @@ describe('ecdict (CC-CEDICT)', () => {
         if (!existsSync(DB_PATH)) {
             throw new Error(
                 `cc_cedict.db not found at ${DB_PATH}.\n` +
-                'The pre-built CC-CEDICT database must exist at resources/data/dict/cc_cedict.db'
+                'The pre-built CC-CEDICT database must exist at data/dict/cc_cedict.db'
             )
         }
         db = new Database(DB_PATH, { readonly: true })
@@ -31,7 +31,7 @@ describe('ecdict (CC-CEDICT)', () => {
             build?: { extraResources?: Array<{ from: string; to: string; filter?: string[] }> }
         }
         const extra_resources = pkg.build?.extraResources
-        const dict_entry = extra_resources?.find((e) => e.from === 'resources/data/dict/')
+        const dict_entry = extra_resources?.find((e) => e.from === 'data/dict/')
         expect(dict_entry?.filter).toContain('cc_cedict.db')
     })
 

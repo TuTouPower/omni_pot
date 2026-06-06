@@ -62,7 +62,7 @@ function to_cst_iso(date) {
     return cst.toISOString().replace('Z', '+08:00')
 }
 
-export async function build_latest_metadata({ version, release_dir = 'release', released_at = new Date() }) {
+export async function build_latest_metadata({ version, release_dir = 'build/release', released_at = new Date() }) {
     const installer_path = await find_release_file(release_dir, version, 'installer')
     const portable_path = await find_release_file(release_dir, version, 'portable')
 

@@ -52,10 +52,10 @@ function find_db_path(): string | null {
 
     const app_path = app.getAppPath()
     const candidates = [
-        join(app_path, 'resources', 'data', 'dict', 'chinese_dictionary.db'),
-        join(app_path, '..', 'resources', 'data', 'dict', 'chinese_dictionary.db'),
-        join(app_path, '..', '..', 'resources', 'data', 'dict', 'chinese_dictionary.db'),
-        join(process.cwd(), 'resources', 'data', 'dict', 'chinese_dictionary.db'),
+        join(app_path, 'data', 'dict', 'chinese_dictionary.db'),
+        join(app_path, '..', 'data', 'dict', 'chinese_dictionary.db'),
+        join(app_path, '..', '..', 'data', 'dict', 'chinese_dictionary.db'),
+        join(process.cwd(), 'data', 'dict', 'chinese_dictionary.db'),
     ]
     return candidates.find((path) => existsSync(path)) ?? null
 }

@@ -9,7 +9,7 @@ import { createServer } from 'net'
 import { randomUUID } from 'crypto'
 
 const PROJECT_ROOT = resolve(__dirname, '../../..')
-const MAIN_JS = resolve(PROJECT_ROOT, 'out/main/index.js')
+const MAIN_JS = resolve(PROJECT_ROOT, 'build/app/main/index.js')
 
 async function getFreePort(): Promise<number> {
     return new Promise((resolve, reject) => {
@@ -102,7 +102,7 @@ export async function closeApp(launched: LaunchedApp): Promise<void> {
     // already exited (crash, double-stop, or app.quit() from test actions).
     let pid: number | undefined
     try {
-        pid = launched.app.process()?.pid
+        pid = launched.app.process().pid
     } catch {
         // App already dead — nothing to kill, skip straight to cleanup.
     }
@@ -117,7 +117,7 @@ export async function closeApp(launched: LaunchedApp): Promise<void> {
         await new Promise(r => setTimeout(r, 500))
         if (platform() === 'win32') {
             try {
-                execSync(`taskkill /F /T /PID ${pid} 2>nul`, { timeout: 3000, stdio: 'ignore' })
+                execSync(`taskkill /F /T /PID ${String(pid)} 2>nul`, { timeout: 3000, stdio: 'ignore' })
             } catch { /* process already exited */ }
         } else {
             try { process.kill(pid, 'SIGKILL') } catch { /* already exited */ }

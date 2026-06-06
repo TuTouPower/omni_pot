@@ -9,7 +9,8 @@ import http from 'http'
 import { randomUUID } from 'crypto'
 
 const PROJECT_ROOT = resolve(__dirname, '../../..')
-const MAIN_JS = resolve(PROJECT_ROOT, 'out/main/index.js')
+const MAIN_JS = resolve(PROJECT_ROOT, 'build/app/main/index.js')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const ELECTRON_EXE = require('electron') as string
 
 async function get_free_port(): Promise<number> {
@@ -26,7 +27,7 @@ async function get_free_port(): Promise<number> {
 
 function kill_pid(pid: number): void {
     try {
-        execSync(`powershell -Command "Stop-Process -Id ${pid} -Force -ErrorAction SilentlyContinue"`, { timeout: 5000, stdio: 'ignore' })
+        execSync(`powershell -Command "Stop-Process -Id ${String(pid)} -Force -ErrorAction SilentlyContinue"`, { timeout: 5000, stdio: 'ignore' })
     } catch { /* already dead */ }
 }
 
@@ -34,7 +35,7 @@ async function kill_process_tree(proc: ChildProcess): Promise<void> {
     if (proc.pid) {
         // Kill process tree via PowerShell to catch detached children
         try {
-            execSync(`powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq ${proc.pid} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`, { timeout: 5000, stdio: 'ignore' })
+            execSync(`powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq ${String(proc.pid)} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`, { timeout: 5000, stdio: 'ignore' })
         } catch { /* ignore */ }
         kill_pid(proc.pid)
     }
@@ -55,7 +56,7 @@ async function wait_for_http(port: number, api_token: string, timeout_ms: number
                     headers: { 'X-Omni-Pot-Api-Token': api_token },
                 }, (res) => {
                     res.on('data', () => {})
-                    res.on('end', () => { if (res.statusCode === 200) resolve(); else reject() })
+                    res.on('end', () => { if (res.statusCode === 200) resolve(); else reject(new Error('HTTP request failed')) })
                 })
                 req.on('error', reject)
             })
@@ -116,7 +117,7 @@ function spawn_app(http_port: number, user_data_dir: string, api_token: string):
 
 async function wait_for_exit(proc: ChildProcess, timeout_ms: number): Promise<number | null> {
     return new Promise((resolve) => {
-        const timer = setTimeout(() => resolve(null), timeout_ms)
+        const timer = setTimeout(() => { resolve(null) }, timeout_ms)
         proc.on('exit', (code) => { clearTimeout(timer); resolve(code) })
     })
 }
@@ -128,8 +129,6 @@ test.describe('restart process lifecycle @core', () => {
         const api_token = randomUUID()
 
         const proc = spawn_app(port, user_data_dir, api_token)
-        let proc_exited = false
-        proc.on('exit', () => { proc_exited = true })
 
         try {
             const ready = await wait_for_http(port, api_token, 30_000)

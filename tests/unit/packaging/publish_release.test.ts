@@ -53,7 +53,7 @@ describe('publish release helpers', () => {
 
     it('runs R2 wrangler commands through WSL to reuse the existing Cloudflare login', async () => {
         const { build_r2_command } = (await import(module_path)) as { build_r2_command: BuildR2Command }
-        const command = build_r2_command(['r2', 'object', 'put', 'releases/omni-pot/latest.json', '--file', 'release/latest.json', '--remote'])
+        const command = build_r2_command(['r2', 'object', 'put', 'releases/omni-pot/latest.json', '--file', 'build/release/latest.json', '--remote'])
 
         expect(command.command).toBe('wsl.exe')
         expect(command.args).toEqual([
@@ -66,7 +66,7 @@ describe('publish release helpers', () => {
             'put',
             'releases/omni-pot/latest.json',
             '--file',
-            'release/latest.json',
+            'build/release/latest.json',
             '--remote',
         ])
     })
@@ -102,8 +102,8 @@ describe('publish release helpers', () => {
 
     it('prints R2 latest file upload and verification before latest metadata upload', async () => {
         await with_temp_dir(async (dir) => {
-            const release_dir = join(dir, 'release')
-            await mkdir(release_dir)
+            const release_dir = join(dir, 'build', 'release')
+            await mkdir(release_dir, { recursive: true })
             await writeFile(join(dir, 'package.json'), JSON.stringify({ version: app_version }))
             await writeFile(join(release_dir, installer_name), 'installer')
             await writeFile(join(release_dir, portable_name), 'portable')

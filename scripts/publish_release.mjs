@@ -331,7 +331,7 @@ async function main() {
     const version = await package_version()
     if (options.version && options.version !== version) throw new Error(`--version ${options.version} does not match package.json version ${version}`)
     const tag = `v${version}`
-    const release_dir = resolve(cwd(), 'release')
+    const release_dir = resolve(cwd(), 'build/release')
 
     if (!options.skip_dist) {
         run('npm', ['run', 'dist'], { dry_run: options.dry_run })

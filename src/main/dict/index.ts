@@ -18,10 +18,10 @@ function find_db_path(): string | null {
     }
     const app_path = app.getAppPath()
     const candidates = [
-        join(app_path, 'resources', 'data', 'dict', 'cc_cedict.db'),
-        join(app_path, '..', 'resources', 'data', 'dict', 'cc_cedict.db'),
-        join(app_path, '..', '..', 'resources', 'data', 'dict', 'cc_cedict.db'),
-        join(process.cwd(), 'resources', 'data', 'dict', 'cc_cedict.db'),
+        join(app_path, 'data', 'dict', 'cc_cedict.db'),
+        join(app_path, '..', 'data', 'dict', 'cc_cedict.db'),
+        join(app_path, '..', '..', 'data', 'dict', 'cc_cedict.db'),
+        join(process.cwd(), 'data', 'dict', 'cc_cedict.db'),
     ]
     return candidates.find((path) => existsSync(path)) ?? null
 }
