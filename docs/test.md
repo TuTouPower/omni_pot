@@ -143,14 +143,14 @@
 
 以下问题涉及操作系统、打包产物或硬件环境，自动化只能辅助，不能单独宣称已解决：
 
-- `release/OmniPot{VERSION}.exe`、`release/OmniPot{VERSION}-portable.exe` 的首次启动和重新打开行为，其中 `{VERSION}` 来自 `package.json` 的 `version` 字段。
+- `build/release/OmniPot{VERSION}.exe`、`build/release/OmniPot{VERSION}-portable.exe` 的首次启动和重新打开行为，其中 `{VERSION}` 来自 `package.json` 的 `version` 字段。
 - Windows 系统托盘真实显示效果、托盘 popup 位置、失焦关闭、浅色主题和 example 对齐。
 - 真实 `globalShortcut` 是否被 Windows 接收并触发应用 action。
 - OCR 鼠标框选截图在 DPI 缩放、多显示器、窗口偏移下是否裁剪到用户实际框选区域。
 - TTS 是否真的发声、系统音频设备不可用时是否有用户可见反馈。
 - 原生窗口 resize、边框拖拽、最小/最大尺寸在真实桌面环境中的表现。
 
-修复这类问题时，完成报告必须分开说明：自动化测试结果、`npm run dist` 结果、真实打包产物 smoke 结果。没有真实 smoke 的，只能写“自动化路径通过，packaged 行为未验证”，不能写“已修复”。`npm run dist` 会在打包前检查既有 `release` exe 产物是否被 Omni Pot 或其他进程占用，若占用则直接报错，避免 electron-builder 长时间等待解锁。
+修复这类问题时，完成报告必须分开说明：自动化测试结果、`npm run dist` 结果、真实打包产物 smoke 结果。没有真实 smoke 的，只能写“自动化路径通过，packaged 行为未验证”，不能写“已修复”。`npm run dist` 会在打包前检查既有 `build/release` exe 产物是否被 Omni Pot 或其他进程占用，若占用则直接报错，避免 electron-builder 长时间等待解锁。
 
 ---
 

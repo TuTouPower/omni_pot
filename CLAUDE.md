@@ -28,7 +28,7 @@ Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron 
 | `npm run test:e2e:all` | 运行全部 e2e 测试，含真实外部服务（需要网络） |
 | `npm run dist:dir` | 构建 unpacked 目录产物，用于本地打包 smoke；Windows 上成功后自动启动 unpacked 应用 |
 | `npm run start` | 预览构建产物 |
-| `npm run build:chinese-dictionary` | 生成 `resources/data/dict/chinese_dictionary.db`（86MB，gitignored） |
+| `npm run build:chinese-dictionary` | 生成 `data/dict/chinese_dictionary.db`（86MB，gitignored） |
 
 ## 新克隆后的初始化
 
@@ -47,15 +47,15 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `src/` | 渲染进程代码（React UI） |
 | `src/shared/` | 主进程/渲染进程共享类型 |
 | `public/` | 静态资源（logo 等） |
-| `resources/` | 应用图标（icon.png, icon.ico） |
 | `data/` | 词典数据、Tesseract 训练数据 |
 | `config/` | 代码规范/Lint 配置文件 |
 | `scripts/` | 自动构建/发布脚本 |
 | `tests/` | 单元测试 |
 | `tests/e2e/` | 端到端测试 |
 | `docs/` | 项目文档 |
-| `out/` | 构建输出 |
-| `release/` | 打包输出 |
+| `build/app/` | 编译后的 Electron/Vite 应用产物（gitignored） |
+| `build/release/` | 打包输出、安装包、便携版、latest.json（gitignored） |
+| `build/reports/` | Playwright HTML 报告与 e2e artifacts（gitignored） |
 
 ## 运行时数据目录
 

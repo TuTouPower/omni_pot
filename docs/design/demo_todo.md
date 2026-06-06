@@ -1,6 +1,6 @@
 # omni_pot 设计稿待修改
 
-> 来源：`docs/spec_demo.md` 差异报告中用户标记为"设计稿"的项目。
+> 来源：`docs/archive/reviews/spec_demo.md` 差异报告中用户标记为"设计稿"的项目。
 > 设计稿原型文件：`docs/design/omni-pot/project/` 下的 jsx/css/html 文件。
 
 ---

@@ -26,17 +26,17 @@
 npm run release:publish
 ```
 
-脚本会运行 `npm run dist`，生成 `release/latest.json`，创建或复用公开发布仓库的 `v{VERSION}` release，上传 GitHub Release 产物，并同步 Cloudflare R2。同步 R2 时会先上传并读回校验当前 `latest/` 文件，再切换 GitHub 与 R2 的 `latest.json`，最后删除旧 `latest.json` 指向、且不在当前版本 manifest 里的 `omni-pot/latest/` 对象；Wrangler CLI 不能枚举对象，手工散落对象需要人工删除。
+脚本会运行 `npm run dist`，生成 `build/release/latest.json`，创建或复用公开发布仓库的 `v{VERSION}` release，上传 GitHub Release 产物，并同步 Cloudflare R2。同步 R2 时会先上传并读回校验当前 `latest/` 文件，再切换 GitHub 与 R2 的 `latest.json`，最后删除旧 `latest.json` 指向、且不在当前版本 manifest 里的 `omni-pot/latest/` 对象；Wrangler CLI 不能枚举对象，手工散落对象需要人工删除。
 
 可选参数：
 
 | 参数 | 说明 |
 |---|---|
 | `--version {VERSION}` | 可选一致性校验；传入值必须等于 `package.json` 的 `version` |
-| `--skip-dist` | 跳过 `npm run dist`，使用已有 `release/` 产物 |
+| `--skip-dist` | 跳过 `npm run dist`，使用已有 `build/release/` 产物 |
 | `--dry-run` | 只打印将执行的上传命令，不执行上传 |
 
-产物输出在 `release/` 目录，包含 NSIS 安装版（`OmniPot{VERSION}.exe`）和便携版（`OmniPot{VERSION}-portable.exe`）。
+产物输出在 `build/release/` 目录，包含 NSIS 安装版（`OmniPot{VERSION}.exe`）和便携版（`OmniPot{VERSION}-portable.exe`）。
 
 ## 注意事项
 

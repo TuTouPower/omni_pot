@@ -98,7 +98,7 @@
 
 | 服务/数据源 | 状态 | 本地依赖 | 备注 |
 |---|---|---|---|
-| Chinese Dictionary | 当前代码存在 | `resources/data/dict/chinese_dictionary.db` | 本地中文单字/词语/成语释义数据库，约 86 MB。 |
+| Chinese Dictionary | 当前代码存在 | `data/dict/chinese_dictionary.db` | 本地中文单字/词语/成语释义数据库，约 86 MB。 |
 | CC-CEDICT | 已移除当前注册服务 | 无 | 历史本地中英双向词典数据源；当前词典窗口不再注册、构建、打包或提示下载该服务。 |
 | ECDICT / GCIDE | 资料中离线候选 | 本地词典数据库 | pot-app 插件资料中提及，未作为当前已注册实现列入。 |
 | mapull/chinese-dictionary | 资料中推荐数据源 | JSON 数据导入 SQLite | Chinese Dictionary数据源，不是在线服务。 |

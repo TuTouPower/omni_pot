@@ -81,7 +81,7 @@
 |---|---|---|
 | `package.json` scripts | `build:chinese-dictionary` | `build:chinese-dictionary` |
 | `package.json` extraResources | `chinese_dictionary.db` | `chinese_dictionary.db` |
-| `.gitignore` | `resources/data/dict/chinese_dictionary.db` | `resources/data/dict/chinese_dictionary.db` |
+| `.gitignore` | `data/dict/chinese_dictionary.db` | `data/dict/chinese_dictionary.db` |
 | `scripts/run_dist.mjs` | `build:chinese-dictionary` | `build:chinese-dictionary` |
 
 ---
@@ -157,7 +157,7 @@
 | `chinese_dictionary` | 不变 |
 | `Chinese Dictionary` | → `Chinese Dictionary` |
 
-### E5. docs/better_sqlite3_abi.md
+### E5. docs/runtime/better_sqlite3_abi.md
 
 | 行 | 改动 |
 |---|---|
@@ -177,14 +177,14 @@
 | `Chinese Dictionary` | → `Chinese Dictionary` |
 | free_dictionary 相关条目 | 移除 |
 
-### E7. docs/spec_code.md
+### E7. docs/archive/reviews/spec_code.md
 
 | 行 | 改动 |
 |---|---|
 | `chinese_dictionary` | 不变 |
 | `Chinese Dictionary` | → `Chinese Dictionary` |
 
-### E8. docs/spec_demo.md
+### E8. docs/archive/reviews/spec_demo.md
 
 | 行 | 改动 |
 |---|---|

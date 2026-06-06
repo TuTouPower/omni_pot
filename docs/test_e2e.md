@@ -88,9 +88,9 @@ export async function closeApp(launched: LaunchedApp): Promise<void>
 
 要点：
 
-- 用 `electron.launch({ args: ['out/main/index.js'], env })` 启动；Playwright 自带 CDP 接管，
+- 用 `electron.launch({ args: ['build/app/main/index.js'], env })` 启动；Playwright 自带 CDP 接管，
   无需手动管理 `--remote-debugging-port`。
-- `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `out/` 产物。
+- `globalSetup` 在每次 Playwright 命令开始时执行一次 `electron-vite build`，避免旧 `build/app/` 产物。
 - 每个测试独立随机 `httpPort`、**独立 userData 临时目录** —— 测试间隔离。
 - 环境变量把 `userDataDir`、预置 `config`、`firstRun`、`OMNI_POT_E2E=1`、
   `OMNI_POT_E2E_TOKEN` 传给 main 进程；E2E-only HTTP 端点必须带匹配 token。

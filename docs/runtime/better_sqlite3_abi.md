@@ -91,7 +91,7 @@ npm run dist
   - `test:e2e:external`: `npx playwright test --project=external`
   - `build:chinese-dictionary`: `npx tsx scripts/build_chinese_dictionary.ts`
 - `scripts/build_chinese_dictionary.ts`
-  - Node 进程中 import `better-sqlite3`，用于生成 `resources/data/dict/chinese_dictionary.db`。
+  - Node 进程中 import `better-sqlite3`，用于生成 `data/dict/chinese_dictionary.db`。
 - `electron/chinese_dictionary/index.ts`
   - Electron 主进程中 import `better-sqlite3`，运行Chinese Dictionary查询。
 - `electron/history/index.ts`
