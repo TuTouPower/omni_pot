@@ -61,7 +61,7 @@ vi.mock('electron', () => ({
     on: vi.fn(),
     removeListener: vi.fn(),
   },
-  app: { isPackaged: true, getAppPath: vi.fn().mockReturnValue('/mock/app') }
+  app: { isPackaged: true, getAppPath: vi.fn().mockReturnValue('/mock/app'), on: vi.fn() }
 }))
 
 vi.mock('../../src/main/log', () => ({

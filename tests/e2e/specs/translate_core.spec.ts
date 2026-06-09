@@ -30,7 +30,7 @@ test.describe('translate flows', () => {
             await expect(translate.sourceInput()).toHaveValue('hello world', { timeout: local_operation_timeout_ms })
             await expect_non_empty_result_body(translate)
             await translate.clickClose()
-            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(false)
         } finally {
             await server.stop()
         }

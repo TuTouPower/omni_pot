@@ -44,6 +44,9 @@ function supports_pin_topmost(label: WindowLabel): boolean {
   return label === WindowLabel.TRANSLATE || label === WindowLabel.DICT || label === WindowLabel.RECOGNIZE
 }
 
+/** Labels for which windows should be preloaded and reused via hide/show. */
+const PRELOAD_LABELS: WindowLabel[] = [WindowLabel.TRANSLATE, WindowLabel.DICT, WindowLabel.RECOGNIZE]
+
 export class WindowManager {
   private byLabel = new Map<WindowLabel, BrowserWindow>()
   private labelById = new Map<number, WindowLabel>()
@@ -54,8 +57,10 @@ export class WindowManager {
   private rebuilding = new Set<WindowLabel>()
   private translate_height_controller: TranslateHeightController | null = null
   private dict_height_controller: DictHeightController | null = null
+  private _quitting = false
 
   constructor() {
+    app.on('before-quit', () => { this._quitting = true })
     // Listen for renderer-ready signals
     ipcMain.on('renderer:ready', (event, requested_label: WindowLabel) => {
       const win = BrowserWindow.fromWebContents(event.sender)
@@ -135,7 +140,8 @@ export class WindowManager {
         sandbox: true,
         contextIsolation: true,
         nodeIntegration: false,
-        disableBlinkFeatures: 'Auxclick'
+        disableBlinkFeatures: 'Auxclick',
+        backgroundThrottling: opts.backgroundThrottling ?? true,
       }
     })
 
@@ -202,6 +208,16 @@ export class WindowManager {
     win.on('unresponsive', () => {
       log_wm.warn('window unresponsive:', opts.label)
     })
+
+    // Preloaded windows (translate/dict/recognize) are hidden instead of
+    // destroyed on close, so they can be reused instantly on next trigger.
+    if (PRELOAD_LABELS.includes(opts.label)) {
+      win.on('close', (event) => {
+        if (this._quitting || this.rebuilding.has(opts.label)) return
+        event.preventDefault()
+        win.hide()
+      })
+    }
 
     const route_hash = opts.label === WindowLabel.WELCOME ? 'welcome' : opts.label
 
@@ -321,6 +337,30 @@ export class WindowManager {
   focusOrCreate(label: WindowLabel, opts: WindowOptions): BrowserWindow {
     const existing = this.getWindow(label)
     if (existing) {
+      if (!existing.isVisible()) {
+        // Reposition to current display before showing
+        if (label !== WindowLabel.DAEMON) {
+          const point = screen.getCursorScreenPoint()
+          const display = screen.getDisplayNearestPoint(point)
+          const { workArea } = display
+          let x: number, y: number
+          if (label === WindowLabel.TRANSLATE && getConfig('translate_window_position') === 'pre_state') {
+            const saved_x = getConfig('translate_window_position_x') as number
+            const saved_y = getConfig('translate_window_position_y') as number
+            if (typeof saved_x === 'number' && typeof saved_y === 'number') {
+              x = saved_x; y = saved_y
+            } else {
+              x = Math.round(workArea.x + (workArea.width - opts.width) / 2)
+              y = Math.round(workArea.y + (workArea.height - opts.height) / 2)
+            }
+          } else {
+            x = Math.round(workArea.x + (workArea.width - opts.width) / 2)
+            y = Math.round(workArea.y + (workArea.height - opts.height) / 2)
+          }
+          existing.setPosition(x, y)
+        }
+        existing.show()
+      }
       existing.focus()
       return existing
     }
@@ -330,6 +370,24 @@ export class WindowManager {
   closeWindow(label: WindowLabel): void {
     const win = this.getWindow(label)
     if (win) win.close()
+  }
+
+  /**
+   * Pre-create a hidden window so the first trigger shows it instantly.
+   * Call once at startup for translate/dict/recognize.
+   */
+  preloadWindow(opts: WindowOptions): BrowserWindow {
+    return this.createWindow({
+      ...opts,
+      show: false,
+      skipTaskbar: true,
+      backgroundThrottling: false
+    })
+  }
+
+  /** Called before app.quit() to allow actual window destruction. */
+  setQuitting(): void {
+    this._quitting = true
   }
 
   /**

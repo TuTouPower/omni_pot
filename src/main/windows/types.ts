@@ -24,4 +24,5 @@ export interface WindowOptions {
   transparent?: boolean
   frame?: boolean
   focusable?: boolean
+  backgroundThrottling?: boolean
 }

@@ -65,7 +65,7 @@ test.describe('@ui translate behavior settings', () => {
 
             const close_config = await blur_app.openConfig()
             await close_config.wordmark().click()
-            await expect.poll(async () => (await blur_app.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await blur_app.api.windowState('translate')).visible).toBe(false)
         } finally {
             await blur_app.stop()
         }
@@ -150,7 +150,7 @@ test.describe('@ui translate behavior settings', () => {
             const translate = await omni.translate()
             await expect(translate.wordmark()).toBeVisible()
             await translate.clickClose()
-            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(false)
 
             const result = await omni.api.triggerHotkey('hotkey_translate', '')
             expect(result.success).toBe(true)
@@ -465,7 +465,7 @@ test.describe('@ui translate behavior settings', () => {
             await expect_config(omni, 'translate_window_width', expected_width)
 
             await translate.clickClose()
-            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(false)
 
             const open_result = await omni.api.openWindow('translate')
             expect(open_result.success).toBe(true)

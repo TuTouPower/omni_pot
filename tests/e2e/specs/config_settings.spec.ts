@@ -103,14 +103,14 @@ test.describe('@ui config settings window', () => {
             await expect_config(omni, 'transparent', false)
 
             await translate.clickClose()
-            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(false)
             const input_result = await omni.api.triggerInputTranslate()
             expect(input_result.success).toBe(true)
             await expect.poll(async () => (await omni.api.windowState('translate')).transparent).toBe(false)
 
             const opaque_translate = await omni.translate()
             await opaque_translate.clickClose()
-            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(false)
             await config.toggle('cfg-transparent')
             await expect_config(omni, 'transparent', true)
             const transparent_result = await omni.api.triggerInputTranslate()

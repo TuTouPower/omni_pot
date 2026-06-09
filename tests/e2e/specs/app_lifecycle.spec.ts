@@ -115,7 +115,7 @@ test.describe('@ui app lifecycle', () => {
 
             const dict = await omni.dict()
             await dict.clickClose()
-            await expect.poll(async () => (await omni.api.windowState('dict')).exists).toBe(false)
+            await expect.poll(async () => (await omni.api.windowState('dict')).visible).toBe(false)
 
             await omni.openRecognize()
             await expect_window_count(omni, 'recognize', 1)
@@ -133,7 +133,7 @@ test.describe('@ui app lifecycle', () => {
             const translate = await omni.translate()
             await expect(translate.sourceInput()).toBeVisible()
             await press_key_and_allow_close(translate_page, 'Escape')
-            await expect.poll(async () => (await omni.api.windowState('translate')).exists).toBe(false)
+            await expect.poll(async () => (await omni.api.windowState('translate')).visible).toBe(false)
 
             expect((await omni.api.trayAction('input_translate')).success).toBe(true)
             await expect_window_visible(omni, 'translate')

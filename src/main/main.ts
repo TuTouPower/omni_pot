@@ -3,6 +3,9 @@ import { basename, dirname } from 'path'
 import { WindowManager } from './windows/manager'
 import { WindowLabel } from './windows/types'
 import { get_welcome_window_options } from './windows/welcome_options'
+import { get_translate_window_options } from './windows/translate_options'
+import { get_dict_window_options } from './windows/dict_options'
+import { get_recognize_window_options } from './windows/recognize_options'
 import { initConfigStore, isFirstRun, commitFirstRun, getConfig, flush_config, getUserDataDir, onConfigChanged } from './config/store'
 import { initLog, log } from './log'
 
@@ -217,6 +220,12 @@ if (!gotLock) {
       transparent: false,
       frame: false
     })
+
+    // Pre-create translate/dict/recognize windows for instant first trigger
+    manager.preloadWindow(get_translate_window_options())
+    manager.preloadWindow(get_dict_window_options())
+    manager.preloadWindow(get_recognize_window_options())
+    log_main.info('preloaded translate/dict/recognize windows')
 
     if (!getConfig('welcome_dismissed')) {
       manager.createWindow(get_welcome_window_options())

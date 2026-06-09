@@ -28,7 +28,7 @@ async function expect_screenshot_closed(omni: AppFixture): Promise<void> {
 }
 
 async function expect_no_recognize_output(omni: AppFixture): Promise<void> {
-    await expect.poll(async () => (await omni.api.windowState('recognize')).exists).toBe(false)
+    await expect.poll(async () => (await omni.api.windowState('recognize')).visible).toBe(false)
 }
 
 function color_alpha(color: string): number {
