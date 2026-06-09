@@ -59,7 +59,7 @@ async function bootstrap(): Promise<void> {
 
   await useConfigStore.getState().loadConfig()
 
-  bindI18nToConfig()
+  await bindI18nToConfig()
   bind_theme_to_config()
 
   const root_element = document.getElementById('root')
