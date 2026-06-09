@@ -70,7 +70,7 @@ function cycle_variable_name(text: string): string {
     return apply_format(words, next)
 }
 
-export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy = false, ttsPlaying = false, onDetectedLanguageClick, onClearResults, inputRef }: SourceAreaProps): React.ReactElement | null {
+const SourceArea_ = function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy = false, ttsPlaying = false, onDetectedLanguageClick, onClearResults, inputRef }: SourceAreaProps): React.ReactElement | null {
     const { t } = useTranslation()
     const sourceText = useTranslateStore((s) => s.sourceText)
     const setSourceText = useTranslateStore((s) => s.setSourceText)
@@ -263,3 +263,4 @@ export function SourceArea({ onTranslate, onTts, ttsAvailable = false, ttsBusy =
         </div>
     )
 }
+export const SourceArea = React.memo(SourceArea_)

@@ -45,7 +45,7 @@ interface SortableCardProps {
     ttsAvailable: boolean
 }
 
-function SortableCard({
+const SortableCard = React.memo(function SortableCard({
     instanceKey, results, isTranslating, collapsed, onToggleCollapse, onRetry,
     onCopy, onTts,
     playingKey, busyKey, ttsAvailable,
@@ -142,9 +142,9 @@ function SortableCard({
             </div>
         </div>
     )
-}
+})
 
-function DictResultInline({ result }: { result: DictResult }): React.ReactElement {
+const DictResultInline = React.memo(function DictResultInline({ result }: { result: DictResult }): React.ReactElement {
     return (
         <div>
             {result.pronunciations.length > 0 && (
@@ -171,7 +171,7 @@ function DictResultInline({ result }: { result: DictResult }): React.ReactElemen
             )}
         </div>
     )
-}
+})
 
 export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry }: TargetAreaProps): React.ReactElement | null {
     const results = useTranslateStore((s) => s.results)
@@ -301,6 +301,8 @@ export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry
         useConfigStore.getState().set('translate_service_list', updated)
     }, [serviceList])
 
+    const handleSortableTts = useCallback((text: string, key: string) => { handleTts(text, key) }, [handleTts])
+
     if (!hasAnyRequest) return null
 
     return (
@@ -317,7 +319,7 @@ export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry
                             onToggleCollapse={toggleCollapse}
                             onRetry={onRetry}
                             onCopy={handleCopy}
-                            onTts={(text, key) => { handleTts(text, key) }}
+                            onTts={handleSortableTts}
                             onReverseTranslate={handleReverseTranslate}
                             playingKey={playingKey}
                             busyKey={busyKey}

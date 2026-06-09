@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useShallow } from 'zustand/react/shallow'
 import { Titlebar } from '../../components/titlebar'
 import { SourceArea } from './source_area'
 import { LanguageArea } from './language_area'
@@ -21,52 +22,94 @@ const log = create_logger('translate')
 
 export default function TranslateWindow(): React.ReactElement {
     const { t } = useTranslation()
-    const sourceText = useTranslateStore((s) => s.sourceText)
-    const results = useTranslateStore((s) => s.results)
-    const isTranslating = useTranslateStore((s) => s.isTranslating)
-    const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
-    const targetLanguage = useTranslateStore((s) => s.targetLanguage)
-    const detectedLanguage = useTranslateStore((s) => s.detectedLanguage)
-    const effectiveTargetLanguage = useTranslateStore((s) => s.effectiveTargetLanguage)
-    const lockedTargetLanguage = useTranslateStore((s) => s.lockedTargetLanguage)
-    const setIsTranslating = useTranslateStore((s) => s.setIsTranslating)
-    const setResult = useTranslateStore((s) => s.setResult)
-    const clearResults = useTranslateStore((s) => s.clearResults)
-    const setSourceText = useTranslateStore((s) => s.setSourceText)
-    const setDetectedLanguage = useTranslateStore((s) => s.setDetectedLanguage)
-    const setEffectiveTargetLanguage = useTranslateStore((s) => s.setEffectiveTargetLanguage)
-    const setLockedTargetLanguage = useTranslateStore((s) => s.setLockedTargetLanguage)
-    const nextRequestId = useTranslateStore((s) => s.nextRequestId)
+    const {
+        sourceText,
+        results,
+        isTranslating,
+        sourceLanguage,
+        targetLanguage,
+        detectedLanguage,
+        effectiveTargetLanguage,
+        lockedTargetLanguage,
+        setIsTranslating,
+        setResult,
+        clearResults,
+        setSourceText,
+        setDetectedLanguage,
+        setEffectiveTargetLanguage,
+        setLockedTargetLanguage,
+        nextRequestId,
+        setTargetLanguage: setStoreTargetLang,
+        setSourceLanguage: setStoreSourceLang,
+        swapLanguages,
+    } = useTranslateStore(useShallow((s) => ({
+        sourceText: s.sourceText,
+        results: s.results,
+        isTranslating: s.isTranslating,
+        sourceLanguage: s.sourceLanguage,
+        targetLanguage: s.targetLanguage,
+        detectedLanguage: s.detectedLanguage,
+        effectiveTargetLanguage: s.effectiveTargetLanguage,
+        lockedTargetLanguage: s.lockedTargetLanguage,
+        setIsTranslating: s.setIsTranslating,
+        setResult: s.setResult,
+        clearResults: s.clearResults,
+        setSourceText: s.setSourceText,
+        setDetectedLanguage: s.setDetectedLanguage,
+        setEffectiveTargetLanguage: s.setEffectiveTargetLanguage,
+        setLockedTargetLanguage: s.setLockedTargetLanguage,
+        nextRequestId: s.nextRequestId,
+        setTargetLanguage: s.setTargetLanguage,
+        setSourceLanguage: s.setSourceLanguage,
+        swapLanguages: s.swapLanguages,
+    })))
 
-    const serviceList = useConfigStore((s) => s.config.translate_service_list)
-    const serviceInstances = useConfigStore((s) => s.config.service_instances)
+    const {
+        serviceList,
+        serviceInstances,
+        alwaysOnTop,
+        configPinned,
+        secondLanguage,
+        incrementalTranslate,
+        deleteNewline,
+        autoCopy,
+        hideSource,
+        hideLanguage,
+        historyDisable,
+        ttsServiceList,
+        configTargetLang,
+        configSourceLang,
+        appFont,
+        appFontSize,
+        setConfig,
+    } = useConfigStore(useShallow((s) => ({
+        serviceList: s.config.translate_service_list,
+        serviceInstances: s.config.service_instances,
+        alwaysOnTop: s.config.translate_always_on_top,
+        configPinned: s.config.translate_pinned,
+        secondLanguage: s.config.translate_second_language,
+        incrementalTranslate: s.config.incremental_translate,
+        deleteNewline: s.config.translate_delete_newline,
+        autoCopy: s.config.translate_auto_copy,
+        hideSource: s.config.hide_source,
+        hideLanguage: s.config.hide_language,
+        historyDisable: s.config.history_disable,
+        ttsServiceList: s.config.tts_service_list,
+        configTargetLang: s.config.translate_target_language,
+        configSourceLang: s.config.translate_source_language,
+        appFont: s.config.app_font,
+        appFontSize: s.config.app_font_size,
+        setConfig: s.set,
+    })))
     const enabledServiceList = useMemo(
         () => serviceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [serviceList, serviceInstances]
     )
-    const alwaysOnTop = useConfigStore((s) => s.config.translate_always_on_top)
-    const configPinned = useConfigStore((s) => s.config.translate_pinned)
     const pinned = configPinned || alwaysOnTop
-    const secondLanguage = useConfigStore((s) => s.config.translate_second_language)
-    const incrementalTranslate = useConfigStore((s) => s.config.incremental_translate)
-    const deleteNewline = useConfigStore((s) => s.config.translate_delete_newline)
-    const autoCopy = useConfigStore((s) => s.config.translate_auto_copy)
-    const hideSource = useConfigStore((s) => s.config.hide_source)
-    const hideLanguage = useConfigStore((s) => s.config.hide_language)
-    const historyDisable = useConfigStore((s) => s.config.history_disable)
-    const ttsServiceList = useConfigStore((s) => s.config.tts_service_list)
     const enabledTtsServiceList = useMemo(
         () => ttsServiceList.filter((instanceKey) => get_service_config(serviceInstances, instanceKey).enable !== false),
         [ttsServiceList, serviceInstances]
     )
-    const configTargetLang = useConfigStore((s) => s.config.translate_target_language)
-    const configSourceLang = useConfigStore((s) => s.config.translate_source_language)
-    const appFont = useConfigStore((s) => s.config.app_font)
-    const appFontSize = useConfigStore((s) => s.config.app_font_size)
-    const setConfig = useConfigStore((s) => s.set)
-    const setStoreTargetLang = useTranslateStore((s) => s.setTargetLanguage)
-    const setStoreSourceLang = useTranslateStore((s) => s.setSourceLanguage)
-    const swapLanguages = useTranslateStore((s) => s.swapLanguages)
 
     const languageConfigReadyRef = useRef(false)
     const configSourceLangRef = useRef(configSourceLang)
@@ -109,8 +152,8 @@ export default function TranslateWindow(): React.ReactElement {
         const storeAtEntry = useTranslateStore.getState()
         const textToTranslate = textOverride ?? storeAtEntry.sourceText
         if (!textToTranslate.trim()) return
-        log.info('[handleTranslate] ENTRY closure src=%s target=%s locked=%s | store src=%s target=%s locked=%s text=%j override=%j', sourceLanguage, targetLanguage, lockedTargetLanguage ?? '-', storeAtEntry.sourceLanguage, storeAtEntry.targetLanguage, storeAtEntry.lockedTargetLanguage ?? '-', storeAtEntry.sourceText.slice(0, 30), textOverride?.slice(0, 30) ?? null)
-        log.info('[handleTranslate] config secondLanguage=%s services=[%s]', secondLanguage, enabledServiceList.join(','))
+        log.debug('[handleTranslate] ENTRY closure src=%s target=%s locked=%s | store src=%s target=%s locked=%s text=%j override=%j', sourceLanguage, targetLanguage, lockedTargetLanguage ?? '-', storeAtEntry.sourceLanguage, storeAtEntry.targetLanguage, storeAtEntry.lockedTargetLanguage ?? '-', storeAtEntry.sourceText.slice(0, 30), textOverride?.slice(0, 30) ?? null)
+        log.debug('[handleTranslate] config secondLanguage=%s services=[%s]', secondLanguage, enabledServiceList.join(','))
 
         const id = nextRequestId()
         setIsTranslating(true)
@@ -157,7 +200,7 @@ export default function TranslateWindow(): React.ReactElement {
                 return
             }
             const instanceConfig = get_service_config(serviceInstances, instanceKey)
-            log.info('[service:%s] CALL service=%s from=%s(orig=%s) to=%s text=%j config=%j',
+            log.debug('[service:%s] CALL service=%s from=%s(orig=%s) to=%s text=%j config=%j',
                 instanceKey, serviceKey, effectiveSource, sourceLanguage, effectiveTarget,
                 textToTranslate.slice(0, 30), instanceConfig)
 
@@ -177,17 +220,14 @@ export default function TranslateWindow(): React.ReactElement {
                         setResult(instanceKey, accumulated)
                     }
                     resultsMap[instanceKey] = accumulated
-                    log.info('[service:%s] RESULT stream len=%d preview=%j', instanceKey, accumulated.length, accumulated.slice(0, 60))
+                    log.debug('[service:%s] RESULT stream len=%d preview=%j', instanceKey, accumulated.length, accumulated.slice(0, 60))
                 } else {
                     const result = await service.translate(textToTranslate, effectiveSource, effectiveTarget, instanceConfig)
                     resultsMap[instanceKey] = result
                     if (useTranslateStore.getState().requestId === id) {
                         setResult(instanceKey, result)
                     }
-                    const previewStr = typeof result === 'string'
-                        ? result.slice(0, 60)
-                        : JSON.stringify(result).slice(0, 120)
-                    log.info('[service:%s] RESULT type=%s preview=%j', instanceKey, typeof result, previewStr)
+                    log.debug('[service:%s] RESULT type=%s preview=%j', instanceKey, typeof result, typeof result === 'string' ? result.slice(0, 60) : JSON.stringify(result).slice(0, 120))
                 }
             } catch (err) {
                 log.error('[service:%s] FAILED: %s', instanceKey, err instanceof Error ? err.stack ?? err.message : String(err))
@@ -254,12 +294,12 @@ export default function TranslateWindow(): React.ReactElement {
     const schedule_translate = useCallback((text: string) => {
         cancel_scheduled_translate()
         const snap = useTranslateStore.getState()
-        log.info('[schedule_translate] queued text=%j | store src=%s target=%s locked=%s',
+        log.debug('[schedule_translate] queued text=%j | store src=%s target=%s locked=%s',
             text.slice(0, 30), snap.sourceLanguage, snap.targetLanguage, snap.lockedTargetLanguage ?? '-')
         translate_timer_ref.current = window.setTimeout(() => {
             translate_timer_ref.current = null
             const snap2 = useTranslateStore.getState()
-            log.info('[schedule_translate] FIRE text=%j | store src=%s target=%s locked=%s',
+            log.debug('[schedule_translate] FIRE text=%j | store src=%s target=%s locked=%s',
                 text.slice(0, 30), snap2.sourceLanguage, snap2.targetLanguage, snap2.lockedTargetLanguage ?? '-')
             handleTranslate(text).catch((err: unknown) => { log_error('translate', err) })
         }, 0)
@@ -274,7 +314,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromSelection((text: string) => {
-            log.info('[ipc:onTranslateFromSelection] recv text=%j', text.slice(0, 30))
+            log.debug('[ipc:onTranslateFromSelection] recv text=%j', text.slice(0, 30))
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
             setSourceText(nextText)
@@ -286,7 +326,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateSelectionEmpty(() => {
-            log.info('[ipc:onTranslateSelectionEmpty]')
+            log.debug('[ipc:onTranslateSelectionEmpty]')
             cancel_scheduled_translate()
             setSourceText('')
             setDetectedLanguage(null)
@@ -297,7 +337,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromApi((text: string) => {
-            log.info('[ipc:onTranslateFromApi] recv text=%j', text.slice(0, 30))
+            log.debug('[ipc:onTranslateFromApi] recv text=%j', text.slice(0, 30))
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
             setSourceText(nextText)
@@ -309,7 +349,7 @@ export default function TranslateWindow(): React.ReactElement {
 
     useEffect(() => {
         const unsub = window.electronAPI.text.onTranslateFromClipboard((text: string) => {
-            log.info('[ipc:onTranslateFromClipboard] recv text=%j', text.slice(0, 30))
+            log.debug('[ipc:onTranslateFromClipboard] recv text=%j', text.slice(0, 30))
             if (!text.trim()) return
             const nextText = prepareIncomingText(text)
             setSourceText(nextText)

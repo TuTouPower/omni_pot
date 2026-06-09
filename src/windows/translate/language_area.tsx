@@ -10,7 +10,7 @@ import type { LanguageCode } from '@shared/types/language'
 const SOURCE_LANGUAGES: LanguageCode[] = ['auto', ...LANGUAGE_CODES.filter((c) => c !== 'auto')]
 const TARGET_LANGUAGES: LanguageCode[] = LANGUAGE_CODES.filter((c) => c !== 'auto')
 
-function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
+const LangPick = React.memo(function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
     value: LanguageCode
     onChange: (v: LanguageCode) => void
     options: string[]
@@ -192,14 +192,14 @@ function LangPick({ value, onChange, options, testId, optionTestIdPrefix }: {
             )}
         </React.Fragment>
     )
-}
+})
 
 interface LanguageAreaProps {
     onSwap: () => void
     containerRef?: React.Ref<HTMLDivElement>
 }
 
-export function LanguageArea({ onSwap, containerRef }: LanguageAreaProps): React.ReactElement {
+const LanguageArea_ = function LanguageArea({ onSwap, containerRef }: LanguageAreaProps): React.ReactElement {
     const { t } = useTranslation()
     const sourceLanguage = useTranslateStore((s) => s.sourceLanguage)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
@@ -224,3 +224,4 @@ export function LanguageArea({ onSwap, containerRef }: LanguageAreaProps): React
         </div>
     )
 }
+export const LanguageArea = React.memo(LanguageArea_)
