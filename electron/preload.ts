@@ -1,6 +1,18 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { ElectronAPI, ChineseDictServiceState } from '@shared/types/ipc'
-import type { ConfigKey } from '@shared/types/config'
+import type { AppConfig, ConfigKey } from '@shared/types/config'
+import { DEFAULT_CONFIG } from '@shared/types/config'
+
+function get_initial_config(): AppConfig {
+  const prefix = '--omni-pot-initial-config='
+  const arg = process.argv.find(a => a.startsWith(prefix))
+  if (!arg) return DEFAULT_CONFIG
+  try {
+    return { ...DEFAULT_CONFIG, ...JSON.parse(arg.slice(prefix.length)) as Partial<AppConfig> }
+  } catch {
+    return DEFAULT_CONFIG
+  }
+}
 
 const api: Omit<ElectronAPI, 'ready'> = {
   window: {
@@ -35,6 +47,7 @@ const api: Omit<ElectronAPI, 'ready'> = {
     get: (key) => ipcRenderer.invoke('config:get', key),
     set: (key, value) => ipcRenderer.invoke('config:set', key, value),
     getAll: () => ipcRenderer.invoke('config:getAll'),
+    getInitial: get_initial_config,
     getUserDir: () => ipcRenderer.invoke('config:getUserDir'),
     onChange: (callback) => {
       const handler = (_event: Electron.IpcRendererEvent, key: ConfigKey, value: unknown) =>

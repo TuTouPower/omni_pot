@@ -48,6 +48,7 @@ export interface ElectronAPI {
     get(key: ConfigKey): Promise<unknown>
     set(key: ConfigKey, value: unknown): Promise<void>
     getAll(): Promise<AppConfig>
+    getInitial(): AppConfig
     getUserDir(): Promise<string>
     onChange(callback: (key: ConfigKey, value: unknown) => void): () => void
   }
