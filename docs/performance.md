@@ -18,9 +18,9 @@
 - `focusOrCreate` 检测隐藏窗口自动 `show() + setPosition() + focus()`
 - 退出时通过 `_quitting` 标志正常销毁
 
-### A2. show:true 白屏
+### A2. show:true 白屏 ✅ 已落地
 
-未单独做。A1 预创建已消除白屏——窗口预渲染好再 show。
+`src/main/main.ts` — welcome 窗口改为 `show: false` + `ready-to-show` 再显示。其余窗口(A1 预创建)已消除白屏。
 
 ---
 
@@ -67,9 +67,8 @@
 
 | 项目 | 原因 |
 |---|---|
-| A2 show:false | A1 预创建已消除白屏 |
-| B7 碎片模块合并 | 当前模块粒度合理，无必要性 |
-| B8 StrictMode | 仅影响 dev，生产无影响 |
+| B7 碎片模块合并 | `src/components/` 下无 < 30 行文件,原分析为误判 |
+| B8 StrictMode | 仅影响 dev,生产无影响 |
 
 ---
 

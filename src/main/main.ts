@@ -228,7 +228,10 @@ if (!gotLock) {
     log_main.info('preloaded translate/dict/recognize windows')
 
     if (!getConfig('welcome_dismissed')) {
-      manager.createWindow(get_welcome_window_options())
+      const welcome_win = manager.createWindow({ ...get_welcome_window_options(), show: false })
+      welcome_win.once('ready-to-show', () => {
+        if (!welcome_win.isDestroyed()) welcome_win.show()
+      })
     }
 
     if (isFirstRun()) {
