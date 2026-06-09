@@ -1,6 +1,18 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { ElectronAPI, ChineseDictServiceState } from '@shared/types/ipc'
-import type { ConfigKey } from '@shared/types/config'
+import type { AppConfig, ConfigKey } from '@shared/types/config'
+import { DEFAULT_CONFIG } from '@shared/types/config'
+
+function get_initial_config(): AppConfig {
+  const prefix = '--omni-pot-initial-config='
+  const arg = process.argv.find(a => a.startsWith(prefix))
+  if (!arg) return DEFAULT_CONFIG
+  try {
+    return { ...DEFAULT_CONFIG, ...JSON.parse(arg.slice(prefix.length)) as Partial<AppConfig> }
+  } catch {
+    return DEFAULT_CONFIG
+  }
+}
 
 type RendererLabel = 'daemon' | 'translate' | 'welcome' | 'screenshot' | 'recognize' | 'dict' | 'config' | 'updater' | 'tray'
 type PartialElectronAPI = Partial<Omit<ElectronAPI, 'ready'>> & Pick<ElectronAPI, 'window' | 'config' | 'log'>
@@ -42,6 +54,7 @@ function make_common_api(): PartialElectronAPI {
       get: (key) => ipcRenderer.invoke('config:get', key),
       set: (key, value) => ipcRenderer.invoke('config:set', key, value),
       getAll: () => ipcRenderer.invoke('config:getAll'),
+      getInitial: get_initial_config,
       getUserDir: () => ipcRenderer.invoke('config:getUserDir'),
       onChange: (callback) => {
         const handler = (_event: Electron.IpcRendererEvent, key: ConfigKey, value: unknown) => { callback(key, value); }

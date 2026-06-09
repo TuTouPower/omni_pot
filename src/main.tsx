@@ -57,7 +57,8 @@ function bind_theme_to_config(): void {
 async function bootstrap(): Promise<void> {
   registerAllServices()
 
-  await useConfigStore.getState().loadConfig()
+  // Start async config loading (sync initial values populated immediately via getInitial)
+  useConfigStore.getState().loadConfig()
 
   await bindI18nToConfig()
   bind_theme_to_config()

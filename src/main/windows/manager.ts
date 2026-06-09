@@ -3,7 +3,8 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 import type { WindowOptions } from './types'
 import { WindowLabel } from './types'
-import { getConfig, setConfig } from '../config/store'
+import { getConfig, setConfig, getAllConfig } from '../config/store'
+import type { AppConfig } from '@shared/types/config'
 import { get_translate_window_options } from './translate_options'
 import { TranslateHeightController } from './translate_height_controller'
 import { get_recognize_window_options } from './recognize_options'
@@ -20,6 +21,14 @@ function debounce<F extends (...args: unknown[]) => void>(fn: F, ms: number): F 
 }
 
 const log_wm = log.scope('wm')
+
+/** Strip secrets before passing config through additionalArguments (command-line visible). */
+function sanitize_config_for_renderer(config: AppConfig): Partial<AppConfig> {
+  const safe = { ...config }
+  delete (safe as Record<string, unknown>).webdav_password
+  delete (safe as Record<string, unknown>).service_instances
+  return safe
+}
 
 export function log_renderer_console_message(label: WindowLabel, level: number, message: string): void {
   const tag = `[renderer:${label}]`
@@ -142,6 +151,9 @@ export class WindowManager {
         nodeIntegration: false,
         disableBlinkFeatures: 'Auxclick',
         backgroundThrottling: opts.backgroundThrottling ?? true,
+        additionalArguments: [
+          `--omni-pot-initial-config=${JSON.stringify(sanitize_config_for_renderer(getAllConfig()))}`
+        ]
       }
     })
 

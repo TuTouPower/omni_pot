@@ -19,6 +19,11 @@ export const useConfigStore = create<ConfigStore>()((set, get) => ({
   loaded: false,
 
   loadConfig: async () => {
+    // Sync initial config so first render has data (no IPC round-trip)
+    const initial = window.electronAPI.config.getInitial()
+    set({ config: initial, loaded: true })
+
+    // Then fetch latest from disk and merge
     const all = await window.electronAPI.config.getAll()
     set({ config: { ...DEFAULT_CONFIG, ...all }, loaded: true })
 
