@@ -1,11 +1,12 @@
-import React from 'react'
-import TranslateWindow from './windows/translate'
-import ConfigWindow from './windows/config'
-import ScreenshotWindow from './windows/screenshot'
-import RecognizeWindow from './windows/recognize'
-import DictWindow from './windows/dict'
-import UpdaterWindow from './windows/updater'
-import TrayWindow from './windows/tray'
+import React, { Suspense } from 'react'
+
+const TranslateWindow = React.lazy(() => import('./windows/translate'))
+const ConfigWindow = React.lazy(() => import('./windows/config'))
+const ScreenshotWindow = React.lazy(() => import('./windows/screenshot'))
+const RecognizeWindow = React.lazy(() => import('./windows/recognize'))
+const DictWindow = React.lazy(() => import('./windows/dict'))
+const UpdaterWindow = React.lazy(() => import('./windows/updater'))
+const TrayWindow = React.lazy(() => import('./windows/tray'))
 
 function getLabel(): string {
   return window.location.hash.replace(/^#/, '') || 'translate'
@@ -16,22 +17,22 @@ export default function App(): React.ReactElement {
 
   switch (label) {
     case 'translate':
-      return <TranslateWindow />
+      return <Suspense fallback={<div />}><TranslateWindow /></Suspense>
     case 'daemon':
       return <></>
     case 'config':
-      return <ConfigWindow />
+      return <Suspense fallback={<div />}><ConfigWindow /></Suspense>
     case 'screenshot':
-      return <ScreenshotWindow />
+      return <Suspense fallback={<div />}><ScreenshotWindow /></Suspense>
     case 'recognize':
-      return <RecognizeWindow />
+      return <Suspense fallback={<div />}><RecognizeWindow /></Suspense>
     case 'dict':
-      return <DictWindow />
+      return <Suspense fallback={<div />}><DictWindow /></Suspense>
     case 'updater':
-      return <UpdaterWindow />
+      return <Suspense fallback={<div />}><UpdaterWindow /></Suspense>
     case 'tray':
-      return <TrayWindow />
+      return <Suspense fallback={<div />}><TrayWindow /></Suspense>
     default:
-      return <TranslateWindow />
+      return <Suspense fallback={<div />}><TranslateWindow /></Suspense>
   }
 }
