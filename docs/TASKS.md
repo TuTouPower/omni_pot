@@ -52,19 +52,19 @@
 
 > 来自 `docs/demo_todo.md`，2026-06-12 拆分。已完成项见 `docs/archive/closed_issues/demo_todo_completed.md`。
 
-- [ ] **1.3 快捷键展示格式改为缩写**：统一 `Ctrl + Alt + T`（Win）/ `Cmd + Alt + T`（Mac）
-- [ ] **1.4 托盘菜单移除非功能项快捷键**：仅翻译/词典/文字识别/截图翻译 4 项显示
-- [ ] **2.1 Chinese Dictionary 朗读按钮**：中文词典卡片隐藏朗读按钮（POS tag 已隐藏）
-- [ ] **2.3 词典窗口默认宽度**：快捷键 400×500，HTTP 350×420
-- [ ] **3.2 服务列表示例数据精简**：翻译只保留 bing/google/deepl/mymemory；中文词典 cc-cedict；英文词典 cambridge_dict/cc-cedict
-- [ ] **3.3 服务实例列表不显示 key 和标签**：移除实例 key 副文本和 PLATFORM/OFFLINE chip
-- [ ] **3.6 关于页路径动态获取**：通过 IPC 获取实际 userData 路径
-- [ ] **3.7 备份内容说明移除 CC-CEDICT**：改为"备份内容：设置、历史记录数据库"
-- [ ] **4.1 复制按钮文案改为"复制识别文本"**：当前 `t('copy')` = "复制"
-- [ ] **5.1 shared.jsx 冗余 Titlebar 组件清理**
-- [ ] **5.2 Titlebar 区分仅关闭/三件套**
-- [ ] **5.3 图标按钮激活态视觉修正**
-- [ ] **6 Tweaks 面板移除 density/fontSize 默认值**
+- [x] **1.3 快捷键展示格式改为缩写**：统一 `Ctrl + Alt + T`（Win）/ `Cmd + Alt + T`（Mac）→ `format_hotkey.ts` 已正确实现
+- [x] **1.4 托盘菜单移除非功能项快捷键**：仅翻译/词典/文字识别/截图翻译 4 项显示 → `shortcuts` 对象仅含 4 个功能键
+- [x] **2.1 Chinese Dictionary 朗读按钮**：中文词典卡片隐藏朗读按钮（POS tag 已隐藏）→ 新增 `hideTts` prop (0532617)
+- [x] **2.3 词典窗口默认宽度**：快捷键 400×500，HTTP 350×420 → `get_dict_window_options(source)` (ce23138)
+- [x] **3.2 服务列表示例数据精简**：翻译只保留 bing/google/deepl/mymemory；中文词典 cc-cedict；英文词典 cambridge_dict/cc-cedict → DEFAULT_CONFIG 已更新 (db9ed3d)
+- [x] **3.3 服务实例列表不显示 key 和标签**：移除实例 key 副文本和 PLATFORM/OFFLINE chip → `service_item_row.tsx` 已无 chip
+- [x] **3.6 关于页路径动态获取**：通过 IPC 获取实际 userData 路径 → `about.tsx` 已用 IPC
+- [x] **3.7 备份内容说明移除 CC-CEDICT**：改为"备份内容：设置、历史记录数据库" → `backup_settings.tsx` 已正确
+- [x] **4.1 复制按钮文案改为"复制识别文本"**：当前 `t('copy')` = "复制" → 已改为 `recognize.copy_recognized_text` (8f2361e)
+- [ ] **5.1 shared.jsx 冗余 Titlebar 组件清理** → 目标文件在 `docs/design/`，不可修改
+- [ ] **5.2 Titlebar 区分仅关闭/三件套** → 目标文件在 `docs/design/`，不可修改
+- [x] **5.3 图标按钮激活态视觉修正** → Pin 图标激活时内部线条反色 (13acab8)
+- [ ] **6 Tweaks 面板移除 density/fontSize 默认值** → 目标文件在 `docs/design/`，不可修改
 
 ---
 
