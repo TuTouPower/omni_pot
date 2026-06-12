@@ -66,4 +66,4 @@ The pricing displayed on our website ([zzzkkkccc.site](https://www.zzzkkkccc.sit
 
 ## License
 
-Private repository. All rights reserved.
+[AGPL-3.0](LICENSE)

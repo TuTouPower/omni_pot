@@ -4,7 +4,7 @@
 
 | 仓库 | 地址 | 可见性 | 用途 |
 |---|---|---|---|
-| 源码仓库 | `https://github.com/TuTouPower/omni_pot` | 私有 | 开发、CI、测试 |
+| 源码仓库 | `https://github.com/TuTouPower/omni_pot` | 公开 | 开发、CI、测试 |
 | 发布仓库 | `https://github.com/TuTouPower/omni_pot_release` | 公开 | 对外发布 release |
 
 本地 git remote 配置：
@@ -40,5 +40,4 @@ npm run release:publish
 
 ## 注意事项
 
-- 源代码不推送到公开仓库，公开仓库仅用于 GitHub Release 功能。
-- release 产物由私有仓库的代码构建，确保构建前测试通过。
+- 源代码在公开仓库，release 产物由源码仓库的代码构建，确保构建前测试通过。
