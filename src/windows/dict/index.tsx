@@ -357,6 +357,7 @@ export default function DictWindow(): React.ReactElement {
                                         collapsed={collapsedKeys.has(instanceKey)}
                                         onToggleCollapse={() => { toggleCollapse(instanceKey); }}
                                         hidePosTag={is_zh_dict}
+                                        hideTts={is_zh_dict}
                                     />
                                 )
                             })}

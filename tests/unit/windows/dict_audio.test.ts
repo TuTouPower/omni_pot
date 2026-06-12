@@ -77,4 +77,22 @@ describe('dictionary pronunciation audio', () => {
         expect(audio_constructor).toHaveBeenCalledWith('https://dictionary.cambridge.org/media/test.mp3')
         expect(play).toHaveBeenCalledOnce()
     })
+
+    it('hides audio button when hideTts is true (Chinese Dictionary)', () => {
+        const result: DictResult = {
+            type: 'dict',
+            pronunciations: [{ region: 'CN', phonetic: '/test/', audio_url: 'https://example.com/audio.mp3' }],
+            definitions: [{ part_of_speech: 'noun', meanings: ['test meaning'] }],
+            examples: [],
+        }
+
+        render(React.createElement(SortableDictCard, {
+            instanceKey: 'chinese_dictionary@default',
+            result,
+            isLoading: false,
+            hideTts: true,
+        }))
+
+        expect(screen.queryByTestId('dict-pron-audio-btn')).toBeNull()
+    })
 })

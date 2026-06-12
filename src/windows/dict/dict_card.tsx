@@ -9,10 +9,11 @@ import { getServiceKey } from '@shared/types/service'
 import { dict_result_to_text } from './dict_helpers'
 import type { DictResult } from '@shared/types/service'
 
-export function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleCollapse, hidePosTag }: {
+export function SortableDictCard({ instanceKey, result, isLoading, collapsed, onToggleCollapse, hidePosTag, hideTts }: {
     instanceKey: string; result: DictResult | null | undefined; isLoading: boolean
     collapsed?: boolean; onToggleCollapse?: () => void
     hidePosTag?: boolean
+    hideTts?: boolean
 }): React.ReactElement | null {
     const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
@@ -83,7 +84,7 @@ export function SortableDictCard({ instanceKey, result, isLoading, collapsed, on
                                     <span key={i} data-testid="dict-pronunciation" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                         {p.region && <span className="hint" style={{ fontSize: 11 }}>{p.region}</span>}
                                         <span className="mono" style={{ color: 'var(--text-mute)', fontSize: 12.5 }}>{p.phonetic}</span>
-                                        {p.audio_url && (
+                                        {!hideTts && p.audio_url && (
                                             <button
                                                 className="ic-btn"
                                                 data-testid="dict-pron-audio-btn"
