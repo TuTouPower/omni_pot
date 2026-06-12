@@ -105,12 +105,12 @@ describe('native module packaging', () => {
 
     it('prefers the matching packaged app for dist and dist:dir outputs', () => {
         expect(typed_app_candidates('/repo', 'release', 'OmniPot', '1.2.3', false)).toEqual([
-            join('/repo', 'release', 'OmniPot1.2.3.exe'),
+            join('/repo', 'release', 'OmniPot-1.2.3-windows-portable.exe'),
             join('/repo', 'release', 'win-unpacked', 'OmniPot.exe'),
         ])
         expect(typed_app_candidates('/repo', 'release', 'OmniPot', '1.2.3', true)).toEqual([
             join('/repo', 'release', 'win-unpacked', 'OmniPot.exe'),
-            join('/repo', 'release', 'OmniPot1.2.3.exe'),
+            join('/repo', 'release', 'OmniPot-1.2.3-windows-portable.exe'),
         ])
     })
 
@@ -121,8 +121,8 @@ describe('native module packaging', () => {
 
         expect(build.executableName).not.toMatch(/\s/)
         expect(build.artifactName).toBeUndefined()
-        expect(build.nsis?.artifactName).toBe('OmniPot${version}.${ext}')
-        expect(build.portable?.artifactName).toBe('OmniPot${version}-portable.${ext}')
+        expect(build.nsis?.artifactName).toBe('OmniPot-${version}-windows-setup.${ext}')
+        expect(build.portable?.artifactName).toBe('OmniPot-${version}-windows-portable.${ext}')
         expect(build.nsis?.artifactName).not.toMatch(/\s/)
         expect(build.portable?.artifactName).not.toMatch(/\s/)
 

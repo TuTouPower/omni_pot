@@ -18,8 +18,7 @@ function is_allowed_external_url(value: string): boolean {
         const url = new URL(value)
         if (url.protocol !== 'https:') return false
         if (url.hostname === 'github.com'
-            && (url.pathname === '/TuTouPower/omni_pot' || url.pathname.startsWith('/TuTouPower/omni_pot/')
-                || url.pathname === '/TuTouPower/omni_pot_release' || url.pathname.startsWith('/TuTouPower/omni_pot_release/'))) return true
+            && (url.pathname === '/TuTouPower/omni_pot' || url.pathname.startsWith('/TuTouPower/omni_pot/'))) return true
         if (url.hostname === 'afdian.com'
             && (url.pathname === '/a/tutoupower' || url.pathname.startsWith('/a/tutoupower/'))) return true
         return false

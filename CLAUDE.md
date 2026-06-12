@@ -71,12 +71,11 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 
 ## 仓库架构
 
-| 仓库 | 可见性 | 用途 | Git remote |
+| 仓库 | 地址 | 可见性 | 用途 |
 |---|---|---|---|
-| `TuTouPower/omni_pot` | 公开 | 源代码、开发、CI | `origin` |
-| `TuTouPower/omni_pot_release` | 公开 | 发布 release（安装包），不含源码 | `release` |
+| 源码仓库 | `https://github.com/TuTouPower/omni_pot` | 公开 | 开发、CI、Release 发布 |
 
-发布流程：在私有仓库完成开发 → `npm run dist` 产出安装包 → 通过 GitHub API 在私有仓库和公开仓库同时创建 release 并上传产物。
+发布流程：在仓库完成开发 → `npm run dist` 产出安装包 → 通过 GitHub API 创建 release 并上传产物到 GitHub Release + Cloudflare R2。
 
 ## 项目背景
 
@@ -100,7 +99,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `docs/api.md` | 主进程对外暴露的 HTTP API（`server_port`，默认 20202） |
 | `docs/archive/runtime_issues.md` | 运行时问题记录（日志证据、影响范围、修复方向与验证方式） |
 | `docs/TASKS.md` | 开发待办、测试覆盖审查、已知问题（合并自原 PLAN/review/issues） |
-| `docs/release.md` | 发布流程（公开仓库、版本号、产物上传） |
+| `docs/RELEASE.md` | 发布流程（产物命名、latest.json 格式、全部下载链接） |
 | `docs/external_service_catalog.md` | 外部服务事实清单（翻译/词典/OCR/TTS/检测/同步），按是否需要 key/本地依赖分类 |
 | `docs/archive/external_services/` | 外部服务历史研究与测试报告快照（catalog 的溯源） |
 | `docs/archive/closed_issues/` | 已关闭的问题记录 |

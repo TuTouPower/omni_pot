@@ -3,7 +3,7 @@ function is_e2e_update_url(url: URL): boolean {
 }
 
 function is_release_asset_url(url: URL): boolean {
-    return url.protocol === 'https:' && url.hostname === 'github.com' && /^\/TuTouPower\/omni_pot_release\/releases\/download\/v([^/]+)\/OmniPot\1(?:-portable)?\.exe$/.test(url.pathname)
+    return url.protocol === 'https:' && url.hostname === 'github.com' && /^\/TuTouPower\/omni_pot\/releases\/download\/v[^/]+\/OmniPot-[^/]+\.(?:exe|dmg|AppImage)$/.test(url.pathname)
 }
 
 function is_release_redirect_url(url: URL): boolean {
@@ -14,7 +14,7 @@ function is_release_redirect_url(url: URL): boolean {
 }
 
 function is_r2_update_url(url: URL): boolean {
-    return url.protocol === 'https:' && url.hostname === 'downloads.zzzkkkccc.site' && /^\/omni-pot\/latest\/OmniPot\d+\.\d+\.\d+(?:-portable)?\.exe$/.test(url.pathname)
+    return url.protocol === 'https:' && url.hostname === 'downloads.zzzkkkccc.site' && /^\/omni-pot\/latest\/OmniPot-.+\.(?:exe|dmg|AppImage)$/.test(url.pathname)
 }
 
 export function assert_allowed_download_url(download_url: string, is_redirect: boolean): URL {

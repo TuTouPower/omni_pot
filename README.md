@@ -16,13 +16,14 @@ Cross-platform desktop translation, OCR and dictionary tool. Built with Electron
 
 ## Download
 
-| File | Link |
-|---|---|
-| Windows Setup | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
-| Windows Portable | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
-| All downloads | [downloads.zzzkkkccc.site](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| File | GitHub | Cloudflare |
+|---|---|---|
+| Windows Setup | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| Windows Portable | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| macOS (soon) | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| Linux (soon) | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
 
-Full download links per release see [docs/release.md](docs/release.md).
+Full download links see [docs/RELEASE.md](docs/RELEASE.md).
 
 ## About
 

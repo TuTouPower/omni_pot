@@ -7,8 +7,8 @@ import { BrowserWindow, app, type WebContents } from 'electron'
 import { WindowLabel } from '../../src/main/windows/types'
 
 const app_version = (createRequire(import.meta.url)('../../package.json') as { version: string }).version
-const app_installer_name = `OmniPot${app_version}.exe`
-const app_installer_github_url = `https://github.com/TuTouPower/omni_pot_release/releases/download/v${app_version}/${app_installer_name}`
+const app_installer_name = `OmniPot-${app_version}-windows-setup.exe`
+const app_installer_github_url = `https://github.com/TuTouPower/omni_pot/releases/download/v${app_version}/${app_installer_name}`
 const app_installer_r2_url = `https://downloads.zzzkkkccc.site/omni-pot/latest/${app_installer_name}`
 
 vi.mock('electron', () => ({
@@ -99,27 +99,29 @@ const test_hash = 'a'.repeat(64)
 
 function latest_metadata(version = '1.1.0', installer_hash = test_hash) {
     return {
-        format_version: 1,
+        format_version: 2,
         version,
         released_at: '2026-05-31T00:00:00.000Z',
-        files: {
-            windows_installer: {
-                filename: `OmniPot${version}.exe`,
-                versioned_filename: `OmniPot${version}.exe`,
+        files: [
+            {
+                os: 'windows',
+                type: 'setup',
+                filename: `OmniPot-${version}-windows-setup.exe`,
                 sha256: installer_hash,
                 size: 123,
-                github_url: `https://github.com/TuTouPower/omni_pot_release/releases/download/v${version}/OmniPot${version}.exe`,
-                r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot${version}.exe`,
+                github_url: `https://github.com/TuTouPower/omni_pot/releases/download/v${version}/OmniPot-${version}-windows-setup.exe`,
+                r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-${version}-windows-setup.exe`,
             },
-            windows_portable: {
-                filename: `OmniPot${version}-portable.exe`,
-                versioned_filename: `OmniPot${version}-portable.exe`,
+            {
+                os: 'windows',
+                type: 'portable',
+                filename: `OmniPot-${version}-windows-portable.exe`,
                 sha256: 'b'.repeat(64),
                 size: 456,
-                github_url: `https://github.com/TuTouPower/omni_pot_release/releases/download/v${version}/OmniPot${version}-portable.exe`,
-                r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot${version}-portable.exe`,
+                github_url: `https://github.com/TuTouPower/omni_pot/releases/download/v${version}/OmniPot-${version}-windows-portable.exe`,
+                r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-${version}-windows-portable.exe`,
             },
-        },
+        ],
     }
 }
 
@@ -147,26 +149,24 @@ describe('updater latest metadata', () => {
         const { parse_latest_metadata } = await import('../../src/main/updater')
         const metadata = parse_latest_metadata(latest_metadata())
 
-        expect(metadata.files.windows_installer.filename).toBe('OmniPot1.1.0.exe')
-        expect(metadata.files.windows_portable.filename).toBe('OmniPot1.1.0-portable.exe')
+        expect(metadata.files[0].filename).toBe('OmniPot-1.1.0-windows-setup.exe')
+        expect(metadata.files[1].filename).toBe('OmniPot-1.1.0-windows-portable.exe')
 
         const invalid = latest_metadata()
-        invalid.files.windows_installer.filename = 'BadName1.1.0.exe'
-        invalid.files.windows_installer.versioned_filename = 'BadName1.1.0.exe'
-        expect(() => { parse_latest_metadata(invalid) }).toThrow('Invalid latest metadata files.windows_installer.filename')
+        invalid.files[0].filename = 'BadName-1.1.0-windows-setup.exe'
+        expect(() => { parse_latest_metadata(invalid) }).toThrow('Invalid latest metadata files[0].filename')
 
         const wrong_prefix = latest_metadata()
-        wrong_prefix.files.windows_installer.filename = 'OmniPotBad1.1.0.exe'
-        wrong_prefix.files.windows_installer.versioned_filename = 'OmniPotBad1.1.0.exe'
-        expect(() => { parse_latest_metadata(wrong_prefix) }).toThrow('Invalid latest metadata files.windows_installer.filename')
+        wrong_prefix.files[0].filename = 'OmniPotBad-1.1.0-windows-setup.exe'
+        expect(() => { parse_latest_metadata(wrong_prefix) }).toThrow('Invalid latest metadata files[0].filename')
 
         const wrong_github_url = latest_metadata()
-        wrong_github_url.files.windows_installer.github_url = 'https://github.com/TuTouPower/omni_pot_release/releases/download/v1.1.0/BadName1.1.0.exe'
-        expect(() => { parse_latest_metadata(wrong_github_url) }).toThrow('Invalid latest metadata files.windows_installer.github_url')
+        wrong_github_url.files[0].github_url = 'https://github.com/TuTouPower/omni_pot/releases/download/v1.1.0/BadName-1.1.0-windows-setup.exe'
+        expect(() => { parse_latest_metadata(wrong_github_url) }).toThrow('Invalid latest metadata files[0].github_url')
 
         const wrong_r2_url = latest_metadata()
-        wrong_r2_url.files.windows_installer.r2_url = 'https://downloads.zzzkkkccc.site/omni-pot/' + 'OmniPot1.1.0.exe'
-        expect(() => { parse_latest_metadata(wrong_r2_url) }).toThrow('Invalid latest metadata files.windows_installer.r2_url')
+        wrong_r2_url.files[0].r2_url = 'https://downloads.zzzkkkccc.site/omni-pot/' + 'OmniPot-1.1.0-windows-setup.exe'
+        expect(() => { parse_latest_metadata(wrong_r2_url) }).toThrow('Invalid latest metadata files[0].r2_url')
     })
 
     it('does not update for unsupported latest.json format versions', async () => {
@@ -183,7 +183,7 @@ describe('updater latest metadata', () => {
         const release = await get_update_release_info()
 
         expect(release?.version).toBe('1.1.0')
-        expect(release?.assets).toEqual([{ name: 'OmniPot1.1.0.exe', url: 'https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot1.1.0.exe', size: 123, digest: `sha256:${test_hash}`, fallback_urls: ['https://github.com/TuTouPower/omni_pot_release/releases/download/v1.1.0/OmniPot1.1.0.exe'] }])
+        expect(release?.assets).toEqual([{ name: 'OmniPot-1.1.0-windows-setup.exe', url: 'https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-1.1.0-windows-setup.exe', size: 123, digest: `sha256:${test_hash}`, fallback_urls: ['https://github.com/TuTouPower/omni_pot/releases/download/v1.1.0/OmniPot-1.1.0-windows-setup.exe'] }])
     })
 
     it('treats missing latest.json on both sources as no available update', async () => {
@@ -205,25 +205,24 @@ describe('updater latest metadata', () => {
 
         const release = await get_update_release_info()
 
-        expect(release?.assets[0]?.name).toBe('OmniPot1.1.0.exe')
+        expect(release?.assets[0]?.name).toBe('OmniPot-1.1.0-windows-setup.exe')
     })
 
     it('rejects dual-source metadata conflicts', async () => {
         const { get_update_release_info } = await import('../../src/main/updater')
         mock_metadata_fetch(latest_metadata(), latest_metadata('1.1.0', 'c'.repeat(64)))
 
-        await expect(get_update_release_info()).rejects.toThrow('Latest metadata conflict: windows_installer mismatch')
+        await expect(get_update_release_info()).rejects.toThrow('Latest metadata conflict: windows/setup mismatch')
     })
 
     it('selects portable assets when running as portable', async () => {
-        const { get_update_release_info, get_windows_update_file_key } = await import('../../src/main/updater')
+        const { get_update_release_info } = await import('../../src/main/updater')
         process.env['PORTABLE_EXECUTABLE_DIR'] = '/portable'
         mock_metadata_fetch(latest_metadata(), latest_metadata())
 
         const release = await get_update_release_info()
 
-        expect(get_windows_update_file_key()).toBe('windows_portable')
-        expect(release?.assets[0]?.name).toBe('OmniPot1.1.0-portable.exe')
-        expect(release?.assets[0]?.url).toBe('https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot1.1.0-portable.exe')
+        expect(release?.assets[0]?.name).toBe('OmniPot-1.1.0-windows-portable.exe')
+        expect(release?.assets[0]?.url).toBe('https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-1.1.0-windows-portable.exe')
     })
 })

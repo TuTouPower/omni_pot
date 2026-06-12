@@ -14,7 +14,7 @@ function platform_arch(): string {
     if (/Linux/.test(ua)) return 'linux-x64'
     return 'unknown'
 }
-const REPO_URL = 'https://github.com/TuTouPower/omni_pot_release'
+const REPO_URL = 'https://github.com/TuTouPower/omni_pot'
 const SURVEY_URL = 'https://wj.qq.com/edit?sid=27007386'
 
 export default function AboutPage(): React.ReactElement {

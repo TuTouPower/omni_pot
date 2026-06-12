@@ -1,12 +1,12 @@
 import { app } from 'electron'
 import { log } from '../log'
 import { compare_versions } from './version'
-import type { LatestMetadata, LatestMetadataFile, UpdateReleaseInfo, WindowsUpdateFileKey } from './types'
+import type { LatestMetadata, LatestMetadataFile, UpdateReleaseInfo } from './types'
 
 const log_updater = log.scope('updater')
 
 const REPO_OWNER = 'TuTouPower'
-const REPO_NAME = 'omni_pot_release'
+const REPO_NAME = 'omni_pot'
 
 const LATEST_METADATA_SOURCES = [
     { name: 'github', url: `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest/download/latest.json` },
@@ -32,24 +32,25 @@ function assert_size(value: unknown, field: string): number {
     return value
 }
 
-function parse_latest_metadata_file(value: unknown, file_key: WindowsUpdateFileKey, version: string): LatestMetadataFile {
-    const file = assert_object(value, `files.${file_key}`)
-    const filename = assert_string(file['filename'], `files.${file_key}.filename`)
-    const versioned_filename = assert_string(file['versioned_filename'], `files.${file_key}.versioned_filename`)
-    if (filename !== versioned_filename) throw new Error(`Invalid latest metadata files.${file_key}.versioned_filename`)
-    const expected_filename = file_key === 'windows_portable' ? `OmniPot${version}-portable.exe` : `OmniPot${version}.exe`
-    if (filename !== expected_filename) throw new Error(`Invalid latest metadata files.${file_key}.filename`)
-    const sha256 = assert_string(file['sha256'], `files.${file_key}.sha256`).toLowerCase()
-    if (!/^[a-f0-9]{64}$/.test(sha256)) throw new Error(`Invalid latest metadata files.${file_key}.sha256`)
-    const github_url = assert_string(file['github_url'], `files.${file_key}.github_url`)
-    const r2_url = assert_string(file['r2_url'], `files.${file_key}.r2_url`)
-    if (github_url !== `https://github.com/TuTouPower/omni_pot_release/releases/download/v${version}/${filename}`) throw new Error(`Invalid latest metadata files.${file_key}.github_url`)
-    if (r2_url !== `https://downloads.zzzkkkccc.site/omni-pot/latest/${filename}`) throw new Error(`Invalid latest metadata files.${file_key}.r2_url`)
+function parse_latest_metadata_file(value: unknown, index: number, version: string): LatestMetadataFile {
+    const file = assert_object(value, `files[${String(index)}]`)
+    const os = assert_string(file['os'], `files[${String(index)}].os`)
+    const type = assert_string(file['type'], `files[${String(index)}].type`)
+    const filename = assert_string(file['filename'], `files[${String(index)}].filename`)
+    const expected = `OmniPot-${version}-${os}-${type}.${type === 'appimage' ? 'AppImage' : type === 'dmg' ? 'dmg' : 'exe'}`
+    if (filename !== expected) throw new Error(`Invalid latest metadata files[${String(index)}].filename: expected ${expected}`)
+    const sha256 = assert_string(file['sha256'], `files[${String(index)}].sha256`).toLowerCase()
+    if (!/^[a-f0-9]{64}$/.test(sha256)) throw new Error(`Invalid latest metadata files[${String(index)}].sha256`)
+    const github_url = assert_string(file['github_url'], `files[${String(index)}].github_url`)
+    const r2_url = assert_string(file['r2_url'], `files[${String(index)}].r2_url`)
+    if (github_url !== `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/v${version}/${filename}`) throw new Error(`Invalid latest metadata files[${String(index)}].github_url`)
+    if (r2_url !== `https://downloads.zzzkkkccc.site/omni-pot/latest/${filename}`) throw new Error(`Invalid latest metadata files[${String(index)}].r2_url`)
     return {
+        os,
+        type,
         filename,
-        versioned_filename,
         sha256,
-        size: assert_size(file['size'], `files.${file_key}.size`),
+        size: assert_size(file['size'], `files[${String(index)}].size`),
         github_url,
         r2_url,
     }
@@ -57,17 +58,16 @@ function parse_latest_metadata_file(value: unknown, file_key: WindowsUpdateFileK
 
 export function parse_latest_metadata(value: unknown): LatestMetadata {
     const metadata = assert_object(value, 'root')
-    if (metadata['format_version'] !== 1) throw new Error('Unsupported latest metadata format_version')
+    if (metadata['format_version'] !== 2) throw new Error('Unsupported latest metadata format_version')
     const version = assert_string(metadata['version'], 'version').replace(/^v/, '')
-    const files = assert_object(metadata['files'], 'files')
+    const files_raw = metadata['files']
+    if (!Array.isArray(files_raw) || files_raw.length === 0) throw new Error('Invalid latest metadata files')
+    const files = files_raw.map((file, index) => parse_latest_metadata_file(file, index, version))
     return {
-        format_version: 1,
+        format_version: 2,
         version,
         released_at: assert_string(metadata['released_at'], 'released_at'),
-        files: {
-            windows_installer: parse_latest_metadata_file(files['windows_installer'], 'windows_installer', version),
-            windows_portable: parse_latest_metadata_file(files['windows_portable'], 'windows_portable', version),
-        },
+        files,
     }
 }
 
@@ -83,11 +83,11 @@ async function fetch_latest_metadata(source: { name: LatestMetadataSourceName; u
 
 function assert_matching_latest_metadata(github_metadata: LatestMetadata, r2_metadata: LatestMetadata): void {
     if (github_metadata.version !== r2_metadata.version) throw new Error('Latest metadata conflict: version mismatch')
-    for (const key of ['windows_installer', 'windows_portable'] as WindowsUpdateFileKey[]) {
-        const github_file = github_metadata.files[key]
-        const r2_file = r2_metadata.files[key]
+    for (const github_file of github_metadata.files) {
+        const r2_file = r2_metadata.files.find((f) => f.os === github_file.os && f.type === github_file.type)
+        if (!r2_file) throw new Error(`Latest metadata conflict: missing ${github_file.os}/${github_file.type} in R2`)
         if (github_file.sha256 !== r2_file.sha256 || github_file.size !== r2_file.size) {
-            throw new Error(`Latest metadata conflict: ${key} mismatch`)
+            throw new Error(`Latest metadata conflict: ${github_file.os}/${github_file.type} mismatch`)
         }
     }
 }
@@ -123,8 +123,9 @@ async function get_latest_metadata(): Promise<LatestMetadata | null> {
     throw new Error(failures.map((failure) => String(failure.result.reason)).join('; ') || 'No latest metadata available')
 }
 
-export function get_windows_update_file_key(): WindowsUpdateFileKey {
-    return process.env['PORTABLE_EXECUTABLE_DIR'] ? 'windows_portable' : 'windows_installer'
+function get_current_os_type(): { os: string; type: string } {
+    if (process.env['PORTABLE_EXECUTABLE_DIR']) return { os: 'windows', type: 'portable' }
+    return { os: 'windows', type: 'setup' }
 }
 
 export async function get_update_release_info(): Promise<UpdateReleaseInfo | null> {
@@ -134,7 +135,13 @@ export async function get_update_release_info(): Promise<UpdateReleaseInfo | nul
     const latest_version = metadata.version
     if (!compare_versions(current_version, latest_version)) return null
 
-    const file = metadata.files[get_windows_update_file_key()]
+    const { os, type } = get_current_os_type()
+    const file = metadata.files.find((f) => f.os === os && f.type === type)
+    if (!file) {
+        log_updater.warn('no update file for %s/%s', os, type)
+        return null
+    }
+
     return {
         version: latest_version,
         current_version,

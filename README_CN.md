@@ -16,13 +16,14 @@
 
 ## 下载
 
-| 文件 | 链接 |
-|---|---|
-| Windows 安装版 | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
-| Windows 便携版 | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
-| 全部下载 | [downloads.zzzkkkccc.site](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| 文件 | GitHub | Cloudflare |
+|---|---|---|
+| Windows 安装版 | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| Windows 便携版 | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| macOS（即将） | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+| Linux（即将） | [Releases](https://github.com/TuTouPower/omni_pot/releases) | [R2](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
 
-每版完整下载链接见 [docs/release.md](docs/release.md)。
+完整下载链接见 [docs/RELEASE.md](docs/RELEASE.md)。
 
 ## 关于
 

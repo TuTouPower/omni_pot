@@ -12,7 +12,7 @@ import type { DownloadAsset, UpdateReleaseInfo } from './types'
 
 export { assert_allowed_download_url } from './download_url'
 export { parse_sha256_digest } from './download'
-export { get_update_release_info, get_windows_update_file_key, parse_latest_metadata } from './latest_metadata'
+export { get_update_release_info, parse_latest_metadata } from './latest_metadata'
 
 const log_updater = log.scope('updater')
 

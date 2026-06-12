@@ -1,8 +1,7 @@
-export type WindowsUpdateFileKey = 'windows_installer' | 'windows_portable'
-
 export interface LatestMetadataFile {
+    os: string
+    type: string
     filename: string
-    versioned_filename: string
     sha256: string
     size: number
     github_url: string
@@ -10,10 +9,10 @@ export interface LatestMetadataFile {
 }
 
 export interface LatestMetadata {
-    format_version: 1
+    format_version: 2
     version: string
     released_at: string
-    files: Record<WindowsUpdateFileKey, LatestMetadataFile>
+    files: LatestMetadataFile[]
 }
 
 export interface UpdateReleaseInfo {

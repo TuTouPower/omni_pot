@@ -20,7 +20,7 @@ export function should_start_app(platform, always_start, restart_state_exists) {
 }
 
 export function app_candidates(repo_root, output_dir, executable_name, version, is_dir) {
-    const portable_app = join(repo_root, output_dir, `${executable_name}${version}.exe`)
+    const portable_app = join(repo_root, output_dir, `${executable_name}-${version}-windows-portable.exe`)
     const unpacked_app = join(repo_root, output_dir, 'win-unpacked', `${executable_name}.exe`)
     return is_dir ? [unpacked_app, portable_app] : [portable_app, unpacked_app]
 }

@@ -10,13 +10,14 @@ const app_version = (createRequire(import.meta.url)('../../../package.json') as 
 const old_version = '0.9.9'
 const containing_version = `1${app_version}`
 const longer_version = `${app_version}.1`
-const installer_name = `OmniPot${app_version}.exe`
-const portable_name = `OmniPot${app_version}-portable.exe`
+const installer_name = `OmniPot-${app_version}-windows-setup.exe`
+const portable_name = `OmniPot-${app_version}-windows-portable.exe`
 const version_error_pattern = new RegExp(`version ${app_version.replaceAll('.', '\\.')}`)
 
 type ReleaseFileMetadata = {
+    os: string
+    type: string
     filename: string
-    versioned_filename: string
     source_path: string
     sha256: string
     size: number
@@ -30,10 +31,7 @@ type ReleaseMetadata = {
     format_version: number
     version: string
     released_at: string
-    files: {
-        windows_installer: ReleaseFileMetadata
-        windows_portable: ReleaseFileMetadata
-    }
+    files: ReleaseFileMetadata[]
 }
 
 type BuildLatestMetadata = (options: { version: string; release_dir: string; released_at?: Date }) => Promise<ReleaseMetadata>
@@ -61,8 +59,8 @@ describe('release metadata helpers', () => {
         await with_temp_dir(async (dir) => {
             await writeFile(join(dir, installer_name), 'installer')
             await writeFile(join(dir, portable_name), 'portable')
-            await writeFile(join(dir, `OmniPot${old_version}.exe`), 'old-installer')
-            await writeFile(join(dir, `OmniPot${old_version}-portable.exe`), 'old-portable')
+            await writeFile(join(dir, `OmniPot-${old_version}-windows-setup.exe`), 'old-installer')
+            await writeFile(join(dir, `OmniPot-${old_version}-windows-portable.exe`), 'old-portable')
 
             const metadata = await build_latest_metadata({
                 version: app_version,
@@ -70,25 +68,28 @@ describe('release metadata helpers', () => {
                 released_at: new Date('2026-05-31T00:00:00.000Z'),
             })
 
-            expect(metadata.format_version).toBe(1)
+            expect(metadata.format_version).toBe(2)
             expect(metadata.version).toBe(app_version)
             expect(metadata.released_at).toBe('2026-05-31T08:00:00.000+08:00')
-            expect(metadata.files.windows_installer).toMatchObject({
+            expect(metadata.files).toHaveLength(2)
+            expect(metadata.files[0]).toMatchObject({
+                os: 'windows',
+                type: 'setup',
                 filename: installer_name,
-                versioned_filename: installer_name,
                 source_path: join(dir, installer_name),
                 sha256: sha256_text('installer'),
                 size: 9,
-                github_url: `https://github.com/TuTouPower/omni_pot_release/releases/download/v${app_version}/${installer_name}`,
+                github_url: `https://github.com/TuTouPower/omni_pot/releases/download/v${app_version}/${installer_name}`,
                 r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/${installer_name}`,
             })
-            expect(metadata.files.windows_portable).toMatchObject({
+            expect(metadata.files[1]).toMatchObject({
+                os: 'windows',
+                type: 'portable',
                 filename: portable_name,
-                versioned_filename: portable_name,
                 source_path: join(dir, portable_name),
                 sha256: sha256_text('portable'),
                 size: 8,
-                github_url: `https://github.com/TuTouPower/omni_pot_release/releases/download/v${app_version}/${portable_name}`,
+                github_url: `https://github.com/TuTouPower/omni_pot/releases/download/v${app_version}/${portable_name}`,
                 r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/${portable_name}`,
             })
         })
@@ -104,13 +105,13 @@ describe('release metadata helpers', () => {
         })
     })
 
-    it('throws with missing installer kind when installer is absent', async () => {
+    it('throws with missing setup kind when setup is absent', async () => {
         const { build_latest_metadata } = (await import(module_path)) as { build_latest_metadata: BuildLatestMetadata }
 
         await with_temp_dir(async (dir) => {
             await writeFile(join(dir, portable_name), 'portable')
 
-            await expect(build_latest_metadata({ version: app_version, release_dir: dir })).rejects.toThrow('installer')
+            await expect(build_latest_metadata({ version: app_version, release_dir: dir })).rejects.toThrow('setup')
         })
     })
 
@@ -118,8 +119,8 @@ describe('release metadata helpers', () => {
         const { build_latest_metadata } = (await import(module_path)) as { build_latest_metadata: BuildLatestMetadata }
 
         await with_temp_dir(async (dir) => {
-            await writeFile(join(dir, `OmniPot${old_version}.exe`), 'old-installer')
-            await writeFile(join(dir, `OmniPot${old_version}-portable.exe`), 'old-portable')
+            await writeFile(join(dir, `OmniPot-${old_version}-windows-setup.exe`), 'old-installer')
+            await writeFile(join(dir, `OmniPot-${old_version}-windows-portable.exe`), 'old-portable')
 
             await expect(build_latest_metadata({ version: app_version, release_dir: dir })).rejects.toThrow(version_error_pattern)
         })
@@ -129,8 +130,8 @@ describe('release metadata helpers', () => {
         const { build_latest_metadata } = (await import(module_path)) as { build_latest_metadata: BuildLatestMetadata }
 
         await with_temp_dir(async (dir) => {
-            await writeFile(join(dir, `OmniPot${containing_version}.exe`), 'wrong-installer')
-            await writeFile(join(dir, `OmniPot${containing_version}-portable.exe`), 'wrong-portable')
+            await writeFile(join(dir, `OmniPot-${containing_version}-windows-setup.exe`), 'wrong-installer')
+            await writeFile(join(dir, `OmniPot-${containing_version}-windows-portable.exe`), 'wrong-portable')
 
             await expect(build_latest_metadata({ version: app_version, release_dir: dir })).rejects.toThrow(version_error_pattern)
         })
@@ -140,8 +141,8 @@ describe('release metadata helpers', () => {
         const { build_latest_metadata } = (await import(module_path)) as { build_latest_metadata: BuildLatestMetadata }
 
         await with_temp_dir(async (dir) => {
-            await writeFile(join(dir, `OmniPot${longer_version}.exe`), 'wrong-installer')
-            await writeFile(join(dir, `OmniPot${longer_version}-portable.exe`), 'wrong-portable')
+            await writeFile(join(dir, `OmniPot-${longer_version}-windows-setup.exe`), 'wrong-installer')
+            await writeFile(join(dir, `OmniPot-${longer_version}-windows-portable.exe`), 'wrong-portable')
 
             await expect(build_latest_metadata({ version: app_version, release_dir: dir })).rejects.toThrow(version_error_pattern)
         })
@@ -151,12 +152,12 @@ describe('release metadata helpers', () => {
         const { write_latest_json } = (await import(module_path)) as { write_latest_json: WriteLatestJson }
 
         await with_temp_dir(async (dir) => {
-            const metadata = { format_version: 1, version: app_version, released_at: '2026-05-31T00:00:00.000Z', files: {} }
+            const metadata = { format_version: 2, version: app_version, released_at: '2026-05-31T00:00:00.000Z', files: [] }
             const path = await write_latest_json(dir, metadata)
             const text = await readFile(path, 'utf8')
 
             expect(text).toBe(`${JSON.stringify(metadata, null, 4)}\n`)
-            expect(text).toContain('    "format_version": 1')
+            expect(text).toContain('    "format_version": 2')
         })
     })
 
@@ -173,10 +174,10 @@ describe('release metadata helpers', () => {
                 released_at: new Date('2026-05-31T00:00:00.000Z'),
             })
 
-            expect(metadata.files.windows_installer.r2_version_key).toBe(`omni-pot/${app_version}/${installer_name}`)
-            expect(metadata.files.windows_installer.r2_latest_key).toBe(`omni-pot/latest/${installer_name}`)
-            expect(metadata.files.windows_portable.r2_version_key).toBe(`omni-pot/${app_version}/${portable_name}`)
-            expect(metadata.files.windows_portable.r2_latest_key).toBe(`omni-pot/latest/${portable_name}`)
+            expect(metadata.files[0].r2_version_key).toBe(`omni-pot/${app_version}/${installer_name}`)
+            expect(metadata.files[0].r2_latest_key).toBe(`omni-pot/latest/${installer_name}`)
+            expect(metadata.files[1].r2_version_key).toBe(`omni-pot/${app_version}/${portable_name}`)
+            expect(metadata.files[1].r2_latest_key).toBe(`omni-pot/latest/${portable_name}`)
         })
     })
 

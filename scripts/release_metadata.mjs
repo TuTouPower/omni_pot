@@ -4,7 +4,7 @@ import { readdir, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const r2_base_url = 'https://downloads.zzzkkkccc.site/omni-pot'
-const github_base_url = 'https://github.com/TuTouPower/omni_pot_release/releases/download'
+const github_base_url = 'https://github.com/TuTouPower/omni_pot/releases/download'
 
 const FILE_SPECS = [
     { os: 'windows', type: 'setup', ext: 'exe' },
@@ -32,18 +32,6 @@ function make_filename(version, os, type, ext) {
     return `OmniPot-${version}-${os}-${type}.${ext}`
 }
 
-async function find_release_file(release_dir, version, spec) {
-    const expected = make_filename(version, spec.os, spec.type, spec.ext)
-    const entries = await readdir(release_dir)
-
-    const match = entries.find((name) => name.toLowerCase() === expected.toLowerCase())
-    if (!match) {
-        throw new Error(`Release file not found: ${expected} in ${release_dir}`)
-    }
-
-    return join(release_dir, match)
-}
-
 async function build_file_metadata({ path, version, os, type, filename }) {
     const info = await stat(path)
     const file_sha256 = await sha256_file(path)
@@ -68,19 +56,31 @@ function to_cst_iso(date) {
 }
 
 export async function build_latest_metadata({ version, release_dir = 'build/release', released_at = new Date() }) {
+    const entries = await readdir(release_dir)
     const files = []
 
     for (const spec of FILE_SPECS) {
-        try {
-            const path = await find_release_file(release_dir, version, spec)
-            const filename = make_filename(version, spec.os, spec.type, spec.ext)
-            files.push(await build_file_metadata({ path, version, os: spec.os, type: spec.type, filename }))
-        } catch {
-            // skip platforms not built for this release
-        }
+        const expected = make_filename(version, spec.os, spec.type, spec.ext)
+        const match = entries.find((name) => name.toLowerCase() === expected.toLowerCase())
+        if (!match) continue
+
+        const path = join(release_dir, match)
+        files.push(await build_file_metadata({ path, version, os: spec.os, type: spec.type, filename: expected }))
+    }
+
+    const has_windows_setup = files.some((file) => file.os === 'windows' && file.type === 'setup')
+    const has_windows_portable = files.some((file) => file.os === 'windows' && file.type === 'portable')
+    if (has_windows_setup && !has_windows_portable) {
+        throw new Error(`Release file not found: ${make_filename(version, 'windows', 'portable', 'exe')} in ${release_dir}`)
+    }
+    if (has_windows_portable && !has_windows_setup) {
+        throw new Error(`Release file not found: ${make_filename(version, 'windows', 'setup', 'exe')} in ${release_dir}`)
     }
 
     if (files.length === 0) {
+        if (entries.some((name) => /^OmniPot-/i.test(name))) {
+            throw new Error(`No release files found for version ${version} in ${release_dir}`)
+        }
         throw new Error(`No release files found in ${release_dir}`)
     }
 

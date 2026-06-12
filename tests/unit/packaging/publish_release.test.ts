@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest'
 const script_path = join(process.cwd(), 'scripts/publish_release.mjs')
 const module_path = pathToFileURL(script_path).href
 const app_version = (createRequire(import.meta.url)('../../../package.json') as { version: string }).version
-const installer_name = `OmniPot${app_version}.exe`
-const portable_name = `OmniPot${app_version}-portable.exe`
+const installer_name = `OmniPot-${app_version}-windows-setup.exe`
+const portable_name = `OmniPot-${app_version}-windows-portable.exe`
 
 async function with_temp_dir(run: (dir: string) => Promise<void>) {
     const dir = await mkdtemp(join(tmpdir(), 'omni-pot-publish-test-'))

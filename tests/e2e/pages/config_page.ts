@@ -267,7 +267,7 @@ export class ConfigPage {
         return this.page.evaluate(() => window.electronAPI.history.list(1, 100))
     }
 
-    aboutLink(name: 'home' | 'docs' | 'feedback'): Locator {
+    aboutLink(name: 'home' | 'docs' | 'survey'): Locator {
         return this.page.getByTestId(`about-${name}-link`)
     }
 
