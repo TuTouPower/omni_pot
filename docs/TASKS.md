@@ -68,6 +68,17 @@
 
 ---
 
+## P12: 跨平台 Release 产物
+
+> 方案见 `docs/release.md`。
+
+- [ ] **artifactName 统一**：Windows nsis/portable 改为 `OmniPot-${version}-windows-setup.${ext}` / `OmniPot-${version}-windows-portable.${ext}`
+- [ ] **macOS universal DMG**：electron-builder 加 mac target（`dmg`，`artifactName: "OmniPot-${version}-macos.${ext}"`）
+- [ ] **Linux AppImage**：electron-builder 加 linux target（`AppImage`，`artifactName: "OmniPot-${version}-linux.${ext}"`）
+- [ ] **自动更新适配 v2**：`src/main/updater/` 按 `os` 筛选 `files` 数组匹配对应平台下载链接
+
+---
+
 ## 已知问题（不修，仅跟踪）
 
 - **CLD3 短文本语言误判**：极短 CJK 文本（如"馄饨"）`is_reliable: true` 但实际误判，regex 能正确识别。涉及检测策略变更，暂不修。

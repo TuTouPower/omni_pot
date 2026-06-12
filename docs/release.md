@@ -36,7 +36,61 @@ npm run release:publish
 | `--skip-dist` | 跳过 `npm run dist`，使用已有 `build/release/` 产物 |
 | `--dry-run` | 只打印将执行的上传命令，不执行上传 |
 
-产物输出在 `build/release/` 目录，包含 NSIS 安装版（`OmniPot{VERSION}.exe`）和便携版（`OmniPot{VERSION}-portable.exe`）。
+## 产物命名
+
+```
+OmniPot-{version}-{os}-{type}.{ext}
+```
+
+| 平台 | type | 文件名 | 状态 |
+|---|---|---|---|
+| Windows | `setup` | `OmniPot-1.0.0-windows-setup.exe` | 已支持 |
+| Windows | `portable` | `OmniPot-1.0.0-windows-portable.exe` | 已支持 |
+| macOS | `dmg` | `OmniPot-1.0.0-macos.dmg` | 待实现 |
+| Linux | `appimage` | `OmniPot-1.0.0-linux.AppImage` | 待实现 |
+
+macOS 为 universal build（同时兼容 Intel + M 系列），一个包即可。
+
+## latest.json 格式 (v2)
+
+```json
+{
+  "format_version": 2,
+  "version": "1.0.0",
+  "released_at": "2026-06-12T20:00:00+08:00",
+  "files": [
+    {
+      "os": "windows",
+      "type": "setup",
+      "filename": "OmniPot-1.0.0-windows-setup.exe",
+      "sha256": "...",
+      "size": 88456789,
+      "github_url": "https://github.com/TuTouPower/omni_pot_release/releases/download/v1.0.0/OmniPot-1.0.0-windows-setup.exe",
+      "r2_url": "https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-1.0.0-windows-setup.exe"
+    },
+    {
+      "os": "windows",
+      "type": "portable",
+      "filename": "OmniPot-1.0.0-windows-portable.exe",
+      ...
+    }
+  ]
+}
+```
+
+`format_version` 1→2，`files` 从 `{key: obj}` 改为 `[{os, type, filename, ...}]`，去掉 `versioned_filename`（与 `filename` 合并）。
+
+## 下载渠道
+
+每版 release 有 3 个下载渠道：
+
+| 渠道 | URL |
+|---|---|
+| GitHub 源码仓库 | `https://github.com/TuTouPower/omni_pot/releases` |
+| GitHub 发布仓库 | `https://github.com/TuTouPower/omni_pot_release/releases` |
+| Cloudflare R2 | `https://downloads.zzzkkkccc.site/omni-pot/latest/` |
+
+产物上传到上述 3 个渠道 + R2 版本归档。`latest.json` 只记录发布仓库和 R2 的 URL，自动更新从 R2 拉取。`latest.json` 上传到两个 GitHub 仓库和 R2。
 
 ## 注意事项
 
