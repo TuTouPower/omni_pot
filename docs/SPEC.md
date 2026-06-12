@@ -87,7 +87,7 @@ React 18 + NextUI，技术老旧；本项目从零实现 spec 中定义的全部
 
 | 名称类型 | 形式 | 适用范围 |
 |---|---|---|
-| 面向用户的显示名（wordmark） | `Omni Pot`（首字母大写、含空格） | 窗口标题栏、托盘、关于页、用户文档、README 标题 |
+| 面向用户的显示名（wordmark） | `Omni Pot`（英文）/ `Omni Pot 万点`（中文） | 窗口标题栏、托盘、关于页、用户文档、README 标题 |
 | 项目代码命名 | `omni_pot`（snake_case 全小写） | package.json `name`、文件夹/文件名、变量名、CSS 类名、配置键、IPC 通道名、命名空间 |
 
 代码中不允许散落 `Omni Pot` 字面量与 `omni_pot` 字面量混用；显示名通过常量或 i18n key 集中管理。

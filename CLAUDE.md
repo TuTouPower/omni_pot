@@ -5,7 +5,7 @@
 Omni Pot 是一个跨平台桌面翻译、OCR 和词典工具，基于 Electron + React + TypeScript 构建。
 支持多翻译引擎、截图 OCR、划词翻译/词典、剪贴板监听等功能，常驻系统托盘。
 
-- 显示名（UI/文档中展示给用户）：**Omni Pot**
+- 显示名（UI/文档中展示给用户）：**Omni Pot**（英文）/ **Omni Pot 万点**（中文）
 - 代码名（变量/文件名/package name）：**omni_pot**
 
 技术栈：Electron 39 + React 19 + TypeScript 6 + electron-vite + Tailwind CSS + Zustand + better-sqlite3
