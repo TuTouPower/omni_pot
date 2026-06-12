@@ -5,9 +5,10 @@ import { WindowLabel, type WindowOptions } from './types'
 export const DICT_MIN_WIDTH = 280
 export const DICT_MIN_HEIGHT = 120
 
-export function get_dict_window_options(): WindowOptions {
+export function get_dict_window_options(source?: 'hotkey' | 'http'): WindowOptions {
     const remember_size = getConfig('dict_remember_window_size') as boolean
-    const width = remember_size ? (getConfig('dict_window_width') as number) : 350
+    const default_width = source === 'http' ? 350 : 400
+    const width = remember_size ? (getConfig('dict_window_width') as number) : default_width
     const height = remember_size ? (getConfig('dict_window_height') as number) : DICT_MIN_HEIGHT
     return {
         label: WindowLabel.DICT,

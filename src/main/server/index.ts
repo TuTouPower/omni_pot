@@ -389,7 +389,7 @@ function handleDictLookup(
                 res.end(JSON.stringify({ success: false, error: 'empty body' }))
                 return
             }
-            mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
+            mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options('http'))
             mgr.sendWhenReady(WindowLabel.DICT, 'dict:lookup', trimmed)
             res.writeHead(200)
             res.end(JSON.stringify({ success: true }))
