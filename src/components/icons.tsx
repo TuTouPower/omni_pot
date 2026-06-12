@@ -37,7 +37,7 @@ export const Icons = {
     Pin: ({ size = 15, strokeWidth = 1.85, fill = false, style, className }: IconProps) => (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
             <path d="M8 3h8l-1.5 6 2.5 4H7l2.5-4L8 3z" fill={fill ? 'currentColor' : 'none'} />
-            <path d="M12 16v6" />
+            <path d="M12 16v6" stroke={fill ? 'var(--bg)' : 'currentColor'} />
         </svg>
     ),
     Lock: ({ size = 15, strokeWidth = 1.85, fill = false, style, className }: IconProps) => (
