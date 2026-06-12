@@ -28,10 +28,6 @@ function sha256_file(path) {
     })
 }
 
-function escape_regexp(value) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 function make_filename(version, os, type, ext) {
     return `OmniPot-${version}-${os}-${type}.${ext}`
 }
