@@ -51,7 +51,7 @@ export function Titlebar({ alwaysOnTop, pinned, onToggleTopmost, onTogglePin, mo
                 </button>
             </div>
             <div className="op-wordmark" style={{ marginLeft: 2 }} data-testid="titlebar-wordmark">
-                Omni Pot
+                {t('app_name', { defaultValue: 'Omni Pot' })}
             </div>
             <span className="op-mode" data-testid="titlebar-mode">{modeLabel}</span>
             <div style={{ flex: 1 }} />

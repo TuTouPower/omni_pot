@@ -160,7 +160,7 @@ export default function UpdaterWindow(): React.ReactElement {
             {/* Titlebar */}
             <div className="op-titlebar">
                 <div className="op-wordmark" data-testid="titlebar-wordmark">
-                    Omni Pot
+                    {t('app_name', { defaultValue: 'Omni Pot' })}
                 </div>
                 <span className="op-mode">{t('updater.title')}</span>
                 <div style={{ flex: 1 }} />

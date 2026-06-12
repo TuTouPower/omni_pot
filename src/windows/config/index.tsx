@@ -77,7 +77,7 @@ export default function ConfigWindow(): React.ReactElement {
             {/* Single titlebar spanning full width */}
             <div className="op-titlebar" data-testid="config-titlebar">
                 <div className="op-wordmark" style={{ marginLeft: 4 }} data-testid="config-wordmark">
-                    Omni Pot
+                    {t('app_name', { defaultValue: 'Omni Pot' })}
                 </div>
                 <span className="op-mode" data-testid="config-title">{t('config.title', { defaultValue: '设置' })} · {cur?.label}</span>
                 <div style={{ flex: 1 }} />

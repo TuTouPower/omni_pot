@@ -208,7 +208,7 @@ export default function WelcomeWindow(): React.ReactElement {
     return (
         <div className="op-window" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <div className="op-titlebar" data-testid="titlebar" ref={titlebar_ref}>
-                <div className="op-wordmark" data-testid="titlebar-wordmark">Omni Pot</div>
+                <div className="op-wordmark" data-testid="titlebar-wordmark">{t('app_name', { defaultValue: 'Omni Pot' })}</div>
                 <span className="op-mode" data-testid="titlebar-mode">{t('welcome.window_title', { defaultValue: '欢迎' })}</span>
                 <div style={{ flex: 1 }} />
                 <button className="op-close" title={t('close')} data-testid="titlebar-close" onClick={() => { close_welcome().catch(() => undefined); }}>

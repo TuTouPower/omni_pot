@@ -274,7 +274,7 @@ export function createTray(): void {
   const icon = nativeImage.createFromPath(iconPath)
 
   tray = new Tray(icon.resize({ width: 16, height: 16 }))
-  tray.setToolTip('Omni Pot')
+  tray.setToolTip(getConfig('app_language') === 'zh_cn' ? 'Omni Pot 万点' : 'Omni Pot')
 
   tray.on('click', () => {
     trigger_tray_click()

@@ -63,7 +63,7 @@ export default function AboutPage(): React.ReactElement {
                 >
                     op
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Omni Pot</div>
+                <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('app_name', { defaultValue: 'Omni Pot' })}</div>
                 <div className="hint mono" data-testid="about-version">version {version} · {platform_arch()}</div>
                 <div className="hint" style={{ maxWidth: 360 }}>
                     一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和内置服务设置。

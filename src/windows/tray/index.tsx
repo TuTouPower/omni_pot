@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { format_hotkey } from '../../utils/format_hotkey'
 
@@ -21,6 +22,7 @@ const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
 ]
 
 export default function TrayWindow(): React.ReactElement {
+    const { t } = useTranslation()
     const root_ref = useRef<HTMLDivElement>(null)
     const [labels, setLabels] = useState<string[] | null>(null)
     const [shortcuts, setShortcuts] = useState<Record<string, string>>({})
@@ -77,7 +79,7 @@ export default function TrayWindow(): React.ReactElement {
             <div className="card" style={{ width: 'max-content', padding: 8, borderRadius: 14, boxShadow: '0 10px 34px rgba(17, 24, 39, 0.14)', display: 'flex', flexDirection: 'column', gap: 4, background: 'var(--bg-elev)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px 10px' }}>
                     <div style={{ width: 24, height: 24, borderRadius: 8, background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)', display: 'grid', placeItems: 'center', fontWeight: 700 }}>O</div>
-                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>Omni Pot</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>{t('app_name', { defaultValue: 'Omni Pot' })}</div>
                 </div>
                 {ACTIONS.map(({ action, icon }, index) => {
                     const Icon = Icons[icon]
