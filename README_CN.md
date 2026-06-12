@@ -1,4 +1,4 @@
-# Omni Pot
+# Omni Pot（万点）
 
 跨平台桌面翻译、OCR 和词典工具。基于 Electron + React + TypeScript 构建。
 
