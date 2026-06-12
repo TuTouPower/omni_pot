@@ -81,6 +81,14 @@ describe('tray visible strings', () => {
         expect(mocks.set_tool_tip).not.toHaveBeenCalledWith('Pot Desktop')
     })
 
+    it('uses Omni Pot 万点 as the tray tooltip when language is zh_cn', () => {
+        mocks.app_language = 'zh_cn'
+        destroyTray()
+        createTray()
+
+        expect(mocks.set_tool_tip).toHaveBeenCalledWith('Omni Pot 万点')
+    })
+
     it('keeps English menu labels free of legacy product names', () => {
         rebuildMenu()
 
