@@ -110,10 +110,10 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "OmniPot${version}.${ext}"
+      "artifactName": "OmniPot-${version}-windows-setup.${ext}"
     },
     "portable": {
-      "artifactName": "OmniPot${version}-portable.${ext}"
+      "artifactName": "OmniPot-${version}-windows-portable.${ext}"
     }
   },
   "devDependencies": {

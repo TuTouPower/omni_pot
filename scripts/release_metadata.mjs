@@ -6,6 +6,13 @@ import { join } from 'node:path'
 const r2_base_url = 'https://downloads.zzzkkkccc.site/omni-pot'
 const github_base_url = 'https://github.com/TuTouPower/omni_pot_release/releases/download'
 
+const FILE_SPECS = [
+    { os: 'windows', type: 'setup', ext: 'exe' },
+    { os: 'windows', type: 'portable', ext: 'exe' },
+    { os: 'macos', type: 'dmg', ext: 'dmg' },
+    { os: 'linux', type: 'appimage', ext: 'AppImage' },
+]
+
 function sha256_file(path) {
     return new Promise((resolve, reject) => {
         const hash = createHash('sha256')
@@ -25,34 +32,36 @@ function escape_regexp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-async function find_release_file(release_dir, version, kind) {
-    const entries = await readdir(release_dir)
-    const escaped_version = escape_regexp(version)
-    const pattern = kind === 'portable'
-        ? new RegExp(`^OmniPot${escaped_version}-portable\\.exe$`, 'i')
-        : new RegExp(`^OmniPot${escaped_version}\\.exe$`, 'i')
-    const matches = entries.filter((name) => pattern.test(name))
-
-    if (matches.length !== 1) {
-        throw new Error(`Expected exactly one ${kind} release file for version ${version}, found ${String(matches.length)}`)
-    }
-
-    return join(release_dir, matches[0])
+function make_filename(version, os, type, ext) {
+    return `OmniPot-${version}-${os}-${type}.${ext}`
 }
 
-async function build_file_metadata({ path, version, filename, versioned_filename }) {
+async function find_release_file(release_dir, version, spec) {
+    const expected = make_filename(version, spec.os, spec.type, spec.ext)
+    const entries = await readdir(release_dir)
+
+    const match = entries.find((name) => name.toLowerCase() === expected.toLowerCase())
+    if (!match) {
+        throw new Error(`Release file not found: ${expected} in ${release_dir}`)
+    }
+
+    return join(release_dir, match)
+}
+
+async function build_file_metadata({ path, version, os, type, filename }) {
     const info = await stat(path)
-    const sha256 = await sha256_file(path)
+    const file_sha256 = await sha256_file(path)
 
     return {
+        os,
+        type,
         filename,
-        versioned_filename,
         source_path: path,
-        sha256,
+        sha256: file_sha256,
         size: info.size,
-        github_url: `${github_base_url}/v${version}/${versioned_filename}`,
+        github_url: `${github_base_url}/v${version}/${filename}`,
         r2_url: `${r2_base_url}/latest/${filename}`,
-        r2_version_key: `omni-pot/${version}/${versioned_filename}`,
+        r2_version_key: `omni-pot/${version}/${filename}`,
         r2_latest_key: `omni-pot/latest/${filename}`,
     }
 }
@@ -63,27 +72,27 @@ function to_cst_iso(date) {
 }
 
 export async function build_latest_metadata({ version, release_dir = 'build/release', released_at = new Date() }) {
-    const installer_path = await find_release_file(release_dir, version, 'installer')
-    const portable_path = await find_release_file(release_dir, version, 'portable')
+    const files = []
+
+    for (const spec of FILE_SPECS) {
+        try {
+            const path = await find_release_file(release_dir, version, spec)
+            const filename = make_filename(version, spec.os, spec.type, spec.ext)
+            files.push(await build_file_metadata({ path, version, os: spec.os, type: spec.type, filename }))
+        } catch {
+            // skip platforms not built for this release
+        }
+    }
+
+    if (files.length === 0) {
+        throw new Error(`No release files found in ${release_dir}`)
+    }
 
     return {
-        format_version: 1,
+        format_version: 2,
         version,
         released_at: to_cst_iso(released_at),
-        files: {
-            windows_installer: await build_file_metadata({
-                path: installer_path,
-                version,
-                filename: `OmniPot${version}.exe`,
-                versioned_filename: `OmniPot${version}.exe`,
-            }),
-            windows_portable: await build_file_metadata({
-                path: portable_path,
-                version,
-                filename: `OmniPot${version}-portable.exe`,
-                versioned_filename: `OmniPot${version}-portable.exe`,
-            }),
-        },
+        files,
     }
 }
 
@@ -100,18 +109,14 @@ export function public_metadata(metadata) {
         format_version: metadata.format_version,
         version: metadata.version,
         released_at: metadata.released_at,
-        files: Object.fromEntries(
-            Object.entries(metadata.files).map(([key, file]) => [
-                key,
-                {
-                    filename: file.filename,
-                    versioned_filename: file.versioned_filename,
-                    sha256: file.sha256,
-                    size: file.size,
-                    github_url: file.github_url,
-                    r2_url: file.r2_url,
-                },
-            ]),
-        ),
+        files: metadata.files.map((file) => ({
+            os: file.os,
+            type: file.type,
+            filename: file.filename,
+            sha256: file.sha256,
+            size: file.size,
+            github_url: file.github_url,
+            r2_url: file.r2_url,
+        })),
     }
 }

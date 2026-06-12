@@ -181,7 +181,7 @@ function r2_latest_key_from_url(url) {
 
 export function collect_stale_r2_latest_keys(previous_metadata, current_files) {
     const current_keys = new Set(current_files.map((file) => file.r2_latest_key))
-    const previous_files = Object.values(previous_metadata?.files ?? {})
+    const previous_files = previous_metadata?.files ?? []
     const previous_keys = previous_files
         .map((file) => r2_latest_key_from_url(file?.r2_url))
         .filter((key) => key && !current_keys.has(key))
@@ -360,7 +360,7 @@ async function main() {
     const metadata = await build_latest_metadata({ version, release_dir })
     const public_json = public_metadata(metadata)
     const latest_json_path = join(release_dir, 'latest.json')
-    const release_files = Object.values(metadata.files)
+    const release_files = metadata.files
 
     if (!options.dry_run) {
         await write_latest_json(release_dir, public_json)
