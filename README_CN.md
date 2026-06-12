@@ -14,6 +14,16 @@
 - **HTTP API** — 本地 HTTP 服务器供外部脚本调用
 - **系统托盘** — 常驻后台，全局快捷键
 
+## 下载
+
+| 文件 | 链接 |
+|---|---|
+| Windows 安装版 | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
+| Windows 便携版 | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
+| 全部下载 | [downloads.zzzkkkccc.site](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+
+每版完整下载链接见 [docs/release.md](docs/release.md)。
+
 ## 关于
 
 Omni Pot 是 [pot-app/pot-desktop](https://github.com/pot-app/pot-desktop) 的完整重写版，基于 Electron + React + TypeScript 从零构建，实现原版全部功能并升级技术栈。

@@ -14,6 +14,16 @@ Cross-platform desktop translation, OCR and dictionary tool. Built with Electron
 - **HTTP API** — local HTTP server for external scripts
 - **System Tray** — always running, global hotkeys
 
+## Download
+
+| File | Link |
+|---|---|
+| Windows Setup | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
+| Windows Portable | [GitHub Releases](https://github.com/TuTouPower/omni_pot_release/releases) |
+| All downloads | [downloads.zzzkkkccc.site](https://downloads.zzzkkkccc.site/omni-pot/latest/) |
+
+Full download links per release see [docs/release.md](docs/release.md).
+
 ## About
 
 Omni Pot is a complete rewrite of [pot-app/pot-desktop](https://github.com/pot-app/pot-desktop), rebuilt from the ground up with Electron + React + TypeScript. It implements all features of the original while modernizing the tech stack.
