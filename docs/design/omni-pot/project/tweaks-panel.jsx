@@ -12,15 +12,23 @@
 //   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 //     "primaryColor": "#D97757",
 //     "palette": ["#D97757", "#29261b", "#f6f4ef"],
+//     "fontSize": 16,
+//     "density": "regular",
 //     "dark": false
 //   }/*EDITMODE-END*/;
 //
 //   function App() {
 //     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 //     return (
-//       <div style={{ color: t.primaryColor }}>
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
 //         Hello
 //         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
 //           <TweakSection label="Theme" />
 //           <TweakColor  label="Primary" value={t.primaryColor}
 //                        options={['#D97757', '#2A6FDB', '#1F8A5B', '#7A5AE0']}
