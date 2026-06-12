@@ -121,6 +121,24 @@ function latest_metadata(version = '1.1.0', installer_hash = test_hash) {
                 github_url: `https://github.com/TuTouPower/omni_pot/releases/download/v${version}/OmniPot-${version}-windows-portable.exe`,
                 r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-${version}-windows-portable.exe`,
             },
+            {
+                os: 'macos',
+                type: 'dmg',
+                filename: `OmniPot-${version}-macos-dmg.dmg`,
+                sha256: 'c'.repeat(64),
+                size: 789,
+                github_url: `https://github.com/TuTouPower/omni_pot/releases/download/v${version}/OmniPot-${version}-macos-dmg.dmg`,
+                r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-${version}-macos-dmg.dmg`,
+            },
+            {
+                os: 'linux',
+                type: 'appimage',
+                filename: `OmniPot-${version}-linux-appimage.AppImage`,
+                sha256: 'd'.repeat(64),
+                size: 101,
+                github_url: `https://github.com/TuTouPower/omni_pot/releases/download/v${version}/OmniPot-${version}-linux-appimage.AppImage`,
+                r2_url: `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-${version}-linux-appimage.AppImage`,
+            },
         ],
     }
 }
@@ -224,5 +242,49 @@ describe('updater latest metadata', () => {
 
         expect(release?.assets[0]?.name).toBe('OmniPot-1.1.0-windows-portable.exe')
         expect(release?.assets[0]?.url).toBe('https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-1.1.0-windows-portable.exe')
+    })
+
+    it('selects macOS dmg asset on darwin platform', async () => {
+        const { get_update_release_info } = await import('../../src/main/updater')
+        vi.stubGlobal('process', { ...process, platform: 'darwin' })
+        mock_metadata_fetch(latest_metadata(), latest_metadata())
+
+        const release = await get_update_release_info()
+
+        expect(release?.assets[0]?.name).toBe('OmniPot-1.1.0-macos-dmg.dmg')
+        expect(release?.assets[0]?.url).toBe('https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-1.1.0-macos-dmg.dmg')
+    })
+
+    it('selects Linux AppImage asset on linux platform', async () => {
+        const { get_update_release_info } = await import('../../src/main/updater')
+        vi.stubGlobal('process', { ...process, platform: 'linux' })
+        mock_metadata_fetch(latest_metadata(), latest_metadata())
+
+        const release = await get_update_release_info()
+
+        expect(release?.assets[0]?.name).toBe('OmniPot-1.1.0-linux-appimage.AppImage')
+        expect(release?.assets[0]?.url).toBe('https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-1.1.0-linux-appimage.AppImage')
+    })
+
+    it('parses macOS and Linux filenames in latest metadata', async () => {
+        const { parse_latest_metadata } = await import('../../src/main/updater')
+        const metadata = parse_latest_metadata(latest_metadata())
+
+        expect(metadata.files[2].filename).toBe('OmniPot-1.1.0-macos-dmg.dmg')
+        expect(metadata.files[3].filename).toBe('OmniPot-1.1.0-linux-appimage.AppImage')
+    })
+
+    it('rejects invalid macOS filename format', async () => {
+        const { parse_latest_metadata } = await import('../../src/main/updater')
+        const invalid = latest_metadata()
+        invalid.files[2].filename = 'OmniPot-1.1.0-macos.dmg'
+        expect(() => { parse_latest_metadata(invalid) }).toThrow('Invalid latest metadata files[2].filename')
+    })
+
+    it('rejects invalid Linux filename format', async () => {
+        const { parse_latest_metadata } = await import('../../src/main/updater')
+        const invalid = latest_metadata()
+        invalid.files[3].filename = 'OmniPot-1.1.0-linux.AppImage'
+        expect(() => { parse_latest_metadata(invalid) }).toThrow('Invalid latest metadata files[3].filename')
     })
 })

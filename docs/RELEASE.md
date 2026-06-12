@@ -16,8 +16,8 @@ OmniPot-{version}-{os}-{type}.{ext}
 |---|---|---|---|
 | Windows | `setup` | `OmniPot-1.0.0-windows-setup.exe` | 已支持 |
 | Windows | `portable` | `OmniPot-1.0.0-windows-portable.exe` | 已支持 |
-| macOS | `dmg` | `OmniPot-1.0.0-macos.dmg` | 待实现 |
-| Linux | `appimage` | `OmniPot-1.0.0-linux.AppImage` | 待实现 |
+| macOS | `dmg` | `OmniPot-1.0.0-macos-dmg.dmg` | 待实现 |
+| Linux | `appimage` | `OmniPot-1.0.0-linux-appimage.AppImage` | 待实现 |
 
 macOS 为 universal build（同时兼容 Intel + M 系列）。
 
@@ -76,20 +76,20 @@ npm run release:publish
     {
       "os": "macos",
       "type": "dmg",
-      "filename": "OmniPot-1.0.0-macos.dmg",
+      "filename": "OmniPot-1.0.0-macos-dmg.dmg",
       ...
     },
     {
       "os": "linux",
       "type": "appimage",
-      "filename": "OmniPot-1.0.0-linux.AppImage",
+      "filename": "OmniPot-1.0.0-linux-appimage.AppImage",
       ...
     }
   ]
 }
 ```
 
-自动更新从 R2 `latest.json` 拉取，按 `os` / `type` 筛选匹配下载链接。
+应用内自动更新按当前平台（Windows/macOS/Linux）和安装类型（setup/portable）从 R2 `latest.json` 筛选匹配的下载链接。
 
 ## 下载链接
 
@@ -113,15 +113,15 @@ npm run release:publish
 
 | 渠道 | URL |
 |---|---|
-| GitHub | `https://github.com/TuTouPower/omni_pot/releases/download/v{VERSION}/OmniPot-{version}-macos.dmg` |
-| Cloudflare | `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-{version}-macos.dmg` |
+| GitHub | `https://github.com/TuTouPower/omni_pot/releases/download/v{VERSION}/OmniPot-{version}-macos-dmg.dmg` |
+| Cloudflare | `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-{version}-macos-dmg.dmg` |
 
 ### Linux
 
 | 渠道 | URL |
 |---|---|
-| GitHub | `https://github.com/TuTouPower/omni_pot/releases/download/v{VERSION}/OmniPot-{version}-linux.AppImage` |
-| Cloudflare | `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-{version}-linux.AppImage` |
+| GitHub | `https://github.com/TuTouPower/omni_pot/releases/download/v{VERSION}/OmniPot-{version}-linux-appimage.AppImage` |
+| Cloudflare | `https://downloads.zzzkkkccc.site/omni-pot/latest/OmniPot-{version}-linux-appimage.AppImage` |
 
 ### 元数据
 

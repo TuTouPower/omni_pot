@@ -109,6 +109,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `docs/archive/old_pot/spec.md` | pot-desktop 3.0.7 旧规格（历史参考，不代表当前实现） |
 | `docs/archive/superpowers/` | 早期重写设计与分阶段计划（历史参考，不代表当前实现） |
 | `docs/better_sqlite3_abi.md` | better-sqlite3 ABI 兼容问题及自动修复说明 |
+| `docs/user_docs/` | **用户文档**（安装、翻译、词典、OCR、设置、API、FAQ） |
 
 ## 编码约定
 

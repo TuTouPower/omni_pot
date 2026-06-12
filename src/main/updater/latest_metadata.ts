@@ -124,6 +124,8 @@ async function get_latest_metadata(): Promise<LatestMetadata | null> {
 }
 
 function get_current_os_type(): { os: string; type: string } {
+    if (process.platform === 'darwin') return { os: 'macos', type: 'dmg' }
+    if (process.platform === 'linux') return { os: 'linux', type: 'appimage' }
     if (process.env['PORTABLE_EXECUTABLE_DIR']) return { os: 'windows', type: 'portable' }
     return { os: 'windows', type: 'setup' }
 }
