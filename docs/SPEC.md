@@ -6,15 +6,15 @@
 本文档整合了以下来源，并作为产品实现的权威目标：
 
 - `docs/design/omni-pot/` — UI 设计稿（HTML/JSX/CSS 原型，最高优先级）
-- `TASKS.md` — 当前实机验收发现的问题、待办与测试覆盖缺口（合并自原 PLAN/review/issues）
+- `docs/TASKS.md` — 当前实机验收发现的问题、待办与测试覆盖缺口（合并自原 PLAN/review/issues）
 - `docs/archive/old_pot/spec.md` — Pot Desktop 3.0.7 原始产品规格（功能蓝本）
-- `docs/superpowers/specs/2026-05-06-pot-desktop-rewrite-design.md` — 重写技术方案
-- `docs/superpowers/specs/2026-05-08-selection-text-extraction-design.md` — 跨平台选中文本提取设计
+- `docs/archive/superpowers/specs/2026-05-06-pot-desktop-rewrite-design.md` — 重写技术方案
+- `docs/archive/superpowers/specs/2026-05-08-selection-text-extraction-design.md` — 跨平台选中文本提取设计
 
 相关文档：
 
-- `docs/design/demo_todo.md` — omni_pot 设计稿与 spec 的已知偏差
-- `docs/test.md` — 测试规范与总则
+- `docs/demo_todo.md` — omni_pot 设计稿与 spec 的已知偏差
+- `docs/TEST.md` — 测试规范与总则
 - `docs/test_e2e.md` — 用户端到端测试设计
 
 ---

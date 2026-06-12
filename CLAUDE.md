@@ -92,24 +92,24 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 
 | 文档 | 作用 |
 |---|---|
-| `docs/spec.md` | **产品规格** — omni_pot 功能、窗口、UI、服务、配置的权威定义 |
+| `docs/SPEC.md` | **产品规格** — omni_pot 功能、窗口、UI、服务、配置的权威定义 |
 | `docs/design/omni-pot/` | UI 设计稿原型（HTML/JSX/CSS，最高优先级） |
-| `docs/design/demo_todo.md` | omni_pot 设计稿与 spec 的已知偏差备忘 |
-| `docs/test.md` | 测试规范与总则（分层、原则、快捷键策略、运行命令） |
+| `docs/demo_todo.md` | omni_pot 设计稿与 spec 的已知偏差备忘 |
+| `docs/TEST.md` | 测试规范与总则（分层、原则、快捷键策略、运行命令） |
 | `docs/test_e2e.md` | 用户端到端测试设计（基础设施、文件规划、各 spec 内容） |
 | `docs/api.md` | 主进程对外暴露的 HTTP API（`server_port`，默认 20202） |
-| `docs/runtime_issues.md` | 运行时问题记录（日志证据、影响范围、修复方向与验证方式） |
-| `TASKS.md` | 开发待办、测试覆盖审查、已知问题（合并自原 PLAN/review/issues） |
+| `docs/archive/runtime_issues.md` | 运行时问题记录（日志证据、影响范围、修复方向与验证方式） |
+| `docs/TASKS.md` | 开发待办、测试覆盖审查、已知问题（合并自原 PLAN/review/issues） |
 | `docs/release.md` | 发布流程（公开仓库、版本号、产物上传） |
 | `docs/external_service_catalog.md` | 外部服务事实清单（翻译/词典/OCR/TTS/检测/同步），按是否需要 key/本地依赖分类 |
 | `docs/archive/external_services/` | 外部服务历史研究与测试报告快照（catalog 的溯源） |
-| `docs/code_quality_checks_plan.md` | 代码质量检查体系落地方案 |
 | `docs/archive/closed_issues/` | 已关闭的问题记录 |
 | `docs/archive/handoffs/` | 历史会话交接备忘 |
 | `docs/archive/reviews/` | 历史代码 review 与 demo/spec 差异分析 |
 | `docs/archive/plan_archives/` | 历史 PLAN 归档 |
 | `docs/archive/old_pot/spec.md` | pot-desktop 3.0.7 旧规格（历史参考，不代表当前实现） |
-| `docs/superpowers/` | 早期重写设计与分阶段计划（历史参考，不代表当前实现） |
+| `docs/archive/superpowers/` | 早期重写设计与分阶段计划（历史参考，不代表当前实现） |
+| `docs/better_sqlite3_abi.md` | better-sqlite3 ABI 兼容问题及自动修复说明 |
 
 ## 编码约定
 
@@ -122,8 +122,8 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 ## 测试要求
 
 测试要做完好的单元测试、集成测试、端到端测试，尽量少用 mock，多用真实环境，
-保证测试覆盖 SPEC 的所有功能、所有 UI。外部服务 stub 边界按 `docs/test.md §2.1` 执行。
-详见 `docs/test.md`。
+保证测试覆盖 SPEC 的所有功能、所有 UI。外部服务 stub 边界按 `docs/TEST.md §2.1` 执行。
+详见 `docs/TEST.md`。
 
 ## 产品术语
 

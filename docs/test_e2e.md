@@ -2,9 +2,9 @@
 
 > omni_pot 用户端到端测试的完整设计方案 —— 从头重做。
 > 测试目录：`tests/e2e/`
-> 测试总则与分层职责见 `docs/test.md`；本文是 E2E 这一层的详细设计。
+> 测试总则与分层职责见 `docs/TEST.md`；本文是 E2E 这一层的详细设计。
 > E2E 框架为 **Playwright**（`@playwright/test` + Electron）。
-> 功能与 UI 定义见 `docs/spec.md`；UI 设计稿原型见 `docs/design/omni-pot/`。
+> 功能与 UI 定义见 `docs/SPEC.md`；UI 设计稿原型见 `docs/design/omni-pot/`。
 
 ---
 
