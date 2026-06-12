@@ -79,10 +79,10 @@ describe('Config defaults', () => {
 
     it('service lists have correct defaults', () => {
         expect(DEFAULT_CONFIG.translate_service_list).toEqual([
-            'bing@default', 'deepl@default', 'mymemory@default'
+            'bing@default', 'google@default', 'deepl@default', 'mymemory@default'
         ])
         expect(DEFAULT_CONFIG.dictionary_service_list).toEqual([
-            'chinese_dictionary@default', 'ecdict@default'
+            'ecdict@default'
         ])
         expect(DEFAULT_CONFIG.english_dictionary_service_list).toEqual([
             'cambridge_dict@default', 'ecdict@default'
