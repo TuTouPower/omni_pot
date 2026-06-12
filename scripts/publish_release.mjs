@@ -8,8 +8,9 @@ import { spawnSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 import { build_latest_metadata, public_metadata, write_latest_json } from './release_metadata.mjs'
 
-const github_repo = 'TuTouPower/omni_pot_release'
-const github_latest_json_url = (tag) => `https://github.com/${github_repo}/releases/download/${tag}/latest.json`
+const release_repo = 'TuTouPower/omni_pot_release'
+const source_repo = 'TuTouPower/omni_pot'
+const github_latest_json_url = (tag) => `https://github.com/${release_repo}/releases/download/${tag}/latest.json`
 const r2_latest_json_url = 'https://downloads.zzzkkkccc.site/omni-pot/latest.json'
 const wsl_cloudflare_service_dir = '/home/karon/karson_ubuntu/cloudflare_service'
 
@@ -233,8 +234,8 @@ function command_output(result) {
     return `${result.stdout ?? ''}${result.stderr ?? ''}`.trim()
 }
 
-function get_github_assets(tag) {
-    const result = run('gh', ['release', 'view', tag, '--repo', github_repo, '--json', 'assets'], { stdio: 'pipe' })
+function get_github_assets(tag, repo) {
+    const result = run('gh', ['release', 'view', tag, '--repo', repo, '--json', 'assets'], { stdio: 'pipe' })
     const release = JSON.parse(result.stdout)
 
     return release.assets ?? []
@@ -254,26 +255,26 @@ export function matches_github_asset_metadata(asset, file) {
     return asset.size === file.size && asset.digest === `sha256:${file.sha256}`
 }
 
-async function verify_existing_github_asset(tag, file, temp_dir) {
-    run('gh', ['release', 'download', tag, '--repo', github_repo, '--pattern', file.versioned_filename, '--dir', temp_dir])
+async function verify_existing_github_asset(tag, file, temp_dir, repo) {
+    run('gh', ['release', 'download', tag, '--repo', repo, '--pattern', file.versioned_filename, '--dir', temp_dir])
     const downloaded_path = join(temp_dir, file.versioned_filename)
     const actual = await local_file_metadata(downloaded_path)
 
     assert_file_metadata(`GitHub asset ${file.versioned_filename}`, actual, file)
 }
 
-async function upload_github_version_assets(tag, files, options) {
+async function upload_github_version_assets(tag, files, options, repo) {
     if (options.dry_run) {
         for (const file of files) {
-            console.log(`# if GitHub asset ${file.versioned_filename} exists, download and verify sha256/size; otherwise upload without --clobber`)
-            console.log(format_command('gh', ['release', 'view', tag, '--repo', github_repo, '--json', 'assets']))
-            console.log(format_command('gh', ['release', 'download', tag, '--repo', github_repo, '--pattern', file.versioned_filename, '--dir', '<temp-dir>']))
-            console.log(format_command('gh', ['release', 'upload', tag, file.source_path, '--repo', github_repo]))
+            console.log(`# [${repo}] if GitHub asset ${file.versioned_filename} exists, download and verify sha256/size; otherwise upload without --clobber`)
+            console.log(format_command('gh', ['release', 'view', tag, '--repo', repo, '--json', 'assets']))
+            console.log(format_command('gh', ['release', 'download', tag, '--repo', repo, '--pattern', file.versioned_filename, '--dir', '<temp-dir>']))
+            console.log(format_command('gh', ['release', 'upload', tag, file.source_path, '--repo', repo]))
         }
         return
     }
 
-    const assets = get_github_assets(tag)
+    const assets = get_github_assets(tag, repo)
     await with_temp_dir(async (temp_dir) => {
         for (const file of files) {
             const existing_asset = assets.find((asset) => asset.name === file.versioned_filename)
@@ -281,11 +282,11 @@ async function upload_github_version_assets(tag, files, options) {
             if (existing_asset) {
                 if (matches_github_asset_metadata(existing_asset, file)) continue
                 if (existing_asset.size !== file.size) {
-                    throw new Error(`GitHub asset ${file.versioned_filename} exists with different size`)
+                    throw new Error(`[${repo}] GitHub asset ${file.versioned_filename} exists with different size`)
                 }
-                await verify_existing_github_asset(tag, file, temp_dir)
+                await verify_existing_github_asset(tag, file, temp_dir, repo)
             } else {
-                run('gh', ['release', 'upload', tag, file.source_path, '--repo', github_repo])
+                run('gh', ['release', 'upload', tag, file.source_path, '--repo', repo])
             }
         }
     })
@@ -326,12 +327,31 @@ async function upload_r2_version_archive(file, options) {
     })
 }
 
+async function ensure_github_release(tag, repo, version, options) {
+    if (options.dry_run) {
+        console.log(`# [${repo}] ensure release exists`)
+        console.log(format_command('gh', ['release', 'view', tag, '--repo', repo]))
+        console.log(format_command('gh', ['release', 'create', tag, '--repo', repo, '--title', `Omni Pot ${version}`, '--notes', `Omni Pot ${version}`]))
+        return
+    }
+
+    const view_result = run('gh', ['release', 'view', tag, '--repo', repo], {
+        stdio: 'ignore',
+        allow_failure: true,
+    })
+
+    if (view_result.status !== 0) {
+        run('gh', ['release', 'create', tag, '--repo', repo, '--title', `Omni Pot ${version}`, '--notes', `Omni Pot ${version}`])
+    }
+}
+
 async function main() {
     const options = parse_args(process.argv.slice(2))
     const version = await package_version()
     if (options.version && options.version !== version) throw new Error(`--version ${options.version} does not match package.json version ${version}`)
     const tag = `v${version}`
     const release_dir = resolve(cwd(), 'build/release')
+    const github_repos = [release_repo, source_repo]
 
     if (!options.skip_dist) {
         run('npm', ['run', 'dist'], { dry_run: options.dry_run })
@@ -342,24 +362,14 @@ async function main() {
     const latest_json_path = join(release_dir, 'latest.json')
     const release_files = Object.values(metadata.files)
 
-    if (options.dry_run) {
-        console.log(`# would write ${latest_json_path}`)
-        console.log(JSON.stringify(public_json, null, 4))
-        console.log(format_command('gh', ['release', 'view', tag, '--repo', github_repo]))
-        console.log(format_command('gh', ['release', 'create', tag, '--repo', github_repo, '--title', `Omni Pot ${version}`, '--notes', `Omni Pot ${version}`]))
-    } else {
+    if (!options.dry_run) {
         await write_latest_json(release_dir, public_json)
-        const view_result = run('gh', ['release', 'view', tag, '--repo', github_repo], {
-            stdio: 'ignore',
-            allow_failure: true,
-        })
-
-        if (view_result.status !== 0) {
-            run('gh', ['release', 'create', tag, '--repo', github_repo, '--title', `Omni Pot ${version}`, '--notes', `Omni Pot ${version}`])
-        }
     }
 
-    await upload_github_version_assets(tag, release_files, options)
+    for (const repo of github_repos) {
+        await ensure_github_release(tag, repo, version, options)
+        await upload_github_version_assets(tag, release_files, options, repo)
+    }
 
     for (const file of release_files) {
         await upload_r2_version_archive(file, options)
@@ -370,10 +380,14 @@ async function main() {
     }
 
     if (options.dry_run) {
+        console.log(`# would write ${latest_json_path}`)
+        console.log(JSON.stringify(public_json, null, 4))
         for (const file of release_files) {
             console.log(`# fetch ${file.r2_url} and verify sha256/size`)
         }
-        console.log(format_command('gh', ['release', 'upload', tag, latest_json_path, '--repo', github_repo, '--clobber']))
+        for (const repo of github_repos) {
+            console.log(format_command('gh', ['release', 'upload', tag, latest_json_path, '--repo', repo, '--clobber']))
+        }
         console.log(format_r2_command(['r2', 'object', 'put', 'releases/omni-pot/latest.json', '--file', latest_json_path, '--remote']))
         console.log(`# fetch ${github_latest_json_url(tag)}`)
         console.log(`# fetch ${r2_latest_json_url}`)
@@ -386,7 +400,9 @@ async function main() {
         assert_file_metadata(`R2 latest file ${file.r2_url}`, actual, file)
     }
 
-    run('gh', ['release', 'upload', tag, latest_json_path, '--repo', github_repo, '--clobber'])
+    for (const repo of github_repos) {
+        run('gh', ['release', 'upload', tag, latest_json_path, '--repo', repo, '--clobber'])
+    }
     run_r2(['r2', 'object', 'put', 'releases/omni-pot/latest.json', '--file', latest_json_path, '--remote'])
 
     const local_json = JSON.parse(await readFile(latest_json_path, 'utf8'))

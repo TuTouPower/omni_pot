@@ -76,7 +76,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `TuTouPower/omni_pot` | 私有 | 源代码、开发、CI | `origin` |
 | `TuTouPower/omni_pot_release` | 公开 | 发布 release（安装包），不含源码 | `release` |
 
-发布流程：在私有仓库完成开发 → `npm run dist` 产出安装包 → 通过 GitHub API 在公开仓库创建 release 并上传产物。
+发布流程：在私有仓库完成开发 → `npm run dist` 产出安装包 → 通过 GitHub API 在私有仓库和公开仓库同时创建 release 并上传产物。
 
 ## 项目背景
 
