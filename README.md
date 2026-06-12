@@ -14,6 +14,10 @@ Cross-platform desktop translation, OCR and dictionary tool. Built with Electron
 - **HTTP API** — local HTTP server for external scripts
 - **System Tray** — always running, global hotkeys
 
+## About
+
+Omni Pot is a complete rewrite of [pot-app/pot-desktop](https://github.com/pot-app/pot-desktop), rebuilt from the ground up with Electron + React + TypeScript. It implements all features of the original while modernizing the tech stack.
+
 ## Tech Stack
 
 Electron 39 · React 19 · TypeScript 6 · electron-vite · Tailwind CSS · Zustand · better-sqlite3

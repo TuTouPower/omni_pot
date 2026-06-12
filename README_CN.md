@@ -14,6 +14,10 @@
 - **HTTP API** — 本地 HTTP 服务器供外部脚本调用
 - **系统托盘** — 常驻后台，全局快捷键
 
+## 关于
+
+Omni Pot 是 [pot-app/pot-desktop](https://github.com/pot-app/pot-desktop) 的完整重写版，基于 Electron + React + TypeScript 从零构建，实现原版全部功能并升级技术栈。
+
 ## 技术栈
 
 Electron 39 · React 19 · TypeScript 6 · electron-vite · Tailwind CSS · Zustand · better-sqlite3
