@@ -219,6 +219,7 @@ export function getAllConfig(): AppConfig {
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
 function write_config_to_disk(): void {
+    if (!config_path) return
     const tmp_path = config_path + '.tmp'
     writeFileSync(tmp_path, JSON.stringify(protect_config_secrets(data), null, 2), 'utf-8')
     renameSync(tmp_path, config_path)
