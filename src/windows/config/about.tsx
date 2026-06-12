@@ -15,6 +15,7 @@ function platform_arch(): string {
     return 'unknown'
 }
 const REPO_URL = 'https://github.com/TuTouPower/omni_pot_release'
+const SURVEY_URL = 'https://wj.qq.com/edit?sid=27007386'
 
 export default function AboutPage(): React.ReactElement {
     const { t } = useTranslation()
@@ -74,8 +75,8 @@ export default function AboutPage(): React.ReactElement {
                     <button className="btn sm" data-testid="about-docs-link" onClick={() => { openExternal(`${REPO_URL}/tree/master/docs`); }}>
                         文档
                     </button>
-                    <button className="btn sm" data-testid="about-feedback-link" onClick={() => { openExternal(`${REPO_URL}/issues`); }}>
-                        反馈
+                    <button className="btn sm" data-testid="about-survey-link" onClick={() => { openExternal(SURVEY_URL); }}>
+                        问卷反馈
                     </button>
                     <button className="btn primary sm" data-testid="about-check-update" onClick={() => { openExternal(`${REPO_URL}/releases`); }}>
                         <Icons.Cloud size={12} />

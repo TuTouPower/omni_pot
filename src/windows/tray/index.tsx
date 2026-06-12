@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icons } from '../../components/icons'
 import { format_hotkey } from '../../utils/format_hotkey'
 
-type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'config' | 'auto_start' | 'clipboard_monitor' | 'feedback' | 'support_author' | 'check_update' | 'view_log' | 'restart' | 'quit'
+type TrayAction = 'input_translate' | 'dictionary' | 'ocr_recognize' | 'screenshot_translate' | 'config' | 'auto_start' | 'clipboard_monitor' | 'survey' | 'support_author' | 'check_update' | 'view_log' | 'restart' | 'quit'
 
 const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'input_translate', icon: 'Translate' },
@@ -12,7 +12,7 @@ const ACTIONS: Array<{ action: TrayAction; icon: keyof typeof Icons }> = [
     { action: 'config', icon: 'Settings' },
     { action: 'auto_start', icon: 'Power' },
     { action: 'clipboard_monitor', icon: 'Copy' },
-    { action: 'feedback', icon: 'Info' },
+    { action: 'survey', icon: 'Info' },
     { action: 'support_author', icon: 'Heart' },
     { action: 'check_update', icon: 'Cloud' },
     { action: 'view_log', icon: 'Info' },
