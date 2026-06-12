@@ -4,6 +4,7 @@ import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, unlink
 import { cancel_pending_config_save, flush_config, getAllConfig, getUserDataDir, reload_config_from_disk, broadcastAllConfig } from '../config/store'
 import { sanitize_config_secrets } from '../config/secrets'
 import { close_history } from '../history'
+import { log } from '../log'
 
 interface BackupFile {
     name: string
@@ -290,7 +291,11 @@ function create_restore_staging_dir(entry_by_name: Map<string, Buffer>): string 
 function rollback_restore(rollback_paths: Map<string, string>): void {
     for (const [target_path, rollback_path] of rollback_paths) {
         remove_file_if_exists(target_path)
-        if (existsSync(rollback_path)) renameSync(rollback_path, target_path)
+        try {
+            if (existsSync(rollback_path)) renameSync(rollback_path, target_path)
+        } catch (err) {
+            log.error('rollback failed for %s: %s', target_path, err instanceof Error ? err.message : String(err))
+        }
     }
 }
 

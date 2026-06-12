@@ -288,8 +288,6 @@ export class WindowManager {
       const current = this.byLabel.get(opts.label)
       if (current?.id === win.id) {
         this.byLabel.delete(opts.label)
-        this.readyLabels.delete(opts.label)
-        this.pendingQueue.delete(opts.label)
 
         // Reset per-window pin/topmost state so next open starts fresh
         if (!is_rebuilding) {

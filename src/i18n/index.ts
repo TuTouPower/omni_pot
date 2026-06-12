@@ -18,8 +18,8 @@ i18n.use(initReactI18next).init({
 const loaded_locales = new Set<string>(['en'])
 
 async function load_locale(lang: string): Promise<Record<string, unknown>> {
-    const mod = await import(`./locales/${lang}.json`)
-    return mod.default as Record<string, unknown>
+    const mod = await import(`./locales/${lang}.json`) as { default: Record<string, unknown> }
+    return mod.default
 }
 
 async function ensure_locale(lang: string): Promise<void> {

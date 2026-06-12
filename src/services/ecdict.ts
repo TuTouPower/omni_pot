@@ -12,13 +12,21 @@ export const ecdictService: TranslateService = {
         text: string,
         from: LanguageCode
     ): Promise<string | DictResult> {
-        const result = await window.electronAPI.dict.lookup(text, from)
-        if (!result) return ''
-        return result
+        try {
+            const result = await window.electronAPI.dict.lookup(text, from)
+            if (!result) return ''
+            return result
+        } catch {
+            return ''
+        }
     },
 
     async testConfig(): Promise<boolean> {
-        const check = await window.electronAPI.dict.check()
-        return check.ready
+        try {
+            const check = await window.electronAPI.dict.check()
+            return check.ready
+        } catch {
+            return false
+        }
     }
 }

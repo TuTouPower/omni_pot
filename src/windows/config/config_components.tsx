@@ -73,10 +73,9 @@ export function ConfigSwitch({ on, onChange, testId }: {
     )
 }
 
-function require_select_option<T>(options: T[], index: number): T {
-    const option = options[index] ?? options[0]
-    if (option === undefined) return undefined as T
-    return option
+function require_select_option<T>(options: T[], index: number): T | undefined {
+    if (options.length === 0) return undefined
+    return options[index] ?? options[0]
 }
 
 export function ConfigSelect<T extends string>({ value, onChange, options, style, testId }: {
@@ -95,7 +94,6 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
     const selected_index = Math.max(0, options.findIndex((o) => o.value === value))
     const listbox_id = `${testId ?? 'config-select'}-listbox`
     const active_option = require_select_option(options, active_index)
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- options array may be empty
     const active_id = active_option ? `${listbox_id}-option-${active_option.value}` : undefined
 
     const updateMenuPosition = React.useCallback(() => {
@@ -146,7 +144,7 @@ export function ConfigSelect<T extends string>({ value, onChange, options, style
         } else if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             if (!open) open_menu()
-            else select_option(active_option.value)
+            else if (active_option) select_option(active_option.value)
         } else if (e.key === 'Escape') {
             e.preventDefault()
             setOpen(false)

@@ -92,7 +92,7 @@ function HotkeyField({ label, sub, configKey, activeField, onStartCapture }: Hot
             const result = await window.electronAPI.hotkey.register(configKey, tempValue)
             if (result.success) {
                 if (currentValue && currentValue !== tempValue) {
-                    await window.electronAPI.hotkey.unregister(configKey, currentValue)
+                    await window.electronAPI.hotkey.unregister(configKey, currentValue).catch(() => undefined)
                 }
                 setCurrentValue(tempValue)
                 setStatus('')
@@ -102,7 +102,7 @@ function HotkeyField({ label, sub, configKey, activeField, onStartCapture }: Hot
                 setStatus(t('hotkey.bind_failed', { defaultValue: '绑定失败' }))
             }
         } else {
-            await window.electronAPI.hotkey.unregister(configKey, currentValue)
+            await window.electronAPI.hotkey.unregister(configKey, currentValue).catch(() => undefined)
             setCurrentValue('')
             setStatus(t('hotkey.cleared', { defaultValue: '已清除' }))
         }

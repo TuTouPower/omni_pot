@@ -53,9 +53,12 @@ export default function HistorySettings(): React.ReactElement {
         if (search.trim()) filters.search = search.trim()
         if (serviceFilter) filters.service_key = serviceFilter
         if (timeFilter > 0) filters.days = timeFilter
-        const count = await api.history.count(Object.keys(filters).length > 0 ? filters : undefined)
+        const effective_filters = Object.keys(filters).length > 0 ? filters : undefined
+        const [count, rows] = await Promise.all([
+            api.history.count(effective_filters),
+            api.history.list(p, PAGE_SIZE, effective_filters),
+        ])
         setTotal(count)
-        const rows = await api.history.list(p, PAGE_SIZE, Object.keys(filters).length > 0 ? filters : undefined)
         setRecords(rows)
     }, [search, serviceFilter, timeFilter])
 
@@ -63,7 +66,9 @@ export default function HistorySettings(): React.ReactElement {
         let cancelled = false
         load_page(page).then(() => {
             if (cancelled) return
-        }).catch((err: unknown) => { log_error('load history', err) })
+        }).catch((err: unknown) => {
+            if (!cancelled) log_error('load history', err)
+        })
         return () => { cancelled = true }
     }, [page, load_page])
 
@@ -71,7 +76,7 @@ export default function HistorySettings(): React.ReactElement {
         window.electronAPI.history.service_keys()
             .then(setServiceOptions)
             .catch((err: unknown) => { log_error('load history service keys', err) })
-    }, [records])
+    }, [])
 
     const total_pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 

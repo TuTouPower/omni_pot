@@ -58,7 +58,7 @@ async function bootstrap(): Promise<void> {
   registerAllServices()
 
   // Start async config loading (sync initial values populated immediately via getInitial)
-  useConfigStore.getState().loadConfig()
+  useConfigStore.getState().loadConfig().catch((err: unknown) => { log.error('loadConfig failed: %s', err instanceof Error ? err.message : String(err)) })
 
   await bindI18nToConfig()
   bind_theme_to_config()

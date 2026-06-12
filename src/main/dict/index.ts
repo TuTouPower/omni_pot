@@ -7,6 +7,7 @@ import { log } from '../log'
 const log_dict = log.scope('ecdict')
 
 let db: Database.Database | undefined
+let db_state: 'idle' | 'ready' | 'failed' = 'idle'
 let cached_path: string | undefined
 const stmt_cache = new Map<string, Database.Statement>()
 
@@ -27,15 +28,18 @@ function find_db_path(): string | null {
 }
 
 function open_db(): Database.Database | null {
+    if (db_state === 'failed') return null
     if (db) return db
     const path = find_db_path()
     if (!path) {
+        db_state = 'failed'
         log_dict.warn('cc_cedict.db not found')
         return null
     }
     try {
         db = new Database(path, { readonly: true })
         cached_path = path
+        db_state = 'ready'
         stmt_cache.clear()
         stmt_cache.set('lookup_chinese', db.prepare(
             'SELECT simplified, traditional, pinyin, english FROM entries WHERE simplified = ? OR traditional = ?'
@@ -52,6 +56,7 @@ function open_db(): Database.Database | null {
     } catch (e) {
         log_dict.error('failed to open db: %s', e)
         db = undefined
+        db_state = 'failed'
         return null
     }
 }
@@ -113,6 +118,7 @@ export function close_dict(): void {
         db.close()
         db = undefined
     }
+    db_state = 'idle'
     cached_path = undefined
     stmt_cache.clear()
 }

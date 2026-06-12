@@ -202,4 +202,6 @@ export function close_chinese_dictionary(): void {
         db = undefined
     }
     db_state = 'idle'
+    cached_path = undefined
+    stmt_cache.clear()
 }

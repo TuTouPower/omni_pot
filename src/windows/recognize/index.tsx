@@ -289,8 +289,11 @@ export default function RecognizeWindow(): React.ReactElement {
         if (!recognizedText) return
         const requestId = bumpOcrRequestId()
         setIsTranslating(true)
-        await doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
-        setIsTranslating(false)
+        try {
+            await doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
+        } finally {
+            setIsTranslating(false)
+        }
     }, [recognizedText, selectedLanguage, bumpOcrRequestId, doTranslate])
 
     const handleDeleteNewline = useCallback(() => {

@@ -34,7 +34,8 @@ function read_config_from_disk(): PersistedShape {
         const persisted = to_persisted_shape(JSON.parse(readFileSync(config_path, 'utf-8')) as unknown)
         needs_secret_migration = has_plain_config_secrets(persisted)
         return to_persisted_shape(unprotect_config_secrets(persisted))
-    } catch {
+    } catch (e) {
+        log_config.warn('failed to read config, using defaults: %s', e instanceof Error ? e.message : String(e))
         return {}
     }
 }

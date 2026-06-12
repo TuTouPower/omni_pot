@@ -199,7 +199,7 @@ if (!gotLock) {
             log_main.info('HTTP server port in use, retrying in 3s (%d/%d)...', i + 1, retries)
             await new Promise(r => setTimeout(r, 3000))
           } else {
-            log_main.info('HTTP server failed:', err)
+            log_main.error('HTTP server failed:', err)
           }
         }
       }
