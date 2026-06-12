@@ -438,7 +438,7 @@ export default function RecognizeWindow(): React.ReactElement {
                 <button className="ic-btn" title={t('delete_spaces')} data-testid="ocr-space-btn" onClick={handleDeleteAllSpaces} disabled={!recognizedText}>
                     <Icons.Space size={16} />
                 </button>
-                <button className="ic-btn" title={t('copy')} data-testid="ocr-copy-btn" onClick={() => { handleCopy().catch((err: unknown) => { log_error('copy recognized text', err) }); }} disabled={!recognizedText}>
+                <button className="ic-btn" title={t('recognize.copy_recognized_text', { defaultValue: '复制识别文本' })} data-testid="ocr-copy-btn" onClick={() => { handleCopy().catch((err: unknown) => { log_error('copy recognized text', err) }); }} disabled={!recognizedText}>
                     <Icons.Copy size={16} />
                 </button>
                 <ExportButton text={is_translate_mode ? translatedText : recognizedText} />
