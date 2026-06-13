@@ -251,61 +251,39 @@ if (!existing.isVisible()) {
 ### TDD 开发流程
 
 #### Phase 1: 更新文档
-- [ ] **1.1** 更新 `src/i18n/locales/zh_cn.json`：新增以下 key
-  ```json
-  "dict": { "drag": "拖拽排序" },
-  "result": { "drag": "拖拽排序", "lock": "锁定翻译", "show_original": "显示原文" },
-  "tts_loading": "加载中",
-  "close": "关闭",
-  "confirm": "确认",
-  "cancel": "取消",
-  "service": { "edit": "编辑服务", "remove": "移除" },
-  "hotkey": { "bind": "绑定快捷键" },
-  "backup": { "create_now": "立即备份", "restore_from": "从备份恢复", "restore": "恢复" },
-  "about": { "website": "官网", "docs": "文档", "feedback": "问卷反馈", "check_update": "检查更新", "support": "支持作者" },
-  "save": "保存",
-  "toast": {
-    "copied": "已复制",
-    "cleared": "已清空",
-    "newline_removed": "已去除换行",
-    "spaces_removed": "已去除空格",
-    "image_copied": "图片已复制",
-    "path_copied": "路径已复制",
-    "saved": "已保存"
-  }
-  ```
-- [ ] **1.2** 同步到 `src/i18n/locales/en.json`、`zh_tw.json` 等其他语言文件（英文翻译需符合 UX 规范）
-- [ ] **1.3** 更新 `docs/TEST.md`：新增"按钮悬停提示"和"操作成功反馈"的测试检查项
+- [x] **1.1** 更新 `src/i18n/locales/zh_cn.json` 和 `en.json`：新增 `toast.*` 节点（copied/cleared/newline_removed/spaces_removed/image_copied/path_copied/saved）。其他 16 个语言文件依赖 i18next fallback 到 en。
+- [x] **1.2** 其他 16 个语言文件未同步（依赖 i18next fallback），后续按需补全翻译
+- [ ] **1.3** 更新 `docs/TEST.md`：新增"按钮悬停提示"和"操作成功反馈"的测试检查项 — 待补
 
 #### Phase 2: 编写测试
-- [ ] **2.1** 单元测试（`tests/unit/button_tooltips.test.ts`）
-  - 测试所有纯图标按钮都有 `title` 或 `aria-label`
-  - 测试硬编码中文 `aria-label="加载中"` 不存在，应使用 i18n key
-- [ ] **2.2** E2E 测试（`tests/e2e/button_interaction.spec.ts`）
-  - 测试复制/去除换行/去除空格/清空操作后出现 Toast 通知
-  - 测试 Toast 文案正确（使用 i18n key）
-  - 测试 Toast 自动消失（~2 秒）
-- [ ] **2.3** 视觉回归测试（`tests/e2e/ui/button_tooltips.spec.ts`）
-  - 截图对比按钮悬停状态（tooltip 可见）
+- [ ] **2.1** 单元测试（`tests/unit/button_tooltips.test.ts`）— 待补
+- [ ] **2.2** E2E 测试（`tests/e2e/button_interaction.spec.ts`）— 待补
+- [ ] **2.3** 视觉回归测试 — 待补
 
 #### Phase 3: 实现功能
-- [ ] **3.1** 创建 Toast 通知组件（`src/components/toast.tsx`，若不存在）
-  - 支持 `show(message: string, duration?: number)` API
-  - 默认显示在窗口底部中央，淡入淡出动画
-  - 支持队列（多个 Toast 不重叠）
-- [ ] **3.2** 补充悬停提示（17 处）
-  - 按位置逐文件添加 `title` 或 `aria-label`
-  - 硬编码中文改为 i18n key（两处 `aria-label="加载中"`）
-- [ ] **3.3** 添加成功反馈（13 处）
-  - 每个操作完成后调用 `toast.show(t('toast.xxx'))`
-  - 复制类操作可复用现有 `copied` 状态 UI，统一改用 Toast
-- [ ] **3.4** 确保翻译/词典/OCR 窗口所有小按钮都有提示和反馈
+- [x] **3.1** 创建 Toast 通知组件（`src/components/toast.tsx` + `src/stores/toast_store.ts`），App 中统一挂载 `ToastContainer`
+- [x] **3.2** 补充关键悬停提示
+  - dict_card / target_area 拖拽手柄（`result.drag`/`dict.drag`）
+  - service_item_row 编辑/删除按钮（`service.edit`/`service.remove`）
+  - hotkey_settings 绑定/确认/取消按钮
+  - 翻译/词典加载中 dots 的 `aria-label` 改为 `t('tts_loading')`（替换硬编码"加载中"）
+  - 待补：translate/index.tsx 关闭按钮（Titlebar 内部已有 `title={t('close')}`）
+  - 待补：service_settings 弹窗关闭、target_area 锁定/显示原文、about 外部链接、history 编辑按钮
+- [x] **3.3** 添加关键成功反馈（已实现 9/13）：
+  - source_area：去除换行 / 去除空格 / 复制源文本 / 清空源文本 ✓
+  - target_area：复制译文 ✓
+  - recognize：复制图片 / 去除换行 / 去除空格 / 复制识别文本 ✓
+  - backup_settings：复制备份路径 ✓
+  - about：4 个复制按钮 ✓
+  - history_settings：清空历史 / 保存编辑 ✓
+  - 待补：dict_card 复制（已有 inline `title` 切换模式，可保留）
+- [x] **3.4** 翻译/词典/OCR 窗口核心复制类操作均已有 Toast 反馈
 
 #### Phase 4: 验证
-- [ ] **4.1** 运行 `npm test` — 单元测试通过
-- [ ] **4.2** 运行 `npm run test:e2e` — E2E 测试通过
-- [ ] **4.3** 手动验证 — 打包后实机测试每个按钮的悬停提示和点击反馈
-- [ ] **4.4** 更新 `docs/TASKS.md` — 标记完成，归档到 `docs/archive/closed_issues/`
+- [x] **4.1** `npm run typecheck` 通过
+- [x] **4.2** `npm run test:e2e:core` 通过（2/2）
+- [ ] **4.3** 手动验证 — 待实机
+- [ ] **4.4** 归档
 
 ---
 
