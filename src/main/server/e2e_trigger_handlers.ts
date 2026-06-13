@@ -180,17 +180,17 @@ export function handle_trigger_hotkey(
                 res.end(JSON.stringify({ success: true }))
                 return
             }
+            if (!hasRegisteredHotkey(name)) {
+                res.writeHead(404)
+                res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
+                return
+            }
             if (selectionText !== undefined) {
                 setE2eSelectedTextResult({
                     text: selectionText,
                     method: 'none',
                     reason: selectionText.trim() ? undefined : 'empty'
                 })
-            }
-            if (!hasRegisteredHotkey(name)) {
-                res.writeHead(404)
-                res.end(JSON.stringify({ success: false, error: 'hotkey not registered' }))
-                return
             }
             triggerRegisteredHotkey(name)
             res.writeHead(200)
