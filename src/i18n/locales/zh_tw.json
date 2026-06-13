@@ -171,5 +171,14 @@
         "drag_hint": "拖動選取區域",
         "confirm": "確認",
         "cancel": "取消"
+    },
+    "toast": {
+        "copied": "已複製",
+        "cleared": "已清空",
+        "newline_removed": "已去除換行",
+        "spaces_removed": "已去除空格",
+        "image_copied": "圖片已複製",
+        "path_copied": "路徑已複製",
+        "saved": "已儲存"
     }
 }
