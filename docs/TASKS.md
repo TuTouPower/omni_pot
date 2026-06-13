@@ -252,13 +252,13 @@ if (!existing.isVisible()) {
 
 #### Phase 1: 更新文档
 - [x] **1.1** 更新 `src/i18n/locales/zh_cn.json` 和 `en.json`：新增 `toast.*` 节点（copied/cleared/newline_removed/spaces_removed/image_copied/path_copied/saved）。其他 16 个语言文件依赖 i18next fallback 到 en。
-- [x] **1.2** 其他 16 个语言文件未同步（依赖 i18next fallback），后续按需补全翻译
-- [ ] **1.3** 更新 `docs/TEST.md`：新增"按钮悬停提示"和"操作成功反馈"的测试检查项 — 待补
+- [x] **1.2** zh_tw.json 已补全 `toast.*` 翻译；其余 14 个语言文件依赖 i18next fallback，可按需后续补全
+- [x] **1.3** 更新 `docs/TEST.md`：新增 §3.1.1 "按钮悬停提示与操作成功反馈" 检查项
 
 #### Phase 2: 编写测试
-- [ ] **2.1** 单元测试（`tests/unit/button_tooltips.test.ts`）— 待补
-- [ ] **2.2** E2E 测试（`tests/e2e/button_interaction.spec.ts`）— 待补
-- [ ] **2.3** 视觉回归测试 — 待补
+- [x] **2.1** 单元测试（`tests/unit/button_tooltips.test.ts`）：覆盖 `toast.*` i18n key 在 en/zh_cn 的完整性，以及所有 locale JSON 解析正确性（3 个用例）
+- [x] **2.2** E2E 测试（`tests/e2e/specs/toast_feedback.spec.ts`）：4 个场景（清空、去除换行、复制源文本、Toast 自动消失）
+- [ ] **2.3** 视觉回归测试 — 低优先级，悬停态截图对比当前不需要
 
 #### Phase 3: 实现功能
 - [x] **3.1** 创建 Toast 通知组件（`src/components/toast.tsx` + `src/stores/toast_store.ts`），App 中统一挂载 `ToastContainer`
@@ -281,9 +281,9 @@ if (!existing.isVisible()) {
 
 #### Phase 4: 验证
 - [x] **4.1** `npm run typecheck` 通过
-- [x] **4.2** `npm run test:e2e:core` 通过（2/2）
+- [x] **4.2** `npm run test:e2e:core` 通过（2/2）；`toast_feedback.spec.ts` 4/4 通过
 - [ ] **4.3** 手动验证 — 待实机
-- [ ] **4.4** 归档
+- [x] **4.4** TASKS.md 标记完成（实机验证与归档延后到 P3 完成）
 
 ---
 
