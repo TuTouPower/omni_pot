@@ -297,7 +297,7 @@ export default function HistorySettings(): React.ReactElement {
                     >
                         <div className="card-head">
                             <span>{selected.service_key}</span>
-                            <button data-testid="history-edit-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => { setSelected(null); }}>
+                            <button data-testid="history-edit-close" className="ic-btn" title={t('close', { defaultValue: '关闭' })} style={{ marginLeft: 'auto' }} onClick={() => { setSelected(null); }}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
@@ -315,8 +315,8 @@ export default function HistorySettings(): React.ReactElement {
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                                <button data-testid="history-edit-cancel" className="btn ghost" onClick={() => { setSelected(null); }}>{t('ui.cancel', { defaultValue: '取消' })}</button>
-                                <button data-testid="history-edit-save" className="btn primary" onClick={() => { handle_save().catch((err: unknown) => { log_error('save history record', err) }); }}>{t('ui.save', { defaultValue: '保存' })}</button>
+                                <button data-testid="history-edit-cancel" className="btn ghost" title={t('ui.cancel', { defaultValue: '取消' })} onClick={() => { setSelected(null); }}>{t('ui.cancel', { defaultValue: '取消' })}</button>
+                                <button data-testid="history-edit-save" className="btn primary" title={t('ui.save', { defaultValue: '保存' })} onClick={() => { handle_save().catch((err: unknown) => { log_error('save history record', err) }); }}>{t('ui.save', { defaultValue: '保存' })}</button>
                             </div>
                         </div>
                     </div>

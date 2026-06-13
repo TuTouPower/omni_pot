@@ -189,11 +189,11 @@ export default function BackupSettings(): React.ReactElement {
 
             <ConfigCard title="操作">
                 <div style={{ display: 'flex', gap: 8 }}>
-                    <button data-testid="backup-create" className="btn primary" onClick={() => { handle_backup().catch((err: unknown) => { log_error('create backup', err) }); }}>
+                    <button data-testid="backup-create" className="btn primary" title={t('backup.create', { defaultValue: '立即备份' })} onClick={() => { handle_backup().catch((err: unknown) => { log_error('create backup', err) }); }}>
                         <Icons.Cloud size={14} />
                         {t('backup.create', { defaultValue: '立即备份' })}
                     </button>
-                    <button data-testid="backup-restore-open" className="btn" onClick={() => { load_backups().catch((err: unknown) => { log_error('load backups', err) }); setRestoreModal(true) }}>
+                    <button data-testid="backup-restore-open" className="btn" title={t('backup.restore', { defaultValue: '从备份恢复' })} onClick={() => { load_backups().catch((err: unknown) => { log_error('load backups', err) }); setRestoreModal(true) }}>
                         <Icons.Cycle size={14} />
                         {t('backup.restore', { defaultValue: '从备份恢复' })}
                     </button>
@@ -215,10 +215,10 @@ export default function BackupSettings(): React.ReactElement {
                                 {extract_timestamp(entry.name)}{extract_timestamp(entry.name) ? ' · ' : ''}{format_size(entry.size)}
                             </div>
                         </div>
-                        <button data-testid="backup-copy-path" className="btn ghost icon sm" title="复制路径" onClick={() => { handle_copy_path(entry.name).catch((err: unknown) => { log_error('copy backup path', err) }); }}>
+                        <button data-testid="backup-copy-path" className="btn ghost icon sm" title={t('about.copy_path', { defaultValue: '复制路径' })} onClick={() => { handle_copy_path(entry.name).catch((err: unknown) => { log_error('copy backup path', err) }); }}>
                             <Icons.Copy size={12} />
                         </button>
-                        <button data-testid="backup-delete" className="btn ghost icon sm" style={{ color: 'var(--danger)' }} title="删除" onClick={() => { handle_delete(entry.name).catch((err: unknown) => { log_error('delete backup', err) }); }}>
+                        <button data-testid="backup-delete" className="btn ghost icon sm" style={{ color: 'var(--danger)' }} title={t('ui.delete', { defaultValue: '删除' })} onClick={() => { handle_delete(entry.name).catch((err: unknown) => { log_error('delete backup', err) }); }}>
                             <Icons.Trash size={12} />
                         </button>
                     </div>

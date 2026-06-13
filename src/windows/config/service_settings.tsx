@@ -296,7 +296,7 @@ export default function ServiceSettings(): React.ReactElement {
                     >
                         <div className="card-head">
                             <span>{t('service.add', { defaultValue: '添加服务' })}</span>
-                            <button className="ic-btn" data-testid="svc-add-close" style={{ marginLeft: 'auto' }} onClick={() => { setShowAddModal(false); }}>
+                            <button className="ic-btn" data-testid="svc-add-close" title={t('close', { defaultValue: '关闭' })} style={{ marginLeft: 'auto' }} onClick={() => { setShowAddModal(false); }}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
@@ -354,7 +354,7 @@ export default function ServiceSettings(): React.ReactElement {
                     >
                         <div className="card-head">
                             <span>{t('service.edit_service')}</span>
-                            <button className="ic-btn" style={{ marginLeft: 'auto' }} onClick={closeEdit}>
+                            <button className="ic-btn" title={t('close', { defaultValue: '关闭' })} style={{ marginLeft: 'auto' }} onClick={closeEdit}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
