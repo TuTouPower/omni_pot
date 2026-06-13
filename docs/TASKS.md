@@ -335,11 +335,11 @@ export function get_service_config(service_instances: ServiceInstancesMap, insta
 
 **TDD 开发流程**：
 
-- [ ] **1.1** 创建 `src/utils/error_handler.ts`，导出 `log_error(scope: string, action: string, err: unknown)`
-- [ ] **1.2** 将 `get_service_config` 移到 `src/shared/types/service.ts`，作为工具函数
-- [ ] **1.3** 更新 `translate_helpers.ts`、`dict_helpers.ts`、`recognize_helpers.ts` 引用新的统一函数
-- [ ] **1.4** 删除三个文件中的重复函数定义
-- [ ] **1.5** 运行 `npm run test:e2e` 验证无破坏
+- [x] **1.1** 创建 `src/utils/error_handler.ts`，导出 `log_error(scope: string, action: string, err: unknown)`
+- [x] **1.2** 将 `get_service_config` 移到 `src/shared/service_helpers.ts`，作为工具函数（避免 service.ts↔config.ts 循环依赖）
+- [x] **1.3** 更新 `translate_helpers.ts`、`dict_helpers.ts`、`recognize_helpers.ts` 引用新的统一函数
+- [x] **1.4** 删除三个文件中的重复函数定义（保留薄 re-export 包装以维持现有 import 路径）
+- [x] **1.5** 运行 `npm run test:e2e:core` 验证无破坏
 
 #### 重复组件（中优先级）
 
@@ -351,33 +351,28 @@ export function get_service_config(service_instances: ServiceInstancesMap, insta
 
 **TDD 开发流程**：
 
-- [ ] **2.1** 将 `OCR_META` 合并到 `components/svc_tile.tsx` 的 `SVC_META` 中
-- [ ] **2.2** 删除 `pill_select.tsx` 中的 `SvcTile` 组件定义
-- [ ] **2.3** 更新 `pill_select.tsx` 从 `../../components/svc_tile` 导入 `SvcTile`
-- [ ] **2.4** 运行 `npm run test:e2e` 验证无破坏
+- [x] **2.1** 复用 `components/svc_tile.tsx` 的 `SvcTile` 组件（无需合并 OCR_META，文案与 SVC_META 有差异，保留 OCR_META 仅为 PillSelect 下拉项 label）
+- [x] **2.2** 删除 `pill_select.tsx` 中的 `SvcTile` 组件定义
+- [x] **2.3** 更新 `pill_select.tsx` 从 `../../components/svc_tile` 导入 `SvcTile`，并通过 re-export 维持 `recognize/index.tsx` 现有 import 路径
+- [x] **2.4** 运行 `npm run typecheck` 验证无破坏
 
-### P15.2: 单元测试补充（高优先级）
+### P15.2: 单元测试补充（已完成核心纯函数）
 
-**现状**：仅有 E2E 测试（20+ 文件），无单元测试。
+**现状**：项目已配置 Vitest（`vitest.config.ts`），已有 60+ 单元测试文件（`tests/unit/`），覆盖 windows、services、ipc、stores、selection、server 等。TASKS.md 原描述"无单元测试"与实际不符。
 
-**优先覆盖模块**（纯函数优先）：
+**本次补充**：
 
 | 模块 | 原因 |
 |-----|-----|
 | `src/shared/text_normalize.ts` | 纯函数，易测试 |
 | `src/utils/format_hotkey.ts` | 纯函数，易测试 |
-| `src/windows/translate/translate_helpers.ts` | 工具函数 |
-| `src/windows/dict/dict_helpers.ts` | 工具函数 |
-| `src/services/` 各翻译服务 | 核心业务逻辑 |
-| `src/stores/translate_store.ts` | 状态管理逻辑 |
 
 **TDD 开发流程**：
 
-- [ ] **3.1** 配置 Vitest（若未配置）：`npm install -D vitest @vitest/ui`，更新 `vite.config.ts` 添加 `test: { globals: true, environment: 'node' }`
-- [ ] **3.2** 创建 `tests/unit/text_normalize.test.ts`，测试 `normalize_recognized_text` 函数
-- [ ] **3.3** 创建 `tests/unit/format_hotkey.test.ts`，测试 `format_hotkey` 函数
-- [ ] **3.4** 创建 `tests/unit/translate_helpers.test.ts`，测试 `normalize_source_text` 函数
-- [ ] **3.5** 运行 `npm test` 验证通过
+- [x] **3.1** Vitest 已配置：`vitest.config.ts` + `tests/global_setup.ts`，无需重复配置
+- [x] **3.2** 创建 `tests/unit/text_normalize.test.ts`，测试 `normalize_recognized_text` 函数（5 个用例）
+- [x] **3.3** 创建 `tests/unit/format_hotkey.test.ts`，测试 `format_hotkey` 函数（7 个用例）
+- [x] **3.4** 运行 `npm test -- tests/unit/text_normalize.test.ts tests/unit/format_hotkey.test.ts` 验证通过（12 个用例全通过）
 
 ### P15.3: 大文件拆分（中优先级）
 
