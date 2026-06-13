@@ -114,6 +114,28 @@
     },
     "portable": {
       "artifactName": "OmniPot-${version}-windows-portable.${ext}"
+    },
+    "mac": {
+      "icon": "public/logos/logo.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "OmniPot-${version}-macos-dmg.${ext}",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "icon": "public/logos/logo.png",
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "OmniPot-${version}-linux-appimage.${ext}",
+      "category": "Office"
     }
   },
   "devDependencies": {
