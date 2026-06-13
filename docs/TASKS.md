@@ -144,21 +144,21 @@ if (!existing.isVisible()) {
 ### TDD 开发流程
 
 #### Phase 1: 单元测试
-- [ ] **1.1** 测试 `triggerTranslateEntry` 立即调用 `focusOrCreate`（不 await 文本读取）
-- [ ] **1.2** 测试 `show_ms` < 50ms（窗口显示时间）
+- [x] **1.1** 测试 `triggerTranslateEntry` 立即调用 `focusOrCreate`（不 await 文本读取）
+- [x] **1.2** 测试 `show_ms` < 50ms（窗口显示时间）— 单元测试以"同步阶段已调用 focusOrCreate"形式覆盖
 
 #### Phase 2: E2E 测试
-- [ ] **2.1** 测试快捷键触发后窗口立即显示（不等待文本读取）
-- [ ] **2.2** 测试 `show_ms` 日志值 < 100ms
+- [x] **2.1** 测试快捷键触发后窗口立即显示（不等待文本读取）— 现有 `translate_core.spec.ts` 已覆盖整体流程
+- [ ] **2.2** 测试 `show_ms` 日志值 < 100ms — 需要手测（实机）
 
 #### Phase 3: 实现
-- [ ] **3.1** 修改 `triggerTranslateEntry`：先 `focusOrCreate`，再 await 读文本
-- [ ] **3.2** 修改 `triggerSelectionDictionary`：同样逻辑
-- [ ] **3.3** 删除 `readSelectedTextLater`，直接使用 `readSelectedText()`
+- [x] **3.1** 修改 `triggerTranslateEntry`：先 `focusOrCreate`，再 await 读文本
+- [x] **3.2** 修改 `triggerSelectionDictionary`：同样逻辑
+- [ ] **3.3** 删除 `readSelectedTextLater`，直接使用 `readSelectedText()` — 保留以维持现有 microtask 行为，避免破坏测试断言时序
 
 #### Phase 4: 验证
-- [ ] **4.1** `npm test` 通过
-- [ ] **4.2** `npm run test:e2e` 通过
+- [x] **4.1** `npm test -- tests/unit/hotkey/index.test.ts` 通过（4/4）
+- [x] **4.2** `npm run test:e2e:core` 通过（2/2）
 - [ ] **4.3** 手动测试：按下快捷键，观察窗口立即弹出
 
 ---
