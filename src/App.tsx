@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react'
+import { ToastContainer } from './components/toast'
 
 const TranslateWindow = React.lazy(() => import('./windows/translate'))
 const WelcomeWindow = React.lazy(() => import('./windows/welcome'))
@@ -13,9 +14,7 @@ function getLabel(): string {
   return window.location.hash.replace(/^#/, '') || 'translate'
 }
 
-export default function App(): React.ReactElement {
-  const label = getLabel()
-
+function renderWindow(label: string): React.ReactElement {
   switch (label) {
     case 'translate':
       return <Suspense fallback={<div />}><TranslateWindow /></Suspense>
@@ -38,4 +37,15 @@ export default function App(): React.ReactElement {
     default:
       return <Suspense fallback={<div />}><TranslateWindow /></Suspense>
   }
+}
+
+export default function App(): React.ReactElement {
+  const label = getLabel()
+
+  return (
+    <>
+      {renderWindow(label)}
+      <ToastContainer />
+    </>
+  )
 }
