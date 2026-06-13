@@ -13,6 +13,7 @@
     "dist": "node scripts/run_dist.mjs",
     "release:publish": "node scripts/publish_release.mjs",
     "dist:dir": "node scripts/run_dist.mjs --dir",
+    "dist:smoke": "node scripts/check_dist_smoke.mjs",
     "postinstall": "electron-builder install-app-deps",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint --config eslint_config.mjs . --max-warnings=0",
