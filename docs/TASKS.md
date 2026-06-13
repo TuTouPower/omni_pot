@@ -189,9 +189,9 @@ if (!existing.isVisible()) {
 
 - [x] **artifactName 统一**：Windows nsis/portable 改为 `OmniPot-${version}-windows-setup.${ext}` / `OmniPot-${version}-windows-portable.${ext}`
 - [x] **release_metadata v2**：`FILE_SPECS` 驱动，`files` 数组 + `os`/`type`，`format_version: 2`
-- [ ] **macOS universal DMG**：electron-builder 加 mac target（`dmg`，`artifactName: "OmniPot-${version}-macos.${ext}"`）
-- [ ] **Linux AppImage**：electron-builder 加 linux target（`AppImage`，`artifactName: "OmniPot-${version}-linux.${ext}"`）
-- [ ] **自动更新适配 v2**：`src/main/updater/` 按 `os` 筛选 `files` 数组匹配对应平台下载链接
+- [x] **macOS universal DMG**：electron-builder 加 mac target（`dmg`，`artifactName: "OmniPot-${version}-macos-dmg.${ext}"`，x64+arm64 universal）。⚠️ 实际打包需在 macOS 上执行。
+- [x] **Linux AppImage**：electron-builder 加 linux target（`AppImage`，`artifactName: "OmniPot-${version}-linux-appimage.${ext}"`）。⚠️ 实际打包需在 Linux 上执行。
+- [x] **自动更新适配 v2**：`src/main/updater/latest_metadata.ts` 的 `get_current_os_type()` + `metadata.files.find((f) => f.os === os && f.type === type)` 已实现按平台筛选下载链接
 
 ---
 
