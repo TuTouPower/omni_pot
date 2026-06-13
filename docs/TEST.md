@@ -128,7 +128,18 @@
 - 语言标签文字正确性：断言具体文字（如 `native_language_name` 返回值），不能只断言 `toBeVisible()`。
 - 快捷键录入互斥：同时只有一个字段处于录入态；点击另一个字段的"绑定"时，前一个自动退出。
 - 词典服务分流：中文查询只出Chinese Dictionary卡片，英文查询只出英文词典卡片，通过 `data-result-key` 验证。
-- 中文场景覆盖：测试数据不能只有 `hello world`，必须包含中文查询（如"经济"、"学习"）。
+- 中文场景覆盖：测试数据不能只有 `hello world`，必须包含中文查询（如"经济"、"学习")。
+
+### 3.1.1 按钮悬停提示与操作成功反馈
+
+来自 P13（按钮提示与反馈全覆盖）：
+
+- **纯图标按钮**必须有 `title` 或 `aria-label`（鼠标悬停可见提示），不能用硬编码中文字符串，必须用 i18n key。
+- **复制 / 删除 / 清空 / 去除换行 / 去除空格** 等一次性操作完成后，必须显示 Toast 通知（`useToastStore` → `ToastContainer`，data-testid=`toast`）。
+- Toast 文案必须使用 `t('toast.*')` 系列 key（已存在于 zh_cn/zh_tw/en，其他语言回退到 en）。
+- 新增按钮时，自动化测试应至少覆盖：
+  - 按钮有 `title` 或 `aria-label` 属性；
+  - 触发操作后 `getByTestId('toast')` 在 3s 内可见。
 
 ### 3.2 可半自动化覆盖
 
