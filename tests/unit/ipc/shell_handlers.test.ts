@@ -29,4 +29,20 @@ describe('open_external_safely', () => {
         await expect(open_external_safely('file:///C:/Windows/System32/cmd.exe')).resolves.toBe(false)
         expect(shell_open_external).not.toHaveBeenCalled()
     })
+
+    it('allows wj.qq.com survey URLs', async () => {
+        const { open_external_safely } = await import('../../../src/main/ipc/shell_handlers')
+        shell_open_external.mockClear()
+
+        await expect(open_external_safely('https://wj.qq.com/edit?sid=27007386')).resolves.toBe(true)
+        expect(shell_open_external).toHaveBeenCalledWith('https://wj.qq.com/edit?sid=27007386')
+    })
+
+    it('rejects unknown domains', async () => {
+        const { open_external_safely } = await import('../../../src/main/ipc/shell_handlers')
+        shell_open_external.mockClear()
+
+        await expect(open_external_safely('https://evil.example.com/phish')).resolves.toBe(false)
+        expect(shell_open_external).not.toHaveBeenCalled()
+    })
 })
