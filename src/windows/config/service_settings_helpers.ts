@@ -1,7 +1,7 @@
 import { translateServiceRegistry, dictionaryServiceRegistry, ocrServiceRegistry } from '../../services/registry'
 import { ttsServiceRegistry } from '../../services/tts_registry'
 import type { ServiceConfig } from '@shared/types/service'
-import type { ServiceInstancesMap } from '@shared/types/config'
+import { get_service_config as shared_get_service_config } from '@shared/service_helpers'
 
 export type ServiceCategory = 'translate_service_list' | 'dictionary_service_list' | 'english_dictionary_service_list' | 'recognize_service_list' | 'tts_service_list'
 type TestableService = { testConfig(config: Record<string, unknown>): Promise<boolean> }
@@ -51,6 +51,4 @@ export function parse_config_text(text: string): ServiceConfig | null {
     return result
 }
 
-export function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
-    return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
-}
+export { shared_get_service_config as get_service_config }
