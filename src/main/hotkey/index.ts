@@ -52,14 +52,17 @@ function readSelectedTextLater(): ReturnType<typeof readSelectedText> {
 
 export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: string): Promise<void> {
     const started_at = Date.now()
+
+    // Show window immediately so the user sees instant feedback.
+    mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
+    const show_ms = Date.now() - started_at
+    mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-pending')
+
     const result_promise = textOverride === undefined
         ? readSelectedTextLater()
         : Promise.resolve({ text: textOverride, method: 'none' as const, reason: textOverride.trim() ? undefined : 'empty' as const })
 
     const result = await result_promise
-    mgr.focusOrCreate(WindowLabel.TRANSLATE, get_translate_window_options())
-    const show_ms = Date.now() - started_at
-    mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-pending')
 
     const total_ms = Date.now() - started_at
     if (!result.text.trim()) {
@@ -74,11 +77,14 @@ export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: s
 
 export async function triggerSelectionDictionary(mgr: WindowManager): Promise<void> {
     const started_at = Date.now()
+
+    // Show window immediately so the user sees instant feedback.
+    mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
+    const show_ms = Date.now() - started_at
+
     const result_promise = readSelectedTextLater()
 
     const result = await result_promise
-    mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
-    const show_ms = Date.now() - started_at
 
     const total_ms = Date.now() - started_at
     if (!result.text.trim()) {
