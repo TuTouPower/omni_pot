@@ -5,6 +5,7 @@ import { useConfig } from '../../hooks/use_config'
 import type { HistoryRecord } from '@shared/types/ipc'
 import { ConfigSwitch } from './config_components'
 import { create_logger } from '../../utils/logger'
+import { show_toast } from '../../stores/toast_store'
 
 const log = create_logger('config-history')
 
@@ -87,6 +88,7 @@ export default function HistorySettings(): React.ReactElement {
         setServiceFilter('')
         setTimeFilter(0)
         load_page(1).catch((err: unknown) => { log_error('load history', err) })
+        show_toast(t('toast.cleared', { defaultValue: '已清空' }))
     }
 
     const handle_select = (record: HistoryRecord): void => {
@@ -100,6 +102,7 @@ export default function HistorySettings(): React.ReactElement {
         await window.electronAPI.history.update(selected.id, editSource, editTarget)
         setSelected(null)
         load_page(page).catch((err: unknown) => { log_error('load history', err) })
+        show_toast(t('toast.saved', { defaultValue: '已保存' }))
     }
 
     const disabled = historyDisable

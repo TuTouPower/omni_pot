@@ -4,6 +4,7 @@ import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
 import { ConfigCard, ConfigRow, ConfigField } from './config_components'
 import { create_logger } from '../../utils/logger'
+import { show_toast } from '../../stores/toast_store'
 
 const log = create_logger('config-backup')
 
@@ -107,6 +108,7 @@ export default function BackupSettings(): React.ReactElement {
         try {
             const path = await window.electronAPI.backup.getPath(name)
             await navigator.clipboard.writeText(path)
+            show_toast(t('toast.path_copied', { defaultValue: '路径已复制' }))
         } catch (error) {
             setStatus(`复制失败: ${error_message(error)}`)
         }
