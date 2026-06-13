@@ -1,29 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Icons } from '../../components/icons'
+import { SvcTile } from '../../components/svc_tile'
+
+export { SvcTile }
 
 function require_pill_option<T>(options: T[], index: number): T {
     const option = options[index] ?? options[0]
     if (option === undefined) throw new Error('select requires options')
     return option
-}
-
-export function SvcTile({ name, size = 22 }: { name: string; size?: number }): React.ReactElement {
-    const m = OCR_META[name] ?? { mono: name.slice(0, 2).toUpperCase(), tone: 'oklch(55% 0.005 70)' }
-    return (
-        <div
-            className="svc-tile"
-            style={{
-                width: size,
-                height: size,
-                fontSize: size >= 28 ? 11 : 9,
-                color: m.tone,
-                borderColor: 'color-mix(in oklab, ' + m.tone + ' 30%, var(--line))',
-            }}
-        >
-            {m.mono}
-        </div>
-    )
 }
 
 // OCR engine metadata (subset of SVC_META for action bar)
