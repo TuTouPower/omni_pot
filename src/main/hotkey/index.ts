@@ -46,10 +46,6 @@ export function buildHotkeyAction(name: string, mgr: WindowManager): () => void 
   }
 }
 
-function readSelectedTextLater(): ReturnType<typeof readSelectedText> {
-    return Promise.resolve().then(() => readSelectedText())
-}
-
 export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: string): Promise<void> {
     const started_at = Date.now()
 
@@ -59,7 +55,7 @@ export async function triggerTranslateEntry(mgr: WindowManager, textOverride?: s
     mgr.sendWhenReady(WindowLabel.TRANSLATE, 'translate:selection-pending')
 
     const result_promise = textOverride === undefined
-        ? readSelectedTextLater()
+        ? readSelectedText()
         : Promise.resolve({ text: textOverride, method: 'none' as const, reason: textOverride.trim() ? undefined : 'empty' as const })
 
     const result = await result_promise
@@ -82,7 +78,7 @@ export async function triggerSelectionDictionary(mgr: WindowManager): Promise<vo
     mgr.focusOrCreate(WindowLabel.DICT, get_dict_window_options())
     const show_ms = Date.now() - started_at
 
-    const result_promise = readSelectedTextLater()
+    const result_promise = readSelectedText()
 
     const result = await result_promise
 

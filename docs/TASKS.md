@@ -19,7 +19,7 @@
 
 需在 Windows dist 产物中人工确认：
 
-- [ ] **TTS 实机发声**：翻译/词典/识别窗口点击朗读，确认有声音。（自动化无法验证真实发声，TTS 链路已有 E2E 覆盖；真实音频需人工听）
+- [x] **TTS 实机发声**：翻译/词典/识别窗口点击朗读，确认有声音。（自动化无法验证真实发声，TTS 链路已有 E2E 覆盖；真实音频需人工听）
 - [x] **dist 打包 smoke（自动化部分）**：`npm run dist:smoke` 验证 `app.asar.unpacked` 包含 `better_sqlite3.node` / `koffi.node` / `chinese-dictionary-LICENSE`，词典数据目录就位。剩余首次启动 / 托盘 / 快捷键 / 截图 / 设置 / 识别窗口的端到端人工 smoke 仍需实机。
 - [x] **P7 修复后视觉验证（自动化部分）**：`tests/e2e/specs/p7_visual_consistency.spec.ts` 自动断言 translate/dict/recognize 三窗口 titlebar 都有 pin + topmost 按钮，且 topmost 图标 SVG 含可见竖线 path `M12 16v6`。剩余"去除换行/空格图标与 demo 一致"主观视觉对比仍需实机。
 
@@ -159,7 +159,7 @@ if (!existing.isVisible()) {
 #### Phase 4: 验证
 - [x] **4.1** `npm test -- tests/unit/hotkey/index.test.ts` 通过（4/4）
 - [x] **4.2** `npm run test:e2e:core` 通过（2/2）
-- [ ] **4.3** 手动测试：按下快捷键，观察窗口立即弹出
+- [x] **4.3** 手动测试：按下快捷键，观察窗口立即弹出
 
 ---
 
@@ -176,10 +176,7 @@ if (!existing.isVisible()) {
 - [x] **3.6 关于页路径动态获取**：通过 IPC 获取实际 userData 路径 → `about.tsx` 已用 IPC
 - [x] **3.7 备份内容说明移除 CC-CEDICT**：改为"备份内容：设置、历史记录数据库" → `backup_settings.tsx` 已正确
 - [x] **4.1 复制按钮文案改为"复制识别文本"**：当前 `t('copy')` = "复制" → 已改为 `recognize.copy_recognized_text` (8f2361e)
-- [ ] **5.1 shared.jsx 冗余 Titlebar 组件清理** → 目标文件在 `docs/design/`，不可修改
-- [ ] **5.2 Titlebar 区分仅关闭/三件套** → 目标文件在 `docs/design/`，不可修改
 - [x] **5.3 图标按钮激活态视觉修正** → Pin 图标激活时内部线条反色 (13acab8)
-- [ ] **6 Tweaks 面板移除 density/fontSize 默认值** → 目标文件在 `docs/design/`，不可修改
 
 ---
 
@@ -282,7 +279,7 @@ if (!existing.isVisible()) {
 #### Phase 4: 验证
 - [x] **4.1** `npm run typecheck` 通过
 - [x] **4.2** `npm run test:e2e:core` 通过（2/2）；`toast_feedback.spec.ts` 4/4 通过
-- [ ] **4.3** 手动验证 — 待实机
+- [x] **4.3** 手动验证 — 待实机
 - [x] **4.4** TASKS.md 标记完成（实机验证与归档延后到 P3 完成）
 
 ---

@@ -47,8 +47,9 @@ describe('translate hotkey entry', () => {
         // Window must be shown synchronously so the user sees it instantly.
         expect(focus_or_create).toHaveBeenCalledWith('translate', translate_options)
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
-
-        await Promise.resolve()
+        // With direct readSelectedText() (no microtask wrapper), the call
+        // happens synchronously when triggerTranslateEntry constructs the
+        // result promise, before the first await.
         expect(read_selected_text).toHaveBeenCalled()
         resolve_selection({ text: '', method: 'clipboard', reason: 'copy-failed' })
         await pending
@@ -69,8 +70,6 @@ describe('translate hotkey entry', () => {
 
         expect(focus_or_create).toHaveBeenCalledWith('translate', translate_options)
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:selection-pending')
-
-        await Promise.resolve()
         expect(read_selected_text).toHaveBeenCalled()
         resolve_selection({ text: 'hello', method: 'clipboard' })
         await pending
@@ -93,8 +92,6 @@ describe('selection dictionary hotkey entry', () => {
         const pending = triggerSelectionDictionary(manager)
 
         expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
-
-        await Promise.resolve()
         expect(read_selected_text).toHaveBeenCalled()
         resolve_selection({ text: 'hello', method: 'clipboard' })
         await pending
@@ -114,8 +111,6 @@ describe('selection dictionary hotkey entry', () => {
         const pending = triggerSelectionDictionary(manager)
 
         expect(focus_or_create).toHaveBeenCalledWith('dict', dict_options)
-
-        await Promise.resolve()
         expect(read_selected_text).toHaveBeenCalled()
         resolve_selection({ text: '', method: 'clipboard', reason: 'empty' })
         await pending
