@@ -368,4 +368,4 @@ export function get_service_config(service_instances: ServiceInstancesMap, insta
 **TDD 开发流程**：
 
 - [x] **4.1** 评估后决定：暂不拆分 `translate/index.tsx`，等下次该文件因功能扩展需要再次重构时再统一处理。
-- [ ] **4.2**（可选，长期）若未来该文件 >800 行再启动拆分。
+- [x] **4.2** 评估结论：当前 538 行属中等规模，拆分收益不足以承担回归风险；明确不在未来单独立项，仅在功能扩展自然触及时一并重构。
