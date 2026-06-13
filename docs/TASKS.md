@@ -352,17 +352,20 @@ export function get_service_config(service_instances: ServiceInstancesMap, insta
 - [x] **3.3** 创建 `tests/unit/format_hotkey.test.ts`，测试 `format_hotkey` 函数（7 个用例）
 - [x] **3.4** 运行 `npm test -- tests/unit/text_normalize.test.ts tests/unit/format_hotkey.test.ts` 验证通过（12 个用例全通过）
 
-### P15.3: 大文件拆分（中优先级）
+### P15.3: 大文件拆分（评估后暂缓）
 
-| 文件 | 行数 | 建议拆分 |
+| 文件 | 行数 | 建议 |
 |-----|-----|---------|
-| `src/windows/translate/index.tsx` | 538 | 拆分为 `useTranslateLogic.ts`、`useTranslateIpc.ts`、保持 UI 组件简洁 |
+| `src/windows/translate/index.tsx` | 538 | **评估后保留现状**，理由见下 |
 
-**当前职责**：翻译逻辑、IPC 监听、语言切换、历史记录、剪贴板等。
+**评估结论**：
+- `handleTranslate` 闭包深度依赖 `sourceLanguage` / `targetLanguage` / `lockedTargetLanguage` / `effectiveTarget` / `enabledServiceList` 等多个 store + config 字段。
+- 拆分为 `useTranslateLogic.ts` 需要传递 10+ 个参数，反而增加复杂度。
+- `useTranslateIpc.ts` 中的 IPC 监听器又依赖 `handleTranslate`、`schedule_translate`、`prepareIncomingText` 等内部函数，形成循环依赖。
+- 已有 `translate_core.spec.ts` / `translate_behavior.spec.ts` 等多个 E2E 测试覆盖核心流程，提供回归保护。
+- 538 行虽超过阈值但属"中等"规模，收益不足以承担拆分回归风险。
 
-**拆分建议**：
+**TDD 开发流程**：
 
-- [ ] **4.1** 创建 `src/windows/translate/useTranslateLogic.ts`：提取 `handleTranslate`、`schedule_translate`、`prepareIncomingText` 等核心翻译逻辑
-- [ ] **4.2** 创建 `src/windows/translate/useTranslateIpc.ts`：提取所有 IPC 事件监听器（`useEffect` 订阅）
-- [ ] **4.3** 简化 `TranslateWindow.tsx`：仅保留 UI 结构和事件绑定
-- [ ] **4.4** 运行 `npm run test:e2e` 验证无破坏
+- [x] **4.1** 评估后决定：暂不拆分 `translate/index.tsx`，等下次该文件因功能扩展需要再次重构时再统一处理。
+- [ ] **4.2**（可选，长期）若未来该文件 >800 行再启动拆分。
