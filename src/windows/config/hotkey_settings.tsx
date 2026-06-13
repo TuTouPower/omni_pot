@@ -138,13 +138,13 @@ function HotkeyField({ label, sub, configKey, activeField, onStartCapture }: Hot
                     )}
                 </div>
                 {!capturing ? (
-                    <button className="btn sm" data-testid={`cfg-${configKey}-bind`} onClick={() => { onStartCapture(configKey); setStatus('') }}>
+                    <button className="btn sm" data-testid={`cfg-${configKey}-bind`} title={currentValue ? t('ui.unbind', { defaultValue: '解绑' }) : t('ui.set', { defaultValue: '绑定' })} onClick={() => { onStartCapture(configKey); setStatus('') }}>
                         {currentValue ? t('ui.unbind', { defaultValue: '解绑' }) : t('ui.set', { defaultValue: '绑定' })}
                     </button>
                 ) : (
                     <>
-                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} onClick={() => { handleConfirm().catch((err: unknown) => { log_error('confirm hotkey', err) }); }}>{t('ui.ok', { defaultValue: '确认' })}</button>
-                        <button className="btn sm ghost" data-testid={`cfg-${configKey}-cancel`} onClick={handleCancel}>{t('ui.cancel', { defaultValue: '取消' })}</button>
+                        <button className="btn sm primary" data-testid={`cfg-${configKey}-confirm`} title={t('ui.ok', { defaultValue: '确认' })} onClick={() => { handleConfirm().catch((err: unknown) => { log_error('confirm hotkey', err) }); }}>{t('ui.ok', { defaultValue: '确认' })}</button>
+                        <button className="btn sm ghost" data-testid={`cfg-${configKey}-cancel`} title={t('ui.cancel', { defaultValue: '取消' })} onClick={handleCancel}>{t('ui.cancel', { defaultValue: '取消' })}</button>
                     </>
                 )}
                 {status && <span className="hint" data-testid={`cfg-${configKey}-status`}>{status}</span>}

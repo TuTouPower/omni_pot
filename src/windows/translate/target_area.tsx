@@ -75,7 +75,7 @@ const SortableCard = React.memo(function SortableCard({
             <div className="card" data-testid="result-card" data-result-key={instanceKey} style={{ padding: '10px 12px' }}>
                 {/* Header row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span data-testid="result-drag" {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--text-mute)' }}>
+                    <span data-testid="result-drag" {...attributes} {...listeners} title={t('result.drag', { defaultValue: '拖拽排序' })} style={{ cursor: 'grab', color: 'var(--text-mute)' }}>
                         <Icons.Drag size={14} />
                     </span>
                     <SvcTile name={serviceKey} />

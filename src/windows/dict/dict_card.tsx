@@ -51,7 +51,7 @@ export function SortableDictCard({ instanceKey, result, isLoading, collapsed, on
             <div className="card" data-testid="dict-card" data-result-key={instanceKey} style={{ padding: '10px 12px', overflow: 'visible' }}>
                 {/* Header row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span data-testid="dict-drag" {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--text-mute)' }}>
+                    <span data-testid="dict-drag" {...attributes} {...listeners} title={t('dict.drag', { defaultValue: '拖拽排序' })} style={{ cursor: 'grab', color: 'var(--text-mute)' }}>
                         <Icons.Drag size={14} />
                     </span>
                     <SvcTile name={serviceKey} />

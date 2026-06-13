@@ -91,6 +91,7 @@ export function ServiceItemRow({
             <button
                 data-testid="svc-edit"
                 className="btn ghost sm"
+                title={t('service.edit')}
                 onClick={() => { onEdit(instanceKey); }}
             >
                 <Icons.Settings size={14} />
@@ -101,6 +102,7 @@ export function ServiceItemRow({
                 className="btn ghost sm"
                 style={{ color: canDelete ? 'var(--danger)' : 'var(--text-mute)' }}
                 disabled={!canDelete}
+                title={t('service.remove')}
                 onClick={() => { onRemove(instanceKey); }}
             >
                 <Icons.Trash size={14} />
