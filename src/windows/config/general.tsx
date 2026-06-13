@@ -61,7 +61,7 @@ export default function GeneralPage(): React.ReactElement {
                         style={{ minWidth: 160 }}
                     />
                 </ConfigRow>
-                <ConfigRow label={t('general.server_port', { defaultValue: '本地 API 端口' })} sub={t('general.server_port_sub')} help={{ href: 'https://github.com/TuTouPower/omni_pot/blob/main/docs/api.md', title: 'API 文档' }}>
+                <ConfigRow label={t('general.server_port', { defaultValue: '本地 API 端口' })} sub={t('general.server_port_sub')} help={{ href: 'https://github.com/TuTouPower/omni_pot/blob/main/docs/user_docs/cn/api.md', title: 'API 文档' }}>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <ConfigField
                             mono

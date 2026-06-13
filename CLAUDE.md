@@ -94,9 +94,7 @@ npm run build:chinese-dictionary   # 依赖项目内 github_repo/chinese-diction
 | `docs/SPEC.md` | **产品规格** — omni_pot 功能、窗口、UI、服务、配置的权威定义 |
 | `docs/design/omni-pot/` | UI 设计稿原型（HTML/JSX/CSS，最高优先级） |
 | `docs/demo_todo.md` | omni_pot 设计稿与 spec 的已知偏差备忘 |
-| `docs/TEST.md` | 测试规范与总则（分层、原则、快捷键策略、运行命令） |
-| `docs/test_e2e.md` | 用户端到端测试设计（基础设施、文件规划、各 spec 内容） |
-| `docs/api.md` | 主进程对外暴露的 HTTP API（`server_port`，默认 20202） |
+| `docs/TEST.md` | 测试规范（分层、原则、快捷键策略、E2E 设计、运行命令） |
 | `docs/archive/runtime_issues.md` | 运行时问题记录（日志证据、影响范围、修复方向与验证方式） |
 | `docs/TASKS.md` | 开发待办、测试覆盖审查、已知问题（合并自原 PLAN/review/issues） |
 | `docs/RELEASE.md` | 发布流程（产物命名、latest.json 格式、全部下载链接） |

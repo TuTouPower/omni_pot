@@ -1,6 +1,6 @@
 # omni_pot 任务清单
 
-> **权威来源**: 功能定义以 `docs/SPEC.md` 为准，测试设计以 `docs/test_e2e.md` 为准。
+> **权威来源**: 功能定义以 `docs/SPEC.md` 为准，测试设计以 `docs/TEST.md` 为准。
 > 已完成项归档见 `docs/archive/plan_archives/`、`docs/archive/closed_issues/`。
 > 最近归档：2026-06-13 → `docs/archive/plan_archives/tasks_completed_2026_06_13.md`
 
