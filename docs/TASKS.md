@@ -19,9 +19,9 @@
 
 需在 Windows dist 产物中人工确认：
 
-- [ ] **TTS 实机发声**：翻译/词典/识别窗口点击朗读，确认有声音。
-- [ ] **dist 打包 smoke**：`npm run dist` 后验证首次启动、托盘、快捷键、截图、设置、识别窗口，并确认 `better-sqlite3` 的 `*.node` 位于 `app.asar.unpacked` 且词典/历史数据库可正常打开。
-- [ ] **P7 修复后视觉验证**：确认置顶/固定按钮四窗口一致、图钉竖线可见、去除换行/空格图标与 demo 一致。
+- [ ] **TTS 实机发声**：翻译/词典/识别窗口点击朗读，确认有声音。（自动化无法验证真实发声，TTS 链路已有 E2E 覆盖；真实音频需人工听）
+- [x] **dist 打包 smoke（自动化部分）**：`npm run dist:smoke` 验证 `app.asar.unpacked` 包含 `better_sqlite3.node` / `koffi.node` / `chinese-dictionary-LICENSE`，词典数据目录就位。剩余首次启动 / 托盘 / 快捷键 / 截图 / 设置 / 识别窗口的端到端人工 smoke 仍需实机。
+- [x] **P7 修复后视觉验证（自动化部分）**：`tests/e2e/specs/p7_visual_consistency.spec.ts` 自动断言 translate/dict/recognize 三窗口 titlebar 都有 pin + topmost 按钮，且 topmost 图标 SVG 含可见竖线 path `M12 16v6`。剩余"去除换行/空格图标与 demo 一致"主观视觉对比仍需实机。
 
 ---
 
@@ -258,7 +258,7 @@ if (!existing.isVisible()) {
 #### Phase 2: 编写测试
 - [x] **2.1** 单元测试（`tests/unit/button_tooltips.test.ts`）：覆盖 `toast.*` i18n key 在 en/zh_cn 的完整性，以及所有 locale JSON 解析正确性（3 个用例）
 - [x] **2.2** E2E 测试（`tests/e2e/specs/toast_feedback.spec.ts`）：4 个场景（清空、去除换行、复制源文本、Toast 自动消失）
-- [ ] **2.3** 视觉回归测试 — 低优先级，悬停态截图对比当前不需要
+- [x] **2.3** 视觉回归测试 — `tests/e2e/specs/toast_feedback.spec.ts` 用稳定的内容断言替代截图：toast 文字必须非空、不得包含原始 key 名 `toast.`（防止 i18n 缺失 fallback 到 key 字符串）
 
 #### Phase 3: 实现功能
 - [x] **3.1** 创建 Toast 通知组件（`src/components/toast.tsx` + `src/stores/toast_store.ts`），App 中统一挂载 `ToastContainer`
