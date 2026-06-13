@@ -288,5 +288,14 @@
         "drag_hint": "Drag to select",
         "confirm": "Confirm",
         "cancel": "Cancel"
+    },
+    "toast": {
+        "copied": "Copied",
+        "cleared": "Cleared",
+        "newline_removed": "Line breaks removed",
+        "spaces_removed": "Spaces removed",
+        "image_copied": "Image copied",
+        "path_copied": "Path copied",
+        "saved": "Saved"
     }
 }

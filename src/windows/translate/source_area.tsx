@@ -5,6 +5,7 @@ import { useTranslateStore } from '../../stores/translate_store'
 import { useConfig } from '../../hooks/use_config'
 import { native_language_name } from '../../i18n/language_names'
 import { create_logger } from '../../utils/logger'
+import { show_toast } from '../../stores/toast_store'
 
 const log = create_logger('translate-source')
 
@@ -142,22 +143,27 @@ const SourceArea_ = function SourceArea({ onTranslate, onTts, ttsAvailable = fal
     )
 
     const handleCopy = useCallback(() => {
-        window.electronAPI.text.writeClipboard(sourceText).catch((err: unknown) => { log_error('copy source text', err) })
-    }, [sourceText])
+        window.electronAPI.text.writeClipboard(sourceText).then(() => {
+            show_toast(t('toast.copied', { defaultValue: '已复制' }))
+        }).catch((err: unknown) => { log_error('copy source text', err) })
+    }, [sourceText, t])
 
     const handleDeleteNewline = useCallback(() => {
         setSourceText(sourceText.replace(/-\s+/g, '').replace(/\s+/g, ' '))
-    }, [sourceText, setSourceText])
+        show_toast(t('toast.newline_removed', { defaultValue: '已去除换行' }))
+    }, [sourceText, setSourceText, t])
 
     const handleDeleteSpace = useCallback(() => {
         setSourceText(sourceText.replace(/ +/g, ''))
-    }, [sourceText, setSourceText])
+        show_toast(t('toast.spaces_removed', { defaultValue: '已去除空格' }))
+    }, [sourceText, setSourceText, t])
 
     const handleClear = useCallback(() => {
         setSourceText('')
         setDetectedLanguage(null)
         onClearResults?.()
-    }, [setSourceText, setDetectedLanguage, onClearResults])
+        show_toast(t('toast.cleared', { defaultValue: '已清空' }))
+    }, [setSourceText, setDetectedLanguage, onClearResults, t])
 
     const handleSourceChange = useCallback((value: string) => {
         setSourceText(value)
@@ -245,7 +251,7 @@ const SourceArea_ = function SourceArea({ onTranslate, onTts, ttsAvailable = fal
                     style={ttsPlaying ? { background: 'var(--brand-primary-soft)', color: 'var(--brand-primary)' } : undefined}
                 >
                     {ttsBusy ? (
-                        <span className="dots" aria-label="加载中"><span /><span /><span /></span>
+                        <span className="dots" aria-label={t('tts_loading', { defaultValue: '加载中' })}><span /><span /><span /></span>
                     ) : (
                         <Icons.Volume size={16} fill={ttsPlaying} />
                     )}

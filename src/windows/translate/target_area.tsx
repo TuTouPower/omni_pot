@@ -12,6 +12,7 @@ import { ttsServiceRegistry } from '../../services/tts_registry'
 import { getServiceKey } from '@shared/types/service'
 import type { DictResult, ServiceConfig } from '@shared/types/service'
 import type { ServiceInstancesMap } from '@shared/types/config'
+import { show_toast } from '../../stores/toast_store'
 
 function get_service_config(service_instances: ServiceInstancesMap, instance_key: string): ServiceConfig {
     return (service_instances as Partial<ServiceInstancesMap>)[instance_key]?.config ?? {}
@@ -103,7 +104,7 @@ const SortableCard = React.memo(function SortableCard({
                         }}
                     >
                         {is_busy ? (
-                            <span className="dots" aria-label="加载中"><span /><span /><span /></span>
+                            <span className="dots" aria-label={t('tts_loading', { defaultValue: '加载中' })}><span /><span /><span /></span>
                         ) : (
                             <Icons.Volume size={16} fill={is_playing} />
                         )}
@@ -174,6 +175,7 @@ const DictResultInline = React.memo(function DictResultInline({ result }: { resu
 })
 
 export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry }: TargetAreaProps): React.ReactElement | null {
+    const { t } = useTranslation()
     const results = useTranslateStore((s) => s.results)
     const isTranslating = useTranslateStore((s) => s.isTranslating)
     const targetLanguage = useTranslateStore((s) => s.targetLanguage)
@@ -208,8 +210,10 @@ export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry
     }, [])
 
     const handleCopy = useCallback((text: string) => {
-        window.electronAPI.text.writeClipboard(text).catch(() => undefined)
-    }, [])
+        window.electronAPI.text.writeClipboard(text).then(() => {
+            show_toast(t('toast.copied', { defaultValue: '已复制' }))
+        }).catch(() => undefined)
+    }, [t])
 
     const handleReverseTranslate = useCallback((text: string) => {
         setSourceText(text)

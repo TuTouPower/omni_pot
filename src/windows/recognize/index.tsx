@@ -15,6 +15,7 @@ import { PillSelect, SvcTile, OCR_META } from './pill_select'
 import { ExportButton } from './export_button'
 import { ImageCard } from './image_card'
 import { RecognizeContent } from './recognize_content'
+import { show_toast } from '../../stores/toast_store'
 import type { LanguageCode } from '@shared/types/language'
 import type { ServiceConfig } from '@shared/types/service'
 
@@ -279,9 +280,11 @@ export default function RecognizeWindow(): React.ReactElement {
     // ---- Handlers ----
     const handleCopy = useCallback(async () => {
         if (recognizedText) {
-            await window.electronAPI.text.writeClipboard(recognizedText).catch(() => undefined)
+            await window.electronAPI.text.writeClipboard(recognizedText).then(() => {
+                show_toast(t('toast.copied', { defaultValue: '已复制' }))
+            }).catch(() => undefined)
         }
-    }, [recognizedText])
+    }, [recognizedText, t])
 
     const handleTranslate = useCallback(async () => {
         setMode('translate')
@@ -298,11 +301,13 @@ export default function RecognizeWindow(): React.ReactElement {
 
     const handleDeleteNewline = useCallback(() => {
         setRecognizedText(normalize_recognized_text(recognizedText))
-    }, [recognizedText])
+        show_toast(t('toast.newline_removed', { defaultValue: '已去除换行' }))
+    }, [recognizedText, t])
 
     const handleDeleteAllSpaces = useCallback(() => {
         setRecognizedText(recognizedText.replace(/ +/g, ''))
-    }, [recognizedText])
+        show_toast(t('toast.spaces_removed', { defaultValue: '已去除空格' }))
+    }, [recognizedText, t])
 
     const handleClose = useCallback(() => {
         window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) })
@@ -323,7 +328,8 @@ export default function RecognizeWindow(): React.ReactElement {
     const handleCopyImage = useCallback(async () => {
         if (!imageBase64) return
         await window.electronAPI.text.write_clipboard_image(imageBase64)
-    }, [imageBase64])
+        show_toast(t('toast.image_copied', { defaultValue: '图片已复制' }))
+    }, [imageBase64, t])
 
     const handleSwap = useCallback(() => {
         if (selectedLanguage === 'auto') {
