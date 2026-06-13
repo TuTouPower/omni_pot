@@ -93,25 +93,25 @@ export default function AboutPage(): React.ReactElement {
             <ConfigCard title="诊断">
                 <ConfigRow label="日志目录">
                     <div className="mono hint" data-testid="about-log-dir" style={{ marginRight: 8 }}>{logDir}</div>
-                    <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-log-dir" onClick={() => { window.electronAPI.text.writeClipboard(logDir).then(() => show_toast(t('toast.copied', { defaultValue: '已复制' }))).catch(() => undefined); }}>
+                    <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-log-dir" onClick={() => { window.electronAPI.text.writeClipboard(logDir).then(() => { show_toast(t('toast.copied', { defaultValue: '已复制' })) }).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>
                 <ConfigRow label="设置目录">
                     <div className="mono hint" data-testid="about-config-dir" style={{ marginRight: 8 }}>{configDir}</div>
-                    <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-config-dir" onClick={() => { window.electronAPI.text.writeClipboard(configDir).then(() => show_toast(t('toast.copied', { defaultValue: '已复制' }))).catch(() => undefined); }}>
+                    <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-config-dir" onClick={() => { window.electronAPI.text.writeClipboard(configDir).then(() => { show_toast(t('toast.copied', { defaultValue: '已复制' })) }).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>
                 <ConfigRow label="本机 API">
                     <div className="mono hint" data-testid="about-api-url" style={{ marginRight: 8 }}>{apiUrl}</div>
-                    <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).then(() => show_toast(t('toast.copied', { defaultValue: '已复制' }))).catch(() => undefined); }}>
+                    <button className="ic-btn" title={t('about.copy_path', { defaultValue: '复制路径' })} data-testid="about-copy-api" onClick={() => { window.electronAPI.text.writeClipboard(apiUrl).then(() => { show_toast(t('toast.copied', { defaultValue: '已复制' })) }).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>
                 <ConfigRow label="API Token">
                     <div className="mono hint" data-testid="about-api-token" style={{ marginRight: 8, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apiToken || '...'}</div>
-                    <button className="ic-btn" title={t('about.copy_token', { defaultValue: '复制 Token' })} data-testid="about-copy-api-token" onClick={() => { if (apiToken) window.electronAPI.text.writeClipboard(apiToken).then(() => show_toast(t('toast.copied', { defaultValue: '已复制' }))).catch(() => undefined); }}>
+                    <button className="ic-btn" title={t('about.copy_token', { defaultValue: '复制 Token' })} data-testid="about-copy-api-token" onClick={() => { if (apiToken) window.electronAPI.text.writeClipboard(apiToken).then(() => { show_toast(t('toast.copied', { defaultValue: '已复制' })) }).catch(() => undefined); }}>
                         <Icons.Copy size={12} />
                     </button>
                 </ConfigRow>

@@ -7,10 +7,12 @@ import { create_logger } from './logger'
 const loggers = new Map<string, ReturnType<typeof create_logger>>()
 
 function get_logger(scope: string): ReturnType<typeof create_logger> {
-    if (!loggers.has(scope)) {
-        loggers.set(scope, create_logger(scope))
+    let logger = loggers.get(scope)
+    if (!logger) {
+        logger = create_logger(scope)
+        loggers.set(scope, logger)
     }
-    return loggers.get(scope)!
+    return logger
 }
 
 /**
