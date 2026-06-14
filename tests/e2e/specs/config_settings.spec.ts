@@ -476,4 +476,50 @@ test.describe('@ui config settings window', () => {
             await omni.stop()
         }
     })
+
+    test('about page text is i18n-aware (English locale)', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'en' } })
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('about')
+
+            // Hero section in English
+            await expect(config.aboutHeroName()).toContainText('Omni Pot')
+            await expect(config.aboutHeroDescription()).toContainText(/desktop translation/i)
+
+            // Tile labels in English
+            await expect(config.aboutTile('update')).toContainText('Check for updates')
+            await expect(config.aboutTile('home')).toContainText('Home')
+            await expect(config.aboutTile('docs')).toContainText('Docs & Help')
+            await expect(config.aboutTile('feedback')).toContainText('Feedback')
+            await expect(config.aboutTile('support')).toContainText('Support')
+            await expect(config.aboutTile('license')).toContainText('License')
+
+            // Hero links and copyright in English
+            await expect(config.aboutHero().getByTestId('about-link-privacy')).toContainText('Privacy')
+            await expect(config.aboutHero().getByTestId('about-link-terms')).toContainText('Terms')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('about page privacy and terms links are clickable', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('about')
+
+            await omni.api.resetShellOpenExternal()
+            await config.aboutHero().getByTestId('about-link-privacy').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls.length).toBeGreaterThan(0)
+
+            await omni.api.resetShellOpenExternal()
+            await config.aboutHero().getByTestId('about-link-terms').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls.length).toBeGreaterThan(0)
+        } finally {
+            await omni.stop()
+        }
+    })
 })

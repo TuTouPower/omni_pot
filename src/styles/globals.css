@@ -801,3 +801,44 @@ kbd {
     line-height: 1.3;
     color: var(--text-dim);
 }
+
+.about-page {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.about-top-grid {
+    display: grid;
+    grid-template-columns: 214px 1fr;
+    gap: 12px;
+}
+
+.about-hero-name {
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-top: 16px;
+    white-space: nowrap;
+}
+
+.about-platform {
+    margin-top: 9px;
+}
+
+.about-divider {
+    width: 72%;
+    height: 1px;
+    background: var(--line-soft);
+    margin: 18px 0;
+}
+
+.about-description {
+    line-height: 1.65;
+    max-width: 180px;
+}
+
+.about-copyright {
+    margin-top: 8px;
+    font-size: 10.5px;
+}
