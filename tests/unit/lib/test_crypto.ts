@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { createHash } from 'node:crypto'
 import { md5, sha256, hmac } from '../../../src/lib/crypto'
 
 describe('crypto', () => {
@@ -15,6 +16,13 @@ describe('crypto', () => {
             const hash = md5('你好')
             expect(hash).toMatch(/^[0-9a-f]{32}$/)
             expect(hash).not.toBe(md5(''))
+        })
+
+        it('output matches node:crypto createHash', () => {
+            for (const input of ['', 'hello', '你好', 'a'.repeat(1000)]) {
+                const expected = createHash('md5').update(input).digest('hex')
+                expect(md5(input)).toBe(expected)
+            }
         })
     })
 
