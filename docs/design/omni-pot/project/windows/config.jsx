@@ -104,7 +104,7 @@ const ThemeSeg = ({ value, onChange }) => {
 const PageGeneral = () => {
   const [autostart, setAutostart] = useStateC(true);
   const [check, setCheck] = useStateC(true);
-  const [transparent, setTransparent] = useStateC(false);
+  const [transparent, setTransparent] = useStateC(true);
   const [proxy, setProxy] = useStateC(false);
   const [theme, setTheme] = useStateC('auto');
   const [fontFamily, setFontFamily] = useStateC('default');
@@ -150,20 +150,7 @@ const PageGeneral = () => {
         <Row label="主题">
           <ThemeSeg value={theme} onChange={setTheme}/>
         </Row>
-        <Row label="文字">
-          <div style={{ display:'flex', gap: 6 }}>
-            <Select
-              value={fontFamily}
-              onChange={setFontFamily}
-              options={FONT_OPTIONS.map(f => ({ value: f.value, label: f.label }))}
-              style={{minWidth:180}}/>
-            <Select
-              value={fontSize}
-              onChange={setFontSize}
-              options={[{value:'12',label:'12 px'},{value:'13',label:'13 px'},{value:'14',label:'14 px'},{value:'15',label:'15 px'},{value:'16',label:'16 px'}]}
-              style={{minWidth:110}}/>
-          </div>
-        </Row>
+        {/* 文字（字体族 + 字号）设置 UI 已隐藏，配置仍保留以兼容旧版本。 */}
         <Row label="主色调" sub="应用于按钮、链接与高亮等强调元素"><PrimaryPicker/></Row>
         <Row label="透明背景" sub="毛玻璃效果，部分平台可能影响性能"><Switch on={transparent} onChange={setTransparent}/></Row>
       </Card>
@@ -172,7 +159,7 @@ const PageGeneral = () => {
 };
 
 const PageTranslate = () => {
-  const [stateMap, setStateMap] = useStateC({ auto_copy:false, history:false, incr:false, dyn:false, del:false, remember:false, pos:'mouse', size:true, blur:true, top:false, hideS:false, hideL:false, hideW:false });
+  const [stateMap, setStateMap] = useStateC({ auto_copy:false, history:false, incr:false, dyn:false, del:true, remember:false, pos:'mouse', size:true, blur:true, top:false, hideS:false, hideL:false, hideW:false });
   const set = (k,v) => setStateMap(s => ({...s, [k]: v}));
   return (
     <div className="stack gap-12">
@@ -212,7 +199,7 @@ const PageRecognize = () => {
     <div className="stack gap-12">
       <Card title="识别">
         <Row label="默认识别引擎">
-          <Select value="tesseract" options={[
+          <Select value="system" options={[
             {value:'system',label:'系统识别'},
             {value:'tesseract',label:'Tesseract'},
             {value:'openai_compatible',label:'AI 视觉 · Qwen2.5-VL'},
@@ -250,9 +237,9 @@ const PageHotkey = () => {
   return (
     <div className="stack gap-12">
       <Card title="全局快捷键" hint="按下组合键以录入 · Backspace 清除">
-        <HK label="翻译" sub={['选中文本时翻译该文本；','未选中时弹出空翻译窗口供输入；','剪贴板监听时，自动翻译剪贴板。']} value="Ctrl+Alt+T" />
-        <HK label="词典" sub="选中字词查询词典释义" value="Ctrl+Alt+D" />
-        <HK label="文字识别" sub="截图后将文字提取到识别窗口" value="Ctrl+Alt+S" />
+        <HK label="翻译" sub={['选中文本时翻译该文本；','未选中时弹出空翻译窗口供输入；','剪贴板监听时，自动翻译剪贴板。']} value={window.MOD_KEY + "+Alt+T"} />
+        <HK label="词典" sub="选中字词查询词典释义" value={window.MOD_KEY + "+Alt+D"} />
+        <HK label="文字识别" sub="截图后将文字提取到识别窗口" value={window.MOD_KEY + "+Alt+S"} />
         <HK label="截图翻译" sub="截图、识别并自动翻译" value="" />
       </Card>
     </div>
@@ -262,38 +249,33 @@ const PageHotkey = () => {
 const PageService = () => {
   const [tab, setTab] = useStateC('translate');
   const tabs = [
-    { id:'translate', label:'翻译', count: 5 },
-    { id:'dict_zh', label:'Chinese Dictionary', count: 2 },
-    { id:'dict_en', label:'英文词典', count: 3 },
-    { id:'recognize', label:'文字识别', count: 2 },
+    { id:'translate', label:'翻译', count: 4 },
+    { id:'dict_zh', label:'中文词典', count: 1 },
+    { id:'dict_en', label:'英文词典', count: 2 },
+    { id:'recognize', label:'文字识别', count: 3 },
     { id:'tts', label:'语音朗读', count: 1 },
-    { id:'collection', label:'收藏', count: 1 },
   ];
   const data = {
     translate: [
-      { key:'deepl', enabled: true },
       { key:'bing', enabled: true },
       { key:'google', enabled: true },
-      { key:'lingva', enabled: true },
+      { key:'deepl', enabled: true },
       { key:'mymemory', enabled: true },
     ],
     dict_zh: [
-      { key:'chinese_dictionary', enabled: true, tag:'OFFLINE' },
-      { key:'ecdict', enabled: true, tag:'OFFLINE' },
+      { key:'cc-cedict', enabled: true },
     ],
     dict_en: [
       { key:'cambridge_dict', enabled: true },
-      { key:'ecdict', enabled: true, tag:'OFFLINE' },
+      { key:'cc-cedict', enabled: true },
     ],
     recognize: [
-      { key:'system', enabled: true, tag:'PLATFORM' },
-      { key:'openai_compatible@v', name:'openai_compatible', label:'Qwen2.5-VL · SiliconFlow', enabled: true },
+      { key:'system', enabled: true },
+      { key:'tesseract', enabled: true },
+      { key:'qrcode', enabled: true },
     ],
     tts: [
       { key:'edge_tts', enabled: true },
-    ],
-    collection: [
-      { key:'anki', enabled: true },
     ],
   };
   const items = data[tab];
@@ -325,9 +307,7 @@ const PageService = () => {
                 <SvcTile name={s.name || s.key} />
                 <div className="stack" style={{ flex:1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500 }}>{s.label || meta.name || s.key}</div>
-                  <div className="hint mono" style={{ fontSize: 10.5 }}>{s.key}</div>
                 </div>
-                {s.tag && <span className="chip mono" style={{fontSize:9.5}}>{s.tag}</span>}
                 <Switch on={s.enabled} />
                 <button className="btn ghost sm" title="编辑"><Icons.Edit size={14}/><span>编辑</span></button>
                 <button className="btn ghost sm" style={{color:'var(--danger)'}} title="删除"><Icons.Trash size={14}/><span>删除</span></button>
@@ -348,9 +328,9 @@ const PageHistory = () => {
   const [enabled, setEnabled] = useStateC(true);
   const rows = [
     { svc:'deepl', src:'reconcile', from:'en', to:'zh_cn', dst:'调和；使一致', t:'2 分钟前' },
-    { svc:'bing', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
+    { svc:'openai', src:'The function must be associative and commutative', from:'en', to:'zh_cn', dst:'该函数必须满足结合律与交换律', t:'5 分钟前' },
     { svc:'google', src:'eventual consistency', from:'en', to:'zh_cn', dst:'最终一致性', t:'8 分钟前' },
-    { svc:'cambridge_dict', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
+    { svc:'free_dictionary', src:'idiosyncrasy', from:'en', to:'zh_cn', dst:'特质；癖好', t:'今天 14:32' },
     { svc:'mymemory', src:'走り抜ける', from:'ja', to:'zh_cn', dst:'跑着穿过', t:'今天 11:08' },
     { svc:'geminipro', src:'お腹が空いた', from:'ja', to:'en', dst:"I'm hungry", t:'昨天 22:11' },
     { svc:'lingva', src:'machen', from:'de', to:'zh_cn', dst:'制作；做', t:'昨天 16:45' },
@@ -377,7 +357,7 @@ const PageHistory = () => {
           <Select value="all" options={[{value:'all',label:'全部服务'},{value:'deepl',label:'DeepL'}]} style={{minWidth:110}}/>
         </div>
         <div style={{ opacity: enabled ? 1 : 0.5, pointerEvents: enabled ? 'auto' : 'none', flex:'0 0 auto' }}>
-          <Select value="month" options={[{value:'today',label:'今天'},{value:'week',label:'本周'},{value:'month',label:'本月'}]} style={{minWidth:90}}/>
+          <Select value="all" options={[{value:'all',label:'全部时间'},{value:'today',label:'今天'},{value:'week',label:'本周'},{value:'month',label:'本月'}]} style={{minWidth:90}}/>
         </div>
         <button className="btn sm danger" disabled={!enabled} style={{ opacity: enabled ? 1 : 0.5, flex:'0 0 auto' }}><Icons.Trash size={12}/>清空</button>
       </div>
@@ -453,7 +433,7 @@ const PageBackup = () => {
           <button className="btn primary"><Icons.Cloud size={14}/>立即备份</button>
           <button className="btn"><Icons.Cycle size={14}/>从备份恢复</button>
         </div>
-        <div className="hint">备份内容：设置、历史记录数据库、CC-CEDICT 词典数据库</div>
+        <div className="hint">备份内容：设置、历史记录数据库</div>
       </Card>
 
       <Card title="最近备份">
@@ -477,29 +457,73 @@ const PageBackup = () => {
   );
 };
 
-const PageAbout = () => (
-  <div className="stack gap-12">
-    <div style={{ padding: 28, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap: 8 }}>
-      <div className="svc-tile" style={{ width: 64, height: 64, borderRadius: 16, background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', fontSize: 22, fontWeight: 700 }}>op</div>
-      <div style={{ fontSize: 22, fontWeight: 600, letterSpacing:'-0.01em' }}>Omni Pot</div>
-      <div className="hint mono">version 3.1.0 · darwin-arm64</div>
-      <div className="hint" style={{ maxWidth: 360 }}>一个面向日常使用的桌面翻译与识别工具，覆盖主流在线翻译、离线词典与文字识别服务，开箱即用。</div>
-      <div style={{ display:'flex', gap: 6, marginTop: 4 }}>
-        <button className="btn sm">官网</button>
-        <button className="btn sm">文档</button>
-        <button className="btn sm">反馈</button>
-        <button className="btn primary sm"><Icons.Cloud size={12}/>检查更新</button>
+const AboutTile = ({ icon, label, sub, tone, external }) => {
+  const t = tone || 'var(--brand-primary)';
+  return (
+    <button className="about-tile">
+      <div className="tile-ic" style={{ background: 'color-mix(in oklab, ' + t + ' 13%, transparent)', color: t }}>{icon}</div>
+      {external && <span className="tile-arrow"><Icons.ArrowR size={15}/></span>}
+      <div>
+        <div className="tile-label">{label}</div>
+        {sub && <div className="tile-sub">{sub}</div>}
       </div>
-    </div>
+    </button>
+  );
+};
 
-    <Card title="诊断">
-      <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/OmniPot</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
-      <Row label="设置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/OmniPot</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
-      <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:20202</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
-      <Row label="日志" sub="最近 7 天的日志打包为 zip，可附在反馈中"><button className="btn sm"><Icons.Export size={12}/>导出日志</button></Row>
-    </Card>
-  </div>
-);
+const PageAbout = () => {
+  const rose = 'oklch(62% 0.15 12)';
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap: 12 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'214px 1fr', gap: 12 }}>
+        {/* Product hero */}
+        <div className="about-hero">
+          <div className="about-logo">op</div>
+          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing:'-0.01em', marginTop: 16, whiteSpace:'nowrap' }}>Omni&nbsp;Pot</div>
+          <div className="about-ver" style={{ marginTop: 10 }}>版本 3.1.0</div>
+          <div className="hint mono" style={{ marginTop: 9 }}>macOS · Apple Silicon</div>
+
+          <div style={{ width:'72%', height: 1, background:'var(--line-soft)', margin:'18px 0' }} />
+
+          <div className="hint" style={{ lineHeight: 1.65, maxWidth: 180 }}>
+            桌面翻译与文字识别工具，覆盖主流在线翻译、离线词典与 OCR 服务，开箱即用。
+          </div>
+
+          <div style={{ flex: 1 }} />
+          <div className="about-links" style={{ marginTop: 18 }}>
+            <a>隐私政策</a><span className="sep">·</span><a>服务条款</a>
+          </div>
+          <div className="hint" style={{ marginTop: 8, fontSize: 10.5 }}>© 2026 Omni Pot · 保留所有权利</div>
+        </div>
+
+        {/* Action tiles */}
+        <div className="about-grid">
+          <button className="about-tile">
+            <div className="tile-ic" style={{ background:'color-mix(in oklab, var(--brand-primary) 13%, transparent)', color:'var(--brand-primary)' }}><Icons.Cycle size={19}/></div>
+            <div>
+              <div className="tile-label">检查更新</div>
+              <div className="about-status"><span className="d" />已是最新</div>
+            </div>
+          </button>
+          <AboutTile icon={<Icons.Globe size={19}/>} label="官网" sub="omnipot.app" external />
+          <AboutTile icon={<Icons.Doc size={19}/>} label="文档与帮助" sub="使用指南 · 常见问题" external />
+          <AboutTile icon={<Icons.Mail size={19}/>} label="反馈与联系" sub="报告问题或建议" external />
+          <AboutTile icon={<Icons.Heart size={19}/>} label="支持作者" sub="请开发者喝杯咖啡" tone={rose} />
+          <AboutTile icon={<Icons.Code size={19}/>} label="开源许可" sub="第三方组件声明" />
+        </div>
+      </div>
+
+      {/* Diagnostics */}
+      <Card title="诊断">
+        {/* 路径在实现时通过 IPC 从主进程动态获取实际 userData 目录，下方为示例值。 */}
+        <Row label="日志目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Logs/OmniPot</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
+        <Row label="设置目录"><div className="mono hint" style={{ marginRight: 8 }}>~/Library/Application Support/OmniPot</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
+        <Row label="本机 API"><div className="mono hint" style={{ marginRight: 8 }}>http://127.0.0.1:20202</div><button className="btn ghost icon sm" title="复制路径"><Icons.Copy size={12}/></button></Row>
+        <Row label="日志" sub="最近 7 天的日志打包为 zip，可附在反馈中"><button className="btn sm"><Icons.Export size={12}/>导出日志</button></Row>
+      </Card>
+    </div>
+  );
+};
 
 const PAGES = { general: PageGeneral, translate: PageTranslate, recognize: PageRecognize, hotkey: PageHotkey, service: PageService, history: PageHistory, backup: PageBackup, about: PageAbout };
 

@@ -3,9 +3,9 @@
 
 :root {
   /* Brand */
-  --brand-primary: oklch(58% 0.13 45);
-  --brand-primary-soft: oklch(58% 0.13 45 / 0.12);
-  --brand-primary-hover: oklch(54% 0.13 45);
+  --brand-primary: #5a9bbf;
+  --brand-primary-soft: color-mix(in oklab, #5a9bbf 12%, transparent);
+  --brand-primary-hover: #4f8aa9;
   --brand-accent-2: oklch(62% 0.11 195);
 
   /* Neutrals — pure white outside, warm-tinted cards inside */
@@ -42,11 +42,18 @@
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --fs-base: 13px;
+
+  /* Site-chrome surface tokens (used by landing + site pages so they can theme) */
+  --page-bg: #f0eee9;          /* warm marketing page background */
+  --surface: #ffffff;          /* white card surface */
+  --surface-2: oklch(96.8% 0.005 70); /* tinted inner surface */
+  --surface-3: oklch(94.5% 0.006 70); /* sunk surface */
+  --hover: rgba(0,0,0,0.04);
+  --hover-strong: rgba(0,0,0,0.06);
 }
 
 .dark {
   --bg: oklch(15% 0.006 65);
-  --bg-elev: oklch(15% 0.006 65);
   --bg-card: oklch(19% 0.007 65);
   --bg-sunk: oklch(22% 0.008 65);
   --bg-input: oklch(19% 0.007 65);
@@ -57,10 +64,21 @@
   --text-dim: oklch(72% 0.008 65);
   --text-mute: oklch(54% 0.007 65);
   --brand-primary-soft: color-mix(in oklab, var(--brand-primary) 22%, transparent);
+
+  /* Site-chrome surface tokens — dark */
+  --bg-elev: oklch(18% 0.007 65);
+  --page-bg: oklch(13% 0.006 65);
+  --surface: oklch(18.5% 0.007 65);
+  --surface-2: oklch(21% 0.008 65);
+  --surface-3: oklch(24% 0.009 65);
+  --hover: rgba(255,255,255,0.06);
+  --hover-strong: rgba(255,255,255,0.10);
 }
 
 /* Reset-ish */
 * { box-sizing: border-box; }
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
 body { margin: 0; font-family: var(--font-sans); font-size: var(--fs-base); color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 input, textarea, select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
@@ -279,6 +297,53 @@ input, textarea, select { font: inherit; color: inherit; background: transparent
   color: var(--text-dim);
 }
 .svc-tile.lg { width: 32px; height: 32px; font-size: 13px; border-radius: 7px; }
+
+/* About — product hero + action tiles */
+.about-hero {
+  background: var(--bg-card);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  padding: 26px 20px 16px;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+}
+.about-logo {
+  width: 60px; height: 60px; border-radius: 16px;
+  display: grid; place-items: center;
+  background: var(--brand-primary); color: #fff;
+  font-family: var(--font-mono); font-weight: 700; font-size: 21px;
+  letter-spacing: -0.02em;
+  box-shadow: 0 8px 24px -8px var(--brand-primary), 0 0 0 1px rgba(255,255,255,0.06) inset;
+}
+.about-ver {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 11px; border-radius: 999px;
+  background: var(--bg-sunk); border: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--text-dim);
+}
+.about-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.about-links a { color: var(--text-mute); font-size: 11.5px; cursor: pointer; text-decoration: none; }
+.about-links a:hover { color: var(--brand-primary); }
+.about-links .sep { color: var(--line-strong); font-size: 10px; }
+
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.about-tile {
+  position: relative; text-align: left; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg); padding: 15px 15px 14px;
+  display: flex; flex-direction: column; min-height: 94px;
+  justify-content: space-between;
+  transition: border-color .14s, background .14s, transform .14s, box-shadow .14s;
+}
+.about-tile:hover { border-color: var(--line-strong); background: var(--bg-elev); transform: translateY(-1px); box-shadow: 0 6px 18px -12px rgba(0,0,0,0.35); }
+.about-tile:active { transform: translateY(0); }
+.about-tile .tile-ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; }
+.about-tile .tile-arrow { position: absolute; top: 13px; right: 13px; color: var(--text-mute); opacity: .4; transition: opacity .14s, transform .14s; }
+.about-tile:hover .tile-arrow { opacity: 1; transform: translateX(2px); color: var(--brand-primary); }
+.about-tile .tile-label { font-size: 13.5px; font-weight: 600; color: var(--text); margin-top: 13px; }
+.about-tile .tile-sub { font-size: 11px; color: var(--text-mute); margin-top: 3px; line-height: 1.3; }
+.about-status { display: inline-flex; align-items: center; gap: 5px; margin-top: 11px; font-size: 11px; color: var(--ok); font-weight: 500; }
+.about-status .d { width: 6px; height: 6px; border-radius: 99px; background: var(--ok); }
 
 /* Divider */
 .div { height: 1px; background: var(--line); margin: 0; }

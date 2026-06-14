@@ -156,16 +156,28 @@ const TitlebarLeft = ({ mode = '翻译', pinned: pinnedProp = false, onTop: onTo
       {children}
     </button>;
 
-  // Lock glyph with a knocked-out keyhole when filled — the keyhole stroke
-  // switches to the window background colour so it reads as an inverse cut
-  // through the brand-coloured lock body. Works in both light & dark themes
-  // because --bg adapts.
-  const LockGlyph = ({ size, filled }) =>
-  <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85} strokeLinecap="round" strokeLinejoin="round" fill="none">
-    <path d="M5 11h14v10H5z" fill={filled ? 'currentColor' : 'none'} />
-    <path d="M8 11V7a4 4 0 018 0v4" />
-    <path d="M12 15v3" stroke={filled ? 'var(--bg)' : 'currentColor'} />
-  </svg>;
+  // Lock glyph. Inactive = brand-coloured stroke outline, no fill, no button
+  // background. Active = body filled with brand primary and the keyhole slot
+  // is a TRUE cut-out (SVG mask) so the inner line reads as a strict inverse
+  // rather than a line painted in the background colour.
+  const LockGlyph = ({ size, filled }) => filled ? (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.85} strokeLinecap="round" strokeLinejoin="round">
+      <defs>
+        <mask id="op-lock-keyhole">
+          <rect x="0" y="0" width="24" height="24" fill="#fff" />
+          <path d="M12 15v3" stroke="#000" strokeWidth={2.2} />
+        </mask>
+      </defs>
+      <path d="M8 11V7a4 4 0 018 0v4" />
+      <path d="M5 11h14v10H5z" fill="currentColor" stroke="none" mask="url(#op-lock-keyhole)" />
+    </svg>
+  ) : (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.85} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 11h14v10H5z" />
+      <path d="M8 11V7a4 4 0 018 0v4" />
+      <path d="M12 15v3" />
+    </svg>
+  );
 
   return (
     <div className="op-titlebar">
@@ -270,7 +282,6 @@ const ResultCard = ({ s, r }) => {
         }
         <VolumeButton />
         <button className="ic-btn" title="复制"><Icons.Copy size={16} /></button>
-        <button className="ic-btn" title="收藏"><Icons.Heart size={16} /></button>
         <button className="ic-btn" title={col ? '展开' : '收起'} onClick={() => setCol((c) => !c)}>
           <Icons.Chev size={17} style={{ transform: col ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
         </button>
@@ -386,6 +397,9 @@ const TranslateWindow = ({ width = 400, height, sourceText, services, results, p
 const DictResultCard = ({ s, r }) => {
   const hasResult = !!(r && (r.result || r.error));
   const isEmpty = r && r.result && r.result.definitions && r.result.definitions.length === 0;
+  // Chinese dictionary entries carry no audio and the POS labels (动/形…) are
+  // omitted per spec — only the English dictionaries show POS tags + 朝读.
+  const isChineseDict = s.name === 'chinese_dictionary';
   const [col, setCol] = useStateT(false);
   const seenRef = useRefT(false);
   useEffectT(() => {
@@ -410,7 +424,6 @@ const DictResultCard = ({ s, r }) => {
           </button>
         }
         <button className="ic-btn" title="复制"><Icons.Copy size={16} /></button>
-        <button className="ic-btn" title="收藏"><Icons.Heart size={16} /></button>
         <button className="ic-btn" title={col ? '展开' : '收起'} onClick={() => setCol((c) => !c)}>
           <Icons.Chev size={17} style={{ transform: col ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
         </button>
@@ -422,7 +435,7 @@ const DictResultCard = ({ s, r }) => {
         isEmpty ?
           <div style={{ marginTop: 8, marginLeft: 22, color: 'var(--text-mute)', fontSize: 13 }}>未收录该词条</div> :
         result ?
-          <DictBody result={result} /> :
+          <DictBody result={result} hidePos={isChineseDict} hideVolume={isChineseDict} /> :
           <div style={{ marginTop: 8, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div className="shimmer" style={{ height: 8, width: '88%' }} />
             <div className="shimmer" style={{ height: 8, width: '64%' }} />
@@ -436,7 +449,7 @@ const DictResultCard = ({ s, r }) => {
 // Renders the `pronunciations` + `definitions` + `examples` arrays of a
 // DictResult. Pronunciations get their own row each, with a `朗读` button
 // (TTS is supplied by a separate service — dict services never carry audio).
-const DictBody = ({ result }) => {
+const DictBody = ({ result, hidePos = false, hideVolume = false }) => {
   const allPron = result.pronunciations || [];
   const defs = result.definitions || [];
   const examples = result.examples || [];
@@ -444,7 +457,8 @@ const DictBody = ({ result }) => {
     <div style={{ marginTop: 10, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Pronunciations — one shared row. Multiple regional variants
           (e.g. Cambridge us + uk) sit side-by-side; row wraps if it overflows.
-          A speak button follows each phonetic since TTS is per-variant. */}
+          A speak button follows each phonetic since TTS is per-variant.
+          Chinese dictionary carries no audio — the 朝读 button is hidden. */}
       {allPron.length > 0 &&
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 14, rowGap: 4 }}>
           {allPron.map((p, i) =>
@@ -453,22 +467,26 @@ const DictBody = ({ result }) => {
                 <span className="chip plain mono" style={{ fontSize: 10, flex: '0 0 auto' }}>{p.region}</span>
               }
               <span className="mono" style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>{p.phonetic}</span>
-              <VolumeButton size={14} />
+              {!hideVolume && <VolumeButton size={14} />}
             </div>
           )}
         </div>
       }
 
-      {/* Definitions — grouped by partOfSpeech, each group lists numbered meanings. */}
+      {/* Definitions — grouped by partOfSpeech, each group lists numbered meanings.
+          When POS tags are hidden (Chinese dictionary) the gutter collapses and
+          meanings render flush. */}
       {defs.length > 0 &&
         <div className="stack" style={{ gap: 12 }}>
           {defs.map((d, i) =>
-            <div key={i} style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: '0 0 auto', minWidth: 36 }}>
-                {d.partOfSpeech
-                  ? <span className="chip plain mono" style={{ fontSize: 10 }}>{d.partOfSpeech}</span>
-                  : <span className="mono" style={{ fontSize: 11, color: 'var(--text-mute)' }}>{String(i+1).padStart(2,'0')}</span>}
-              </div>
+            <div key={i} style={{ display: 'flex', gap: hidePos ? 0 : 10 }}>
+              {!hidePos &&
+                <div style={{ flex: '0 0 auto', minWidth: 36 }}>
+                  {d.partOfSpeech
+                    ? <span className="chip plain mono" style={{ fontSize: 10 }}>{d.partOfSpeech}</span>
+                    : <span className="mono" style={{ fontSize: 11, color: 'var(--text-mute)' }}>{String(i+1).padStart(2,'0')}</span>}
+                </div>
+              }
               <ol style={{ margin: 0, padding: 0, listStyle: 'none', flex: 1, display:'flex', flexDirection:'column', gap: 4 }}>
                 {(d.meanings || []).map((m, j) =>
                   <li key={j} style={{ display:'flex', gap: 8, fontSize: 13.5, lineHeight: 1.55 }}>
@@ -514,9 +532,7 @@ const DictSourceCard = ({ word, detected }) => (
         检测为 <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>{detected}</span>
       </span>
       <div style={{ flex: 1 }} />
-      <VolumeButton size={16} />
       <button className="ic-btn" title="复制单词"><Icons.Copy size={16} /></button>
-      <button className="ic-btn" title="收藏"><Icons.Heart size={16} /></button>
       <button className="ic-btn brand" title="查询" style={{ color: 'var(--brand-primary)' }}>
         <Icons.Type size={16} />
       </button>
@@ -582,7 +598,7 @@ const SAMPLE_DICT_ZH = {
   word: '调和',
   detected: '中文',
   services: [
-    { key: 'chinese_dictionary', name: 'chinese_dictionary', label: 'Chinese Dictionary' },
+    { key: 'chinese_dictionary', name: 'chinese_dictionary', label: '中文词典' },
     { key: 'ecdict', name: 'ecdict', label: 'ECDict · 中→英' },
   ],
   results: {
@@ -622,7 +638,9 @@ const SAMPLE_DICT_ZH = {
   },
 };
 
-const DictWindow = ({ width = 420, height, lang = 'en' }) => {
+// Default width follows the spec's hotkey-invoked size (400×500). HTTP-invoked
+// windows open smaller (350×420); both clamp to content height here.
+const DictWindow = ({ width = 400, height, lang = 'en' }) => {
   const data = lang === 'zh' ? SAMPLE_DICT_ZH : SAMPLE_DICT_EN;
   return (
     <div className="op-window" style={{ width, height: height || 'auto', alignSelf:'flex-start' }}>

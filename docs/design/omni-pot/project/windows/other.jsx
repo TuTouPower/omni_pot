@@ -252,7 +252,7 @@ fig 3.2 — eventual consistency`}
         )}
         <button className="ic-btn" title="去除换行"><ReactIcon name="MdSmartButton" size={17}/></button>
         <button className="ic-btn" title="去除空格"><ReactIcon name="CgSpaceBetween" size={17}/></button>
-        <button className="ic-btn" title="复制文本"><Icons.Copy size={16}/></button>
+        <button className="ic-btn" title="复制识别文本"><Icons.Copy size={16}/></button>
         <ExportButton />
       </div>
     </div>
@@ -365,20 +365,22 @@ const TrayMenu = () => {
   return (
     <div style={{ width: 332, background:'var(--bg-elev)', border:'1px solid var(--line)', borderRadius: 10, padding: 4, boxShadow:'0 12px 32px rgba(0,0,0,0.12)' }}>
       <div style={{ padding:'8px 12px', display:'flex', alignItems:'center', gap:8, borderBottom:'1px solid var(--line)', marginBottom: 4 }}>
+        <div className="svc-tile" style={{ width: 22, height: 22, borderRadius: 7, background:'var(--brand-primary)', color:'#fff', borderColor:'transparent', fontSize: 10.5, fontWeight: 700, flex:'0 0 22px' }}>op</div>
         <div className="op-wordmark">Omni Pot</div>
         <div style={{flex:1}}/>
         <span className="hint mono">3.1.0</span>
       </div>
-      <Item icon={<Icons.Translate/>} label="翻译" kbd="Ctrl + Alt + T"/>
-      <Item icon={<Icons.Type/>} label="词典" kbd="Ctrl + Alt + D"/>
-      <Item icon={<Icons.Camera/>} label="文字识别" kbd="Ctrl + Alt + S"/>
-      <Item icon={<Icons.Image/>} label="截图翻译" kbd="Ctrl + Alt + Shift + S"/>
-      <div className="div" style={{margin:'4px 8px'}}/>
+      <Item icon={<Icons.Translate/>} label="翻译" kbd={window.hotkeyStr(['Ctrl','Alt','T'])}/>
+      <Item icon={<Icons.Type/>} label="词典" kbd={window.hotkeyStr(['Ctrl','Alt','D'])}/>
+      <Item icon={<Icons.Camera/>} label="文字识别" kbd={window.hotkeyStr(['Ctrl','Alt','S'])}/>
+      <Item icon={<Icons.Image/>} label="截图翻译" kbd={window.hotkeyStr(['Ctrl','Alt','Shift','S'])}/>
       <Item check={true} label="剪贴板监听"/>
       <div className="div" style={{margin:'4px 8px'}}/>
-      <Item icon={<Icons.Settings/>} label="设置" kbd="Ctrl + Alt + ,"/>
+      {/* spec：仅 4 个功能项显示快捷键，设置等项不显示 */}
+      <Item icon={<Icons.Settings/>} label="设置"/>
       <Item icon={<Icons.Cloud/>} label="检查更新"/>
-      <Item icon={<Icons.Info/>} label="查看日志"/>
+      <Item icon={<Icons.Mail/>} label="反馈联系"/>
+      <Item icon={<Icons.Heart/>} label="支持作者"/>
       <div className="div" style={{margin:'4px 8px'}}/>
       <Item icon={<Icons.Cycle/>} label="重启"/>
       <Item icon={<Icons.Close/>} label="退出" danger/>

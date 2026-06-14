@@ -237,7 +237,7 @@ _[tool: fork_verifier_agent]_
 
 `windows/config.jsx` — `PageGeneral` 代理卡片去掉“不代理的地址”（no_proxy）字段，
 只保留启用代理 / 代理地址 / 代理端口。计稿使用了项目中不存在的服务 `yandex`、`bing_dict`。实际服务（见 `docs/spec.md`
-第 13 节）用 `mymemory`、`free_dictionary` 替代了它们。首次启动不要只展示翻译功能，输入翻译 文字识别 截图翻译都加上去。再加绿色 黄色 淡蓝色的主色调
+第 13 节）用 `mymemory`、`free_dictionary` 替代了它们。首次启动不要只展示翻译功能，输入翻译 ocr 识别 ocr 翻译都加上去。再加绿色 黄色 淡蓝色的主色调
 
 ## Assistant
 
@@ -303,7 +303,7 @@ _[tool: fork_verifier_agent]_
 - 备份目标去掉阿里云盘，仅 WebDAV / 本地
 - 代理设置去掉 no_proxy
 - 服务字典：`yandex` / `bing_dict` 替换为 **mymemory** / **free_dictionary**
-- 首次启动重做成 4 个引导卡片：划词翻译 / 输入翻译 / 文字识别 / 截图翻译
+- 首次启动重做成 4 个引导卡片：划词翻译 / 输入翻译 / OCR 识别 / OCR 翻译
 
 ## User
 

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Omni Pot · 定价</title>
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="site.css" />
+<script>(function(){try{var t=localStorage.getItem('op-theme')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.classList.toggle('dark',d);var l=localStorage.getItem('op-lang')||((navigator.language||'').toLowerCase().indexOf('zh')===0?'zh':'en');document.documentElement.dataset.opLang=l;document.documentElement.lang=l==='en'?'en':'zh-CN';}catch(e){}})();</script>
+</head>
+<body>
+
+<!-- ===== Nav ===== -->
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a href="Omni Pot Landing.html" class="brand">
+      <span class="brand-mark">op</span>
+      <span>Omni Pot</span>
+    </a>
+    <div class="nav-links">
+      <a href="Omni Pot Landing.html#features">功能</a>
+      <a href="Omni Pot Landing.html#platforms">平台</a>
+      <a href="Omni Pot Pricing.html" class="active">定价</a>
+    </div>
+    <div class="spacer"></div>
+    <div class="nav-right">
+      <a href="https://afdian.com" target="_blank" rel="noopener" class="afdian" aria-label="去爱发电支持作者">
+        <img src="assets/afdian.jpg" alt="爱发电" />
+        <span class="afdian-tip">去爱发电支持作者</span>
+      </a>
+      <a href="Omni Pot Landing.html#download" class="btn-cta primary" style="height:32px; padding:0 14px; font-size:12.5px;">下载</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Header ===== -->
+<header class="page-head">
+  <div class="dot-bg"></div>
+  <div class="wrap">
+    <div class="eyebrow" data-en='<span class="dash"></span><span class="dot"></span>Pricing · Simple &amp; transparent'><span class="dash"></span><span class="dot"></span>定价 · 简单透明</div>
+    <h1 data-en='Free is plenty, <span class="pri">$5</span> unlocks it all.'>免费够用，<span class="pri">$5</span> 解锁全部。</h1>
+    <p class="lede" data-en="Download and go — no account required. Core translation, dictionary and OCR are free forever. Want custom AI engines, high-accuracy recognition and automation? Upgrade to Pro.">
+      下载即用，无需注册。核心翻译、词典、文字识别永远免费。
+      想要自定义 AI 引擎、高精度识别与自动化，升级 Pro 即可。
+    </p>
+
+    <!-- Billing toggle -->
+    <div class="billing-toggle" role="tablist" aria-label="计费周期">
+      <button id="bill-monthly" class="active" role="tab" aria-selected="true" data-en="Monthly">按月</button>
+      <button id="bill-annual" role="tab" aria-selected="false" data-en='Annual <span class="save">Save 10%</span>'>
+        按年 <span class="save">省 10%</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Pricing cards ===== -->
+<section style="padding-bottom: 8px;">
+  <div class="wrap">
+    <div class="price-grid">
+
+      <!-- Free -->
+      <div class="price-card">
+        <div class="plan-name" data-en="Free">免费版</div>
+        <div class="plan-sub" data-en="Everyday personal translation and word lookup. Local-first, ready out of the box.">个人日常翻译与查词，本地优先，开箱即用。</div>
+        <div class="price-amount">
+          <span class="cur">$</span>
+          <span class="num">0</span>
+          <span class="per" data-en="/ forever">/ 永久</span>
+        </div>
+        <div class="price-note" data-en="No account · no payment">无需注册 · 无需付款</div>
+        <a href="Omni Pot Landing.html#download" class="btn-cta ghost" data-en="Download free">免费下载</a>
+        <ul class="feature-list">
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="Translate, dictionary, OCR and screenshot-translate — all four">翻译、词典、文字识别、截图翻译四大功能</span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en='Built-in Google &amp; Bing translation<span class="sub">No API key needed — works out of the box</span>'>内置 Google、Bing 翻译<span class="sub">无需自备 API Key，开箱即用</span></span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="System OCR and local dictionary">系统文字识别与本地词典</span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="Global hotkeys and translation history">全局快捷键与翻译历史</span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="macOS · Windows · Linux — every platform">macOS · Windows · Linux 全平台</span></li>
+        </ul>
+      </div>
+
+      <!-- Pro -->
+      <div class="price-card featured">
+        <span class="plan-badge">Pro</span>
+        <div class="plan-name" data-en="Pro">专业版</div>
+        <div class="plan-sub" data-en="Bring your own AI engines, high-accuracy recognition and automation workflows.">接入自有 AI 引擎、高精度识别与自动化工作流。</div>
+        <div class="price-amount">
+          <span class="cur">$</span>
+          <span class="num" id="price-num">5</span>
+          <span class="per" id="price-per">/ 月</span>
+        </div>
+        <div class="price-note" id="price-note">按月计费 · 随时取消</div>
+        <a href="#" class="btn-cta primary" id="cta-pro" data-en="Upgrade to Pro">升级到 Pro</a>
+        <ul class="feature-list">
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="Everything in the Free plan">包含免费版的全部功能</span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en='Custom AI engines<span class="sub">Streaming output from OpenAI, Gemini, Ollama and more</span>'>自定义 AI 引擎<span class="sub">OpenAI、Gemini、Ollama 等流式输出</span></span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en='High-accuracy OCR engines<span class="sub">Baidu, Tencent, Volcano, plus LaTeX formula recognition</span>'>高精度识别引擎<span class="sub">百度、腾讯、火山，及 LaTeX 公式识别</span></span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="Clipboard watch and local HTTP API automation">剪贴板监听与本地 HTTP API 自动化</span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="Side-by-side multi-engine comparison, unlimited">多引擎并排对比，不限数量</span></li>
+          <li><span class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-en="Priority email support">优先邮件支持</span></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <p class="price-foot-note" data-en='All prices are charged in US dollars (USD). <b style="color:var(--text-dim);font-weight:500;">Paddle</b> acts as the merchant of record, handling payment and taxes. You can try every basic feature free before upgrading. See the <a href="Omni Pot Refund.html">Refund Policy</a>.'>
+      所有价格以美元（USD）结算，由 <b style="color:var(--text-dim);font-weight:500;">Paddle</b> 作为销售方处理支付与税费。
+      升级前可先免费试用全部基础功能。详见 <a href="Omni Pot Refund.html">退款政策</a>。
+    </p>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head center">
+      <div class="eyebrow" data-en='<span class="dash"></span><span class="dot"></span>FAQ'><span class="dash"></span><span class="dot"></span>常见问题</div>
+      <h2 data-en="A few notes on paying">关于付费的一些说明</h2>
+    </div>
+    <div class="faq">
+      <div class="faq-item">
+        <h4 data-en="Will the free version stay free forever?">免费版会一直免费吗？</h4>
+        <p data-en="Yes. The four core features — translation, dictionary, OCR and screenshot-translate — along with built-in Google and Bing translation, are free forever, with no account or payment required.">会。翻译、词典、文字识别、截图翻译四大核心功能，以及内置的 Google、Bing 翻译，永久免费，无需注册或付款。</p>
+      </div>
+      <div class="faq-item">
+        <h4 data-en="How does the annual discount work?">按年订阅怎么优惠？</h4>
+        <p data-en="Annual billing takes 10% off the monthly price — that's $4.50 a month, or $54 a year, charged in one payment. You can cancel renewal anytime in Paddle.">按年订阅在月价基础上立减 10%——相当于每月 $4.50，一年 $54，一次性结算。随时可在 Paddle 取消续订。</p>
+      </div>
+      <div class="faq-item">
+        <h4 data-en="Is payment secure? Which methods are supported?">付款安全吗？支持哪些方式？</h4>
+        <p data-en="Payment is processed by Paddle as the merchant of record, supporting major credit cards and more. We never store your full card details.">支付由 Paddle 作为销售方（merchant of record）处理，支持主流信用卡等方式。我们不会存储你的完整银行卡信息。</p>
+      </div>
+      <div class="faq-item">
+        <h4 data-en="Can I cancel and get a refund?">可以取消和退款吗？</h4>
+        <p data-en='You can cancel a subscription anytime to stop future renewals. If a technical issue prevents normal use and we cannot resolve it within a reasonable time, you may request a refund within 14 days of purchase. See the <a href="Omni Pot Refund.html">Refund Policy</a>.'>订阅可随时取消以停止后续续订。若因技术问题无法正常使用且我们无法在合理时间内解决，可在购买后 14 天内申请退款。详见 <a href="Omni Pot Refund.html">退款政策</a>。</p>
+      </div>
+      <div class="faq-item">
+        <h4 data-en="How many devices can I use Pro on?">Pro 可以在几台设备上使用？</h4>
+        <p data-en='Your paid license can be used on multiple devices you personally own or control, but may not be publicly shared, resold or transferred. See the <a href="Omni Pot Terms.html">Terms of Service</a>.'>付费授权可在你本人拥有或控制的多台设备上使用，但不得公开分享、转售或转让。详见 <a href="Omni Pot Terms.html">服务条款</a>。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <span class="copy">© 2026 <b>Omni Pot</b> · 保留所有权利</span>
+    <span class="spacer"></span>
+    <a href="Omni Pot Pricing.html">定价</a>
+    <a href="Omni Pot Terms.html">服务条款</a>
+    <a href="Omni Pot Privacy.html">隐私政策</a>
+    <a href="Omni Pot Refund.html">退款政策</a>
+  </div>
+</footer>
+
+<script src="site-chrome.js"></script>
+<script>
+  (function () {
+    var MONTHLY = 5;
+    var monthlyBtn = document.getElementById('bill-monthly');
+    var annualBtn = document.getElementById('bill-annual');
+    var num = document.getElementById('price-num');
+    var per = document.getElementById('price-per');
+    var note = document.getElementById('price-note');
+    var annual = false;
+
+    function en() { return document.documentElement.dataset.opLang === 'en'; }
+
+    function render() {
+      monthlyBtn.classList.toggle('active', !annual);
+      annualBtn.classList.toggle('active', annual);
+      monthlyBtn.setAttribute('aria-selected', String(!annual));
+      annualBtn.setAttribute('aria-selected', String(annual));
+      per.textContent = en() ? '/ mo' : '/ 月';
+      if (annual) {
+        var perMonth = (MONTHLY * 0.9);          // 4.5
+        var yearly = MONTHLY * 12 * 0.9;         // 54
+        num.textContent = perMonth.toFixed(2).replace(/\.00$/, '');
+        note.textContent = en()
+          ? 'Billed $' + yearly + '/yr · save 10%'
+          : '按年 $' + yearly + ' 结算 · 省 10%';
+      } else {
+        num.textContent = MONTHLY;
+        note.textContent = en() ? 'Billed monthly · cancel anytime' : '按月计费 · 随时取消';
+      }
+    }
+    monthlyBtn.addEventListener('click', function () { annual = false; render(); });
+    annualBtn.addEventListener('click', function () { annual = true; render(); });
+    document.addEventListener('op:langchange', render);
+    render();
+  })();
+</script>
+
+</body>
+</html>

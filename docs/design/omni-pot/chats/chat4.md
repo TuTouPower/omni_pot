@@ -219,7 +219,7 @@ Summary of this round:
 
 - **Long-text scroll**: extended the sample text in 02 artboard so internal scroll inside the source card is visible.
 - **Dropdown positioning**: Select / LangDropdown / PillSelect now portal their popups to `document.body` and use `position: fixed` — they escape both card `overflow:hidden` and the DesignCanvas's CSS transform. Popups now land directly under (or above when no space) the trigger, centered on it.
-- **OCR window**: split into two artboards — `识别窗口` and `截图翻译窗口`. The translate variant adds a target-language pill dropdown in the action bar (translate icon → lang) and stacks two text cards on the right (识别 + 翻译).
+- **OCR window**: split into two artboards — `识别窗口` and `OCR 翻译窗口`. The translate variant adds a target-language pill dropdown in the action bar (translate icon → lang) and stacks two text cards on the right (识别 + 翻译).
 - **配置 → 快捷键**: redesigned row layout — single horizontal row with proper alignment; bound state shows a × clear button instead of a static "已绑定" tag; empty state shows a normal "绑定" button.
 - **Wayland banner**: removed; the state-detail card now shows a red-tinted "快捷键已被其他应用占用" notice referencing the conflicting combo.
 - **Result cards**: drag handle (`Icons.Drag`) added to the left of the service tile, matching the service-list rows.

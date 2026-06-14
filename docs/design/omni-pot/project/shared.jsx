@@ -1,6 +1,20 @@
 /* global React */
 const { useState, useMemo, useEffect, useRef } = React;
 
+// ============== PLATFORM ==============
+// macOS uses Cmd as the primary modifier; everything else uses Ctrl.
+// Hotkeys are shown in the abbreviated, space-separated format the app uses
+// across the hotkey settings page, the tray menu and the welcome card —
+// e.g. "Ctrl + Alt + T" (Win/Linux) / "Cmd + Alt + T" (macOS).
+const IS_MAC = typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+const MOD_KEY = IS_MAC ? 'Cmd' : 'Ctrl';
+// Map a canonical token list to platform labels (only the primary modifier
+// differs between platforms). Returns a fresh array of display tokens.
+const hotkeyTokens = (tokens) => tokens.map((t) => (t === 'Ctrl' || t === 'Mod') ? MOD_KEY : t);
+// Joined "A + B + C" string for single-line contexts (tray labels, banners).
+const hotkeyStr = (tokens) => hotkeyTokens(tokens).join(' + ');
+
 // ============== SVG ICONS (minimal, mono) ==============
 const Icon = ({ d, size = 15, sw = 1.85, fill = false, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -48,6 +62,11 @@ const Icons = {
   Type: (p) => <Icon {...p} d={["M4 7V5h16v2","M9 5v14","M15 5v14","M7 19h4M13 19h4"]} />,
   Sliders: (p) => <Icon {...p} d={["M4 6h10","M18 6h2","M4 12h4","M12 12h8","M4 18h12","M18 18h2","M16 4v4","M10 10v4","M16 16v4"]} />,
   Brain: (p) => <Icon {...p} d={["M9 4a3 3 0 013 3v10a3 3 0 11-6 0V9a3 3 0 013-3","M15 4a3 3 0 00-3 3v10a3 3 0 106 0V9a3 3 0 00-3-3"]} />,
+  Mail: (p) => <Icon {...p} d={["M3 6h18v12H3z","M3 7l9 6 9-6"]} />,
+  ArrowR: (p) => <Icon {...p} d={["M5 12h13","M13 6l6 6-6 6"]} />,
+  Doc: (p) => <Icon {...p} d={["M6 3h8l4 4v14H6z","M14 3v4h4","M9 13h6","M9 17h4"]} />,
+  Code: (p) => <Icon {...p} d={["M8 9l-3 3 3 3","M16 9l3 3-3 3","M13 7l-2 10"]} />,
+  Shield: (p) => <Icon {...p} d={["M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6l8-3z","M9 12l2 2 4-4"]} />,
 };
 
 // Service brand monograms — no real logos, we use mono initials
@@ -59,13 +78,16 @@ const SVC_META = {
   mymemory: { name: 'MyMemory', mono: 'MM', tone: 'oklch(60% 0.12 170)' },
   lingva: { name: 'Lingva', mono: 'LV', tone: 'oklch(65% 0.10 170)' },
   ecdict: { name: 'ECDict', mono: 'EC', tone: 'oklch(64% 0.10 60)' },
-  chinese_dictionary: { name: 'Chinese Dictionary', mono: '中', tone: 'oklch(58% 0.13 25)' },
+  free_dictionary: { name: 'Free Dictionary', mono: 'FD', tone: 'oklch(60% 0.12 145)' },
+  chinese_dictionary: { name: '中文词典', mono: '中', tone: 'oklch(58% 0.13 25)' },
+  openai: { name: 'OpenAI', mono: 'AI', tone: 'oklch(58% 0.02 180)' },
   geminipro: { name: 'Gemini', mono: 'GM', tone: 'oklch(64% 0.12 280)' },
   chatglm: { name: 'ChatGLM', mono: 'GL', tone: 'oklch(60% 0.12 30)' },
   ollama: { name: 'Ollama', mono: 'OL', tone: 'oklch(55% 0.005 70)' },
   baidu: { name: '百度', mono: 'BD', tone: 'oklch(58% 0.16 250)' },
   baidu_field: { name: '百度领域', mono: 'BF', tone: 'oklch(58% 0.16 250)' },
   cambridge_dict: { name: 'Cambridge', mono: 'CD', tone: 'oklch(58% 0.13 25)' },
+  'cc-cedict': { name: 'CC-CEDICT', mono: 'CE', tone: 'oklch(64% 0.10 60)' },
   alibaba: { name: '阿里巴巴', mono: 'AB', tone: 'oklch(60% 0.15 30)' },
   tencent: { name: '腾讯', mono: 'TC', tone: 'oklch(60% 0.13 230)' },
   transmart: { name: 'TranSmart', mono: 'TS', tone: 'oklch(60% 0.13 230)' },
@@ -115,21 +137,41 @@ const LANG_NAME = {
 };
 const Flag = ({ code }) => <span className="flag">{LANG_LABEL[code] || code.slice(0,2).toUpperCase()}</span>;
 
-// Window chrome — frameless, custom controls (cross-platform neutral)
-const Titlebar = ({ title, right, hideControls }) => (
-  <div className="op-titlebar">
-    <div className="op-wordmark">{title || 'omni_pot'}</div>
-    <div className="spacer" />
-    {right}
-    {!hideControls && (
-      <div className="op-wmctl">
-        <button title="最小化"><Icons.Min /></button>
-        <button title="最大化"><Icons.Max /></button>
-        <button className="close" title="关闭"><Icons.Close /></button>
-      </div>
-    )}
-  </div>
-);
+// Window chrome — frameless, custom controls (cross-platform neutral).
+//
+// Canonical implementation lives in windows/translate.jsx as `TitlebarLeft`
+// (pin / always-on-top toggles + mode label + window controls). This wrapper
+// exists only so older call-sites that import `Titlebar` stay consistent with
+// every real window: it delegates to TitlebarLeft when available.
+//
+// `chrome` mirrors TitlebarLeft: 'wmctl' renders the full minimise / maximise /
+// close trio; anything else renders the close-only variant. `hideControls`
+// (legacy prop) maps to noPin.
+const Titlebar = ({ title, mode, right, chrome = 'close', hideControls, noPin }) => {
+  if (typeof window !== 'undefined' && window.TitlebarLeft) {
+    return <window.TitlebarLeft mode={mode || title} chrome={chrome} noPin={noPin ?? hideControls} />;
+  }
+  // Fallback (TitlebarLeft not yet loaded): match its close-only / trio split.
+  return (
+    <div className="op-titlebar">
+      <div className="op-wordmark">{title || 'Omni Pot'}</div>
+      {mode && <span className="op-mode">{mode}</span>}
+      <div className="spacer" />
+      {right}
+      {chrome === 'wmctl' ? (
+        <div className="op-wmctl">
+          <button title="最小化"><Icons.Min /></button>
+          <button title="最大化"><Icons.Max /></button>
+          <button className="close" title="关闭"><Icons.Close /></button>
+        </div>
+      ) : (
+        <button className="op-close" title="关闭" style={{ width: 28, height: 28, borderRadius: 6, display: 'grid', placeItems: 'center', color: 'var(--text-mute)', background: 'transparent' }}>
+          <Icons.Close size={18} />
+        </button>
+      )}
+    </div>
+  );
+};
 
 // Small re-usable bits
 const Switch = ({ on, onChange }) => (
@@ -219,4 +261,4 @@ const LangSelect = ({ value, onChange, codes, style }) => {
   return <Select value={value} onChange={onChange} options={opts} style={style} />;
 };
 
-Object.assign(window, { Icon, Icons, SVC_META, SvcTile, LANG_LABEL, LANG_NAME, Flag, Titlebar, Switch, Select, LangSelect });
+Object.assign(window, { Icon, Icons, SVC_META, SvcTile, LANG_LABEL, LANG_NAME, Flag, Titlebar, Switch, Select, LangSelect, IS_MAC, MOD_KEY, hotkeyTokens, hotkeyStr });

@@ -57,6 +57,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "theme": "light",
   "primary": "#5a9bbf"
 }/*EDITMODE-END*/;
+// Note: density 与 fontSize 不纳入 TWEAK_DEFAULTS —— 圆角与密度在生产中固定不可调，
+// 字体设置 UI 已隐藏（仅保留配置兼容），故原型调试面板也不再暴露这两项。
 
 // Radius is fixed at 10px across the app — no longer tweakable.
 const FIXED_RADIUS = 10;
@@ -132,10 +134,10 @@ function App() {
               results={SAMPLE_RESULTS}
               sourceText="The merge function must be both associative and commutative — otherwise the order of arriving operations matters and the result is no longer a CRDT. This invariant becomes critical once you start considering Byzantine actors or out-of-order delivery across geographically distributed replicas. In practice we relax to per-region consistency and reconcile every 60 seconds via a vector-clock merge, which gives us liveness without sacrificing correctness during the common case. Operators who care should monitor the divergence histogram in Grafana." />
           </DCArtboard>
-          <DCArtboard id="dict" label="词典 · 英文字词" width={420} height={780} style={{ height: 'auto' }}>
+          <DCArtboard id="dict" label="词典 · 英文字词" width={400} height={780} style={{ height: 'auto' }}>
             <DictWindow lang="en" />
           </DCArtboard>
-          <DCArtboard id="dict-zh" label="词典 · 中文字词" width={420} height={780} style={{ height: 'auto' }}>
+          <DCArtboard id="dict-zh" label="词典 · 中文字词" width={400} height={780} style={{ height: 'auto' }}>
             <DictWindow lang="zh" />
           </DCArtboard>
         </DCSection>
@@ -175,7 +177,7 @@ function App() {
         </DCSection>
 
         <DCSection id="ambient" title="05 · 后台 · 托盘 · 更新" subtitle="不常出现但必须做好的边角料">
-          <DCArtboard id="tray" label="系统托盘菜单" width={360} height={440}>
+          <DCArtboard id="tray" label="系统托盘菜单" width={360} height={460}>
             <div style={{ padding: 16, background: '#f0eee9', height: '100%', borderRadius: 12, display: 'flex', justifyContent: 'center', paddingTop: 32 }}>
               <TrayMenu />
             </div>
@@ -292,7 +294,7 @@ function TranslateErrorState() {
 
 }
 
-// First-launch — 翻译 (含划词+输入) / 文字识别 / 截图翻译 三个入口
+// First-launch — 翻译 (含划词+输入) / OCR 识别 / 截图翻译 三个入口
 function TranslateEmptyState() {
   const Item = ({ icon, title, sub, kbd }) =>
   <div className="card" style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -328,10 +330,10 @@ function TranslateEmptyState() {
             <div className="hint">下面的快捷键已为你预设，随时可在「设置」中修改</div>
           </div>
         </div>
-        <Item icon={<Icons.Translate size={16} />} title="翻译" sub="选中文本时翻译该文本；未选中时弹出空翻译窗口" kbd={['Ctrl', 'Alt', 'T']} />
-        <Item icon={<Icons.Type size={16} />} title="词典" sub="选中字词查询词典释义" kbd={['Ctrl', 'Alt', 'D']} />
-        <Item icon={<Icons.Camera size={16} />} title="文字识别" sub="截图后将文字提取到识别窗口" kbd={['Ctrl', 'Alt', 'S']} />
-        <Item icon={<Icons.Image size={16} />} title="截图翻译" sub="截图、识别并直接翻译结果" kbd={['Ctrl', 'Alt', 'Shift', 'S']} />
+        <Item icon={<Icons.Translate size={16} />} title="翻译" sub="选中文本时翻译该文本；未选中时弹出空翻译窗口" kbd={window.hotkeyTokens(['Ctrl', 'Alt', 'T'])} />
+        <Item icon={<Icons.Type size={16} />} title="词典" sub="选中字词查询词典释义" kbd={window.hotkeyTokens(['Ctrl', 'Alt', 'D'])} />
+        <Item icon={<Icons.Camera size={16} />} title="文字识别" sub="截图后将文字提取到识别窗口" kbd={window.hotkeyTokens(['Ctrl', 'Alt', 'S'])} />
+        <Item icon={<Icons.Image size={16} />} title="截图翻译" sub="截图、识别并直接翻译结果" kbd={window.hotkeyTokens(['Ctrl', 'Alt', 'Shift', 'S'])} />
         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 4 }}>
           <button className="btn sm"><Icons.Settings size={13} />设置快捷键</button>
           <button className="btn sm" style={{ color: 'var(--brand-primary)' }}>跳过</button>
@@ -350,7 +352,7 @@ function HotkeyUnavailableBanner() {
           <div style={{ fontSize: 12.5, color: 'var(--danger)', lineHeight: 1.55 }}>
             <div style={{ fontWeight: 600, marginBottom: 4 }}>快捷键已被其他应用占用</div>
             <div style={{ color: 'var(--text-dim)' }}>
-              <span className="mono" style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: 3, color: 'var(--text)' }}>Ctrl + Alt + T</span> 未能注册。请释放该快捷键后重试，或选择另一组。
+              <span className="mono" style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: 3, color: 'var(--text)' }}>{window.hotkeyStr(['Ctrl', 'Alt', 'T'])}</span> 未能注册。请释放该快捷键后重试，或选择另一组。
             </div>
           </div>
         </div>
