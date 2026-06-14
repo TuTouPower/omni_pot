@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { useConfig } from '../../hooks/use_config'
@@ -18,6 +18,20 @@ function platform_arch(): string {
 const REPO_URL = 'https://github.com/TuTouPower/omni_pot'
 const SURVEY_URL = 'https://wj.qq.com/edit?sid=27007386'
 
+const open_external = (url: string): void => {
+    window.electronAPI.shell.openExternal(url).catch(() => undefined)
+}
+
+interface TileDef {
+    key: string
+    label: string
+    sub: string
+    icon: React.ReactNode
+    icon_bg: string
+    external?: boolean
+    action: () => void
+}
+
 export default function AboutPage(): React.ReactElement {
     const { t } = useTranslation()
     const [serverPort] = useConfig('server_port')
@@ -27,16 +41,6 @@ export default function AboutPage(): React.ReactElement {
     const [logDir, setLogDir] = useState('...')
     const [version, setVersion] = useState('...')
     const [exporting, setExporting] = useState(false)
-    const openExternal = (url: string): void => {
-        window.electronAPI.shell.openExternal(url).catch(() => undefined)
-    }
-
-    useEffect(() => {
-        window.electronAPI.log.getDir().then(setLogDir).catch(() => { setLogDir('unknown'); })
-        window.electronAPI.config.getUserDir().then(setConfigDir).catch(() => { setConfigDir('unknown'); })
-        window.electronAPI.getVersion().then(setVersion).catch(() => { setVersion('unknown'); })
-    }, [])
-
     const handleExportLog = (): void => {
         setExporting(true)
         window.electronAPI.log.export().then((result) => {
@@ -46,50 +50,124 @@ export default function AboutPage(): React.ReactElement {
         }).catch(() => undefined).finally(() => { setExporting(false); })
     }
 
+    useEffect(() => {
+        window.electronAPI.log.getDir().then(setLogDir).catch(() => { setLogDir('unknown'); })
+        window.electronAPI.config.getUserDir().then(setConfigDir).catch(() => { setConfigDir('unknown'); })
+        window.electronAPI.getVersion().then(setVersion).catch(() => { setVersion('unknown'); })
+    }, [])
+
+    const tiles: TileDef[] = [
+        {
+            key: 'update',
+            label: '检查更新',
+            sub: t('about.check_update', { defaultValue: '检查更新' }),
+            icon: <Icons.Cloud size={19} />,
+            icon_bg: 'var(--brand-primary)',
+            action: () => { open_external(`${REPO_URL}/releases`); },
+        },
+        {
+            key: 'home',
+            label: '官网',
+            sub: 'github.com/TuTouPower',
+            icon: <Icons.Globe size={19} />,
+            icon_bg: 'var(--brand-primary)',
+            external: true,
+            action: () => { open_external(REPO_URL); },
+        },
+        {
+            key: 'docs',
+            label: '文档与帮助',
+            sub: '使用指南与 API',
+            icon: <Icons.Grid size={19} />,
+            icon_bg: 'var(--brand-primary)',
+            external: true,
+            action: () => { open_external(`${REPO_URL}/tree/master/docs`); },
+        },
+        {
+            key: 'feedback',
+            label: '反馈与联系',
+            sub: '问卷与建议',
+            icon: <Icons.Edit size={19} />,
+            icon_bg: 'var(--brand-primary)',
+            external: true,
+            action: () => { open_external(SURVEY_URL); },
+        },
+        {
+            key: 'support',
+            label: '支持作者',
+            sub: '爱发电赞助',
+            icon: <Icons.Heart size={19} />,
+            icon_bg: 'oklch(62% 0.15 12)',
+            action: () => { open_external('https://afdian.com/a/tutoupower'); },
+        },
+        {
+            key: 'license',
+            label: '开源许可',
+            sub: 'MIT License',
+            icon: <Icons.Layers size={19} />,
+            icon_bg: 'var(--brand-primary)',
+            action: () => { open_external(`${REPO_URL}/blob/master/LICENSE`); },
+        },
+    ]
+
     return (
-        <div className="stack gap-12">
-            <div style={{ padding: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8 }}>
-                <div
-                    className="svc-tile"
-                    style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 16,
-                        background: 'var(--brand-primary)',
-                        color: '#fff',
-                        borderColor: 'transparent',
-                        fontSize: 22,
-                        fontWeight: 700,
-                    }}
-                >
-                    op
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Top: hero + action tiles */}
+            <div style={{ display: 'grid', gridTemplateColumns: '214px 1fr', gap: 12 }}>
+                {/* Hero card */}
+                <div className="about-hero" data-testid="about-hero">
+                    <div className="about-logo" data-testid="about-hero-logo">op</div>
+                    <div data-testid="about-hero-name" style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', marginTop: 16, whiteSpace: 'nowrap' }}>
+                        {t('app_name', { defaultValue: 'Omni Pot' })}
+                    </div>
+                    <div className="about-ver" data-testid="about-hero-version" style={{ marginTop: 10 }}>
+                        版本 {version}
+                    </div>
+                    <div className="hint mono" style={{ marginTop: 9 }}>
+                        {platform_arch()}
+                    </div>
+                    <div style={{ width: '72%', height: 1, background: 'var(--line-soft)', margin: '18px 0' }} />
+                    <div className="hint" data-testid="about-hero-description" style={{ lineHeight: 1.65, maxWidth: 180 }}>
+                        桌面翻译与文字识别工具，覆盖主流在线翻译、离线词典与 OCR 服务，开箱即用。
+                    </div>
+                    <div style={{ flex: 1 }} />
+                    <div className="about-links" style={{ marginTop: 18 }}>
+                        <a data-testid="about-link-privacy" style={{ fontSize: 11.5 }}>隐私政策</a>
+                        <span className="sep" style={{ fontSize: 10 }}>·</span>
+                        <a data-testid="about-link-terms" style={{ fontSize: 11.5 }}>服务条款</a>
+                    </div>
+                    <div className="hint" data-testid="about-copyright" style={{ marginTop: 8, fontSize: 10.5 }}>
+                        © 2026 Omni Pot · 保留所有权利
+                    </div>
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('app_name', { defaultValue: 'Omni Pot' })}</div>
-                <div className="hint mono" data-testid="about-version">version {version} · {platform_arch()}</div>
-                <div className="hint" style={{ maxWidth: 360 }}>
-                    一个面向日常使用的桌面翻译与识别工具，支持多个翻译引擎、OCR 服务和内置服务设置。
-                </div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button className="btn sm" data-testid="about-home-link" onClick={() => { openExternal(REPO_URL); }}>
-                        官网
-                    </button>
-                    <button className="btn sm" data-testid="about-docs-link" onClick={() => { openExternal(`${REPO_URL}/tree/master/docs`); }}>
-                        文档
-                    </button>
-                    <button className="btn sm" data-testid="about-survey-link" onClick={() => { openExternal(SURVEY_URL); }}>
-                        问卷反馈
-                    </button>
-                    <button className="btn primary sm" data-testid="about-check-update" onClick={() => { openExternal(`${REPO_URL}/releases`); }}>
-                        <Icons.Cloud size={12} />
-                        {t('about.check_update')}
-                    </button>
-                    <button className="btn sm" data-testid="about-support-author" style={{ color: '#9b59b6' }} onClick={() => { openExternal('https://afdian.com/a/tutoupower'); }}>
-                        <Icons.Heart size={12} />
-                        支持作者
-                    </button>
+
+                {/* Action tiles grid */}
+                <div className="about-grid" data-testid="about-grid">
+                    {tiles.map((tile) => (
+                        <div
+                            key={tile.key}
+                            className="about-tile"
+                            data-testid={`about-tile-${tile.key}`}
+                            onClick={tile.action}
+                        >
+                            {tile.external && (
+                                <div className="tile-arrow" data-testid="tile-arrow">
+                                    <Icons.ChevR size={15} />
+                                </div>
+                            )}
+                            <div className="tile-ic" style={{ background: tile.icon_bg, color: '#fff' }}>
+                                {tile.icon}
+                            </div>
+                            <div>
+                                <div className="tile-label">{tile.label}</div>
+                                <div className="tile-sub">{tile.sub}</div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
+            {/* Diagnostics card */}
             <ConfigCard title="诊断">
                 <ConfigRow label="日志目录">
                     <div className="mono hint" data-testid="about-log-dir" style={{ marginRight: 8 }}>{logDir}</div>

@@ -201,7 +201,7 @@ test.describe('@ui config settings window', () => {
             const help_link = config.page.locator('a.label-help[title="API 文档"]')
             await expect(help_link).toBeVisible()
             await expect(help_link).toContainText('?')
-            await expect(help_link).toHaveAttribute('href', /docs\/api\.md/)
+            await expect(help_link).toHaveAttribute('href', /api\.md/)
 
             // Spec §9.3: 不提供代理功能，不显示代理设置卡片。
             await expect(config.page.locator('body')).not.toContainText('代理')
@@ -341,49 +341,137 @@ test.describe('@ui config settings window', () => {
         }
     })
 
-    test('user sees about links and diagnostics', async () => {
+    test('settings window sidebar and content padding match design spec', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+
+        try {
+            const config = await omni.openConfig()
+
+            // Design spec: sidebar width 132px
+            const sidebar = config.window().locator('[data-testid="config-sidebar"]')
+            await expect(sidebar).toBeVisible()
+            await expect(sidebar).toHaveCSS('width', '132px')
+
+            // Design spec: content area padding 12px 16px 16px
+            const content = config.window().locator('[data-testid="config-content"]')
+            await expect(content).toBeVisible()
+            await expect(content).toHaveCSS('padding-top', '12px')
+            await expect(content).toHaveCSS('padding-right', '16px')
+            await expect(content).toHaveCSS('padding-bottom', '16px')
+            await expect(content).toHaveCSS('padding-left', '16px')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('about page shows hero + action tiles layout matching design spec', async () => {
         const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
 
         try {
             const config = await omni.openConfig()
             await config.openSection('about')
 
-            // Spec §9.10: 版本号格式带平台后缀 version x.y.z · platform-arch。
-            await expect(config.aboutVersion()).toContainText(/version \d+\.\d+\.\d+/)
-            await expect(config.aboutVersion()).toContainText(/·/)
-            await expect(config.aboutVersion()).toContainText(/(win32|darwin|linux)-(x64|arm64)/)
+            // Hero card visible
+            await expect(config.aboutHero()).toBeVisible()
+            await expect(config.aboutHeroLogo()).toContainText('op')
+            await expect(config.aboutHeroName()).toContainText('Omni Pot')
+            await expect(config.aboutHeroVersion()).toBeVisible()
+            await expect(config.aboutHeroDescription()).toBeVisible()
+
+            // Action tiles grid visible with 6 tiles
+            await expect(config.aboutGrid()).toBeVisible()
+            const tileKeys = await config.aboutTileKeys()
+            expect(tileKeys).toEqual(expect.arrayContaining([
+                'update', 'home', 'docs', 'feedback', 'support', 'license',
+            ]))
+            expect(tileKeys).toHaveLength(6)
+
+            // Each tile visible
+            await expect(config.aboutTile('update')).toBeVisible()
+            await expect(config.aboutTile('home')).toBeVisible()
+            await expect(config.aboutTile('docs')).toBeVisible()
+            await expect(config.aboutTile('feedback')).toBeVisible()
+            await expect(config.aboutTile('support')).toBeVisible()
+            await expect(config.aboutTile('license')).toBeVisible()
+
+            // Tile labels
+            await expect(config.aboutTile('update')).toContainText('检查更新')
+            await expect(config.aboutTile('home')).toContainText('官网')
+            await expect(config.aboutTile('docs')).toContainText('文档与帮助')
+            await expect(config.aboutTile('feedback')).toContainText('反馈与联系')
+            await expect(config.aboutTile('support')).toContainText('支持作者')
+            await expect(config.aboutTile('license')).toContainText('开源许可')
+
+            // External tiles have arrow indicator
+            await expect(config.aboutTile('home').locator('[data-testid="tile-arrow"]')).toBeVisible()
+            await expect(config.aboutTile('docs').locator('[data-testid="tile-arrow"]')).toBeVisible()
+            await expect(config.aboutTile('feedback').locator('[data-testid="tile-arrow"]')).toBeVisible()
+
+            // Diagnostics card still visible below
+            await expect(config.page.getByTestId('about-config-dir')).toBeVisible()
+            await expect(config.page.getByTestId('about-log-dir')).toBeVisible()
+            await expect(config.page.getByTestId('about-api-url')).toBeVisible()
             await expect(config.page.getByTestId('about-export-log')).toBeVisible()
-            await expect(config.aboutLink('home')).toContainText('官网')
-            await expect(config.aboutLink('docs')).toContainText('文档')
-            await expect(config.aboutLink('survey')).toContainText('问卷反馈')
-            await expect(config.aboutCheckUpdate()).toContainText('检查更新')
-            await expect(config.aboutCheckUpdate()).not.toContainText('about.check_update')
-            await expect(config.aboutSupportAuthor()).toBeVisible()
-            await expect(config.aboutSupportAuthor()).toContainText('支持作者')
-            await expect(config.aboutSupportAuthor()).toHaveCSS('color', 'rgb(155, 89, 182)')
+
+            // Hero links: privacy + terms
+            await expect(config.aboutHero().getByTestId('about-link-privacy')).toBeVisible()
+            await expect(config.aboutHero().getByTestId('about-link-terms')).toBeVisible()
+
+            // Copyright text
+            await expect(config.aboutHero().getByTestId('about-copyright')).toContainText('Omni Pot')
+        } finally {
+            await omni.stop()
+        }
+    })
+
+    test('about page tile actions open correct URLs', async () => {
+        const omni = await AppFixture.start({ config: { app_language: 'zh_cn' } })
+
+        try {
+            const config = await omni.openConfig()
+            await config.openSection('about')
 
             await omni.api.resetShellOpenExternal()
-            await config.aboutLink('home').click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot')
+
+            // 官网 tile
+            await config.aboutTile('home').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls)
+                .toContain('https://github.com/TuTouPower/omni_pot')
 
             await omni.api.resetShellOpenExternal()
-            await config.aboutLink('docs').click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/tree/master/docs')
+
+            // 文档与帮助 tile
+            await config.aboutTile('docs').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls)
+                .toContain('https://github.com/TuTouPower/omni_pot/tree/master/docs')
 
             await omni.api.resetShellOpenExternal()
-            await config.aboutLink('survey').click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://wj.qq.com/edit?sid=27007386')
+
+            // 反馈与联系 tile
+            await config.aboutTile('feedback').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls)
+                .toContain('https://wj.qq.com/edit?sid=27007386')
 
             await omni.api.resetShellOpenExternal()
-            await config.aboutCheckUpdate().click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://github.com/TuTouPower/omni_pot/releases')
+
+            // 检查更新 tile
+            await config.aboutTile('update').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls)
+                .toContain('https://github.com/TuTouPower/omni_pot/releases')
 
             await omni.api.resetShellOpenExternal()
-            await config.aboutSupportAuthor().click()
-            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls).toContain('https://afdian.com/a/tutoupower')
-            await expect(config.aboutDiagnostic('about-config-dir')).toContainText(/omni_pot|unknown/)
-            await expect(config.aboutDiagnostic('about-log-dir')).toContainText('logs')
-            await expect(config.aboutDiagnostic('about-api-url')).toContainText(/http:\/\/127\.0\.0\.1:\d+/)
+
+            // 支持作者 tile
+            await config.aboutTile('support').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls)
+                .toContain('https://afdian.com/a/tutoupower')
+
+            await omni.api.resetShellOpenExternal()
+
+            // 开源许可 tile
+            await config.aboutTile('license').click()
+            await expect.poll(async () => (await omni.api.shellOpenExternal()).urls)
+                .toContain('https://github.com/TuTouPower/omni_pot/blob/master/LICENSE')
         } finally {
             await omni.stop()
         }

@@ -56,6 +56,15 @@ A 实机已通过，自动化与 timing 日志已就位。B/C 用户已确认不
 
 ---
 
+## 设计稿对齐待办（app/frontend）
+
+来源：`docs/design/omni-pot/chats/chat1.md`、`docs/design/omni-pot/project/windows/config.jsx`、`docs/design/omni-pot/project/windows/other.jsx`、`docs/design/omni-pot/project/omni_pot Design.html`。
+
+- [x] **设置窗口整体框架对齐 demo（设置 / 通用等全部子页）**：将当前设置窗口收窄到 demo 比例，减少左侧导航与内容区留白，侧栏宽度、窗口总宽与内边距按 `cfg-general` / `cfg-translate` artboard 对齐（demo 为 `width={720}`、sidebar `132px`、内容区左侧贴边布局；当前 `src/windows/config/index.tsx` 仍是 sidebar `184px` + `width: 100vw`）。验证：启动设置窗口，对照 `docs/design/omni-pot/project/windows/config.jsx` 的 `ConfigWindow` 和 `docs/design/omni-pot/project/omni_pot Design.html` 的 `cfg-general` artboard 做视觉比对，确认导航更窄、内容留白收紧且不再铺满整屏宽度。
+- [x] **设置 → 关于 页改为 hero + action tiles 布局**：按 demo 重做关于页，上半区改为左侧产品 hero + 右侧 2 列 action tiles（检查更新 / 官网 / 文档与帮助 / 反馈与联系 / 支持作者 / 开源许可），下半区保留诊断卡片；当前 `src/windows/config/about.tsx` 仍是居中 logo + 一排按钮，缺少 tile 栅格与开源许可入口。验证：打开设置→关于，对照 `docs/design/omni-pot/project/windows/config.jsx` 的 `PageAbout` 与 `cfg-about` artboard，确认 hero、tile 数量/分组、诊断区层级一致。
+
+---
+
 ## 设计稿对齐待办（涉及 `docs/design/` 不可修改）
 
 > 已完成项已归档至 `docs/archive/plan_archives/tasks_completed_2026_06_13.md`。剩余项因目标文件在 `docs/design/` 下，仓库策略禁止修改，**永久搁置**。

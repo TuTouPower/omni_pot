@@ -287,6 +287,40 @@ export class ConfigPage {
         return this.page.getByTestId(testId)
     }
 
+    /* Design-aligned about page selectors */
+    aboutHero(): Locator {
+        return this.page.getByTestId('about-hero')
+    }
+
+    aboutHeroLogo(): Locator {
+        return this.page.getByTestId('about-hero-logo')
+    }
+
+    aboutHeroName(): Locator {
+        return this.page.getByTestId('about-hero-name')
+    }
+
+    aboutHeroVersion(): Locator {
+        return this.page.getByTestId('about-hero-version')
+    }
+
+    aboutHeroDescription(): Locator {
+        return this.page.getByTestId('about-hero-description')
+    }
+
+    aboutGrid(): Locator {
+        return this.page.getByTestId('about-grid')
+    }
+
+    aboutTile(key: string): Locator {
+        return this.page.getByTestId(`about-tile-${key}`)
+    }
+
+    aboutTileKeys(): Promise<string[]> {
+        return this.page.locator('[data-testid^="about-tile-"]').evaluateAll((els) =>
+            els.map((el) => el.getAttribute('data-testid')?.replace('about-tile-', '') ?? '').filter(Boolean))
+    }
+
     async appRegion(testId: string): Promise<string> {
         return this.page.getByTestId(testId).evaluate((element) => getComputedStyle(element).getPropertyValue('-webkit-app-region'))
     }

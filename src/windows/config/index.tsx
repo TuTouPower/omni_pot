@@ -94,8 +94,8 @@ export default function ConfigWindow(): React.ReactElement {
                 </div>
             </div>
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-                <div style={{
-                    width: 184,
+                <div data-testid="config-sidebar" style={{
+                    width: 132,
                     background: 'var(--bg-card)',
                     borderRight: '1px solid var(--line-soft)',
                     display: 'flex',
@@ -139,7 +139,7 @@ export default function ConfigWindow(): React.ReactElement {
 
                 {/* Content */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <div style={{ flex: 1, overflow: 'auto', padding: '12px 16px 16px' }}>
+                    <div data-testid="config-content" style={{ flex: 1, overflow: 'auto', padding: '12px 16px 16px' }}>
                         {renderPage()}
                     </div>
                 </div>
