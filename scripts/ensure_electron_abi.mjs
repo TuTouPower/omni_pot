@@ -1,6 +1,4 @@
 import { spawnSync, execSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import process from 'node:process'
 import { createRequire } from 'node:module'
 
@@ -18,38 +16,17 @@ const electron_check = spawnSync(
 if (electron_check.status !== 0) {
     process.stderr.write('[abi] better-sqlite3 is not compatible with Electron, rebuilding...\n')
 
-    // electron-builder install-app-deps uses prebuild-install which may
-    // download a Node-ABI prebuilt instead of rebuilding.  Use node-gyp
-    // directly with Electron headers to guarantee the correct ABI.
-    const electron_pkg = resolve(process.cwd(), 'node_modules/electron/package.json')
-    let electron_version
-    try {
-        electron_version = JSON.parse(readFileSync(electron_pkg, 'utf8')).version
-    } catch {
-        process.stderr.write('[abi] cannot read Electron version from node_modules/electron\n')
-        process.exit(1)
-    }
-
     const npx_cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx'
     const target_arch = process.env['npm_config_arch'] ?? process.arch
-    const better_sqlite3_dir = resolve(process.cwd(), 'node_modules/better-sqlite3')
     const rebuild = spawnSync(
         npx_cmd,
-        [
-            'node-gyp', 'rebuild', '--release',
-            `--target=${electron_version}`,
-            `--arch=${target_arch}`,
-            '--dist-url=https://electronjs.org/headers',
-            '--build-from-source',
-        ],
-        { stdio: 'inherit', shell: process.platform === 'win32', cwd: better_sqlite3_dir }
+        ['electron-rebuild', '-f', '-w', 'better-sqlite3', '--build-from-source', `--arch=${target_arch}`],
+        { stdio: 'inherit', shell: process.platform === 'win32' }
     )
     if (rebuild.status !== 0) {
         process.exit(rebuild.status ?? 1)
     }
 
-    // node-gyp rebuild may leave lingering Electron processes or file locks.
-    // Clean up before Playwright launches its own Electron instances.
     if (process.platform === 'win32') {
         try {
             execSync(
@@ -57,7 +34,6 @@ if (electron_check.status !== 0) {
                 { timeout: 5000, stdio: 'ignore' }
             )
         } catch { /* no leftover processes */ }
-        // Brief delay to let file handles release after rebuild
         spawnSync('ping', ['-n', '2', '127.0.0.1'], { stdio: 'ignore' })
     }
 

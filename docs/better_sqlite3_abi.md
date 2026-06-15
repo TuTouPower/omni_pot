@@ -69,7 +69,7 @@ npx electron-builder install-app-deps
 npm run dist
 ```
 
-其中 `electron-builder install-app-deps` / `electron-builder` 会把原生依赖重建成 Electron ABI，也就是 ABI `140`。
+其中 `electron-builder install-app-deps` / `electron-builder` 会尝试把原生依赖重建成 Electron ABI，也就是 ABI `140`。项目在 Electron 侧入口额外使用 `electron-rebuild --build-from-source`，避免拿到不匹配的预编译包。
 
 ### 典型切换链路
 
@@ -86,15 +86,15 @@ npm run dist
 
 - `package.json`
   - `postinstall`: `electron-builder install-app-deps`
-  - `test`: `vitest run`
-  - `test:e2e`: `npx playwright test --project=full`
-  - `test:e2e:external`: `npx playwright test --project=external`
-  - `build:chinese-dictionary`: `npx tsx scripts/build_chinese_dictionary.ts`
+  - `electron:rebuild`: `electron-rebuild -f -w better-sqlite3 --build-from-source`
+  - `test`: `node scripts/ensure_node_abi.mjs && vitest run`
+  - `test:e2e*`: `node scripts/ensure_electron_abi.mjs && ...`
+  - `build:chinese-dictionary`: `node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dictionary.ts`
 - `scripts/build_chinese_dictionary.ts`
   - Node 进程中 import `better-sqlite3`，用于生成 `data/dict/chinese_dictionary.db`。
-- `electron/chinese_dictionary/index.ts`
+- `src/main/chinese_dictionary/index.ts`
   - Electron 主进程中 import `better-sqlite3`，运行Chinese Dictionary查询。
-- `electron/history/index.ts`
+- `src/main/history/index.ts`
   - Electron 主进程中 import `better-sqlite3`，运行历史记录数据库。
 - `tests/integration/chinese_dictionary_build.test.ts`
   - Vitest / Node 进程中 import `better-sqlite3`，检查生成的Chinese Dictionary DB。
@@ -106,8 +106,8 @@ npm run dist
 每个 npm script 在执行前自动确保 `better-sqlite3` 处于正确的 ABI，开发者无需手动记忆或切换。
 
 - **Node 侧命令**（`test`、`build:chinese-dictionary`）：入口前置 `npm rebuild better-sqlite3`。
-- **Electron 侧命令**（`test:e2e`、`test:e2e:core`、`test:e2e:ui`、`test:e2e:external`）：入口前置 `npx electron-builder install-app-deps`。
-- **dist**：`run_dist.mjs` 已有分阶段逻辑，在词典构建前确保 Node ABI，electron-builder 自身会切到 Electron ABI，无需额外处理。
+- **Electron 侧命令**（`test:e2e`、`test:e2e:core`、`test:e2e:ui`、`test:e2e:external`）：入口前置 `electron-rebuild -f -w better-sqlite3 --build-from-source`。
+- **dist**：`run_dist.mjs` 分阶段处理，在词典构建前确保 Node ABI，在打包前确保 Electron ABI。
 
 ### 实施细节
 
@@ -140,31 +140,35 @@ if (check.status !== 0) {
 }
 ```
 
-#### 2. 新增辅助脚本 `scripts/ensure_electron_abi.mjs`
+#### 2. 辅助脚本 `scripts/ensure_electron_abi.mjs`
 
-检测当前 `better-sqlite3` 是否已经是 Electron ABI，不是则 install-app-deps：
+检测当前 `better-sqlite3` 是否已经是 Electron ABI，不是则用 `electron-rebuild` 从源码重建：
 
 ```javascript
 // scripts/ensure_electron_abi.mjs
 import { spawnSync } from 'node:child_process'
 import process from 'node:process'
+import { createRequire } from 'node:module'
 
-// 如果 Node 能加载，说明当前是 Node ABI，需要切到 Electron ABI
-const check = spawnSync(
-    process.execPath,
-    ['-e', "require('better-sqlite3')"],
-    { stdio: 'pipe' }
+const require = createRequire(import.meta.url)
+const sqlite_check_script = "new (require('better-sqlite3'))(':memory:').close()"
+
+const electron_check = spawnSync(
+    require('electron'),
+    ['-e', sqlite_check_script],
+    { stdio: 'pipe', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }
 )
 
-if (check.status === 0) {
-    process.stderr.write('[abi] better-sqlite3 is Node ABI, switching to Electron ABI...\n')
-    const install = spawnSync(
+if (electron_check.status !== 0) {
+    process.stderr.write('[abi] better-sqlite3 is not compatible with Electron, rebuilding...\n')
+    const target_arch = process.env['npm_config_arch'] ?? process.arch
+    const rebuild = spawnSync(
         process.platform === 'win32' ? 'npx.cmd' : 'npx',
-        ['electron-builder', 'install-app-deps'],
+        ['electron-rebuild', '-f', '-w', 'better-sqlite3', '--build-from-source', `--arch=${target_arch}`],
         { stdio: 'inherit', shell: process.platform === 'win32' }
     )
-    if (install.status !== 0) {
-        process.exit(install.status ?? 1)
+    if (rebuild.status !== 0) {
+        process.exit(rebuild.status ?? 1)
     }
     process.stderr.write('[abi] switch complete\n')
 }
@@ -179,6 +183,8 @@ if (check.status === 0) {
     "test": "node scripts/ensure_node_abi.mjs && vitest run",
     "build:chinese-dictionary": "node scripts/ensure_node_abi.mjs && npx tsx scripts/build_chinese_dictionary.ts",
 
+    "electron:rebuild": "electron-rebuild -f -w better-sqlite3 --build-from-source",
+
     // Electron 侧：前置 ensure_electron_abi
     "test:e2e": "node scripts/ensure_electron_abi.mjs && npx playwright test --project=full",
     "test:e2e:core": "node scripts/ensure_electron_abi.mjs && npx playwright test --project=core",
@@ -191,21 +197,19 @@ if (check.status === 0) {
 }
 ```
 
-#### 4. 修改 `scripts/run_dist.mjs`
+#### 4. `scripts/run_dist.mjs` 分阶段切换
 
-在词典构建步骤前显式确保 Node ABI（替换现有的 retry 逻辑为前置检查）：
+词典构建前确保 Node ABI，打包前确保 Electron ABI：
 
 ```javascript
-// 在 steps 数组前加一步
-const ensure_node_abi = ['node', ['scripts/ensure_node_abi.mjs']]
-
 const steps = [
     [npm_cmd, ['run', 'dist:check-locks']],
-    ensure_node_abi,                              // 确保Chinese Dictionary构建用 Node ABI
+    ['node', ['scripts/ensure_node_abi.mjs']],
     [npm_cmd, ['run', 'build:chinese-dictionary']],
     [npm_cmd, ['run', 'build']],
+    ['node', ['scripts/ensure_electron_abi.mjs']],
     [npm_cmd, ['run', 'dist:check-locks']],
-    [npx_cmd, ['electron-builder', ...]],         // electron-builder 自动切 Electron ABI
+    [npx_cmd, ['electron-builder', ...]],
 ]
 ```
 
@@ -230,7 +234,6 @@ const steps = [
 ### 不变的部分
 
 - `postinstall` 仍然是 `electron-builder install-app-deps`（`npm install` 后默认切到 Electron ABI，因为开发时最常用的是 `npm run dev` 启动 Electron）。
-- `run_dist.mjs` 保留现有的 `run_with_better_sqlite3_rebuild` 作为兜底 fallback，但正常路径下不会触发。
 - `npm run dev`、`npm run build`、`npm run start` 不涉及 `better-sqlite3` 的直接加载，无需修改。
 
 ## 判断当前模块属于哪个 ABI

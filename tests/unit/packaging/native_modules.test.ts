@@ -85,10 +85,15 @@ describe('native module packaging', () => {
         expect(ensure_electron_abi).toMatch(/electron_check\.status\s*!==\s*0/)
     })
 
-    it('rebuilds better-sqlite3 for the current architecture', () => {
+    it('rebuilds better-sqlite3 for Electron through electron-rebuild', () => {
+        const package_json = read_package_json()
         const ensure_electron_abi = readFileSync(ENSURE_ELECTRON_ABI_PATH, 'utf8')
 
+        expect(package_json.devDependencies).toHaveProperty('@electron/rebuild')
+        expect(package_json.scripts?.['electron:rebuild']).toBe('electron-rebuild -f -w better-sqlite3 --build-from-source')
+        expect(ensure_electron_abi).toContain("'electron-rebuild', '-f', '-w', 'better-sqlite3', '--build-from-source', `--arch=${target_arch}`")
         expect(ensure_electron_abi).toContain('process.env[\'npm_config_arch\'] ?? process.arch')
+        expect(ensure_electron_abi).not.toContain('node-gyp')
         expect(ensure_electron_abi).not.toContain('--arch=x64')
     })
 
