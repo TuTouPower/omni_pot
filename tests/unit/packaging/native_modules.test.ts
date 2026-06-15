@@ -2,14 +2,18 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-import { app_candidates, should_start_app } from '../../../scripts/restart_dist_app.mjs'
+import { app_candidates, installed_app_candidates, setup_installer_path, should_start_app } from '../../../scripts/restart_dist_app.mjs'
 import { restart_args } from '../../../scripts/run_dist.mjs'
 
 type AppCandidates = (repo_root: string, output_dir: string, product_name: string, version: string, is_dir: boolean) => string[]
+type InstalledAppCandidates = (env: NodeJS.ProcessEnv, product_name: string, executable_name: string) => string[]
+type SetupInstallerPath = (repo_root: string, output_dir: string, executable_name: string, version: string) => string
 type RestartArgs = (is_dir: boolean, completed_ok: boolean) => string[]
 type ShouldStartApp = (platform: string, always_start: boolean, restart_state_exists: boolean) => boolean
 
 const typed_app_candidates = app_candidates as unknown as AppCandidates
+const typed_installed_app_candidates = installed_app_candidates as unknown as InstalledAppCandidates
+const typed_setup_installer_path = setup_installer_path as unknown as SetupInstallerPath
 const typed_restart_args = restart_args as unknown as RestartArgs
 const typed_should_start_app = should_start_app as unknown as ShouldStartApp
 
@@ -88,8 +92,8 @@ describe('native module packaging', () => {
         expect(ensure_electron_abi).not.toContain('--arch=x64')
     })
 
-    it('passes always-start only after a successful dist build', () => {
-        expect(typed_restart_args(false, true)).toEqual(['scripts/restart_dist_app.mjs', '--always'])
+    it('passes install+always-start only after a successful full dist build', () => {
+        expect(typed_restart_args(false, true)).toEqual(['scripts/restart_dist_app.mjs', '--install', '--always'])
         expect(typed_restart_args(false, false)).toEqual(['scripts/restart_dist_app.mjs'])
         expect(typed_restart_args(true, true)).toEqual(['scripts/restart_dist_app.mjs', '--dir', '--always'])
         expect(typed_restart_args(true, false)).toEqual(['scripts/restart_dist_app.mjs', '--dir'])
@@ -103,7 +107,7 @@ describe('native module packaging', () => {
         expect(typed_should_start_app('darwin', true, true)).toBe(false)
     })
 
-    it('prefers the matching packaged app for dist and dist:dir outputs', () => {
+    it('keeps portable/unpacked fallback candidates for dist and dist:dir outputs', () => {
         expect(typed_app_candidates('/repo', 'release', 'OmniPot', '1.2.3', false)).toEqual([
             join('/repo', 'release', 'OmniPot-1.2.3-windows-portable.exe'),
             join('/repo', 'release', 'win-unpacked', 'OmniPot.exe'),
@@ -111,6 +115,35 @@ describe('native module packaging', () => {
         expect(typed_app_candidates('/repo', 'release', 'OmniPot', '1.2.3', true)).toEqual([
             join('/repo', 'release', 'win-unpacked', 'OmniPot.exe'),
             join('/repo', 'release', 'OmniPot-1.2.3-windows-portable.exe'),
+        ])
+    })
+
+    it('builds the setup installer path for full dist auto-install', () => {
+        expect(typed_setup_installer_path('/repo', 'release', 'OmniPot', '1.2.3')).toBe(
+            join('/repo', 'release', 'OmniPot-1.2.3-windows-setup.exe'),
+        )
+    })
+
+    it('generates installed-app candidates before falling back to portable outputs', () => {
+        const env = {
+            ProgramFiles: 'D:/Program Files',
+            'ProgramFiles(x86)': 'D:/Program Files (x86)',
+            LOCALAPPDATA: 'C:/Users/Karson/AppData/Local',
+        } as NodeJS.ProcessEnv
+
+        expect(typed_installed_app_candidates(env, 'Omni Pot', 'OmniPot')).toEqual([
+            join('D:/Program Files', 'Omni Pot', 'OmniPot.exe'),
+            join('D:/Program Files', 'Omni Pot', 'OmniPot', 'OmniPot.exe'),
+            join('D:/Program Files', 'OmniPot', 'OmniPot.exe'),
+            join('D:/Program Files', 'OmniPot', 'OmniPot', 'OmniPot.exe'),
+            join('D:/Program Files (x86)', 'Omni Pot', 'OmniPot.exe'),
+            join('D:/Program Files (x86)', 'Omni Pot', 'OmniPot', 'OmniPot.exe'),
+            join('D:/Program Files (x86)', 'OmniPot', 'OmniPot.exe'),
+            join('D:/Program Files (x86)', 'OmniPot', 'OmniPot', 'OmniPot.exe'),
+            join('C:/Users/Karson/AppData/Local', 'Programs', 'Omni Pot', 'OmniPot.exe'),
+            join('C:/Users/Karson/AppData/Local', 'Programs', 'Omni Pot', 'OmniPot', 'OmniPot.exe'),
+            join('C:/Users/Karson/AppData/Local', 'Programs', 'OmniPot', 'OmniPot.exe'),
+            join('C:/Users/Karson/AppData/Local', 'Programs', 'OmniPot', 'OmniPot', 'OmniPot.exe'),
         ])
     })
 

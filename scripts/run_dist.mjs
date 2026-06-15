@@ -18,7 +18,12 @@ function run(command, args) {
 }
 
 export function restart_args(is_dir, completed_ok) {
-    return ['scripts/restart_dist_app.mjs', ...(is_dir ? ['--dir'] : []), ...(completed_ok ? ['--always'] : [])]
+    return [
+        'scripts/restart_dist_app.mjs',
+        ...(is_dir ? ['--dir'] : []),
+        ...(!is_dir && completed_ok ? ['--install'] : []),
+        ...(completed_ok ? ['--always'] : []),
+    ]
 }
 
 function main() {

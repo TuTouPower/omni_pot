@@ -9,21 +9,22 @@ function render_icon(el: React.ReactElement): string {
 }
 
 describe('Pin icon stick stroke', () => {
-    it('stick inherits currentColor when inactive (fill=false)', () => {
+    it('stick explicitly uses currentColor when inactive (fill=false)', () => {
         const html = render_icon(React.createElement(Icons.Pin, { fill: false }))
-        // The stick path M12 16v6 must NOT set stroke to var(--bg)
         expect(html).toContain('d="M12 16v6"')
         const stick_match = html.match(/<path[^>]*d="M12 16v6"[^>]*>/)
         expect(stick_match).not.toBeNull()
         if (stick_match === null) throw new Error('stick path not found')
+        expect(stick_match[0]).toContain('stroke="currentColor"')
         expect(stick_match[0]).not.toContain('var(--bg)')
     })
 
-    it('stick inherits currentColor when active (fill=true)', () => {
+    it('stick explicitly uses currentColor when active (fill=true)', () => {
         const html = render_icon(React.createElement(Icons.Pin, { fill: true }))
         const stick_match = html.match(/<path[^>]*d="M12 16v6"[^>]*>/)
         expect(stick_match).not.toBeNull()
         if (stick_match === null) throw new Error('stick path not found')
+        expect(stick_match[0]).toContain('stroke="currentColor"')
         expect(stick_match[0]).not.toContain('var(--bg)')
     })
 
