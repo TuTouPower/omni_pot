@@ -24,9 +24,11 @@ const TIME_FILTERS = [
 
 const SVC_ABBR: Record<string, string> = {
     bing: 'BI', deepl: 'DL', google: 'GG', mymemory: 'MM',
-    geminipro: 'GP', baidu: 'BD',
+    geminipro: 'GP', baidu: 'BD', baidu_field: 'BF',
     tencent: 'TC', alibaba: 'AL', caiyun: 'CY', youdao: 'YD',
-    sogai: 'SG', translatetranslate: 'TT', cambridge_dict: 'CD',
+    niutrans: 'NT', volcengine: 'VC', chatglm: 'CG', ollama: 'OL',
+    transmart: 'TM', cambridge_dict: 'CD', ecdict: 'ED',
+    chinese_dictionary: 'CD',
 }
 
 const LANG_LABEL: Record<string, string> = {
