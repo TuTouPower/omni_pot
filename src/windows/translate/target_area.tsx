@@ -174,7 +174,7 @@ const DictResultInline = React.memo(function DictResultInline({ result }: { resu
     )
 })
 
-export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry }: TargetAreaProps): React.ReactElement | null {
+export const TargetArea = React.memo(function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry }: TargetAreaProps): React.ReactElement | null {
     const { t } = useTranslation()
     const results = useTranslateStore((s) => s.results)
     const isTranslating = useTranslateStore((s) => s.isTranslating)
@@ -334,4 +334,4 @@ export function TargetArea({ serviceList, ttsServiceList, hasAnyRequest, onRetry
             </SortableContext>
         </DndContext>
     )
-}
+})
