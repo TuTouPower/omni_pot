@@ -15,6 +15,7 @@ import { create_logger } from '../../utils/logger'
 import type { DictResult } from '@shared/types/service'
 import type { LanguageCode } from '@shared/types/language'
 import { log_error, get_service_config, normalize_source_text } from './translate_helpers'
+import { dispatch_services } from './dispatch_services'
 import { use_source_tts } from './use_source_tts'
 import { use_translate_height_reporting } from './use_translate_height_reporting'
 
@@ -187,56 +188,10 @@ export default function TranslateWindow(): React.ReactElement {
             setLockedTargetLanguage(effectiveTarget)
         }
 
-        const resultsMap: Record<string, string | DictResult | null> = {}
-        const promises = enabledServiceList.map(async (instanceKey) => {
-            const serviceKey = getServiceKey(instanceKey)
-            const service = translateServiceRegistry.get(serviceKey)
-            if (!service) {
-                log.warn('[service:%s] not found in registry (serviceKey=%s)', instanceKey, serviceKey)
-                resultsMap[instanceKey] = null
-                if (useTranslateStore.getState().requestId === id) {
-                    setResult(instanceKey, null)
-                }
-                return
-            }
-            const instanceConfig = get_service_config(serviceInstances, instanceKey)
-            log.debug('[service:%s] CALL service=%s from=%s(orig=%s) to=%s text=%j config=%j',
-                instanceKey, serviceKey, effectiveSource, sourceLanguage, effectiveTarget,
-                textToTranslate.slice(0, 30), instanceConfig)
-
-            try {
-                if (service.translateStream) {
-                    let accumulated = ''
-                    let lastUpdateTime = 0
-                    for await (const chunk of service.translateStream(textToTranslate, effectiveSource, effectiveTarget, instanceConfig)) {
-                        accumulated += chunk
-                        const now = Date.now()
-                        if (now - lastUpdateTime > 50 && useTranslateStore.getState().requestId === id) {
-                            setResult(instanceKey, accumulated)
-                            lastUpdateTime = now
-                        }
-                    }
-                    if (useTranslateStore.getState().requestId === id) {
-                        setResult(instanceKey, accumulated)
-                    }
-                    resultsMap[instanceKey] = accumulated
-                    log.debug('[service:%s] RESULT stream len=%d preview=%j', instanceKey, accumulated.length, accumulated.slice(0, 60))
-                } else {
-                    const result = await service.translate(textToTranslate, effectiveSource, effectiveTarget, instanceConfig)
-                    resultsMap[instanceKey] = result
-                    if (useTranslateStore.getState().requestId === id) {
-                        setResult(instanceKey, result)
-                    }
-                    log.debug('[service:%s] RESULT type=%s preview=%j', instanceKey, typeof result, typeof result === 'string' ? result.slice(0, 60) : JSON.stringify(result).slice(0, 120))
-                }
-            } catch (err) {
-                log.error('[service:%s] FAILED: %s', instanceKey, err instanceof Error ? err.stack ?? err.message : String(err))
-                resultsMap[instanceKey] = null
-                if (useTranslateStore.getState().requestId === id) {
-                    setResult(instanceKey, null)
-                }
-            }
-        })
+        const { resultsMap } = await dispatch_services(
+            textToTranslate, effectiveSource, effectiveTarget, sourceLanguage,
+            enabledServiceList, serviceInstances, id, setResult
+        )
         const isActiveRequest = () => {
             const state = useTranslateStore.getState()
             return state.requestId === id
@@ -246,7 +201,6 @@ export default function TranslateWindow(): React.ReactElement {
                 && state.effectiveTargetLanguage === (effectiveTarget === targetLanguage ? null : effectiveTarget)
         }
 
-        await Promise.allSettled(promises)
         if (!isActiveRequest()) return
         setIsTranslating(false)
 
