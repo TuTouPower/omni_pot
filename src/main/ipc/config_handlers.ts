@@ -64,11 +64,11 @@ export function registerConfigHandlers(manager: WindowManager): void {
     if (!validate_config_value(key, value)) {
       log_ipc.warn('rejected config:set with wrong type for %s: expected %s, got %s',
         key, typeof DEFAULT_CONFIG[key], typeof value)
-      return
+      return false
     }
     if (sender_label !== WindowLabel.CONFIG && sensitive_write_keys.has(key)) {
       log_ipc.warn('rejected config:set for sensitive key %s from non-config window %s', key, sender_label)
-      return
+      return false
     }
     setConfig(key, value)
     if (key === 'app_language') {
