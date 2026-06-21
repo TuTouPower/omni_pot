@@ -27,6 +27,7 @@ function sanitize_config_for_renderer(config: AppConfig): Partial<AppConfig> {
   const safe = { ...config }
   delete (safe as Record<string, unknown>).webdav_password
   delete (safe as Record<string, unknown>).service_instances
+  delete (safe as Record<string, unknown>).server_api_token
   return safe
 }
 
