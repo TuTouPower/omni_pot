@@ -257,22 +257,18 @@ export default function DictWindow(): React.ReactElement {
         const newIdx = activeList.indexOf(String(over.id))
         if (oldIdx === -1 || newIdx === -1) return
 
-        const enabledSet = new Set(activeList)
-        const enabledList = [...activeList]
-        const [moved] = enabledList.splice(oldIdx, 1) as [string]
-        enabledList.splice(newIdx, 0, moved)
+        const reordered = [...activeList]
+        const [moved] = reordered.splice(oldIdx, 1) as [string]
+        reordered.splice(newIdx, 0, moved)
 
-        let enabledIdx = 0
-        const updateList = (list: string[]) => list.map((instanceKey) => {
-            if (!enabledSet.has(instanceKey)) return instanceKey
-            const [reorderedKey] = enabledList.slice(enabledIdx, enabledIdx + 1) as [string]
-            enabledIdx += 1
-            return reorderedKey
-        })
-
-        useConfigStore.getState().set('dictionary_service_list', updateList(zhServiceList))
-        useConfigStore.getState().set('english_dictionary_service_list', updateList(enServiceList))
-    }, [activeList, zhServiceList, enServiceList])
+        // Only update the list that was actively reordered
+        const isZhList = activeList === zhServiceList
+        if (isZhList) {
+            useConfigStore.getState().set('dictionary_service_list', reordered)
+        } else {
+            useConfigStore.getState().set('english_dictionary_service_list', reordered)
+        }
+    }, [activeList, zhServiceList])
 
     return (
         <div ref={root_ref} className="op-window">
