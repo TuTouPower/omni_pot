@@ -145,16 +145,19 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [mode, imageBase64, recognizedText, recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Auto-translate when screenshot translate opens with pre-recognized text
+    const doTranslateRef = useRef(doTranslate)
+    doTranslateRef.current = doTranslate
+
     useEffect(() => {
         if (mode !== 'translate') return
         if (!recognizedText) return
         if (recognizeShowId === 0) return
         const requestId = bumpOcrRequestId()
         setIsTranslating(true)
-        doTranslate(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
+        doTranslateRef.current(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
             .finally(() => { if (ocrRequestIdRef.current === requestId) setIsTranslating(false) })
             .catch((err: unknown) => { log_error('translate recognized text', err) })
-    }, [recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [mode, recognizedText, recognizeShowId, selectedLanguage, bumpOcrRequestId])
 
     // ---- Translate (used in translate mode) ----
     const doTranslate = useCallback(async (text: string, sourceLang: LanguageCode, requestId: number): Promise<void> => {
