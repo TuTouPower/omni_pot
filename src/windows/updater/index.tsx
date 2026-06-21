@@ -85,7 +85,12 @@ export default function UpdaterWindow(): React.ReactElement {
 
     const handleClose = useCallback(() => { window.electronAPI.window.close().catch((err: unknown) => { log_error('close window', err) }) }, [])
     const handleDownloadAndInstall = useCallback(() => {
-        const asset = release?.assets[0]
+        const asset = release?.assets.find((a) => {
+            const name = a.name.toLowerCase()
+            if (process.platform === 'win32') return name.endsWith('.exe')
+            if (process.platform === 'darwin') return name.endsWith('.dmg')
+            return name.endsWith('.appimage')
+        }) ?? release?.assets[0]
         if (!asset || downloading) return
         setDownloading(true)
         setDownloadError(null)
@@ -135,7 +140,7 @@ export default function UpdaterWindow(): React.ReactElement {
             }
             // Headers
             if (trimmed.startsWith('### ')) return <div key={i} style={{ fontSize: 12.5, fontWeight: 600, marginTop: 8, marginBottom: 2 }}>{formatted}</div>
-            if (trimmed.startsWith('## ')) return <div key={i} style={{ fontSize: 13, fontWeight: 600, marginTop: 10, marginBottom: 4 }}>{trimmed.slice(3)}</div>
+            if (trimmed.startsWith('## ')) return <div key={i} style={{ fontSize: 13, fontWeight: 600, marginTop: 10, marginBottom: 4 }}>{typeof formatted === 'string' ? formatted.slice(3) : formatted}</div>
             if (trimmed.startsWith('# ')) return <div key={i} style={{ fontSize: 14, fontWeight: 700, marginTop: 12, marginBottom: 4 }}>{trimmed.slice(2)}</div>
             // List items
             if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) return <div key={i} style={{ paddingLeft: 14, position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>·</span>{formatted}</div>
