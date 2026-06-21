@@ -44,12 +44,12 @@ function AwaitOp($op, [type]$resultType) {
     return $task.GetAwaiter().GetResult()
 }
 
-$file = AwaitOp ([Windows.Storage.StorageFile]::GetFileFromPathAsync('${image_path.replace(/'/g, "''")}')) ([Windows.Storage.StorageFile])
+$file = AwaitOp ([Windows.Storage.StorageFile]::GetFileFromPathAsync($env:OMNI_POT_OCR_IMAGE)) ([Windows.Storage.StorageFile])
 $stream = AwaitOp ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
 $decoder = AwaitOp ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
 $bitmap = AwaitOp ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
 
-$lang = [Windows.Globalization.Language]::new('${bcp47}')
+$lang = [Windows.Globalization.Language]::new($env:OMNI_POT_OCR_LANG)
 $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromLanguage($lang)
 if ($null -eq $engine) { $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages() }
 if ($null -eq $engine) { Write-Error 'No OCR engine available'; exit 1 }
@@ -59,7 +59,11 @@ $result.Text
     return new Promise((resolve, reject) => {
         execFile('powershell.exe', [
             '-NoProfile', '-NonInteractive', '-Command', ps_script
-        ], { maxBuffer: 10 * 1024 * 1024, timeout: 30000 }, (err, stdout, stderr) => {
+        ], {
+            maxBuffer: 10 * 1024 * 1024,
+            timeout: 30000,
+            env: { ...process.env, OMNI_POT_OCR_IMAGE: image_path, OMNI_POT_OCR_LANG: bcp47 }
+        }, (err, stdout, stderr) => {
             if (err) {
                 const msg = stderr.trim() || err.message
                 if (msg.includes('Language package not installed') || msg.includes('0x00000000')) {
