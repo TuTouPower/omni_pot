@@ -88,11 +88,15 @@ const SourceArea_ = function SourceArea({ onTranslate, onTts, ttsAvailable = fal
     const onTranslateRef = useRef(onTranslate)
     onTranslateRef.current = onTranslate
     const dynamic_timer_ref = useRef<number | null>(null)
+    const lineHeightRef = useRef<number>(0)
 
     const resize_source_area = useCallback(() => {
         const textarea = textAreaRef.current
         if (!textarea) return
-        const line_height = Number.parseFloat(getComputedStyle(textarea).lineHeight)
+        if (!lineHeightRef.current) {
+            lineHeightRef.current = Number.parseFloat(getComputedStyle(textarea).lineHeight)
+        }
+        const line_height = lineHeightRef.current
         const max_height = line_height * 8
         textarea.style.maxHeight = `${max_height.toString()}px`
         textarea.style.height = 'auto'
@@ -175,6 +179,7 @@ const SourceArea_ = function SourceArea({ onTranslate, onTts, ttsAvailable = fal
     }, [setSourceText, cancel_dynamic_translate, setDetectedLanguage, onClearResults])
 
     useEffect(() => {
+        lineHeightRef.current = 0
         resize_source_area()
     }, [sourceText, appFont, appFontSize, resize_source_area])
 
