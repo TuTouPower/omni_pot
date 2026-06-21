@@ -18,6 +18,7 @@ export function SortableDictCard({ instanceKey, result, isLoading, collapsed, on
     const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
     const serviceKey = getServiceKey(instanceKey)
+    const audioRef = useRef<HTMLAudioElement | null>(null)
     const service = translateServiceRegistry.get(serviceKey)
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceKey })
     const copy_timer_ref = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -89,7 +90,12 @@ export function SortableDictCard({ instanceKey, result, isLoading, collapsed, on
                                                 className="ic-btn"
                                                 data-testid="dict-pron-audio-btn"
                                                 title={t('result.tts', { defaultValue: '朗读' })}
-                                                onClick={() => { const a = new Audio(p.audio_url); a.play().catch(() => undefined); }}
+                                                onClick={() => {
+                                                    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+                                                    const a = new Audio(p.audio_url)
+                                                    audioRef.current = a
+                                                    a.play().catch(() => undefined)
+                                                }}
                                                 style={{ padding: 2 }}
                                             >
                                                 <Icons.Volume size={12} />
