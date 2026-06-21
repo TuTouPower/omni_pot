@@ -235,6 +235,28 @@
         "empty": "暂无历史记录",
         "showing": "显示 {{start}} – {{end}} / 共 {{total}} 条"
     },
+    "backup_settings": {
+        "backup_target": "备份目标",
+        "webdav_sub": "同步到任意 WebDAV 服务器",
+        "local_label": "本地文件",
+        "local_sub": "导出 ZIP 到本地路径",
+        "delete_failed": "删除失败",
+        "copy_failed": "复制失败",
+        "webdav_connection": "WebDAV 连接",
+        "server_address": "服务器地址",
+        "username": "用户名",
+        "password": "密码",
+        "webdav_coming_soon": "WebDAV 同步功能即将推出",
+        "test_connection": "测试连接",
+        "local_path": "本地路径",
+        "backup_directory": "备份目录",
+        "actions": "操作",
+        "content_hint": "备份内容：设置、历史记录数据库",
+        "recent_backups": "最近备份",
+        "restore_backup": "恢复备份",
+        "no_backups_available": "暂无可用备份",
+        "restore": "恢复"
+    },
     "backup": {
         "title": "备份",
         "create": "创建备份",

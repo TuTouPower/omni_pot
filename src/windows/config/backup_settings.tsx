@@ -34,13 +34,14 @@ function extract_timestamp(name: string): string {
     return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
-const BACKUP_TYPES = [
-    { value: 'webdav' as const, label: 'WebDAV', sub: '同步到任意 WebDAV 服务器' },
-    { value: 'local' as const, label: '本地文件', sub: '导出 ZIP 到本地路径' },
-]
-
 export default function BackupSettings(): React.ReactElement {
     const { t } = useTranslation()
+
+    const backup_types = [
+        { value: 'webdav' as const, label: 'WebDAV', sub: t('backup_settings.webdav_sub', { defaultValue: '同步到任意 WebDAV 服务器' }) },
+        { value: 'local' as const, label: t('backup_settings.local_label', { defaultValue: '本地文件' }), sub: t('backup_settings.local_sub', { defaultValue: '导出 ZIP 到本地路径' }) },
+    ]
+
     const [backupType, setBackupType] = useConfig('backup_type')
     const [webdavUrl, setWebdavUrl] = useConfig('webdav_url')
     const [webdavUsername, setWebdavUsername] = useConfig('webdav_username')
@@ -97,10 +98,10 @@ export default function BackupSettings(): React.ReactElement {
             if (result.success) {
                 load_backups().catch((err: unknown) => { log_error('load backups', err) })
             } else {
-                setStatus(`删除失败: ${result.error ?? ''}`)
+                setStatus(t('backup_settings.delete_failed', { defaultValue: '删除失败', error: result.error ?? '' }))
             }
         } catch (error) {
-            setStatus(`删除失败: ${error_message(error)}`)
+            setStatus(t('backup_settings.delete_failed', { defaultValue: '删除失败', error: error_message(error) }))
         }
     }
 
@@ -110,15 +111,15 @@ export default function BackupSettings(): React.ReactElement {
             await navigator.clipboard.writeText(path)
             show_toast(t('toast.path_copied', { defaultValue: '路径已复制' }))
         } catch (error) {
-            setStatus(`复制失败: ${error_message(error)}`)
+            setStatus(t('backup_settings.copy_failed', { defaultValue: '复制失败', error: error_message(error) }))
         }
     }
 
     return (
         <div className="stack gap-12">
-            <ConfigCard title="备份目标">
+            <ConfigCard title={t('backup_settings.backup_target', { defaultValue: '备份目标' })}>
                 <div style={{ display: 'flex', gap: 8 }}>
-                    {BACKUP_TYPES.map((opt) => (
+                    {backup_types.map((opt) => (
                         <button
                             key={opt.value}
                             type="button"
@@ -143,8 +144,8 @@ export default function BackupSettings(): React.ReactElement {
             </ConfigCard>
 
             {backupType === 'webdav' && (
-                <ConfigCard title="WebDAV 连接">
-                    <ConfigRow label="服务器地址">
+                <ConfigCard title={t('backup_settings.webdav_connection', { defaultValue: 'WebDAV 连接' })}>
+                    <ConfigRow label={t('backup_settings.server_address', { defaultValue: '服务器地址' })}>
                         <ConfigField
                             placeholder="https://dav.example.com/dav"
                             value={webdavUrl}
@@ -153,7 +154,7 @@ export default function BackupSettings(): React.ReactElement {
                             style={{ minWidth: 280 }}
                         />
                     </ConfigRow>
-                    <ConfigRow label="用户名">
+                    <ConfigRow label={t('backup_settings.username', { defaultValue: '用户名' })}>
                         <ConfigField
                             value={webdavUsername}
                             onChange={setWebdavUsername}
@@ -161,7 +162,7 @@ export default function BackupSettings(): React.ReactElement {
                             style={{ minWidth: 280 }}
                         />
                     </ConfigRow>
-                    <ConfigRow label="密码">
+                    <ConfigRow label={t('backup_settings.password', { defaultValue: '密码' })}>
                         <ConfigField
                             value={webdavPassword}
                             onChange={setWebdavPassword}
@@ -172,22 +173,22 @@ export default function BackupSettings(): React.ReactElement {
                     </ConfigRow>
                     <div className="row" style={{ marginTop: 4 }}>
                         <div style={{ flex: 1 }} />
-                        <button data-testid="backup-test-connection" className="btn sm" onClick={() => { setStatus('WebDAV 同步功能即将推出'); }}>
-                            测试连接
+                        <button data-testid="backup-test-connection" className="btn sm" onClick={() => { setStatus(t('backup_settings.webdav_coming_soon', { defaultValue: 'WebDAV 同步功能即将推出' })); }}>
+                            {t('backup_settings.test_connection', { defaultValue: '测试连接' })}
                         </button>
                     </div>
                 </ConfigCard>
             )}
 
             {backupType === 'local' && (
-                <ConfigCard title="本地路径">
-                    <ConfigRow label="备份目录">
+                <ConfigCard title={t('backup_settings.local_path', { defaultValue: '本地路径' })}>
+                    <ConfigRow label={t('backup_settings.backup_directory', { defaultValue: '备份目录' })}>
                         <div className="mono hint" style={{ fontSize: 12 }}>~/Documents/OmniPotBackups</div>
                     </ConfigRow>
                 </ConfigCard>
             )}
 
-            <ConfigCard title="操作">
+            <ConfigCard title={t('backup_settings.actions', { defaultValue: '操作' })}>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button data-testid="backup-create" className="btn primary" title={t('backup.create', { defaultValue: '立即备份' })} onClick={() => { handle_backup().catch((err: unknown) => { log_error('create backup', err) }); }}>
                         <Icons.Cloud size={14} />
@@ -199,10 +200,10 @@ export default function BackupSettings(): React.ReactElement {
                     </button>
                 </div>
                 {status && <p data-testid="backup-status" style={{ fontSize: 12, color: 'var(--text-dim)' }}>{status}</p>}
-                <div data-testid="backup-content-hint" className="hint">备份内容：设置、历史记录数据库</div>
+                <div data-testid="backup-content-hint" className="hint">{t('backup_settings.content_hint', { defaultValue: '备份内容：设置、历史记录数据库' })}</div>
             </ConfigCard>
 
-            <ConfigCard title="最近备份">
+            <ConfigCard title={t('backup_settings.recent_backups', { defaultValue: '最近备份' })}>
                 {backups.length === 0 && (
                     <p data-testid="backup-empty" style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('backup.no_backups', { defaultValue: '暂无备份' })}</p>
                 )}
@@ -245,14 +246,14 @@ export default function BackupSettings(): React.ReactElement {
                         onClick={(e) => { e.stopPropagation(); }}
                     >
                         <div className="card-head">
-                            <span>恢复备份</span>
+                            <span>{t('backup_settings.restore_backup', { defaultValue: '恢复备份' })}</span>
                             <button data-testid="backup-restore-close" className="ic-btn" style={{ marginLeft: 'auto' }} onClick={() => { setRestoreModal(false); }}>
                                 <Icons.Close size={13} />
                             </button>
                         </div>
                         <div style={{ padding: 4 }}>
                             {backups.length === 0 && (
-                                <p data-testid="backup-restore-empty" style={{ fontSize: 13, color: 'var(--text-mute)', padding: 12 }}>No backups available.</p>
+                                <p data-testid="backup-restore-empty" style={{ fontSize: 13, color: 'var(--text-mute)', padding: 12 }}>{t('backup_settings.no_backups_available', { defaultValue: '暂无可用备份' })}</p>
                             )}
                             {backups.map((entry) => (
                                 <div
@@ -274,7 +275,7 @@ export default function BackupSettings(): React.ReactElement {
                                         <span style={{ fontSize: 13 }}>{entry.name}</span>
                                         <div className="hint" style={{ marginTop: 2 }}>{extract_timestamp(entry.name)}{extract_timestamp(entry.name) ? ' · ' : ''}{format_size(entry.size)}</div>
                                     </div>
-                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => { handle_restore(entry.name).catch((err: unknown) => { log_error('restore backup', err) }); }}>恢复</button>
+                                    <button data-testid="backup-restore-action" className="btn sm primary" onClick={() => { handle_restore(entry.name).catch((err: unknown) => { log_error('restore backup', err) }); }}>{t('backup_settings.restore', { defaultValue: '恢复' })}</button>
                                 </div>
                             ))}
                         </div>
