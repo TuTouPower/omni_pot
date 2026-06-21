@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable react-hooks/rules-of-hooks -- custom hook uses snake_case per project convention */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useConfigStore } from '../../stores/config_store'
 import { useTranslateStore } from '../../stores/translate_store'

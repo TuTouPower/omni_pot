@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable react-hooks/rules-of-hooks -- custom hook uses snake_case per project convention */
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { DictResult } from '@shared/types/service'
 
