@@ -9,7 +9,7 @@ import { start_screenshot_capture } from '../screenshot'
 import { log } from '../log'
 import { captured_open_external_urls } from '../ipc/shell_handlers'
 import { get_history_page, get_history_count } from '../history'
-import { BodyTooLargeError, readBody, respondBodyTooLarge, MAX_OCR_BODY_SIZE } from './body'
+import { BodyTooLargeError, readBody, respondBodyTooLarge, MAX_OCR_BODY_SIZE, MAX_TRANSLATE_BODY_SIZE } from './body'
 import { get_public_config_from_config, type PublicConfig } from './public_config'
 import {
     handleTriggerSelection,
@@ -346,7 +346,7 @@ function handleTranslate(
 ): void {
     ;(async () => {
         try {
-            const buf = await readBody(req)
+            const buf = await readBody(req, MAX_TRANSLATE_BODY_SIZE)
             const text = buf.toString('utf-8').trim()
             if (!text) {
                 res.writeHead(400)

@@ -2,6 +2,7 @@ import type http from 'http'
 
 export const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10 MB
 export const MAX_OCR_BODY_SIZE = 50 * 1024 * 1024 // 50 MB
+export const MAX_TRANSLATE_BODY_SIZE = 100 * 1024 // 100 KB
 
 export class BodyTooLargeError extends Error {
     constructor() {
