@@ -5,6 +5,11 @@ import { create_logger } from '../utils/logger'
 
 const log = create_logger('deepl')
 
+function redact_secret(value: string | undefined | null): string {
+  if (!value || value.length <= 8) return '[redacted]'
+  return `${value.slice(0, 4)}…${value.slice(-4)}`
+}
+
 const DEEPL_LANGUAGES: LanguageCode[] = [
   'auto', 'zh_cn', 'zh_tw', 'ja', 'en', 'ko', 'fr', 'es', 'ru', 'de',
   'it', 'tr', 'pt_pt', 'pt_br', 'id', 'sv', 'pl', 'nl', 'uk'
@@ -213,8 +218,9 @@ export const deeplService: TranslateService = {
     config: ServiceConfig
   ): Promise<string> {
     const type = (config.type as string) || 'deeplx_free'
+    const safe_config = { ...config, authKey: redact_secret(config.authKey as string) }
     log.info('[deepl.translate] ENTRY from=%s to=%s type=%s text=%j config=%j',
-      from, to, type, text.slice(0, 30), config)
+      from, to, type, text.slice(0, 30), safe_config)
 
     if (type === 'deeplx_free') {
       return translate_free(text, from, to)
