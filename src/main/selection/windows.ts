@@ -142,6 +142,7 @@ function call_u32(fn: NativePointer, proto: NativeProto, ...args: unknown[]): nu
 }
 
 function release(obj: NativePointer): void {
+    // IUnknown::Release (vtable index 2)
     const fn = readVtableFunc(obj, 2)
     call_u32(fn, ReleaseProto, obj)
 }
@@ -170,6 +171,7 @@ function getTextByUIAutomation(): string | null {
         }
         pAutomation = ppv[0]
 
+        // IUIAutomation::GetFocusedElement (vtable index 8)
         const elementOut: Array<NativePointer | null> = [null]
         const hr3 = call_i32(
             readVtableFunc(pAutomation, 8), GetFocusedElementProto, pAutomation, elementOut
@@ -179,6 +181,7 @@ function getTextByUIAutomation(): string | null {
         }
         pElement = elementOut[0]
 
+        // IUIAutomationElement::GetCurrentPattern (vtable index 16)
         const patternOut: Array<NativePointer | null> = [null]
         const hr4 = call_i32(
             readVtableFunc(pElement, 16), GetCurrentPatternProto,
@@ -189,6 +192,7 @@ function getTextByUIAutomation(): string | null {
         }
         pPattern = patternOut[0]
 
+        // IUIAutomationTextPattern::GetSelection (vtable index 5)
         const rangesOut: Array<NativePointer | null> = [null]
         const hr5 = call_i32(
             readVtableFunc(pPattern, 5), GetSelectionProto, pPattern, rangesOut
@@ -198,6 +202,7 @@ function getTextByUIAutomation(): string | null {
         }
         pRanges = rangesOut[0]
 
+        // IUIAutomationTextRangeArray::GetLength (vtable index 3)
         const lengthOut = [0]
         const hr6 = call_i32(
             readVtableFunc(pRanges, 3), GetLengthProto, pRanges, lengthOut
@@ -210,6 +215,7 @@ function getTextByUIAutomation(): string | null {
         const texts: string[] = []
 
         for (let i = 0; i < length; i++) {
+            // IUIAutomationTextRangeArray::GetElement (vtable index 4)
             const rangeOut: Array<NativePointer | null> = [null]
             const hr7 = call_i32(
                 readVtableFunc(pRanges, 4), GetElementProto, pRanges, i, rangeOut
@@ -221,6 +227,7 @@ function getTextByUIAutomation(): string | null {
             const pRange = rangeOut[0]
             const textOut: Array<NativePointer | null> = [null]
             try {
+                // IUIAutomationTextRange::GetText (vtable index 12)
                 const hr8 = call_i32(
                     readVtableFunc(pRange, 12), GetTextProto, pRange, -1, textOut
                 )
