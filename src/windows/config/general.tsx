@@ -65,7 +65,7 @@ export default function GeneralPage(): React.ReactElement {
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <ConfigField
                             mono
-                            defaultValue={String(serverPort)}
+                            value={String(serverPort)}
                             onChange={(v) => {
                                 const n = Number(v)
                                 const clamped = Number.isFinite(n) && n >= 1 && n <= 65535 ? n : 20202
