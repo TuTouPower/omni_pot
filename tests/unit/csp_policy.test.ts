@@ -15,10 +15,17 @@ describe('CSP policy', () => {
     ])('allows required external service, media, worker, and WASM capabilities in %s builds', (_, is_packaged, wasm_token) => {
         const csp = parse_csp(build_csp_policy(is_packaged))
 
-        expect(csp.get('connect-src')).toContain('https:')
+        // connect-src no longer includes https: wildcard — translation goes through main process proxy
+        expect(csp.get('connect-src')).toContain("'self'")
+        expect(csp.get('connect-src')).toContain('http://localhost:*')
         expect(csp.get('media-src')).toContain('blob:')
         expect(csp.get('media-src')).toContain('https:')
         expect(csp.get('worker-src')).toContain('blob:')
         expect(csp.get('script-src')).toContain(wasm_token)
+    })
+
+    it('does NOT allow connect-src https: wildcard in packaged builds', () => {
+        const csp = parse_csp(build_csp_policy(true))
+        expect(csp.get('connect-src')).not.toContain('https:')
     })
 })
