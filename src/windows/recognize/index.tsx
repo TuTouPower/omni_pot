@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icons } from '../../components/icons'
 import { Titlebar } from '../../components/titlebar'
@@ -87,8 +87,8 @@ export default function RecognizeWindow(): React.ReactElement {
     }, [])
 
     const service_instances = config.service_instances
-    const base_service_list = config.recognize_service_list.filter((instance_key) => get_service_config(service_instances, instance_key).enable !== false)
-    const service_list = qr_detected && !base_service_list.includes(QRCODE_INSTANCE_KEY) ? [...base_service_list, QRCODE_INSTANCE_KEY] : base_service_list
+    const base_service_list = useMemo(() => config.recognize_service_list.filter((instance_key) => get_service_config(service_instances, instance_key).enable !== false), [config.recognize_service_list, service_instances])
+    const service_list = useMemo(() => qr_detected && !base_service_list.includes(QRCODE_INSTANCE_KEY) ? [...base_service_list, QRCODE_INSTANCE_KEY] : base_service_list, [qr_detected, base_service_list])
 
     // Build OCR engine options from service list
     const ocr_engine_options = service_list.map((instanceKey) => {
@@ -238,17 +238,50 @@ export default function RecognizeWindow(): React.ReactElement {
 
             setQrDetected(false)
             const lang = (selectedLanguage || config.recognize_language) as LanguageCode
-            const instance_key = effectiveService
-            if (!instance_key) return
 
-            const svc_key = getServiceKey(instance_key)
-            const service = ocrServiceRegistry.get(svc_key)
-            if (!service) return
+            // Parallel OCR: try all enabled engines concurrently, use first success
+            const enabledEngines = service_list.filter((ik) => {
+                const svcKey = getServiceKey(ik)
+                return !!ocrServiceRegistry.get(svcKey)
+            })
+            if (enabledEngines.length === 0) return
 
-            const instance_config: ServiceConfig = get_service_config(service_instances, instance_key)
-            log.info('ocr start: engine=%s, lang=%s', svc_key, lang)
             const start = Date.now()
-            const result = await service.recognize(imageBase64, lang, instance_config)
+            let result = ''
+
+            if (enabledEngines.length === 1) {
+                const ik = enabledEngines[0]
+                const svc_key = getServiceKey(ik)
+                const service = ocrServiceRegistry.get(svc_key)
+                if (!service) return
+                const instance_config: ServiceConfig = get_service_config(service_instances, ik)
+                log.info('ocr start: engine=%s, lang=%s', svc_key, lang)
+                result = await service.recognize(imageBase64, lang, instance_config) || ''
+            } else {
+                log.info('ocr start: %d engines in parallel, lang=%s', enabledEngines.length, lang)
+                result = await new Promise<string>((resolve) => {
+                    let settled = false
+                    for (const ik of enabledEngines) {
+                        const svc_key = getServiceKey(ik)
+                        const service = ocrServiceRegistry.get(svc_key)
+                        if (!service) continue
+                        const instance_config: ServiceConfig = get_service_config(service_instances, ik)
+                        service.recognize(imageBase64, lang, instance_config)
+                            .then((text) => {
+                                if (settled) return
+                                settled = true
+                                log.info('ocr done: engine=%s, elapsed=%dms', svc_key, Date.now() - start)
+                                resolve(text || '')
+                            })
+                            .catch(() => {
+                                // try next engine; if all fail, resolve empty
+                            })
+                    }
+                    // Fallback: if all fail, resolve empty after timeout
+                    setTimeout(() => { if (!settled) { settled = true; resolve('') } }, 30000)
+                })
+            }
+
             if (ocrRequestIdRef.current !== requestId) return
             log.info('ocr done: engine=%s, elapsed=%dms, length=%d', svc_key, Date.now() - start, (result || '').length)
             const next_text = handleNormalizeText(result || '')
@@ -267,7 +300,7 @@ export default function RecognizeWindow(): React.ReactElement {
         if (ocrRequestIdRef.current === requestId) {
             setIsRecognizing(false)
         }
-    }, [imageBase64, effectiveService, selectedLanguage, service_instances, config.recognize_language, config.recognize_auto_copy, mode, bumpOcrRequestId, handleNormalizeText, doTranslate])
+    }, [imageBase64, selectedLanguage, service_list, service_instances, config.recognize_language, config.recognize_auto_copy, mode, bumpOcrRequestId, handleNormalizeText, doTranslate])
 
     // Auto-re-translate when target language changes in translate mode
     useEffect(() => {

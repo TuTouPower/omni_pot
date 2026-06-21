@@ -99,6 +99,7 @@ export default function ScreenshotWindow(): React.ReactElement {
         reset_selection()
 
         if (rect.width < 5 || rect.height < 5) {
+            await close_window()
             return
         }
 
@@ -119,22 +120,33 @@ export default function ScreenshotWindow(): React.ReactElement {
             const qr = await try_qr_decode(cropped).catch(() => null)
             if (qr) {
                 full_text = qr
-            } else {
-                for (const instance_key of service_list) {
-                    const service_key = getServiceKey(instance_key)
-                    const service = ocrServiceRegistry.get(service_key)
-                    if (!service) continue
-                    const instance_config = get_service_config(service_instances, instance_key)
+            } else if (service_list.length === 1) {
+                const singleKey = service_list[0]
+                const service_key = getServiceKey(singleKey)
+                const service = ocrServiceRegistry.get(service_key)
+                if (service) {
+                    const instance_config = get_service_config(service_instances, singleKey)
                     try {
-                        const result = await service.recognize(cropped, language, instance_config)
-                        if (result) {
-                            full_text = result
-                            break
-                        }
-                    } catch {
-                        continue
-                    }
+                        full_text = (await service.recognize(cropped, language, instance_config)) || ''
+                    } catch { /* empty */ }
                 }
+            } else {
+                full_text = await new Promise<string>((resolve) => {
+                    let settled = false
+                    for (const instance_key of service_list) {
+                        const service_key = getServiceKey(instance_key)
+                        const service = ocrServiceRegistry.get(service_key)
+                        if (!service) continue
+                        const instance_config = get_service_config(service_instances, instance_key)
+                        service.recognize(cropped, language, instance_config)
+                            .then((result) => {
+                                if (settled) return
+                                if (result) { settled = true; resolve(result) }
+                            })
+                            .catch(() => { /* try next */ })
+                    }
+                    setTimeout(() => { if (!settled) { settled = true; resolve('') } }, 30000)
+                })
             }
 
             if (full_text && config.recognize_auto_copy) {
