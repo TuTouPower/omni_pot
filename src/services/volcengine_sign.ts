@@ -1,4 +1,5 @@
-import { hmac, sha256, hexToBytes } from '@/lib/crypto'
+import { sha256 } from '@/lib/crypto'
+import { build_authorization_header } from './aws_sig_v4'
 
 interface VolcengineSignOpts {
     appId: string
@@ -20,23 +21,32 @@ export async function signVolcengineRequest(opts: VolcengineSignOpts): Promise<{
     const timestamp = Math.floor(Date.now() / 1000)
     const d = new Date(timestamp * 1000 + 8 * 3600000)
     const x_date = d.toISOString().replace(/-/g, '').replace(/:/g, '').replace(/\.\d+/, '')
-    const date = x_date.slice(0, 8)
+    const date_stamp = x_date.slice(0, 8)
 
     const hashedPayload = await sha256(body)
     const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-content-sha256:${hashedPayload}\nx-date:${x_date}\n`
     const signedHeaders = 'content-type;host;x-content-sha256;x-date'
-    const canonicalRequest = `POST\n/\nAction=${action}&Version=${version}\n${canonicalHeaders}\n${signedHeaders}\n${hashedPayload}`
+    const credentialScope = `${date_stamp}/${region}/${service}/request`
 
-    const credentialScope = `${date}/${region}/${service}/request`
-    const stringToSign = `HMAC-SHA256\n${x_date}\n${credentialScope}\n${await sha256(canonicalRequest)}`
-
-    const kDate = await hmac(secret, date, 'SHA-256')
-    const kRegion = await hmac(hexToBytes(kDate).buffer as ArrayBuffer, region, 'SHA-256')
-    const kService = await hmac(hexToBytes(kRegion).buffer as ArrayBuffer, service, 'SHA-256')
-    const kSigning = await hmac(hexToBytes(kService).buffer as ArrayBuffer, 'request', 'SHA-256')
-    const signature = await hmac(hexToBytes(kSigning).buffer as ArrayBuffer, stringToSign, 'SHA-256')
-
-    const authorization = `HMAC-SHA256 Credential=${appId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
+    const { authorization } = await build_authorization_header({
+        algorithm: 'HMAC-SHA256',
+        service,
+        region,
+        action,
+        version,
+        date: d,
+        host,
+        secret_key: secret,
+        secret_id: appId,
+        payload_hash: hashedPayload,
+        canonical_querystring: `Action=${action}&Version=${version}`,
+        canonical_headers: canonicalHeaders,
+        signed_headers: signedHeaders,
+        credential_scope: credentialScope,
+        signing_key_steps: [date_stamp, region, service, 'request'],
+        timestamp: x_date,
+        date_stamp,
+    })
 
     return {
         headers: {
