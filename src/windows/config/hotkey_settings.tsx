@@ -76,7 +76,7 @@ function HotkeyField({ label, sub, configKey, activeField, onStartCapture }: Hot
         e.preventDefault()
         e.stopPropagation()
 
-        if (e.key === 'Backspace') {
+        if (e.key === 'Backspace' && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
             setTempValue('')
             return
         }
