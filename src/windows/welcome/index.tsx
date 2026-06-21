@@ -163,8 +163,9 @@ export default function WelcomeWindow(): React.ReactElement {
     }, [])
 
     const close_welcome = useCallback(async (): Promise<void> => {
+        await finish_welcome()
         await window.electronAPI.window.close()
-    }, [])
+    }, [finish_welcome])
 
     const run_action = useCallback(async (action: WelcomeAction): Promise<void> => {
         await finish_welcome()
