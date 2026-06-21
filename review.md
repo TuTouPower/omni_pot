@@ -308,10 +308,10 @@
 11. ✅ `src/windows/translate/index.tsx`: `handleTranslate` 过重（120+行），拆分为服务调用器和请求协调器
 12. ✅ `src/windows/translate/use_source_tts.ts` / `use_translate_height_reporting.ts`: eslint-disable 添加注释说明原因（snake_case hook 名触发规则，非误用）
 13. ✅ `src/windows/translate/language_area.tsx` + `src/windows/recognize/pill_select.tsx`: 统一为通用 `Dropdown` 组件
-14. `src/windows/dict/index.tsx` L248-275: DnD同时修改中英文列表导致不一致 → reorder前检查列表差异
+14. ✅ `src/windows/dict/index.tsx` L248-275: DnD只更新当前活跃列表，不再同时修改中英文列表
 15. ✅ `src/windows/dict/dict_card.tsx` L87-97: 音频无引用管理导致重叠播放 → 保存Audio实例引用  
-16. `src/windows/translate/source_area.tsx`: `resize_source_area` 中 `getComputedStyle` 每次render调用 → useRef缓存lineHeight
-17. `src/windows/screenshot/index.tsx`: OCR串行改为并行，或至少首服务超时后切换
+16. ✅ `src/windows/translate/source_area.tsx`: getComputedStyle lineHeight 用 useRef 缓存，font 变化时重置
+17. ✅ `src/windows/screenshot/index.tsx` + `recognize/index.tsx`: OCR 引擎并行执行，首成功即用
 18. ✅ `src/windows/welcome/index.tsx`: 关闭窗口时调用 `finish_welcome()`
 19. `src/windows/config/service_settings.tsx`: 合并5个selector为1个，减少重渲染
 20. `src/windows/config/service_settings.tsx`: 添加已存在服务过滤，防止重复添加
