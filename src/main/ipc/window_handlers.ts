@@ -4,10 +4,14 @@ import { WindowLabel } from '../windows/types'
 
 export function registerWindowHandlers(manager: WindowManager): void {
   ipcMain.handle('window:close', (event) => {
-    BrowserWindow.fromWebContents(event.sender)?.close()
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    win.close()
   })
   ipcMain.handle('window:minimize', (event) => {
-    BrowserWindow.fromWebContents(event.sender)?.minimize()
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    win.minimize()
   })
   ipcMain.handle('window:maximize', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)
@@ -16,7 +20,9 @@ export function registerWindowHandlers(manager: WindowManager): void {
     else win.maximize()
   })
   ipcMain.handle('window:setAlwaysOnTop', (event, flag: boolean) => {
-    BrowserWindow.fromWebContents(event.sender)?.setAlwaysOnTop(flag)
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    win.setAlwaysOnTop(flag)
   })
   ipcMain.handle('window:setContentSize', (event, width: number, height: number) => {
     const win = BrowserWindow.fromWebContents(event.sender)
@@ -43,7 +49,9 @@ export function registerWindowHandlers(manager: WindowManager): void {
     if (!win) return ''
     return manager.getLabelById(win.id) ?? ''
   })
-  ipcMain.handle('window:openConfig', (_event, section?: string) => {
+  ipcMain.handle('window:openConfig', (event, section?: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
     manager.focusOrCreate(WindowLabel.CONFIG, {
       label: WindowLabel.CONFIG,
       width: 720,
@@ -80,5 +88,8 @@ export function registerWindowHandlers(manager: WindowManager): void {
     const controller = manager.getDictHeightController()
     controller?.report_content_height(height)
   })
-  ipcMain.handle('app:getVersion', () => app.getVersion())
+  ipcMain.handle('app:getVersion', (event) => {
+    if (!BrowserWindow.fromWebContents(event.sender)) return
+    return app.getVersion()
+  })
 }
