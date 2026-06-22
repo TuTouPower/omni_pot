@@ -19,8 +19,7 @@ import { getUserDataDir } from '../config/store'
 import { checkForUpdate } from '../updater'
 import { open_external_safely } from '../ipc/shell_handlers'
 
-// TODO: confirm correct fill URL format; /edit?sid= opens survey editor, not filler
-const SURVEY_URL = 'https://wj.qq.com/edit?sid=27007386'
+const SURVEY_URL = 'https://wj.qq.com/s2/27007386/b25e/'
 
 let tray: Tray | null = null
 let windowManager: WindowManager | null = null
