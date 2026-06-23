@@ -1,6 +1,6 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { Icons } from '../../components/icons'
+import { Icons } from './icons'
 
 interface DropdownOption {
     value: string
@@ -43,7 +43,7 @@ export const Dropdown = React.memo(function Dropdown({
     const selected_index = Math.max(0, options.findIndex((o) => o.value === value))
     const listbox_id = `${testId}-listbox`
     const active_option = options[active_index] ?? options[0]
-    const active_id = `${optionTestIdPrefix ?? testId}-${active_option.value}`
+    const active_id = active_option ? `${optionTestIdPrefix ?? testId}-${active_option.value}` : undefined
 
     const measure = React.useCallback(() => {
         const el = triggerRef.current
@@ -88,7 +88,7 @@ export const Dropdown = React.memo(function Dropdown({
         } else if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             if (!open) open_menu()
-            else select_value(active_option.value)
+            else if (active_option) select_value(active_option.value)
         } else if (e.key === 'Escape') {
             e.preventDefault()
             e.stopPropagation()

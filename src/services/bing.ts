@@ -129,7 +129,7 @@ export const bingService: TranslateService = {
     const data = (await resp.json()) as Array<{
       translations: Array<{ text: string }>
     }>
-    return data[0]?.translations?.[0]?.text ?? ''
+    return data[0]?.translations[0]?.text ?? ''
   },
 
   async testConfig(): Promise<boolean> {

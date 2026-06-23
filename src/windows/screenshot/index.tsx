@@ -122,6 +122,7 @@ export default function ScreenshotWindow(): React.ReactElement {
                 full_text = qr
             } else if (service_list.length === 1) {
                 const singleKey = service_list[0]
+                if (!singleKey) return
                 const service_key = getServiceKey(singleKey)
                 const service = ocrServiceRegistry.get(service_key)
                 if (service) {

@@ -57,6 +57,27 @@ describe('translate hotkey entry', () => {
         expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:input-translate')
     })
 
+    it('starts selection lookup before focusing translate window', async () => {
+        const order: string[] = []
+        read_selected_text.mockImplementationOnce(() => {
+            order.push('read')
+            return Promise.resolve({ text: 'hello', method: 'clipboard' })
+        })
+        focus_or_create.mockImplementationOnce(() => {
+            order.push('focus')
+        })
+        const manager = {
+            focusOrCreate: focus_or_create,
+            sendWhenReady: send_when_ready,
+        } as unknown as WindowManager
+        const { triggerTranslateEntry } = await import('../../../src/main/hotkey/index')
+
+        await triggerTranslateEntry(manager)
+
+        expect(order).toEqual(['read', 'focus'])
+        expect(send_when_ready).toHaveBeenCalledWith('translate', 'translate:from-selection', 'hello')
+    })
+
     it('sends from-selection with text after lookup resolves', async () => {
         let resolve_selection: (value: { text: string; method: 'clipboard' }) => void = () => {}
         read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))
@@ -80,6 +101,27 @@ describe('translate hotkey entry', () => {
 })
 
 describe('selection dictionary hotkey entry', () => {
+    it('starts selection lookup before focusing dictionary window', async () => {
+        const order: string[] = []
+        read_selected_text.mockImplementationOnce(() => {
+            order.push('read')
+            return Promise.resolve({ text: 'hello', method: 'clipboard' })
+        })
+        focus_or_create.mockImplementationOnce(() => {
+            order.push('focus')
+        })
+        const manager = {
+            focusOrCreate: focus_or_create,
+            sendWhenReady: send_when_ready,
+        } as unknown as WindowManager
+        const { triggerSelectionDictionary } = await import('../../../src/main/hotkey/index')
+
+        await triggerSelectionDictionary(manager)
+
+        expect(order).toEqual(['read', 'focus'])
+        expect(send_when_ready).toHaveBeenCalledWith('dict', 'dict:lookup', 'hello')
+    })
+
     it('opens dictionary window immediately, sends lookup after text lookup', async () => {
         let resolve_selection: (value: { text: string; method: 'clipboard' }) => void = () => {}
         read_selected_text.mockReturnValueOnce(new Promise((resolve) => { resolve_selection = resolve }))

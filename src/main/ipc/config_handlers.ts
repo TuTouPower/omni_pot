@@ -77,6 +77,7 @@ export function registerConfigHandlers(manager: WindowManager): void {
     if (key === 'auto_start' && !process.env['OMNI_POT_E2E']) {
       apply_auto_start(value as boolean)
     }
+    return true
   })
   ipcMain.handle('config:getAll', (event) => {
     const sender_label = assert_sender_label(manager, event, config_read_labels, 'config:getAll')

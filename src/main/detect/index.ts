@@ -104,7 +104,7 @@ export function detect_local_cld3(text: string): { lang: LanguageCode; source: '
             return { lang: detect_regex(text), source: 'regex' }
         }
 
-        const mapped = CLD3_LANG_MAP[result.language] as LanguageCode | undefined
+        const mapped = CLD3_LANG_MAP[result.language]
         if (mapped) {
             // Pure CJK text (no hiragana/katakana) should not be detected as Japanese
             if (mapped === 'ja' && /[一-鿿]/.test(text) && !/[぀-ゟ゠-ヿ]/.test(text)) {

@@ -4,6 +4,7 @@ import { useTranslateStore } from '../../stores/translate_store'
 import { create_logger } from '../../utils/logger'
 import { get_service_config } from './translate_helpers'
 import type { DictResult } from '@shared/types/service'
+import type { ServiceInstancesMap } from '@shared/types/config'
 import type { LanguageCode } from '@shared/types/language'
 
 const log = create_logger('dispatch')
@@ -16,14 +17,14 @@ export async function dispatch_services(
     text: string,
     effectiveSource: LanguageCode,
     effectiveTarget: LanguageCode,
-    sourceLanguage: LanguageCode,
+    _sourceLanguage: LanguageCode,
     enabledServiceList: string[],
     serviceInstances: unknown,
     requestId: number,
     setResult: (key: string, value: string | DictResult | null) => void,
 ): Promise<DispatchResult> {
     const resultsMap: Record<string, string | DictResult | null> = {}
-    const svcInstances = serviceInstances as Record<string, unknown>
+    const svcInstances = serviceInstances as ServiceInstancesMap
 
     const promises = enabledServiceList.map(async (instanceKey) => {
         const serviceKey = getServiceKey(instanceKey)

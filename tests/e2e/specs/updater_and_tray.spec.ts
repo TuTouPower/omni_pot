@@ -216,7 +216,7 @@ test.describe('@ui updater and tray', () => {
                 const bottom = item_boxes[i + 1]
                 if (!top || !bottom) continue
                 const gap = bottom.y - (top.y + top.height)
-                expect(gap, `tray item gap between ${REQUIRED_TRAY_ACTIONS[i]} and ${REQUIRED_TRAY_ACTIONS[i + 1]} is too large`)
+                expect(gap, `tray item gap between ${REQUIRED_TRAY_ACTIONS[i] ?? ''} and ${REQUIRED_TRAY_ACTIONS[i + 1] ?? ''} is too large`)
                     .toBeLessThanOrEqual(20)
             }
         } finally {

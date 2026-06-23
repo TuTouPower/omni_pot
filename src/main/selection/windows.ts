@@ -10,6 +10,10 @@ const oleaut32 = koffi.load('oleaut32.dll')
 const INPUT_KEYBOARD = 1
 const KEYEVENTF_KEYUP = 0x0002
 const VK_CONTROL = 0x11
+const VK_SHIFT = 0x10
+const VK_MENU = 0x12
+const VK_LWIN = 0x5b
+const VK_RWIN = 0x5c
 const VK_C = 0x43
 
 const KEYBDINPUT = koffi.struct('KEYBDINPUT', {
@@ -50,7 +54,30 @@ const SendInput = user32.func(
     'unsigned int __stdcall SendInput(unsigned int cInputs, INPUT *pInputs, int cbSize)'
 ) as unknown as (c_inputs: number, inputs: unknown, cb_size: number) => number
 
-function sendCtrlC(): Promise<void> {
+const GetAsyncKeyState = user32.func(
+    'short __stdcall GetAsyncKeyState(int vKey)'
+) as unknown as (v_key: number) => number
+
+function isKeyPressed(v_key: number): boolean {
+    return (GetAsyncKeyState(v_key) & 0x8000) !== 0
+}
+
+function hasPressedModifierKey(): boolean {
+    return [VK_SHIFT, VK_MENU, VK_LWIN, VK_RWIN].some(isKeyPressed)
+}
+
+async function waitForModifierKeysReleased(): Promise<void> {
+    const started_at = Date.now()
+    while (hasPressedModifierKey()) {
+        if (Date.now() - started_at > 1000) {
+            throw new Error('Timed out waiting for modifier keys to release')
+        }
+        await new Promise((resolve) => setTimeout(resolve, 20))
+    }
+}
+
+async function sendCtrlC(): Promise<void> {
+    await waitForModifierKeysReleased()
     const inputs = [
         { type: INPUT_KEYBOARD, u: { ki: { wVk: VK_CONTROL, wScan: 0, dwFlags: 0, time: 0, dwExtraInfo: 0n } } },
         { type: INPUT_KEYBOARD, u: { ki: { wVk: VK_C, wScan: 0, dwFlags: 0, time: 0, dwExtraInfo: 0n } } },

@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SelectedTextResult } from '../../../src/main/selection/index'
 import type { getSelectedTextViaClipboard as getSelectedTextViaClipboardType } from '../../../src/main/selection/clipboard'
 
 const {
     mockSendInput,
+    mockGetAsyncKeyState,
     mockCoInitializeEx,
     mockCoCreateInstance,
     mockCoUninitialize,
@@ -15,6 +16,7 @@ const {
 } = vi.hoisted(() => {
     return {
         mockSendInput: vi.fn(),
+        mockGetAsyncKeyState: vi.fn(),
         mockCoInitializeEx: vi.fn(),
         mockCoCreateInstance: vi.fn(),
         mockCoUninitialize: vi.fn(),
@@ -31,6 +33,7 @@ vi.mock('koffi', () => ({
         load: () => ({
             func: (signature: string) => {
                 if (signature.includes('SendInput')) return mockSendInput
+                if (signature.includes('GetAsyncKeyState')) return mockGetAsyncKeyState
                 if (signature.includes('CoInitializeEx')) return mockCoInitializeEx
                 if (signature.includes('CoCreateInstance')) return mockCoCreateInstance
                 if (signature.includes('CoUninitialize')) return mockCoUninitialize
@@ -107,11 +110,16 @@ function mock_successful_uia_selection(): void {
 }
 
 describe('readSelectedTextWindows fallback chain', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
     beforeEach(() => {
         vi.clearAllMocks()
         vi.resetModules()
         mockCoInitializeEx.mockReturnValue(-2147417850)
         mockCoCreateInstance.mockReturnValue(0)
+        mockGetAsyncKeyState.mockReturnValue(0)
         mockSendInput.mockReturnValue(4)
         mockWithClipboardMutationSuppressed.mockImplementation(async <T>(fn: () => Promise<T>) => fn())
         mockGetSelectedTextViaClipboard.mockImplementation((
@@ -142,6 +150,25 @@ describe('readSelectedTextWindows fallback chain', () => {
             ],
             40
         )
+    })
+
+    it('waits for Shift to be released before simulating Ctrl+C fallback', async () => {
+        vi.useFakeTimers()
+        let shift_pressed = true
+        mockGetAsyncKeyState.mockImplementation((vk: number) => {
+            return vk === 0x10 && shift_pressed ? 0x8000 : 0
+        })
+        const { readSelectedTextWindows } = await import('../../../src/main/selection/windows')
+
+        const pending = readSelectedTextWindows()
+
+        await vi.advanceTimersByTimeAsync(80)
+        expect(mockSendInput).not.toHaveBeenCalled()
+
+        shift_pressed = false
+        await vi.advanceTimersByTimeAsync(20)
+        await expect(pending).resolves.toEqual({ text: 'clipboard selection', method: 'clipboard' })
+        expect(mockSendInput).toHaveBeenCalledOnce()
     })
 
     it('returns UIA text and releases COM resources', async () => {

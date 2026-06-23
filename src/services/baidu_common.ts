@@ -97,7 +97,7 @@ export async function baidu_translate(
 }
 
 export async function baidu_test_config(
-    service: { translate: (text: string, from: LanguageCode, to: LanguageCode, config: ServiceConfig) => Promise<string> },
+    service: { translate: (text: string, from: LanguageCode, to: LanguageCode, config: ServiceConfig) => Promise<unknown> },
     config: ServiceConfig
 ): Promise<boolean> {
     try {

@@ -144,21 +144,6 @@ export default function RecognizeWindow(): React.ReactElement {
         handleRecognize().catch((err: unknown) => { log_error('recognize', err) })
     }, [mode, imageBase64, recognizedText, recognizeShowId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Auto-translate when screenshot translate opens with pre-recognized text
-    const doTranslateRef = useRef(doTranslate)
-    doTranslateRef.current = doTranslate
-
-    useEffect(() => {
-        if (mode !== 'translate') return
-        if (!recognizedText) return
-        if (recognizeShowId === 0) return
-        const requestId = bumpOcrRequestId()
-        setIsTranslating(true)
-        doTranslateRef.current(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
-            .finally(() => { if (ocrRequestIdRef.current === requestId) setIsTranslating(false) })
-            .catch((err: unknown) => { log_error('translate recognized text', err) })
-    }, [mode, recognizedText, recognizeShowId, selectedLanguage, bumpOcrRequestId])
-
     // ---- Translate (used in translate mode) ----
     const doTranslate = useCallback(async (text: string, sourceLang: LanguageCode, requestId: number): Promise<void> => {
         const translateServiceList = useConfigStore.getState().config.translate_service_list
@@ -209,6 +194,21 @@ export default function RecognizeWindow(): React.ReactElement {
         }
     }, [effectiveTarget, lockedTargetLang])
 
+    // Auto-translate when screenshot translate opens with pre-recognized text
+    const doTranslateRef = useRef(doTranslate)
+    doTranslateRef.current = doTranslate
+
+    useEffect(() => {
+        if (mode !== 'translate') return
+        if (!recognizedText) return
+        if (recognizeShowId === 0) return
+        const requestId = bumpOcrRequestId()
+        setIsTranslating(true)
+        doTranslateRef.current(recognizedText, (selectedLanguage || 'auto') as LanguageCode, requestId)
+            .finally(() => { if (ocrRequestIdRef.current === requestId) setIsTranslating(false) })
+            .catch((err: unknown) => { log_error('translate recognized text', err) })
+    }, [mode, recognizedText, recognizeShowId, selectedLanguage, bumpOcrRequestId])
+
     // ---- OCR ----
     const handleRecognize = useCallback(async () => {
         if (!imageBase64) return
@@ -248,10 +248,13 @@ export default function RecognizeWindow(): React.ReactElement {
 
             const start = Date.now()
             let result = ''
+            let used_svc_key = ''
 
             if (enabledEngines.length === 1) {
                 const ik = enabledEngines[0]
+                if (!ik) return
                 const svc_key = getServiceKey(ik)
+                used_svc_key = svc_key
                 const service = ocrServiceRegistry.get(svc_key)
                 if (!service) return
                 const instance_config: ServiceConfig = get_service_config(service_instances, ik)
@@ -270,6 +273,7 @@ export default function RecognizeWindow(): React.ReactElement {
                             .then((text) => {
                                 if (settled) return
                                 settled = true
+                                used_svc_key = svc_key
                                 log.info('ocr done: engine=%s, elapsed=%dms', svc_key, Date.now() - start)
                                 resolve(text || '')
                             })
@@ -283,7 +287,7 @@ export default function RecognizeWindow(): React.ReactElement {
             }
 
             if (ocrRequestIdRef.current !== requestId) return
-            log.info('ocr done: engine=%s, elapsed=%dms, length=%d', svc_key, Date.now() - start, (result || '').length)
+            log.info('ocr done: engine=%s, elapsed=%dms, length=%d', used_svc_key, Date.now() - start, (result || '').length)
             const next_text = handleNormalizeText(result || '')
             setRecognizedText(next_text)
             if (config.recognize_auto_copy && next_text) {

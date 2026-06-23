@@ -18,7 +18,7 @@ function extract_text(html: string, start_idx: number): string {
             i = close_idx + 1
             continue
         }
-        result += html[i]
+        result += html[i] ?? ''
         i++
     }
     return result.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').trim()

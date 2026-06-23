@@ -53,7 +53,7 @@ export const volcengineMultiLangOcrService: OcrService = {
         let signed_str = ''
         let signed_header_keys = ''
         for (const k of sorted_keys) {
-            signed_str += `${k}:${signed_headers_map[k]}\n`
+            signed_str += `${k}:${signed_headers_map[k] ?? ''}\n`
             signed_header_keys += `${k};`
         }
         signed_header_keys = signed_header_keys.slice(0, -1)
